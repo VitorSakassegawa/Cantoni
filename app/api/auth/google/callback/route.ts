@@ -13,7 +13,8 @@ export async function GET(request: NextRequest) {
   console.log('Save this as GOOGLE_REFRESH_TOKEN in your .env.local')
 
   return NextResponse.json({
-    message: 'Token obtained. Check server logs for refresh token.',
+    message: 'Token obtido com sucesso! Copie o refresh_token abaixo e salve no seu .env.local',
+    refresh_token: tokens.refresh_token,
     access_token: tokens.access_token,
   })
 }

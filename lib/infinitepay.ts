@@ -1,3 +1,5 @@
+import crypto from 'crypto'
+
 const BASE_URL = 'https://api.infinitepay.io/v2'
 
 async function ipFetch(path: string, options: RequestInit = {}) {
@@ -66,11 +68,16 @@ export function validarWebhookInfinitePay(
   payload: string,
   signature: string
 ): boolean {
-  // InfinitePay sends HMAC-SHA256 signature
-  const crypto = require('crypto')
+  if (!process.env.INFINITEPAY_WEBHOOK_SECRET) {
+    console.error('INFINITEPAY_WEBHOOK_SECRET is not defined')
+    return false
+  }
+
   const expected = crypto
-    .createHmac('sha256', process.env.INFINITEPAY_WEBHOOK_SECRET!)
+    .createHmac('sha256', process.env.INFINITEPAY_WEBHOOK_SECRET)
     .update(payload)
     .digest('hex')
+    
   return expected === signature
 }
+
