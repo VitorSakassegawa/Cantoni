@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -108,7 +109,7 @@ export default async function ProfessorDashboard() {
               <div className="p-3 bg-red-50/50 rounded-xl"><Clock className="w-6 h-6 text-red-700" /></div>
               <div>
                 <p className="text-3xl font-bold text-red-700">
-                  {pagamentosPendentes?.filter(p => p.status === 'atrasado').length || 0}
+                  {pagamentosPendentes?.filter((p: any) => p.status === 'atrasado').length || 0}
                 </p>
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Em atraso</p>
               </div>
