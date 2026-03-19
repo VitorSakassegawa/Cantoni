@@ -1,6 +1,21 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+function getResendClient() {
+  const key = process.env.RESEND_API_KEY
+  if (!key || key === 're_123') {
+    // Return a dummy object for build time to avoid constructor error
+    return {
+      emails: {
+        send: async () => {
+          console.warn('RESEND_API_KEY non set. Skipping email.')
+          return { data: null, error: null }
+        }
+      }
+    } as any
+  }
+  return new Resend(key)
+}
+
 const FROM = process.env.RESEND_FROM_EMAIL || 'Teacher Gabriel <contato@teachergabriel.com.br>'
 
 export async function enviarEmailBoasVindas({
@@ -23,6 +38,7 @@ export async function enviarEmailBoasVindas({
     .map((a) => `<li>${a.data} — <a href="${a.link}">${a.link}</a></li>`)
     .join('')
 
+  const resend = getResendClient()
   return resend.emails.send({
     from: FROM,
     to,
@@ -70,6 +86,7 @@ export async function enviarEmailCobranca({
 }) {
   const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
 
+  const resend = getResendClient()
   return resend.emails.send({
     from: FROM,
     to,
@@ -113,6 +130,7 @@ export async function enviarConfirmacaoPagamento({
 }) {
   const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
 
+  const resend = getResendClient()
   return resend.emails.send({
     from: FROM,
     to,
@@ -145,6 +163,7 @@ export async function enviarLembreteAula({
   meetLink: string
   homework?: string
 }) {
+  const resend = getResendClient()
   return resend.emails.send({
     from: FROM,
     to,
@@ -177,6 +196,7 @@ export async function enviarAulaContabilizadaComoDada({
   aulasDadas: number
   aulasRestantes: number
 }) {
+  const resend = getResendClient()
   return resend.emails.send({
     from: FROM,
     to,
@@ -208,6 +228,7 @@ export async function enviarConfirmacaoRemarcacao({
   dataNova: string
   meetLink: string
 }) {
+  const resend = getResendClient()
   return resend.emails.send({
     from: FROM,
     to,
