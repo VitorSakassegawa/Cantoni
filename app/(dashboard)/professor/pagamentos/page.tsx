@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -19,12 +20,12 @@ export default async function PagamentosPage() {
     .select('*, contratos(aluno_id, profiles(full_name, email))')
     .order('data_vencimento')
 
-  const atrasados = pagamentos?.filter(p => p.status === 'atrasado') || []
-  const pendentes = pagamentos?.filter(p => p.status === 'pendente') || []
-  const pagos = pagamentos?.filter(p => p.status === 'pago') || []
+  const atrasados = pagamentos?.filter((p: any) => p.status === 'atrasado') || []
+  const pendentes = pagamentos?.filter((p: any) => p.status === 'pendente') || []
+  const pagos = pagamentos?.filter((p: any) => p.status === 'pago') || []
 
-  const totalReceber = [...atrasados, ...pendentes].reduce((acc, p) => acc + p.valor, 0)
-  const totalRecebido = pagos.reduce((acc, p) => acc + p.valor, 0)
+  const totalReceber = [...atrasados, ...pendentes].reduce((acc: number, p: any) => acc + p.valor, 0)
+  const totalRecebido = pagos.reduce((acc: number, p: any) => acc + p.valor, 0)
 
   return (
     <div className="space-y-6">
@@ -35,14 +36,14 @@ export default async function PagamentosPage() {
           <CardContent className="pt-6">
             <p className="text-2xl font-bold text-red-600">{atrasados.length}</p>
             <p className="text-sm text-gray-500">Atrasados</p>
-            <p className="text-xs text-gray-400 mt-1">{formatCurrency(atrasados.reduce((a, p) => a + p.valor, 0))}</p>
+            <p className="text-xs text-gray-400 mt-1">{formatCurrency(atrasados.reduce((a: number, p: any) => a + p.valor, 0))}</p>
           </CardContent>
         </Card>
         <Card>
           <CardContent className="pt-6">
             <p className="text-2xl font-bold text-yellow-600">{pendentes.length}</p>
             <p className="text-sm text-gray-500">Pendentes</p>
-            <p className="text-xs text-gray-400 mt-1">{formatCurrency(pendentes.reduce((a, p) => a + p.valor, 0))}</p>
+            <p className="text-xs text-gray-400 mt-1">{formatCurrency(pendentes.reduce((a: number, p: any) => a + p.valor, 0))}</p>
           </CardContent>
         </Card>
         <Card>

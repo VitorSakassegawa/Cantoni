@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -37,7 +38,7 @@ export default async function AlunosPage() {
 
       <div className="grid gap-4">
         {alunos?.map((aluno: any) => {
-          const contrato = contratos?.find(c => c.aluno_id === aluno.id)
+          const contrato = contratos?.find((c: any) => c.aluno_id === aluno.id)
           const pagPendente = contrato?.pagamentos?.find(
             (p: any) => p.status === 'pendente' || p.status === 'atrasado'
           )
