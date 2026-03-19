@@ -29,9 +29,13 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
+## Cantoni — Gestão de Aulas de Inglês 🚀
+
+Sistema premium para gestão de aulas particulares.
+<!-- Force rebuild 2 -->
+
 ## Deploy on Vercel
 
 A maneira mais fácil de implantar seu aplicativo Next.js é usar a [Vercel](https://vercel.com/new).
 
 Veja nosso [Guia de Implantação Vercel](VERCEL_DEPLOY.md) para instruções detalhadas sobre como configurar as variáveis de ambiente e webhooks.
-
