@@ -10,7 +10,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { maskCPF, maskPhone, maskDate, maskCurrency } from '@/lib/utils'
-import { User, Mail, Phone, Fingerprint, Calendar, BookOpen, Clock, CheckCircle2, ChevronRight, GraduationCap, Info } from 'lucide-react'
+import { User, Mail, Phone, Fingerprint, Calendar, BookOpen, Clock, CheckCircle2, ChevronRight, GraduationCap, Info, AlertCircle } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const DIAS_SEMANA = [
   { label: 'Segunda', value: 1 },
@@ -47,6 +55,7 @@ export default function NovoAlunoPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [newAlunoId, setNewAlunoId] = useState('')
+  const [showFinishConfirm, setShowFinishConfirm] = useState(false)
 
   // Aluno form
   const [nome, setNome] = useState('')
@@ -76,8 +85,8 @@ export default function NovoAlunoPage() {
     )
   }
 
-  async function handleCriarAluno(e: React.FormEvent) {
-    e.preventDefault()
+  async function handleCriarAluno(e?: React.FormEvent, mode: 'next' | 'finish' = 'next') {
+    if (e) e.preventDefault()
     setLoading(true)
     setError('')
 
@@ -155,7 +164,12 @@ export default function NovoAlunoPage() {
       }
       
       setNewAlunoId(data.alunoId)
-      setStep('contrato')
+      
+      if (mode === 'finish') {
+        router.push(`/professor/alunos/${data.alunoId}`)
+      } else {
+        setStep('contrato')
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -331,7 +345,16 @@ export default function NovoAlunoPage() {
 
                   {error && <p className="text-red-500 text-xs font-black uppercase tracking-widest">{error}</p>}
 
-                  <div className="pt-6 flex justify-end">
+                  <div className="pt-6 flex justify-end gap-3">
+                    <Button 
+                      type="button"
+                      variant="ghost"
+                      disabled={loading}
+                      onClick={() => setShowFinishConfirm(true)}
+                      className="h-14 px-8 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50"
+                    >
+                      FINALIZAR SEM CONTRATO
+                    </Button>
                     <Button 
                       type="submit" 
                       disabled={loading}
@@ -560,6 +583,44 @@ export default function NovoAlunoPage() {
           </div>
         </div>
       </div>
+
+      {/* Confirmation Dialog for Finishing without contract */}
+      <Dialog open={showFinishConfirm} onOpenChange={setShowFinishConfirm}>
+        <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] p-0 border-none overflow-hidden shadow-2xl bg-white/95 backdrop-blur-xl">
+          <div className="bg-amber-500 h-2 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader className="space-y-4">
+              <div className="w-16 h-16 rounded-[2rem] bg-amber-50 text-amber-500 flex items-center justify-center mx-auto mb-2">
+                <AlertCircle className="w-8 h-8" />
+              </div>
+              <DialogTitle className="text-2xl font-black text-center text-slate-900 tracking-tighter">
+                Finalizar sem Contrato?
+              </DialogTitle>
+              <DialogDescription className="text-center text-slate-500 font-medium leading-relaxed">
+                Deseja concluir o cadastro de **{nome || 'este aluno'}** agora? 
+                O aluno não terá acesso a aulas, frequências ou pagamentos até que um contrato seja vinculado ao seu perfil futuramente.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100">
+              <Button 
+                variant="ghost" 
+                className="h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 flex-1" 
+                onClick={() => setShowFinishConfirm(false)}
+              >
+                Voltar e Continuar
+              </Button>
+              <Button 
+                className="h-14 rounded-2xl bg-blue-600 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5] text-white" 
+                onClick={() => handleCriarAluno(undefined, 'finish')} 
+                disabled={loading}
+              >
+                {loading ? 'Finalizando...' : 'Confirmar e Finalizar'}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
