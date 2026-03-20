@@ -21,11 +21,12 @@ declare global {
 
 export default function PaymentBrick({ amount, paymentId, email, nome, onSuccess }: PaymentBrickProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const controllerRef = useRef<any>(null)
   const [loading, setLoading] = useState(true)
   const [sdkLoaded, setSdkLoaded] = useState(false)
 
   useEffect(() => {
-    if (sdkLoaded && containerRef.current && !window.hasOwnProperty('paymentBrickController')) {
+    if (sdkLoaded && containerRef.current && !controllerRef.current) {
       const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
       
       if (!publicKey) {
@@ -39,6 +40,9 @@ export default function PaymentBrick({ amount, paymentId, email, nome, onSuccess
       const bricksBuilder = mp.bricks()
 
       const renderPaymentBrick = async (bricksBuilder: any) => {
+        // Clear container to avoid duplicates
+        if (containerRef.current) containerRef.current.innerHTML = ''
+
         const settings = {
           initialization: {
             amount: amount,
@@ -58,7 +62,7 @@ export default function PaymentBrick({ amount, paymentId, email, nome, onSuccess
             },
             visual: {
               style: {
-                theme: 'light', // or 'dark' or 'bootstrap' or 'flat'
+                theme: 'light',
               },
             },
           },
@@ -73,7 +77,7 @@ export default function PaymentBrick({ amount, paymentId, email, nome, onSuccess
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify({
                     formData,
-                    paymentId, // local database payment ID
+                    paymentId,
                   }),
                 })
 
@@ -93,26 +97,33 @@ export default function PaymentBrick({ amount, paymentId, email, nome, onSuccess
             onError: (error: any) => {
               console.error('Payment Brick Error:', error)
               toast.error('Erro ao carregar o checkout do Mercado Pago.')
+              setLoading(false)
             },
           },
         }
 
-        // @ts-ignore
-        window.paymentBrickController = await bricksBuilder.create(
-          'payment',
-          'paymentBrick_container',
-          settings
-        )
+        try {
+          controllerRef.current = await bricksBuilder.create(
+            'payment',
+            'paymentBrick_container',
+            settings
+          )
+        } catch (error) {
+          console.error('Bricks creation error:', error)
+        }
       }
 
       renderPaymentBrick(bricksBuilder)
     }
 
     return () => {
-      // Cleanup if needed
-      if ((window as any).paymentBrickController) {
-        // (window as any).paymentBrickController.unmount() 
-        // delete (window as any).paymentBrickController
+      if (controllerRef.current) {
+        try {
+          controllerRef.current.unmount()
+          controllerRef.current = null
+        } catch (e) {
+          console.error('Unmount error:', e)
+        }
       }
     }
   }, [sdkLoaded, amount, paymentId, email, nome])
