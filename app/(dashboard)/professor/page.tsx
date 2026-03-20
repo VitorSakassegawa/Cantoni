@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { formatCurrency, formatDateTime, formatDateOnly } from '@/lib/utils'
-import { Users, BookOpen, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react'
+import { Users, BookOpen, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, DollarSign } from 'lucide-react'
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, parseISO, isSameDay, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { RotateCcw } from 'lucide-react'
@@ -79,11 +79,17 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .from('pagamentos')
     .select('*, contratos(profiles(full_name, email))')
     .in('status', ['pago', 'pendente', 'atrasado'])
-    .order('data_vencimento')
+    .order('data_vencimento', { ascending: false })
 
   const pagamentosPagos = allPayments?.filter((p: any) => p.status === 'pago') || []
   const pagamentosPendentes = allPayments?.filter((p: any) => p.status === 'pendente') || []
   const pagamentosAtrasados = allPayments?.filter((p: any) => p.status === 'atrasado') || []
+
+  // Calculate monthly total (collected)
+  const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
+  const totalArrecadadoMes = pagamentosPagos
+    .filter((p: any) => p.data_pagamento && p.data_pagamento >= startOfMonth)
+    .reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0)
 
   const { count: totalAlunos } = await supabase
     .from('contratos')
@@ -193,6 +199,84 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           </div>
           <div className="mt-4 h-1 w-12 bg-red-500 rounded-full" />
         </Link>
+      </div>
+
+      {/* Financial Pulse Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 glass-card p-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-1">
+              <h3 className="text-sm font-black text-blue-900 uppercase tracking-widest">Fluxo Recente</h3>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">Últimas transações e atualizações</p>
+            </div>
+            <div className="text-right">
+              <p className="text-[10px] font-black text-emerald-500 uppercase tracking-widest">Arrecadado este mês</p>
+              <p className="text-2xl font-black text-slate-900 tracking-tighter">{formatCurrency(totalArrecadadoMes)}</p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {allPayments?.slice(0, 5).map((p: any) => (
+              <div key={p.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50/50 border border-slate-100/50 hover:bg-white transition-all">
+                <div className="flex items-center gap-4">
+                  <div className={`p-2.5 rounded-xl ${
+                    p.status === 'pago' ? 'bg-emerald-50 text-emerald-600' : 
+                    p.status === 'atrasado' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
+                  }`}>
+                    <DollarSign className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight">
+                      {(p.contratos as any)?.profiles?.full_name}
+                    </p>
+                    <p className="text-[9px] font-bold text-slate-400">
+                      {p.status === 'pago' ? `Pago em ${formatDateOnly(p.data_pagamento)}` : `Vence em ${formatDateOnly(p.data_vencimento)}`}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-black text-slate-900">{formatCurrency(p.valor)}</p>
+                  <Badge variant={p.status === 'pago' ? 'success' : p.status === 'atrasado' ? 'destructive' : 'warning'} className="text-[7px] px-1.5 py-0">
+                    {p.status.toUpperCase()}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+            {(!allPayments || allPayments.length === 0) && (
+              <div className="text-center py-10 text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">
+                Nenhuma transação registrada
+              </div>
+            )}
+          </div>
+          
+          <Link href="/professor/pagamentos" className="block text-center py-3 rounded-xl border border-dashed border-slate-200 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-blue-600 hover:border-blue-200 transition-all">
+            Ver Relatório Financeiro Completo
+          </Link>
+        </div>
+
+        <div className="glass-card p-8 bg-gradient-to-br from-blue-600 to-blue-800 text-white flex flex-col justify-between relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <CheckCircle2 className="w-32 h-32" />
+          </div>
+          <div className="space-y-6 relative z-10">
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-60">Status de Recebíveis</h3>
+            <div className="space-y-4">
+              <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                <span className="text-[10px] font-bold uppercase opacity-70 tracking-widest">Pendentes</span>
+                <span className="text-xl font-black">{formatCurrency(pagamentosPendentes.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
+              </div>
+              <div className="flex justify-between items-end border-b border-white/10 pb-4">
+                <span className="text-[10px] font-bold uppercase opacity-70 tracking-widest text-rose-200">Em Atraso</span>
+                <span className="text-xl font-black text-rose-100">{formatCurrency(pagamentosAtrasados.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
+              </div>
+              <div className="flex justify-between items-end pt-2">
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Total Pago</span>
+                <span className="text-2xl font-black text-emerald-50">{formatCurrency(pagamentosPagos.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
+              </div>
+            </div>
+          </div>
+          <p className="text-[8px] font-bold opacity-40 uppercase tracking-widest mt-8 pointer-events-none">Atualizado via Mercado Pago Real-time</p>
+        </div>
       </div>
 
 

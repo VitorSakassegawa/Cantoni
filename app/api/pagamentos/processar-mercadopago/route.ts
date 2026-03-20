@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
     const body = {
       ...formData,
       external_reference: paymentId.toString(),
-      notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
+      notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago?source_news=webhooks`,
     }
 
     // 3. Create payment in MP
