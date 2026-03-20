@@ -19,94 +19,123 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const basePath = isProfessor ? '/professor' : '/aluno'
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
+    <div className="min-h-screen flex bg-slate-50 relative overflow-hidden">
+      {/* Background blobs for glassmorphism effect */}
+      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+
       {/* Sidebar */}
-      <aside className="w-64 bg-blue-900 text-white flex flex-col">
-        <div className="p-6 border-b border-blue-800">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-white text-blue-900 font-bold flex items-center justify-center">
-              G
-            </div>
-            <div>
-              <p className="font-semibold text-sm">Teacher Gabriel</p>
-              <p className="text-blue-300 text-xs">{isProfessor ? 'Professor' : 'Aluno'}</p>
+      <aside className="w-72 flex flex-col m-4 mr-0 z-10">
+        <div className="flex-1 glass-panel rounded-[2rem] border-white/20 flex flex-col overflow-hidden shadow-2xl shadow-blue-900/5">
+          <div className="p-8 pb-6">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl lms-gradient text-white font-black flex items-center justify-center shadow-lg shadow-blue-500/20 text-xl">
+                C
+              </div>
+              <div className="space-y-0.5">
+                <p className="font-black text-blue-900 leading-none tracking-tight">CANTONI</p>
+                <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Learning LMS</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          <Link
-            href={basePath}
-            className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            Dashboard
-          </Link>
-
-          {isProfessor && (
-            <>
-              <Link
-                href="/professor/alunos"
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
-              >
-                <Users className="w-4 h-4" />
-                Alunos
-              </Link>
-              <Link
-                href="/professor/pagamentos"
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
-              >
-                <CreditCard className="w-4 h-4" />
-                Pagamentos
-              </Link>
-              <Link
-                href="/professor/perfil"
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
-              >
-                <User className="w-4 h-4" />
-                Meu Perfil
-              </Link>
-            </>
-          )}
-
-          {!isProfessor && (
-            <>
-              <Link
-                href="/aluno/aulas"
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
-              >
-                <BookOpen className="w-4 h-4" />
-                Minhas Aulas
-              </Link>
-              <Link
-                href="/aluno/pagamentos"
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
-              >
-                <CreditCard className="w-4 h-4" />
-                Pagamentos
-              </Link>
-              <Link
-                href="/aluno/perfil"
-                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
-              >
-                <User className="w-4 h-4" />
-                Meu Perfil
-              </Link>
-            </>
-          )}
-        </nav>
-
-        <div className="p-4 border-t border-blue-800">
-          <p className="text-xs text-blue-300 mb-2 px-3">{profile?.full_name}</p>
-          <form action="/api/auth/signout" method="POST">
-            <button
-              type="submit"
-              className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors w-full text-left"
+          <nav className="flex-1 px-4 space-y-2 py-4">
+            <Link
+              href={basePath}
+              className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
             >
-              <LogOut className="w-4 h-4" />
-              Sair
-            </button>
-          </form>
+              <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <LayoutDashboard className="w-4 h-4" />
+              </div>
+              Dashboard
+            </Link>
+
+            {isProfessor && (
+              <>
+                <Link
+                  href="/professor/alunos"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <Users className="w-4 h-4" />
+                  </div>
+                  Alunos
+                </Link>
+                <Link
+                  href="/professor/pagamentos"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  Pagamentos
+                </Link>
+                <Link
+                  href="/professor/perfil"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <User className="w-4 h-4" />
+                  </div>
+                  Meu Perfil
+                </Link>
+              </>
+            )}
+
+            {!isProfessor && (
+              <>
+                <Link
+                  href="/aluno/aulas"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  Minhas Aulas
+                </Link>
+                <Link
+                  href="/aluno/pagamentos"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  Pagamentos
+                </Link>
+                <Link
+                  href="/aluno/perfil"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <User className="w-4 h-4" />
+                  </div>
+                  Meu Perfil
+                </Link>
+              </>
+            )}
+          </nav>
+
+          <div className="p-6 mt-auto border-t border-white/20 bg-white/10">
+            <div className="flex items-center gap-3 mb-6 p-2 rounded-2xl bg-white/30 border border-white/40">
+              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-lg">
+                {profile?.full_name?.charAt(0)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-black text-blue-900 truncate tracking-tight">{profile?.full_name}</p>
+                <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{isProfessor ? 'Professor' : 'Aluno'}</p>
+              </div>
+            </div>
+            
+            <form action="/api/auth/signout" method="POST">
+              <button
+                type="submit"
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 text-red-500 hover:text-red-600 font-bold text-xs transition-colors w-full tracking-widest uppercase"
+              >
+                <LogOut className="w-4 h-4" />
+                Desconectar
+              </button>
+            </form>
+          </div>
         </div>
       </aside>
 

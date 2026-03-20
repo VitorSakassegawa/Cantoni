@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDateTime, formatDate } from '@/lib/utils'
 import AulaRow from '@/components/dashboard/AulaRow'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
-import { Video, BookOpen } from 'lucide-react'
+import { Video, BookOpen, Calendar, User, CreditCard } from 'lucide-react'
+import Link from 'next/link'
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
@@ -67,97 +68,140 @@ export default async function AlunoDashboard() {
     : 0
 
   return (
-    <div className="space-y-8 pb-10">
-      <div className="animate-fade-in">
-        <h1 className="text-3xl font-extrabold text-[#1e3a5f] tracking-tight">
-          Olá, {profile?.full_name?.split(' ')[0]}! 👋
-        </h1>
-        <p className="text-gray-500 text-sm mt-1 font-medium italic">Bem-vindo ao seu portal de estudos exclusivo</p>
+    <div className="space-y-10 pb-16 animate-fade-in">
+      {/* Hero Section */}
+      <div className="relative overflow-hidden rounded-[2.5rem] p-10 bg-[#1e3a8a] text-white shadow-2xl shadow-blue-900/20">
+        <div className="absolute top-0 right-0 w-[50%] h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
+        <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl" />
+        
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+          <div className="space-y-4">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-blue-100">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+              Portal do Aluno
+            </div>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
+              Olá, {profile?.full_name?.split(' ')[0]}! ✨
+            </h1>
+            <div className="flex flex-wrap gap-4 items-center text-blue-100/80 font-medium">
+              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
+                <Badge className="bg-blue-500 text-white border-none text-[10px] uppercase font-black">{profile?.nivel || 'Nível não definido'}</Badge>
+              </div>
+              {profile?.birth_date && (
+                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
+                  <Calendar className="w-3.5 h-3.5" />
+                  Nasc: <span className="font-bold text-white">{formatDate(profile.birth_date)}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
+                <BookOpen className="w-3.5 h-3.5" />
+                {contrato?.planos?.descricao || 'Plano Regular'}
+              </div>
+            </div>
+          </div>
+          
+          <div className="flex gap-4">
+            <Link 
+              href="/aluno/perfil"
+              className="px-6 py-3 rounded-2xl bg-white text-blue-900 font-bold text-sm hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
+            >
+              <User className="w-4 h-4" />
+              Ver Perfil
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 animate-fade-in [animation-delay:200ms]">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Próxima aula */}
-        <Card className="glass-card border-none overflow-hidden relative group">
-          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
-            <BookOpen className="w-16 h-16 text-blue-900" />
+        <Card className="glass-card border-none group relative overflow-hidden">
+          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Video className="w-24 h-24 text-blue-900" />
           </div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-blue-900 flex items-center gap-2 uppercase tracking-widest">
-              <div className="w-1 h-4 bg-blue-900 rounded-full" />
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
               Próxima Aula
             </CardTitle>
           </CardHeader>
           <CardContent>
             {proximaAula ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <p className="text-2xl font-black text-blue-900 tracking-tight">{formatDateTime(proximaAula.data_hora)}</p>
-                  <p className="text-[10px] text-gray-500 font-bold uppercase mt-1">Duração: 45 minutos</p>
+                  <p className="text-3xl font-black text-blue-900 tracking-tighter leading-tight">
+                    {formatDateTime(proximaAula.data_hora)}
+                  </p>
+                  <p className="text-[11px] text-gray-400 font-bold uppercase mt-2 tracking-widest flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                    Duração: 45 minutos
+                  </p>
                 </div>
                 
-                {proximaAula.meet_link && (
-                  <a
-                    href={proximaAula.meet_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 bg-blue-900 text-white px-6 py-2.5 rounded-xl text-sm font-bold hover:bg-blue-800 transition-all hover:shadow-lg hover:translate-y-[-1px] active:translate-y-[0px]"
-                  >
-                    <Video className="w-4 h-4" />
-                    Entrar no Google Meet
-                  </a>
-                )}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  {proximaAula.meet_link && (
+                    <a
+                      href={proximaAula.meet_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 lms-gradient text-white px-8 py-3.5 rounded-2xl text-sm font-black hover:shadow-xl hover:shadow-blue-500/20 hover:translate-y-[-2px] active:translate-y-[0px] transition-all"
+                    >
+                      <Video className="w-4 h-4" />
+                      ENTRAR NO MEET
+                    </a>
+                  )}
+                </div>
                 
                 {proximaAula.homework && !proximaAula.homework_completed && (
-                  <div className="bg-yellow-50/50 border border-yellow-100 rounded-xl p-4">
-                    <span className="text-[10px] font-black text-yellow-800 uppercase tracking-tighter">Lição de casa disponível</span>
-                    <p className="text-sm text-yellow-700 mt-1 font-medium leading-relaxed">{proximaAula.homework}</p>
+                  <div className="bg-blue-50/50 border border-blue-100/50 rounded-2xl p-5 relative overflow-hidden group/hw">
+                    <div className="absolute top-0 right-0 w-1 h-full bg-blue-500" />
+                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Tarefa Pendente</span>
+                    <p className="text-sm text-blue-900/80 mt-2 font-semibold leading-relaxed">{proximaAula.homework}</p>
                   </div>
                 )}
-                <div className="pt-2 flex items-center gap-2 text-[10px] text-red-500 font-bold uppercase">
-                  <span>⚠️</span>
-                  <span>Cancelamentos: mínimo 2h de antecedência</span>
-                </div>
               </div>
             ) : (
-              <div className="py-8 text-center bg-gray-50/30 rounded-xl border border-dashed border-gray-200">
-                <p className="text-sm font-medium text-gray-400">Nenhuma aula agendada no momento.</p>
+              <div className="py-12 text-center lms-gradient-soft rounded-3xl border border-dashed border-blue-200">
+                <p className="text-sm font-bold text-blue-400/60 uppercase tracking-widest">Sem aulas agendadas</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         {/* Pagamento atual */}
-        <Card className={`glass-card border-none overflow-hidden relative group ${pagamentoPendente?.status === 'atrasado' ? 'bg-red-50/30' : ''}`}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-blue-900 flex items-center gap-2 uppercase tracking-widest">
-              <div className="w-1 h-4 bg-blue-900 rounded-full" />
+        <Card className={`glass-card border-none group transition-all duration-500 ${pagamentoPendente?.status === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
               Financeiro
             </CardTitle>
           </CardHeader>
           <CardContent>
             {pagamentoPendente ? (
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div className="flex justify-between items-start">
                   <div>
-                    <p className="text-3xl font-black text-gray-900 tracking-tighter">{formatCurrency(pagamentoPendente.valor)}</p>
-                    <p className="text-[10px] font-bold text-gray-500 uppercase mt-1">
-                      Parcela {pagamentoPendente.parcela_num} de 6 • Vencimento: {formatDate(pagamentoPendente.data_vencimento)}
+                    <p className="text-4xl font-black text-slate-900 tracking-tighter">
+                      {formatCurrency(pagamentoPendente.valor)}
+                    </p>
+                    <p className="text-[11px] font-bold text-gray-400 uppercase mt-2 tracking-widest">
+                      Parcela {pagamentoPendente.parcela_num}/6 • Vence em {formatDate(pagamentoPendente.data_vencimento)}
                     </p>
                   </div>
-                  <Badge variant={pagamentoPendente.status === 'atrasado' ? 'destructive' : 'warning'} className="text-[10px] font-black uppercase px-2 py-0.5">
-                    {pagamentoPendente.status === 'atrasado' ? 'Atrasado' : 'Pendente'}
+                  <Badge variant={pagamentoPendente.status === 'atrasado' ? 'destructive' : 'warning'} className="text-[10px] font-black uppercase px-3 py-1 rounded-lg">
+                    {pagamentoPendente.status === 'atrasado' ? 'Em Atraso' : 'Pendente'}
                   </Badge>
                 </div>
 
                 {pagamentoPendente.pix_qrcode_base64 && (
-                  <div className="flex flex-col sm:flex-row items-center gap-6 bg-white/50 p-4 rounded-2xl border border-white/50 shadow-sm">
-                    <img
-                      src={pagamentoPendente.pix_qrcode_base64}
-                      alt="QR Code PIX"
-                      className="w-32 h-32 border-2 border-white rounded-xl shadow-sm bg-white"
-                    />
-                    <div className="flex-1 space-y-3 w-full">
-                      <p className="text-[10px] font-black text-gray-400 uppercase text-center sm:text-left">Pagamento via PIX</p>
+                  <div className="flex flex-col sm:flex-row items-center gap-8 bg-slate-50/50 p-6 rounded-3xl border border-slate-100 shadow-inner">
+                    <div className="relative group/qr">
+                      <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover/qr:opacity-40 transition" />
+                      <img
+                        src={pagamentoPendente.pix_qrcode_base64}
+                        alt="QR Code PIX"
+                        className="relative w-36 h-36 border-4 border-white rounded-2xl bg-white shadow-xl"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-4 w-full">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center sm:text-left">Scan para pagar PIX</p>
                       {pagamentoPendente.pix_copia_cola && (
                         <CopiarPixBtn codigo={pagamentoPendente.pix_copia_cola} />
                       )}
@@ -166,16 +210,20 @@ export default async function AlunoDashboard() {
                 )}
 
                 {!pagamentoPendente.pix_qrcode_base64 && (
-                  <div className="p-4 bg-blue-50/30 rounded-xl border border-blue-100 flex items-center gap-3">
-                    <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
-                    <p className="text-xs font-medium text-blue-700">O código PIX será enviado para seu e-mail em breve.</p>
+                  <div className="p-5 bg-amber-50/50 rounded-2xl border border-amber-100 flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shadow-sm">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                    <p className="text-xs font-bold text-amber-700 leading-tight uppercase tracking-tight">O código PIX será enviado para seu e-mail em breve.</p>
                   </div>
                 )}
               </div>
             ) : (
-              <div className="py-8 flex flex-col items-center justify-center bg-green-50/30 rounded-xl border border-dashed border-green-200">
-                <Badge variant="success" className="mb-2 text-[10px] font-black px-3">Tudo em dia!</Badge>
-                <p className="text-sm font-medium text-green-700">Nenhuma pendência financeira.</p>
+              <div className="py-12 flex flex-col items-center justify-center bg-emerald-50/30 rounded-3xl border border-dashed border-emerald-200">
+                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-sm">
+                  <Badge variant="success" className="p-0 border-none">✅</Badge>
+                </div>
+                <p className="text-sm font-black text-emerald-700 uppercase tracking-widest">Tudo em dia!</p>
               </div>
             )}
           </CardContent>
@@ -184,105 +232,123 @@ export default async function AlunoDashboard() {
 
       {/* Progresso do semestre */}
       {contrato && (
-        <Card className="glass-card border-none animate-fade-in [animation-delay:400ms]">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-blue-900 flex items-center gap-2 uppercase tracking-widest">
-              <div className="w-1 h-4 bg-blue-900 rounded-full" />
-              Progresso do Semestre
+        <Card className="glass-card border-none overflow-hidden relative">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
+          <CardHeader className="pb-4">
+            <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+              Jornada de Aprendizado
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="space-y-6">
             <div className="flex justify-between items-end">
-              <div>
-                <span className="text-2xl font-black text-blue-900">{contrato.aulas_dadas}</span>
-                <span className="text-xs font-bold text-gray-500 ml-1.5 uppercase tracking-tighter">aulas realizadas</span>
+              <div className="space-y-1">
+                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Concluído</p>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-4xl font-black text-blue-900 tracking-tighter">{contrato.aulas_dadas}</span>
+                  <span className="text-sm font-bold text-slate-400 uppercase tracking-tighter">/ {contrato.aulas_totais} aulas</span>
+                </div>
               </div>
               <div className="text-right">
-                <span className="text-xs font-bold text-gray-400 uppercase tracking-tighter">Meta: {contrato.aulas_totais} aulas</span>
+                <Badge className="bg-blue-900 text-white border-none font-black text-[10px] uppercase px-3 py-1 rounded-lg shadow-lg shadow-blue-900/10">
+                  {progressPct}% COMPLETO
+                </Badge>
               </div>
             </div>
             
-            <div className="relative h-4 bg-gray-100/50 rounded-full overflow-hidden border border-gray-100">
+            <div className="relative h-5 bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-1 shadow-inner">
               <div
-                className="h-full bg-gradient-to-r from-blue-800 to-blue-600 rounded-full transition-all duration-1000 ease-out"
+                className="h-full bg-gradient-to-r from-blue-900 via-blue-700 to-blue-500 rounded-full transition-all duration-1000 ease-out shadow-lg shadow-blue-500/30"
                 style={{ width: `${progressPct}%` }}
-              />
+              >
+                <div className="w-full h-full bg-gradient-to-t from-black/10 to-transparent" />
+              </div>
             </div>
             
-            <div className="flex justify-between text-[10px] font-black text-gray-400 uppercase tracking-widest">
-              <span>Início: {formatDate(contrato.data_inicio)}</span>
-              <span className="text-blue-900 bg-blue-50 px-2 py-0.5 rounded-md">{progressPct}% completado</span>
-              <span>Término: {formatDate(contrato.data_fim)}</span>
+            <div className="flex justify-between items-center text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">
+              <div className="flex items-center gap-2">
+                <Calendar className="w-3 h-3" />
+                Início: {formatDate(contrato.data_inicio)}
+              </div>
+              <div className="flex items-center gap-2">
+                Fim: {formatDate(contrato.data_fim)}
+                <Calendar className="w-3 h-3" />
+              </div>
             </div>
           </CardContent>
         </Card>
       )}
 
-      <div className="grid grid-cols-1 gap-8 animate-fade-in [animation-delay:600ms]">
-        {/* Histórico de aulas recentes */}
-        <Card className="glass-card border-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-blue-900 flex items-center gap-2 uppercase tracking-widest">
-              <div className="w-1 h-4 bg-blue-900 rounded-full" />
-              Cronograma de Aulas
+      {/* Tabs / Bottom Sections */}
+      <div className="grid grid-cols-1 gap-10">
+        <Card className="glass-card border-none overflow-hidden">
+          <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
+            <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+              Histórico de Aulas
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100/50 text-gray-400">
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider pl-2">#</th>
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider">Data e Hora</th>
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider">Status</th>
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider">Meet</th>
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider">Lição</th>
-                    <th></th>
+                  <tr className="border-b border-slate-100 text-slate-400">
+                    <th className="text-left py-6 px-8 font-black text-[10px] uppercase tracking-widest">Aula #</th>
+                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Data e Horário</th>
+                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Status</th>
+                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Google Meet</th>
+                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Conteúdo</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100/50">
+                <tbody className="divide-y divide-slate-100">
                   {ultimasAulas?.map((aula: any, i: number) => (
                     <AulaRow key={aula.id} aula={aula} index={ultimasAulas.length - i} />
                   ))}
                 </tbody>
               </table>
+              {(!ultimasAulas || ultimasAulas.length === 0) && (
+                <div className="py-20 text-center">
+                  <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">Nenhuma aula registrada</p>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Histórico de pagamentos */}
-        <Card className="glass-card border-none">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-bold text-blue-900 flex items-center gap-2 uppercase tracking-widest">
-              <div className="w-1 h-4 bg-blue-900 rounded-full" />
-              Histórico Financeiro
+        <Card className="glass-card border-none overflow-hidden">
+          <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
+            <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+              Extrato Financeiro
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-0">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-100/50 text-gray-400">
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider pl-2">Parcela</th>
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider">Valor</th>
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider">Vencimento</th>
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider">Data Pagto</th>
-                    <th className="text-left py-4 font-bold text-[10px] uppercase tracking-wider">Status</th>
+                  <tr className="border-b border-slate-100 text-slate-400">
+                    <th className="text-left py-6 px-8 font-black text-[10px] uppercase tracking-widest">Parcela</th>
+                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Valor</th>
+                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Vencimento</th>
+                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Data de Pago</th>
+                    <th className="text-left py-6 px-8 font-black text-[10px] uppercase tracking-widest text-right">Status</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-100/50">
+                <tbody className="divide-y divide-slate-100">
                   {pagamentos?.map((p: any) => (
-                    <tr key={p.id} className="group hover:bg-gray-50/50 transition-colors">
-                      <td className="py-4 font-bold text-gray-700 pl-2">{p.parcela_num}/6</td>
-                      <td className="py-4 font-black text-gray-900 tracking-tighter">{formatCurrency(p.valor)}</td>
-                      <td className="py-4 font-medium text-gray-500">{formatDate(p.data_vencimento)}</td>
-                      <td className="py-4 font-medium text-gray-500">{p.data_pagamento ? formatDate(p.data_pagamento) : <span className="text-gray-200">Em aberto</span>}</td>
-                      <td className="py-4">
+                    <tr key={p.id} className="group hover:bg-slate-50/50 transition-all duration-300">
+                      <td className="py-6 px-8">
+                        <span className="font-black text-slate-900 tracking-tighter">{p.parcela_num}</span>
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter"> / 06</span>
+                      </td>
+                      <td className="py-6 px-4 font-black text-slate-900 tracking-tighter">{formatCurrency(p.valor)}</td>
+                      <td className="py-6 px-4 font-bold text-slate-500">{formatDate(p.data_vencimento)}</td>
+                      <td className="py-6 px-4 font-bold text-slate-500">
+                        {p.data_pagamento ? formatDate(p.data_pagamento) : <span className="text-slate-200">Aguardando</span>}
+                      </td>
+                      <td className="py-6 px-8 text-right">
                         <Badge variant={
                           p.status === 'pago' ? 'success' :
                           p.status === 'atrasado' ? 'destructive' :
                           'warning'
-                        } className="text-[10px] font-black uppercase tracking-tight">
+                        } className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg">
                           {p.status}
                         </Badge>
                       </td>
