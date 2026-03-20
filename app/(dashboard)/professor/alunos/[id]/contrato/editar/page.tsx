@@ -51,9 +51,14 @@ export default function ProfessorEditContratoPage({ params }: { params: Promise<
         .single()
       
       if (data) {
-        // Formatar valor para o estado (maskCurrency espera centavos se viermos de número direto, mas aqui vamos lidar como string formatada)
+        // Formatar valor para o estado
         const valorFormatado = maskCurrency((data.valor * 100).toString())
-        setContrato({ ...data, valor: valorFormatado })
+        setContrato({ 
+          ...data, 
+          valor: valorFormatado,
+          dia_vencimento: data.dia_vencimento || 5,
+          forma_pagamento: data.forma_pagamento || 'pix'
+        })
         
         // Verificar se o livro está na lista do Evolve
         const isEvolve = EVOLVE_LEVELS.some(l => l.label === data.livro_atual)
@@ -167,6 +172,42 @@ export default function ProfessorEditContratoPage({ params }: { params: Promise<
                     value={contrato.valor || ''}
                     onChange={e => setContrato({ ...contrato, valor: maskCurrency(e.target.value) })}
                   />
+                </div>
+              </div>
+
+              {/* Vencimento e Forma de Pagamento */}
+              <div className="space-y-2.5">
+                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Dia de Vencimento</Label>
+                <div className="relative group/input">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
+                  <Input
+                    type="number"
+                    min="1"
+                    max="31"
+                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 transition-all font-bold text-slate-900"
+                    value={contrato.dia_vencimento || ''}
+                    onChange={e => setContrato({ ...contrato, dia_vencimento: parseInt(e.target.value) })}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Forma de Pagamento</Label>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setContrato({ ...contrato, forma_pagamento: 'pix' })}
+                    className={`flex-1 h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${contrato.forma_pagamento === 'pix' ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200'}`}
+                  >
+                    PIX
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setContrato({ ...contrato, forma_pagamento: 'cartao' })}
+                    className={`flex-1 h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${contrato.forma_pagamento === 'cartao' ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200'}`}
+                  >
+                    Cartão
+                  </button>
                 </div>
               </div>
 

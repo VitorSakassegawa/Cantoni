@@ -73,6 +73,8 @@ export async function POST(request: NextRequest) {
       nivel_atual: nivelAtual,
       horario: horario,
       valor: valor,
+      dia_vencimento: diaVencimento,
+      forma_pagamento: formaPagamento,
     })
     .select()
     .single()
