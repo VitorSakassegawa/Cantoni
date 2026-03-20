@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { criarEventoMeet } from '@/lib/google-calendar'
 import { enviarEmailBoasVindas } from '@/lib/resend'
 import { gerarGradeAulas, formatDateTime } from '@/lib/utils'
+import { fromZonedTime } from 'date-fns-tz'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -78,7 +79,6 @@ export async function POST(request: NextRequest) {
   }
 
   // Generate lesson schedule
-  const [hh, mm] = horario.split(':').map(Number)
   const inicio = new Date(dataInicio)
   const fim = new Date(dataFim)
 
@@ -88,8 +88,9 @@ export async function POST(request: NextRequest) {
   const aulasParaInserir: any[] = []
   const primeirasCinco: { data: string; link: string }[] = []
 
-  for (const data of datasAulas) {
-    data.setHours(hh, mm, 0, 0)
+  for (const dateOnly of datasAulas) {
+    const dateStr = dateOnly.toISOString().split('T')[0]
+    const data = fromZonedTime(`${dateStr} ${horario}`, 'America/Sao_Paulo')
     let eventId = ''
     let meetLink = ''
 
