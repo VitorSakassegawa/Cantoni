@@ -156,6 +156,9 @@ export async function POST(request: NextRequest) {
   const { data: linkData } = await serviceSupabase.auth.admin.generateLink({
     type: 'recovery',
     email: aluno.email,
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
+    }
   })
 
   // Welcome email

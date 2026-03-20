@@ -68,8 +68,9 @@ export default function LoginPage() {
     setSuccessMessage('')
 
     try {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/redefinir-senha`,
+        redirectTo: `${baseUrl}/redefinir-senha`,
       })
       if (error) throw error
       setSuccessMessage('E-mail de recuperação enviado! Verifique sua caixa de entrada.')
