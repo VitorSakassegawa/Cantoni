@@ -76,20 +76,31 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
 
   // Auto-calculation logic
   useEffect(() => {
-    if (dataInicio && diasSelecionados.length > 0 && tipoContrato === 'semestral') {
+    if (dataInicio && diasSelecionados.length > 0) {
       try {
-        const start = new Date(dataInicio + 'T12:00:00') // avoid timezone issues
+        const start = new Date(dataInicio + 'T12:00:00')
         const specs = calculateContractSpecs(start, parseInt(planoId), diasSelecionados)
         
+        // If semestral, auto-fill end date. If ad-hoc, let user choose? 
+        // For now, always suggest semester end, but ad-hoc could be shorter
         setDataFim(specs.endDate.toISOString().split('T')[0])
         setAulasTotais(specs.totalLessons.toString())
         setBonusAulas(specs.bonusLessons)
-        setValor(maskCurrency((specs.totalValue * 100).toString()))
+
+        // Apply discounts to the auto-calculated total
+        const dValor = parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100
+        const dPerc = parseFloat(descontoPercentual || '0')
+        
+        let finalValue = specs.totalValue
+        if (dPerc > 0) finalValue = finalValue * (1 - dPerc / 100)
+        if (dValor > 0) finalValue = finalValue - dValor
+
+        setValor(maskCurrency((finalValue * 100).toString()))
       } catch (e) {
         console.error('Calculation error:', e)
       }
     }
-  }, [dataInicio, planoId, diasSelecionados, tipoContrato])
+  }, [dataInicio, planoId, diasSelecionados, tipoContrato, descontoValor, descontoPercentual])
 
   function toggleDia(dia: number) {
     setDiasSelecionados(prev =>
