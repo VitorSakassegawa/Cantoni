@@ -29,7 +29,6 @@ export async function POST(request: NextRequest) {
     forma_pagamento,
     status
   } = await request.json()
-
   if (!id) return NextResponse.json({ error: 'ID do contrato é obrigatório' }, { status: 400 })
 
   const { error: updateError } = await supabase

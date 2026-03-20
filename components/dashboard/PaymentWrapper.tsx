@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
@@ -39,9 +40,9 @@ export default function PaymentWrapper({ paymentId, amount, email, nome }: Payme
               <DialogTitle className="text-2xl font-black text-slate-900 tracking-tighter text-center">
                 Finalizar Pagamento
               </DialogTitle>
-              <p className="text-center text-slate-500 font-medium text-sm">
+              <DialogDescription className="text-center text-slate-500 font-medium text-sm">
                 Escolha a melhor forma de pagamento para sua mensalidade.
-              </p>
+              </DialogDescription>
             </DialogHeader>
 
             <PaymentBrick 

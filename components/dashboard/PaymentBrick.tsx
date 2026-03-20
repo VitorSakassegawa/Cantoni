@@ -26,7 +26,16 @@ export default function PaymentBrick({ amount, paymentId, email, nome, onSuccess
 
   useEffect(() => {
     if (sdkLoaded && containerRef.current && !window.hasOwnProperty('paymentBrickController')) {
-      const mp = new window.MercadoPago(process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY)
+      const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY
+      
+      if (!publicKey) {
+        console.error('Mercado Pago Public Key is missing!')
+        toast.error('Configuração do Mercado Pago (Public Key) não encontrada no ambiente.')
+        setLoading(false)
+        return
+      }
+
+      const mp = new window.MercadoPago(publicKey)
       const bricksBuilder = mp.bricks()
 
       const renderPaymentBrick = async (bricksBuilder: any) => {
