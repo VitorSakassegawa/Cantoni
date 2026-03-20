@@ -121,10 +121,21 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
 
   try {
     const { eventId, meetLink } = await criarEventoMeet({
-      titulo: `Aula de Inglês — ${aluno.full_name}`,
+      titulo: `🇬🇧 Aula de Inglês — ${aluno.full_name} (REMARCADA)`,
       dataHora: new Date(novaDataHora),
       emailAluno: aluno.email,
       emailProfessor: process.env.RESEND_FROM_EMAIL!,
+      descricao: `
+📌 DETALHES DA AULA (REMARCADA)
+👤 Aluno: ${aluno.full_name}
+📚 Nível: ${aluno.nivel || 'N/A'}
+
+🔗 [Ver no Sistema](${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${contrato.aluno_id})
+
+---
+Instruções:
+- Clique no link do Google Meet abaixo para entrar na aula.
+      `.trim()
     })
     novoEventId = eventId
     novoMeetLink = meetLink

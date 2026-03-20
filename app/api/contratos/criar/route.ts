@@ -101,10 +101,23 @@ export async function POST(request: NextRequest) {
 
     try {
       const result = await criarEventoMeet({
-        titulo: `Aula de Inglês — ${aluno.full_name}`,
+        titulo: `🇬🇧 Aula de Inglês — ${aluno.full_name}`,
         dataHora: data,
         emailAluno: aluno.email,
         emailProfessor: process.env.RESEND_FROM_EMAIL!,
+        descricao: `
+📌 DETALHES DA AULA
+👤 Aluno: ${aluno.full_name}
+📚 Nível: ${nivelAtual || 'N/A'}
+📖 Livro: ${livroAtual || 'N/A'}
+
+🔗 [Ver no Sistema](${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${alunoId})
+
+---
+Instruções:
+- Clique no link do Google Meet abaixo para entrar na aula.
+- Caso precise remarcar, utilize o sistema com pelo menos 2h de antecedência.
+        `.trim()
       })
       eventId = result.eventId
       meetLink = result.meetLink

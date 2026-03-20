@@ -43,6 +43,7 @@ export async function criarEventoMeet({
     requestBody: {
       summary: titulo,
       description: descricao,
+      location: 'Google Meet',
       start: { dateTime: dataHora.toISOString(), timeZone: 'America/Sao_Paulo' },
       end: { dateTime: dataFim.toISOString(), timeZone: 'America/Sao_Paulo' },
       attendees: [{ email: emailAluno }, { email: emailProfessor }],
@@ -54,7 +55,10 @@ export async function criarEventoMeet({
       },
       reminders: {
         useDefault: false,
-        overrides: [{ method: 'email', minutes: 60 * 24 }],
+        overrides: [
+          { method: 'popup', minutes: 10 },
+          { method: 'popup', minutes: 60 },
+        ],
       },
     },
   })
