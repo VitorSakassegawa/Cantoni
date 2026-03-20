@@ -30,7 +30,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="flex-1 glass-panel rounded-[2rem] border-white/20 flex flex-col overflow-hidden shadow-2xl shadow-blue-900/5">
           <div className="p-8 pb-4">
             <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-48 h-24 overflow-hidden flex items-center justify-center">
+              <div className="w-full px-4 flex items-center justify-center">
                 <Logo src="/logo-cantoni.svg" fallbackAvatar="C" />
               </div>
               <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] leading-tight max-w-[140px]">
