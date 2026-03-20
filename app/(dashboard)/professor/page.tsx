@@ -52,7 +52,7 @@ export default async function ProfessorDashboard() {
   // Lista de alunos com contratos ativos
   const { data: alunosAtivos } = await supabase
     .from('contratos')
-    .select('*, profiles(full_name, email), planos(freq_semana, remarca_max_mes), pagamentos(status, parcela_num, valor, data_vencimento)')
+    .select('*, profiles(full_name, email, birth_date, nivel), planos(freq_semana, remarca_max_mes), pagamentos(status, parcela_num, valor, data_vencimento)')
     .eq('status', 'ativo')
     .order('created_at', { ascending: false })
 
@@ -224,9 +224,14 @@ export default async function ProfessorDashboard() {
                           <p className="font-black text-slate-900 tracking-tight leading-none group-hover:text-blue-900">
                             {contrato.profiles?.full_name}
                           </p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest italic">
-                            {formatDateOnly(contrato.profiles?.birth_date)}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-2 mt-1">
+                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">
+                              {formatDateOnly(contrato.profiles?.birth_date)}
+                            </p>
+                            <Badge className="bg-blue-50 text-blue-600 border-none text-[8px] font-black uppercase px-1.5 py-0">
+                              {contrato.profiles?.nivel || 'N/D'}
+                            </Badge>
+                          </div>
                         </td>
                         <td className="py-6 px-4 text-center">
                           <div className="inline-flex flex-col items-center bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100">

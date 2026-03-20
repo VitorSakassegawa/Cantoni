@@ -78,7 +78,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="outline" className="h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50">Editar Perfil</Button>
+            <Link href={`/professor/alunos/${id}/perfil`}>
+              <Button variant="outline" className="h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50">Editar Perfil</Button>
+            </Link>
             <Button className="h-12 px-6 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Novo Contrato</Button>
           </div>
         </div>
@@ -170,12 +172,17 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                 <div className="flex flex-col md:flex-row justify-between gap-10">
                   <div className="space-y-8 flex-1">
                     <div className="flex flex-wrap gap-10">
-                      <div>
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Semestre Ativo</p>
-                        <h4 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
-                          {contrato.semestre} {contrato.ano}
-                          <Badge className="bg-emerald-500/10 text-emerald-600 border-none text-[8px] tracking-widest h-5">ATIVO</Badge>
-                        </h4>
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Semestre Ativo</p>
+                          <h4 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
+                            {contrato.semestre} {contrato.ano}
+                            <Badge className="bg-emerald-500/10 text-emerald-600 border-none text-[8px] tracking-widest h-5">ATIVO</Badge>
+                          </h4>
+                        </div>
+                        <Link href={`/professor/alunos/${id}/contrato/editar`}>
+                          <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50">Editar Contrato</Button>
+                        </Link>
                       </div>
                       <div>
                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Programa de Estudo</p>
