@@ -247,3 +247,52 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
   return { success: true }
 }
 
+export async function concluirAula(aulaId: number) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Não autenticado')
+
+  const serviceSupabase = await createServiceClient()
+
+  // Get aula and contract info
+  const { data: aula, error: fetchError } = await serviceSupabase
+    .from('aulas')
+    .select('*, contratos(*, profiles(*))')
+    .eq('id', aulaId)
+    .single()
+
+  if (fetchError || !aula) throw new Error('Aula não encontrada')
+  if (aula.status === 'dada') throw new Error('Aula já consta como concluída')
+
+  const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (prof?.role !== 'professor') throw new Error('Apenas o professor pode concluir aulas manualmente')
+
+  const contrato = aula.contratos as any
+  const aulasDadas = (contrato.aulas_dadas || 0) + 1
+  const aulasRestantes = Math.max(0, (contrato.aulas_restantes || 0) - 1)
+
+  // Update aula and contract
+  const { error: updateAulaErr } = await serviceSupabase
+    .from('aulas')
+    .update({ status: 'dada' })
+    .eq('id', aulaId)
+
+  if (updateAulaErr) throw new Error('Erro ao atualizar aula')
+
+  const { error: updateContratoErr } = await serviceSupabase
+    .from('contratos')
+    .update({ 
+      aulas_dadas: aulasDadas,
+      aulas_restantes: aulasRestantes 
+    })
+    .eq('id', contrato.id)
+
+  if (updateContratoErr) throw new Error('Erro ao atualizar contrato')
+
+  revalidatePath('/professor')
+  revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
+  revalidatePath('/aluno')
+
+  return { success: true, aulasDadas, aulasRestantes }
+}
+

@@ -16,7 +16,8 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { updateLessonHomework } from '@/lib/actions/homework'
-import { BookOpen, Link as LinkIcon, Video } from 'lucide-react'
+import { concluirAula } from '@/lib/actions/aulas'
+import { BookOpen, Link as LinkIcon, Video, CheckCircle2 } from 'lucide-react'
 
 interface Props {
   aula: any
@@ -27,6 +28,7 @@ interface Props {
 
 export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }: Props) {
   const [loading, setLoading] = useState(false)
+  const [completing, setCompleting] = useState(false)
   const [formData, setFormData] = useState({
     homework: aula.homework || '',
     homework_type: aula.homework_type || 'regular',
@@ -51,6 +53,23 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     }
   }
 
+  async function handleConcluir() {
+    if (!confirm('Deseja marcar esta aula como concluída? Isso irá descontar 1 crédito do plano do aluno.')) return
+    setCompleting(true)
+    try {
+      const { success } = await concluirAula(aula.id)
+      if (success) {
+        toast.success('Aula concluída com sucesso!')
+        onSuccess?.()
+        onOpenChange(false)
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Erro ao concluir aula')
+    } finally {
+      setCompleting(false)
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
@@ -67,6 +86,27 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
               Defina o conteúdo, links e tarefas para esta lesson.
             </DialogDescription>
           </DialogHeader>
+
+          {aula.status !== 'dada' && (
+            <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-3xl flex items-center justify-between group animate-in slide-in-from-top-2 duration-500">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-2xl bg-white text-emerald-600 flex items-center justify-center shadow-sm">
+                  <CheckCircle2 className="w-6 h-6" />
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">A aula já aconteceu?</p>
+                  <p className="text-xs font-bold text-emerald-800/70">Marque como dada para atualizar os créditos do aluno.</p>
+                </div>
+              </div>
+              <Button 
+                onClick={handleConcluir} 
+                disabled={completing}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest px-6 h-12 rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
+              >
+                {completing ? 'Processando...' : 'Concluir Aula'}
+              </Button>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-2">
             <div className="md:col-span-2 space-y-3">
