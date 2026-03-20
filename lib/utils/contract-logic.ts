@@ -12,8 +12,8 @@ import {
 } from 'date-fns'
 
 export const SEMESTERS = {
-  1: { startMonth: 0, endMonth: 6, label: 'jan-jul', totalMonths: 7, maxRegular1x: 20, maxRegular2x: 40, price1x: 1920, price2x: 2880 },
-  2: { startMonth: 7, endMonth: 11, label: 'ago-dez', totalMonths: 5, maxRegular1x: 20, maxRegular2x: 40, price1x: 1920, price2x: 2880 }
+  1: { startMonth: 0, endMonth: 5, label: 'jan-jun', totalMonths: 6, maxRegular1x: 20, maxRegular2x: 40, price1x: 1920, price2x: 2880 },
+  2: { startMonth: 6, endMonth: 11, label: 'jul-dez', totalMonths: 6, maxRegular1x: 20, maxRegular2x: 40, price1x: 1920, price2x: 2880 }
 }
 
 export function isHoliday(date: Date) {
@@ -25,18 +25,18 @@ export function getSemesterInfo(date: Date) {
   const month = date.getMonth()
   const year = date.getFullYear()
   
-  if (month <= 6) { // Jan-Jul
+  if (month <= 5) { // Jan-Jun
     return {
       num: 1,
       ...SEMESTERS[1],
       start: new Date(year, 0, 1),
-      end: new Date(year, 6, 31)
+      end: new Date(year, 5, 30)
     }
-  } else { // Aug-Dec
+  } else { // Jul-Dec
     return {
       num: 2,
       ...SEMESTERS[2],
-      start: new Date(year, 7, 1),
+      start: new Date(year, 6, 1),
       end: new Date(year, 11, 31)
     }
   }

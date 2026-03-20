@@ -175,7 +175,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           planoId: parseInt(planoId),
           dataInicio,
           dataFim,
-          semestre: new Date(dataInicio).getMonth() <= 6 ? 'jan-jul' : 'ago-dez',
+          semestre: new Date(dataInicio).getMonth() <= 5 ? 'jan-jun' : 'jul-dez',
           ano: new Date(dataInicio).getFullYear(),
           diasDaSemana: diasSelecionados,
           horario,

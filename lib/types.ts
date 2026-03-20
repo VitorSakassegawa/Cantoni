@@ -1,7 +1,7 @@
 export type Role = 'professor' | 'aluno'
 export type Nivel = 'iniciante' | 'basico' | 'intermediario' | 'avancado' | 'conversacao' | 'certificado'
 export type TipoAula = 'regular' | 'conversacao' | 'certificado'
-export type Semestre = 'jan-jun' | 'jul-dez' | 'jan-jul' | 'ago-dez' | 'aug-dez'
+export type Semestre = 'jan-jun' | 'jul-dez'
 export type StatusContrato = 'ativo' | 'vencido' | 'cancelado'
 export type StatusAula = 'agendada' | 'confirmada' | 'dada' | 'cancelada' | 'remarcada' | 'pendente_remarcacao'
 
