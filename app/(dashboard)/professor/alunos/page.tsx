@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { formatCurrency } from '@/lib/utils'
+import { formatCurrency, formatDateOnly } from '@/lib/utils'
 import { UserPlus, Search, Filter, MoreHorizontal, GraduationCap, Calendar, Mail, Phone, ExternalLink, BookOpen } from 'lucide-react'
 
 export default async function AlunosPage() {
@@ -92,7 +92,7 @@ export default async function AlunosPage() {
                         {aluno.birth_date && (
                           <span className="flex items-center gap-1.5 text-[10px] font-black uppercase text-slate-400 tracking-widest">
                             <Calendar className="w-3 h-3" />
-                            {new Date(aluno.birth_date).toLocaleDateString('pt-BR')}
+                            {formatDateOnly(aluno.birth_date)}
                           </span>
                         )}
                       </div>

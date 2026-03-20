@@ -67,6 +67,8 @@ export default function NovoAlunoPage() {
   const [valor, setValor] = useState('')
   const [livro, setLivro] = useState('')
   const [isOutroMaterial, setIsOutroMaterial] = useState(false)
+  const [diaVencimento, setDiaVencimento] = useState('5')
+  const [formaPagamento, setFormaPagamento] = useState('pix')
 
   function toggleDia(dia: number) {
     setDiasSelecionados(prev =>
@@ -183,6 +185,8 @@ export default function NovoAlunoPage() {
           valor: parseFloat(valor.replace(/\D/g, '')) / 100,
           livroAtual: livro,
           nivelAtual: nivel,
+          diaVencimento: parseInt(diaVencimento),
+          formaPagamento,
         }),
       })
 
@@ -386,13 +390,48 @@ export default function NovoAlunoPage() {
                     </div>
                     <div className="space-y-2.5">
                       <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Investimento (TOTAL)</Label>
+                      <div className="relative group/input">
+                        <Input 
+                          className="h-14 rounded-2xl bg-blue-50 border-blue-100 text-blue-900 font-black" 
+                          placeholder="R$ 0,00" 
+                          value={valor} 
+                          onChange={e => setValor(maskCurrency(e.target.value))} 
+                          required 
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Dia de Vencimento</Label>
                       <Input 
-                        className="h-14 rounded-2xl bg-blue-50 border-blue-100 text-blue-900 font-black" 
-                        placeholder="R$ 0,00" 
-                        value={valor} 
-                        onChange={e => setValor(maskCurrency(e.target.value))} 
+                        type="number" 
+                        min="1" 
+                        max="31" 
+                        className="h-14 rounded-2xl bg-slate-50 font-bold" 
+                        value={diaVencimento} 
+                        onChange={e => setDiaVencimento(e.target.value)} 
                         required 
                       />
+                    </div>
+
+                    <div className="space-y-2.5">
+                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Forma de Pagamento</Label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setFormaPagamento('pix')}
+                          className={`flex-1 h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${formaPagamento === 'pix' ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200'}`}
+                        >
+                          PIX
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setFormaPagamento('cartao')}
+                          className={`flex-1 h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${formaPagamento === 'cartao' ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200'}`}
+                        >
+                          Cartão
+                        </button>
+                      </div>
                     </div>
 
                     <div className="col-span-2 space-y-4">

@@ -43,6 +43,14 @@ export function formatDateTime(date: string | Date): string {
   }).format(new Date(date))
 }
 
+export function formatDateOnly(dateStr: string | null | undefined): string {
+  if (!dateStr) return 'Não inf.'
+  // Date comes as YYYY-MM-DD
+  const [y, m, d] = dateStr.split('T')[0].split('-')
+  if (!y || !m || !d) return 'Não inf.'
+  return `${d}/${m}/${y}`
+}
+
 export function horasAteAula(dataHora: string): number {
   const now = new Date()
   const aula = new Date(dataHora)

@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { formatCurrency, formatDateTime } from '@/lib/utils'
+import { formatCurrency, formatDateTime, formatDateOnly } from '@/lib/utils'
 import { Users, BookOpen, AlertCircle, Clock } from 'lucide-react'
 
 export default async function ProfessorDashboard() {
@@ -225,7 +225,7 @@ export default async function ProfessorDashboard() {
                             {contrato.profiles?.full_name}
                           </p>
                           <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest italic">
-                            {contrato.profiles?.birth_date ? `Nasc: ${new Date(contrato.profiles.birth_date).toLocaleDateString('pt-BR')}` : 'Sem data nasc.'}
+                            {formatDateOnly(contrato.profiles?.birth_date)}
                           </p>
                         </td>
                         <td className="py-6 px-4 text-center">

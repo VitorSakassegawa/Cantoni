@@ -33,6 +33,8 @@ export async function POST(request: NextRequest) {
     valor,
     livroAtual,
     nivelAtual,
+    diaVencimento,
+    formaPagamento,
   } = await request.json()
 
   const serviceSupabase = await createServiceClient()
@@ -129,7 +131,14 @@ export async function POST(request: NextRequest) {
   for (let i = 1; i <= 6; i++) {
     const mesVenc = new Date(dataInicio)
     mesVenc.setMonth(mesVenc.getMonth() + i - 1)
-    const vencimento = new Date(mesVenc.getFullYear(), mesVenc.getMonth(), 5)
+    
+    // Ajustar para o dia de vencimento escolhido
+    // Se o dia não existir no mês (ex: 31 em fevereiro), o Date do JS ajusta automaticamente para o próximo mês
+    // Mas para vencimento, geralmente queremos o último dia do mês se ultrapassar.
+    const ultimoDiaMes = new Date(mesVenc.getFullYear(), mesVenc.getMonth() + 1, 0).getDate()
+    const diaEfetivo = Math.min(diaVencimento || 5, ultimoDiaMes)
+    
+    const vencimento = new Date(mesVenc.getFullYear(), mesVenc.getMonth(), diaEfetivo)
 
     pagamentosParaInserir.push({
       contrato_id: contrato.id,
@@ -137,6 +146,7 @@ export async function POST(request: NextRequest) {
       valor: valorParcela,
       data_vencimento: vencimento.toISOString().split('T')[0],
       status: 'pendente',
+      forma: formaPagamento || 'pix',
     })
   }
 

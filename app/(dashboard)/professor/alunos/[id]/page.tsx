@@ -4,7 +4,7 @@ import { redirect, notFound } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { formatCurrency, formatDateTime, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/lib/utils'
 import Link from 'next/link'
 import { ChevronLeft, Mail, Phone, Fingerprint, Calendar, GraduationCap, BookOpen, Clock, AlertCircle, TrendingUp, CreditCard } from 'lucide-react'
 import AulaRow from '@/components/dashboard/AulaRow'
@@ -117,7 +117,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                 <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0"><Calendar className="w-4 h-4" /></div>
                 <div>
                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Nascimento</p>
-                  <p className="text-xs font-bold text-slate-700">{aluno.birth_date ? formatDate(aluno.birth_date) : 'Não inf.'}</p>
+                  <p className="text-xs font-bold text-slate-700">{formatDateOnly(aluno.birth_date)}</p>
                 </div>
               </div>
             </CardContent>

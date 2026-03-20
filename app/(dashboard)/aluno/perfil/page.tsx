@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { maskCPF, maskPhone, maskDate } from '@/lib/utils'
+import { maskCPF, maskPhone, maskDate, formatDateOnly } from '@/lib/utils'
 import { User, Mail, Phone, Fingerprint, Calendar, AlertCircle } from 'lucide-react'
 
 export default function PerfilPage() {
@@ -32,9 +32,7 @@ export default function PerfilPage() {
       
       setProfile(data)
       if (data?.birth_date) {
-        // YYYY-MM-DD -> DD/MM/YYYY
-        const [y, m, d] = data.birth_date.split('-')
-        setBirthDateDisplay(`${d}/${m}/${y}`)
+        setBirthDateDisplay(formatDateOnly(data.birth_date))
       }
       setLoading(false)
     }
@@ -43,6 +41,7 @@ export default function PerfilPage() {
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault()
+    setSaving(true)
     // Convert DD/MM/YYYY back to YYYY-MM-DD
     let isoBirthDate = null
     if (birthDateDisplay.length === 10) {

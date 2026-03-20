@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency, formatDateTime, formatDate } from '@/lib/utils'
+import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/lib/utils'
 import AulaRow from '@/components/dashboard/AulaRow'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
 import { Video, BookOpen, Calendar, User, CreditCard } from 'lucide-react'
@@ -90,7 +90,7 @@ export default async function AlunoDashboard() {
               {profile?.birth_date && (
                 <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
                   <Calendar className="w-3.5 h-3.5" />
-                  Nasc: <span className="font-bold text-white">{formatDate(profile.birth_date)}</span>
+                  Nasc: <span className="font-bold text-white">{formatDateOnly(profile.birth_date)}</span>
                 </div>
               )}
               <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
@@ -111,6 +111,24 @@ export default async function AlunoDashboard() {
           </div>
         </div>
       </div>
+      
+      {/* Alerta de Pagamento em Atraso */}
+      {pagamentoPendente?.status === 'atrasado' && (
+        <div className="bg-rose-50 border border-rose-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-rose-500/5 animate-bounce-slow">
+          <div className="flex items-center gap-4 text-rose-600">
+            <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center shrink-0">
+              <CreditCard className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="font-black text-rose-900 text-sm uppercase tracking-tight">Pagamento em Atraso</p>
+              <p className="text-xs text-rose-700/70 font-medium">A parcela {pagamentoPendente.parcela_num} de {formatCurrency(pagamentoPendente.valor)} venceu em {formatDateOnly(pagamentoPendente.data_vencimento)}.</p>
+            </div>
+          </div>
+          <button className="h-10 px-8 rounded-xl bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20">
+            PAGAR AGORA
+          </button>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Próxima aula */}
