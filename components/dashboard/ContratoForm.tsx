@@ -131,7 +131,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
     const dp = parseFloat(dPerc || '0')
     let finalValue = base - dv
     if (finalValue < 0) finalValue = 0
-    setValorFinalComMascara(maskCurrency((finalValue * 100).toString()))
+    setValorFinalComMascara(maskCurrency((finalValue * 100).toFixed(0)))
   }
 
   const toggleDia = (dia: number) => {
