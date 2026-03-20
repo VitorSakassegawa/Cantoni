@@ -16,7 +16,8 @@ function getResendClient() {
   return new Resend(key)
 }
 
-const FROM = process.env.RESEND_FROM_EMAIL || 'Teacher Gabriel <contato@teachergabriel.com.br>'
+const FROM = process.env.RESEND_FROM_EMAIL || 'Teacher Gabriel <gabecantoni@gmail.com>'
+
 
 export async function enviarEmailBoasVindas({
   to,

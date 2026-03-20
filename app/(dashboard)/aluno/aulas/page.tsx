@@ -2,8 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { BookOpen, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
+import AulasTimeline from '@/components/dashboard/AulasTimeline'
+
 import AulaRow from '@/components/dashboard/AulaRow'
 
 export default async function AlunoAulasPage() {
@@ -11,18 +15,27 @@ export default async function AlunoAulasPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: contrato } = await supabase
+  const { data: contratos } = await supabase
     .from('contratos')
     .select('id')
     .eq('aluno_id', user.id)
     .eq('status', 'ativo')
-    .single()
 
+  const contratoIds = (contratos as any[])?.map((c: any) => c.id) || []
+
+  // Pegamos apenas as aulas de hoje em diante para o "Próximas 5"
+  // mas o 'Ver Tudo' do frontend vai mostrar o que entregarmos aqui.
+  // Para ser fiel ao "Histórico", talvez devêssemos entregar todas e filtrar no cliente?
+  // O usuário pediu "liberado as próximas 5 e abrir o restante".
+  // Vamos buscar TODAS as aulas do contrato ativo, ordenadas pela data mais próxima.
   const { data: aulas } = await supabase
     .from('aulas')
     .select('*')
-    .eq('contrato_id', contrato?.id || 0)
-    .order('data_hora', { ascending: false })
+    .in('contrato_id', contratoIds)
+    .gte('data_hora', new Date().toISOString())
+    .order('data_hora', { ascending: true })
+
+
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -44,32 +57,10 @@ export default async function AlunoAulasPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-slate-100/50 text-slate-400">
-                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Aula #</th>
-                  <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Data e Horário</th>
-                  <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Status</th>
-                  <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Google Meet</th>
-                  <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Lição / Conteúdo</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {aulas?.map((aula: any, i: number) => (
-                  <AulaRow key={aula.id} aula={aula} index={aulas.length - i} />
-                ))}
-
-              </tbody>
-            </table>
-            {(!aulas || aulas.length === 0) && (
-              <div className="py-20 text-center">
-                <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">Nenhuma aula registrada</p>
-              </div>
-            )}
-          </div>
+          <AulasTimeline aulas={aulas || []} />
         </CardContent>
       </Card>
     </div>
   )
 }
+

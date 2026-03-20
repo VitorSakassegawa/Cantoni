@@ -3,9 +3,12 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import Link from 'next/link'
+import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import { formatDateTime } from '@/lib/utils'
 import type { Aula } from '@/lib/types'
-import { Video, RotateCcw, X } from 'lucide-react'
+import { Video, RotateCcw, X, AlertCircle } from 'lucide-react'
+
 import { toast } from 'sonner'
 import { cancelarAula, remarcarAula, solicitarRemarcacao } from '@/lib/actions/aulas'
 import {
@@ -151,70 +154,95 @@ export default function AulaRow({ aula, index, isProfessor }: Props) {
       </tr>
 
       <Dialog open={showRemarkModal} onOpenChange={setShowRemarkModal}>
-        <DialogContent className="sm:max-w-[500px] rounded-[2rem] border-none shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Remarcar Aula</DialogTitle>
-            <DialogDescription className="text-slate-500 font-medium">
-              {isProfessor 
-                ? "Confirme a nova data solicitada pelo aluno ou sugira um novo horário." 
-                : "Escolha uma nova data e hora para esta aula. Sua solicitação será enviada para aprovação do professor."}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-6 py-6">
-            <div className="grid gap-3">
-              <Label htmlFor="datetime" className="text-xs font-black uppercase tracking-widest text-slate-400">Nova Data e Hora Sugerida</Label>
-              <Input
-                id="datetime"
-                type="datetime-local"
-                className="h-12 rounded-2xl border-slate-100 bg-slate-50 focus:ring-blue-500 font-bold"
-                value={novaData}
-                onChange={e => setNovaData(e.target.value)}
-              />
-            </div>
-            
-            {!isProfessor && (
+        <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
+          <div className="bg-blue-600 h-2 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">Remarcar Aula</DialogTitle>
+              <DialogDescription className="text-slate-500 font-medium text-base">
+                {isProfessor 
+                  ? "Confirme a nova data solicitada pelo aluno ou sugira um novo horário." 
+                  : "Escolha uma nova data e hora. Sua solicitação será analisada pelo professor."}
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-8 py-4">
               <div className="space-y-4">
-                <div className="p-5 rounded-[1.5rem] bg-blue-50 border border-blue-100 text-blue-900 text-xs leading-relaxed">
-                  <p className="font-bold flex items-center gap-2 mb-1 uppercase tracking-tight text-blue-700">
-                    <RotateCcw className="w-3.5 h-3.5" /> Regras de Remarcação
-                  </p>
-                  {regraTexto} Conforme o contrato semestral, para quem faz {aulasSemana} aula(s) por semana.
-                </div>
-                
-                <div className="p-5 rounded-[1.5rem] bg-slate-50 border border-slate-100 text-slate-600 text-[11px] leading-relaxed italic">
-                  "Nota: Mesmo após solicitada a remarcação, o professor irá avaliar e aceitar o horário de acordo com a disponibilidade da agenda. Agradecemos a compreensão!"
+                <Label htmlFor="datetime" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Nova Data e Hora Sugerida</Label>
+                <div className="relative group">
+                  <Input
+                    id="datetime"
+                    type="datetime-local"
+                    className="h-16 rounded-2xl border-slate-100 bg-slate-50/50 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-lg px-6 transition-all"
+                    value={novaData}
+                    onChange={e => setNovaData(e.target.value)}
+                  />
                 </div>
               </div>
-            )}
+              
+              {!isProfessor && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-1000">
+                  <div className="p-6 rounded-3xl bg-blue-50/50 border border-blue-100/50 text-blue-900 text-sm leading-relaxed relative overflow-hidden group/card shadow-sm">
+                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/card:scale-110 transition-transform">
+                      <RotateCcw className="w-12 h-12" />
+                    </div>
+                    <p className="font-black flex items-center gap-2 mb-2 uppercase tracking-widest text-[10px] text-blue-600">
+                      Regras de Remarcação
+                    </p>
+                    <p className="font-medium">
+                      {regraTexto} Conforme o contrato semestral (quem faz {aulasSemana} aula/semana).
+                    </p>
+                  </div>
+                  
+                  <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 text-slate-500 text-[11px] leading-snug font-medium italic">
+                    "Nota: O professor irá validar a solicitação de acordo com a disponibilidade da agenda acadêmica."
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4">
+              <Button variant="ghost" className="h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all flex-1" onClick={() => setShowRemarkModal(false)}>Voltar</Button>
+              <Button className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]" onClick={handleRemark} disabled={loading}>
+                {loading ? 'Processando...' : isProfessor ? 'Confirmar Remarcação' : 'Enviar Solicitação'}
+              </Button>
+            </DialogFooter>
           </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="ghost" className="h-12 px-6 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400" onClick={() => setShowRemarkModal(false)}>Cancelar</Button>
-            <Button className="h-12 px-8 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20" onClick={handleRemark} disabled={loading}>
-              {loading ? 'Processando...' : isProfessor ? 'Confirmar Remarcação' : 'Enviar Solicitação'}
-            </Button>
-          </DialogFooter>
         </DialogContent>
       </Dialog>
 
+
       <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
-        <DialogContent className="sm:max-w-[450px] rounded-[2rem] border-none shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">Cancelar Aula</DialogTitle>
-            <DialogDescription className="text-slate-500 font-medium pt-2">
-              Tem certeza que deseja cancelar esta aula?<br/>
-              <div className="mt-4 p-4 rounded-xl bg-orange-50 border border-orange-100 text-orange-800 text-xs">
-                <strong>Atenção:</strong> Cancelamentos com menos de <span className="font-black underline">2 horas</span> de antecedência serão automaticamente contabilizados como aula dada.
+        <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
+          <div className="bg-red-600 h-2 w-full" />
+          <div className="p-10 space-y-8">
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">Cancelar Aula</DialogTitle>
+              <DialogDescription className="text-slate-500 font-medium text-base">
+                Tem certeza que deseja cancelar esta aula? Esta ação não poderá ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="p-8 rounded-[2rem] bg-orange-50/50 border border-orange-100/50 text-orange-900 text-sm leading-relaxed relative overflow-hidden group/cancel">
+              <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/cancel:rotate-12 transition-transform">
+                <AlertCircle className="w-12 h-12" />
               </div>
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="mt-6 gap-2 sm:gap-0">
-            <Button variant="ghost" className="h-12 px-6 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400" onClick={() => setShowCancelModal(false)}>Voltar</Button>
-            <Button variant="destructive" className="h-12 px-8 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-red-500/20" onClick={handleCancel} disabled={loading}>
-              {loading ? 'Cancelando...' : 'Confirmar Cancelamento'}
-            </Button>
-          </DialogFooter>
+              <p className="font-black uppercase tracking-widest text-[10px] text-orange-600 mb-2">Aviso de Política</p>
+              <p className="font-medium">
+                Cancelamentos com menos de <span className="text-red-600 font-black underline underline-offset-4 Decoration-2">2 horas</span> de antecedência serão contabilizados como aula dada.
+              </p>
+            </div>
+
+            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4">
+              <Button variant="ghost" className="h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all flex-1" onClick={() => setShowCancelModal(false)}>Voltar</Button>
+              <Button variant="destructive" className="h-14 px-10 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]" onClick={handleCancel} disabled={loading}>
+                {loading ? 'Processando...' : 'Confirmar Cancelamento'}
+              </Button>
+            </DialogFooter>
+          </div>
         </DialogContent>
       </Dialog>
+
     </>
   )
 }
