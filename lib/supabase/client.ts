@@ -6,12 +6,28 @@ export function createClient() {
 
   if (!url || !key) {
     // Return a proxy that handles missing environment variables during build
-    return new Proxy({} as any, {
-      get(target, prop) {
-        if (prop === 'auth') return new Proxy({} as any, { get: () => () => ({ data: { user: null }, error: null }) })
-        return () => ({ data: null, error: new Error('Supabase environment variables are not defined.') })
+    const dummyClient: any = {
+      auth: {
+        getUser: async () => ({ data: { user: null }, error: null }),
+        signInWithPassword: async () => ({ data: { user: null }, error: null }),
+        signUp: async () => ({ data: { user: null }, error: null }),
+      },
+      from: () => {
+        const chain = {
+          select: () => chain,
+          eq: () => chain,
+          single: async () => ({ data: null, error: new Error('Supabase environment variables are not defined.') }),
+          maybeSingle: async () => ({ data: null, error: new Error('Supabase environment variables are not defined.') }),
+          order: () => chain,
+          limit: () => chain,
+          in: () => chain,
+          gte: () => chain,
+          lt: () => chain,
+        }
+        return chain
       }
-    })
+    }
+    return dummyClient
   }
 
   return createBrowserClient(url, key)

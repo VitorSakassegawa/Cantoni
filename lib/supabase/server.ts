@@ -7,11 +7,21 @@ export async function createClient() {
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
   if (!url || !key) {
-    // Return a dummy object for build-time safety
-    return {
+    const dummyClient = {
       auth: { getUser: async () => ({ data: { user: null }, error: null }) },
-      from: () => ({ select: () => ({ eq: () => ({ single: () => ({ data: null, error: null }) }) }) })
-    } as any
+      from: () => {
+        const chain = {
+          select: () => chain,
+          eq: () => chain,
+          single: async () => ({ data: null, error: null }),
+          maybeSingle: async () => ({ data: null, error: null }),
+          order: () => chain,
+          limit: () => chain,
+        }
+        return chain
+      }
+    }
+    return dummyClient as any
   }
 
   return createServerClient(
@@ -40,10 +50,21 @@ export async function createServiceClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !key) {
-    return {
+    const dummyClient = {
       auth: { getUser: async () => ({ data: { user: null }, error: null }) },
-      from: () => ({ select: () => ({ eq: () => ({ single: () => ({ data: null, error: null }) }) }) })
-    } as any
+      from: () => {
+        const chain = {
+          select: () => chain,
+          eq: () => chain,
+          single: async () => ({ data: null, error: null }),
+          maybeSingle: async () => ({ data: null, error: null }),
+          order: () => chain,
+          limit: () => chain,
+        }
+        return chain
+      }
+    }
+    return dummyClient as any
   }
 
   return createServerClient(
