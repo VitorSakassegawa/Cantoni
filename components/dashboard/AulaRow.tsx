@@ -154,22 +154,29 @@ export default function AulaRow({ aula, index, isProfessor }: Props) {
               )}
             </div>
             
-            {(aula as any).homework_type === 'esl_brains' && (
-              <div className="mt-1 flex items-center gap-2">
-                <Badge variant="outline" className="text-[8px] font-black tracking-tighter border-blue-100 text-blue-600">ESL BRAINS</Badge>
-                {(aula as any).homework_image_url ? (
-                  <a href={(aula as any).homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[9px] text-blue-500 hover:underline font-bold">
-                    <ImageIcon className="w-3 h-3" /> Ver Print
-                  </a>
-                ) : (
-                  <label className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-800 cursor-pointer font-bold">
-                    <Upload className="w-3 h-3" /> 
-                    {uploading ? 'Enviando...' : isProfessor ? 'Subir Print' : 'Anexar Print'}
-                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
-                  </label>
-                )}
-              </div>
-            )}
+            <div className="mt-1 flex items-center gap-2">
+              {(aula as any).homework_type && (
+                <Badge variant="outline" className={`text-[8px] font-black tracking-tighter uppercase ${
+                  (aula as any).homework_type === 'esl_brains' ? 'border-blue-100 text-blue-600' : 
+                  (aula as any).homework_type === 'evolve' ? 'border-indigo-100 text-indigo-600' : 
+                  'border-slate-100 text-slate-500'
+                }`}>
+                  {(aula as any).homework_type.replace('_', ' ')}
+                </Badge>
+              )}
+              
+              {(aula as any).homework_image_url ? (
+                <a href={(aula as any).homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[9px] text-blue-500 hover:underline font-bold">
+                  <ImageIcon className="w-3 h-3" /> Ver Anexo
+                </a>
+              ) : (
+                <label className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-800 cursor-pointer font-bold">
+                  <Upload className="w-3 h-3" /> 
+                  {uploading ? 'Enviando...' : isProfessor ? 'Subir Print' : 'Anexar Print'}
+                  <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                </label>
+              )}
+            </div>
 
             {(aula as any).homework_type === 'evolve' && (aula as any).homework_link && (
               <div className="mt-1 flex flex-col gap-1">

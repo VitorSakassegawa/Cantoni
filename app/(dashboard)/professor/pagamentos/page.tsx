@@ -80,9 +80,9 @@ export default async function PagamentosPage() {
         <div className="space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-black uppercase tracking-widest text-blue-600">
             <DollarSign className="w-3 h-3" />
-            Gestão Financeira
+            Gestão Estratégica
           </div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Fluxo de Pagamentos</h1>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Fluxo Financeiro</h1>
           <p className="text-slate-400 font-bold text-sm">Resumo consolidado e detalhamento por aluno</p>
         </div>
       </div>
