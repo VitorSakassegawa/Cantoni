@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (prof?.role !== 'professor') return NextResponse.json({ error: 'Sem permissão' }, { status: 403 })
 
-  const { nome, email, telefone, nivel, tipoAula } = await request.json()
+  const { nome, email, telefone, nivel, tipoAula, cpf, birthDate } = await request.json()
 
   // Use service role to create user
   const adminSupabase = createSupabaseAdmin(
@@ -37,6 +37,8 @@ export async function POST(request: NextRequest) {
     phone: telefone || null,
     nivel: nivel || null,
     tipo_aula: tipoAula || null,
+    cpf: cpf || null,
+    birth_date: birthDate || null,
   })
 
   if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 })

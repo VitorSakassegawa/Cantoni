@@ -34,6 +34,8 @@ export default function NovoAlunoPage() {
   const [telefone, setTelefone] = useState('')
   const [nivel, setNivel] = useState('iniciante')
   const [tipoAula, setTipoAula] = useState('regular')
+  const [cpf, setCpf] = useState('')
+  const [birthDate, setBirthDate] = useState('')
 
   // Contrato form
   const [planoId, setPlanoId] = useState('1')
@@ -67,7 +69,7 @@ export default function NovoAlunoPage() {
       const res = await fetch('/api/alunos/criar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, telefone, nivel, tipoAula }),
+        body: JSON.stringify({ nome, email, telefone, nivel, tipoAula, cpf, birthDate }),
       })
       const data = await res.json()
 
@@ -222,6 +224,16 @@ export default function NovoAlunoPage() {
             <div className="space-y-1.5">
               <Label>E-mail</Label>
               <Input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <Label>CPF</Label>
+                <Input value={cpf} onChange={e => setCpf(e.target.value)} placeholder="000.000.000-00" />
+              </div>
+              <div className="space-y-1.5">
+                <Label>Data de Nascimento</Label>
+                <Input type="date" value={birthDate} onChange={e => setBirthDate(e.target.value)} />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Telefone (opcional)</Label>

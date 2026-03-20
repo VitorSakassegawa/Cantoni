@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, BookOpen, Users, LayoutDashboard, CreditCard } from 'lucide-react'
+import { LogOut, BookOpen, Users, LayoutDashboard, CreditCard, User } from 'lucide-react'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -59,6 +59,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 <CreditCard className="w-4 h-4" />
                 Pagamentos
               </Link>
+              <Link
+                href="/professor/perfil"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Meu Perfil
+              </Link>
             </>
           )}
 
@@ -77,6 +84,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
               >
                 <CreditCard className="w-4 h-4" />
                 Pagamentos
+              </Link>
+              <Link
+                href="/aluno/perfil"
+                className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-blue-800 text-sm transition-colors"
+              >
+                <User className="w-4 h-4" />
+                Meu Perfil
               </Link>
             </>
           )}

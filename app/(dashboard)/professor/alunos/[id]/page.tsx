@@ -66,6 +66,8 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
           <CardContent className="space-y-2 text-sm">
             <div><span className="text-gray-500">E-mail:</span> {aluno.email}</div>
             {aluno.phone && <div><span className="text-gray-500">Telefone:</span> {aluno.phone}</div>}
+            {aluno.cpf && <div><span className="text-gray-500">CPF:</span> {aluno.cpf}</div>}
+            {aluno.birth_date && <div><span className="text-gray-500">Nascimento:</span> {formatDate(aluno.birth_date)}</div>}
             {aluno.nivel && <div><span className="text-gray-500">Nível:</span> {aluno.nivel}</div>}
             {aluno.tipo_aula && <div><span className="text-gray-500">Tipo:</span> {aluno.tipo_aula}</div>}
           </CardContent>
