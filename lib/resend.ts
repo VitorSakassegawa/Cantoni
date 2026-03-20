@@ -25,6 +25,7 @@ export async function enviarEmailBoasVindas({
   dataInicio,
   dataFim,
   aulas,
+  setupPasswordLink,
 }: {
   to: string
   nomeAluno: string
@@ -32,6 +33,7 @@ export async function enviarEmailBoasVindas({
   dataInicio: string
   dataFim: string
   aulas: { data: string; link: string }[]
+  setupPasswordLink?: string
 }) {
   const aulasHtml = aulas
     .slice(0, 5)
@@ -44,22 +46,35 @@ export async function enviarEmailBoasVindas({
     to,
     subject: '🎉 Bem-vindo(a) às aulas de inglês com Teacher Gabriel!',
     html: `
-      <div style="font-family:sans-serif;max-width:600px;margin:auto">
-        <h2 style="color:#1e3a5f">Olá, ${nomeAluno}! 👋</h2>
+      <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;color:#334155;line-height:1.6">
+        <h2 style="color:#1e3a5f;margin-bottom:20px">Olá, ${nomeAluno}! 👋</h2>
         <p>Seja muito bem-vindo(a) às aulas de inglês com <strong>Teacher Gabriel Cantoni</strong>!</p>
-        <h3>Seu plano</h3>
-        <p>${plano}</p>
-        <p><strong>Período:</strong> ${dataInicio} a ${dataFim}</p>
-        <h3>Regras importantes</h3>
-        <ul>
-          <li>Cancelamentos precisam de <strong>2 horas de antecedência</strong>. Sem aviso = aula dada.</li>
-          <li>Remarcações respeitam o limite mensal do seu plano.</li>
-          <li>Contrato semestral — alterações com 30 dias de antecedência.</li>
+        
+        <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0">
+          <h3 style="margin-top:0;color:#1e3a5f;font-size:16px">🔑 Acesso à Plataforma</h3>
+          <p style="font-size:14px">Para acompanhar suas aulas, materiais e pagamentos, defina sua senha no botão abaixo:</p>
+          ${setupPasswordLink ? `
+          <a href="${setupPasswordLink}" style="display:inline-block;padding:14px 28px;background:#2563eb;color:white;text-decoration:none;border-radius:12px;font-weight:bold;margin:10px 0">Definir minha Senha</a>
+          ` : ''}
+          <p style="font-size:12px;color:#64748b;margin-top:10px">Se o botão não funcionar, use este link: <br/> ${setupPasswordLink}</p>
+        </div>
+
+        <h3 style="color:#1e3a5f">📋 Seu Plano</h3>
+        <p style="font-size:14px"><strong>${plano}</strong><br/>Período: ${dataInicio} a ${dataFim}</p>
+        
+        <h3 style="color:#1e3a5f">📅 Primeiras Aulas</h3>
+        <ul style="font-size:14px;padding-left:20px">${aulasHtml}</ul>
+
+        <h3 style="color:#1e3a5f">⚠️ Regras Importantes</h3>
+        <ul style="font-size:13px;color:#475569">
+          <li><strong>Cancelamentos:</strong> Mínimo de 2 horas de antecedência.</li>
+          <li><strong>Remarcações:</strong> Respeitam o limite mensal do seu plano.</li>
+          <li><strong>Contrato:</strong> Semestral (avisar alterações com 30 dias).</li>
         </ul>
-        <h3>Primeiras aulas</h3>
-        <ul>${aulasHtml}</ul>
-        <p>Qualquer dúvida, responda este e-mail. Bons estudos! 🇺🇸</p>
-        <p style="color:#666;font-size:12px">Teacher Gabriel Cantoni — Aulas de inglês online via Google Meet</p>
+
+        <p style="margin-top:30px;font-weight:bold">Bons estudos! 🇺🇸</p>
+        <hr style="border:none;border-top:1px solid #e2e8f0/50;margin:30px 0" />
+        <p style="color:#94a3b8;font-size:11px">Teacher Gabriel Cantoni — Aulas de inglês online</p>
       </div>
     `,
   })

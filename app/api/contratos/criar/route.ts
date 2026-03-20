@@ -141,6 +141,12 @@ export async function POST(request: NextRequest) {
 
   await serviceSupabase.from('pagamentos').insert(pagamentosParaInserir)
 
+  // Generate password recovery/setup link
+  const { data: linkData } = await serviceSupabase.auth.admin.generateLink({
+    type: 'recovery',
+    email: aluno.email,
+  })
+
   // Welcome email
   await enviarEmailBoasVindas({
     to: aluno.email,
@@ -149,6 +155,7 @@ export async function POST(request: NextRequest) {
     dataInicio: new Date(dataInicio).toLocaleDateString('pt-BR'),
     dataFim: new Date(dataFim).toLocaleDateString('pt-BR'),
     aulas: primeirasCinco,
+    setupPasswordLink: linkData?.properties?.action_link,
   })
 
   return NextResponse.json({ success: true, contrato })

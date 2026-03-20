@@ -52,11 +52,6 @@ export async function POST(request: NextRequest) {
 
   if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 })
 
-  // Send password reset so student can set their own password
-  await adminSupabase.auth.admin.generateLink({
-    type: 'recovery',
-    email,
-  })
 
   return NextResponse.json({ success: true, alunoId: authUser.user.id })
 }
