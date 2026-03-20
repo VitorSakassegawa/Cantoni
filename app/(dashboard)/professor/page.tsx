@@ -65,10 +65,12 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
   const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
   const { data: aulasHoje } = await supabase
     .from('aulas')
-    .select('id')
+    .select('id, contratos!inner(status)')
+    .eq('contratos.status', 'ativo')
     .gte('data_hora', todayStart)
     .lt('data_hora', todayEnd)
     .in('status', ['agendada', 'confirmada'])
+
 
   const { data: pagamentosPendentes } = await supabase
     .from('pagamentos')

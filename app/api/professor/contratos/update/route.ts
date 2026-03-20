@@ -26,7 +26,8 @@ export async function POST(request: NextRequest) {
     horario, 
     valor,
     dia_vencimento,
-    forma_pagamento
+    forma_pagamento,
+    status
   } = await request.json()
 
   if (!id) return NextResponse.json({ error: 'ID do contrato é obrigatório' }, { status: 400 })
@@ -41,8 +42,10 @@ export async function POST(request: NextRequest) {
       horario,
       valor: parseFloat(valor),
       dia_vencimento: parseInt(dia_vencimento),
-      forma_pagamento
+      forma_pagamento,
+      status
     })
+
     .eq('id', id)
 
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })

@@ -9,6 +9,7 @@ import Link from 'next/link'
 import { ChevronLeft, Mail, Phone, Fingerprint, Calendar, GraduationCap, BookOpen, Clock, AlertCircle, TrendingUp, CreditCard } from 'lucide-react'
 import AulaRow from '@/components/dashboard/AulaRow'
 import GerarCobrancaBtn from '@/components/dashboard/GerarCobrancaBtn'
+import StatusContratoSelect from '@/components/dashboard/StatusContratoSelect'
 
 export default async function AlunoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -31,8 +32,10 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
     .from('contratos')
     .select('*, planos(*)')
     .eq('aluno_id', id)
-    .eq('status', 'ativo')
-    .single()
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
 
   const { data: aulas } = await supabase
     .from('aulas')
@@ -185,8 +188,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Semestre Ativo</p>
                           <h4 className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-2">
                             {contrato.semestre} {contrato.ano}
-                            <Badge className="bg-emerald-500/10 text-emerald-600 border-none text-[8px] tracking-widest h-5">ATIVO</Badge>
+                            <StatusContratoSelect contrato={contrato} />
                           </h4>
+
                         </div>
                         <Link href={`/professor/alunos/${id}/contrato/editar`}>
                           <Button variant="ghost" size="sm" className="text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50">Editar Contrato</Button>
