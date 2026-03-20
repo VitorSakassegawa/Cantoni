@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
     descontoValor,
     descontoPercentual,
     aulasTotais,
+    numParcelas,
   } = await request.json()
 
   const serviceSupabase = await createServiceClient()
@@ -149,18 +150,19 @@ Instruções:
     console.error('Aulas insert error:', insertAulasErr)
   }
 
-  // Create installments based on remaining months
-  const numParcelas = tipoContrato === 'ad-hoc' ? 1 : specs.remainingMonths
-  const valorParcela = parseFloat((valor / numParcelas).toFixed(2))
+  // Create installments based on request or calculation
+  const nParcelas = numParcelas || (tipoContrato === 'ad-hoc' ? 1 : specs.remainingMonths)
+  const valorParcela = parseFloat((valor / nParcelas).toFixed(2))
   const pagamentosParaInserir = []
   
-  for (let i = 1; i <= numParcelas; i++) {
+  for (let i = 1; i <= nParcelas; i++) {
     const mesVenc = new Date(dataInicio + 'T12:00:00')
     mesVenc.setMonth(mesVenc.getMonth() + i - 1)
     
     const ultimoDiaMes = new Date(mesVenc.getFullYear(), mesVenc.getMonth() + 1, 0).getDate()
     const diaEfetivo = Math.min(diaVencimento || 5, ultimoDiaMes)
-    const vencimento = new Date(mesVenc.getFullYear(), mesVenc.getMonth(), diaEfetivo)
+    // Set to 12h to avoid UTC date shifts
+    const vencimento = new Date(mesVenc.getFullYear(), mesVenc.getMonth(), diaEfetivo, 12, 0, 0)
 
     pagamentosParaInserir.push({
       contrato_id: contrato.id,

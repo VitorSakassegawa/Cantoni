@@ -148,7 +148,7 @@ export default function NovoAlunoPage() {
   // handleCriarContrato is now handled by the ContratoForm component
 
   return (
-    <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-fade-in">
+    <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">

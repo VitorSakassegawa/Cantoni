@@ -71,6 +71,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
   const [nivel, setNivel] = useState(defaultNivel || 'a1_beginner')
   const [diaVencimento, setDiaVencimento] = useState('5')
   const [formaPagamento, setFormaPagamento] = useState('pix')
+  const [numParcelas, setNumParcelas] = useState('6')
 
   // Auto-calculation on any relevant field change
   useEffect(() => {
@@ -188,6 +189,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           tipoContrato,
           descontoValor: parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100,
           descontoPercentual: parseFloat(descontoPercentual || '0'),
+          numParcelas: parseInt(numParcelas),
         }),
       })
 
@@ -430,6 +432,14 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
                 value={diaVencimento} 
                 onChange={e => setDiaVencimento(e.target.value)} 
               />
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nº de Parcelas</Label>
+              <Select value={numParcelas} onChange={e => setNumParcelas(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                  <option key={n} value={n.toString()}>{n === 1 ? '1x (À vista)' : `${n}x parcelado`}</option>
+                ))}
+              </Select>
             </div>
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Pagamento</Label>
