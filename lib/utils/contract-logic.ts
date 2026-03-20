@@ -13,7 +13,7 @@ import {
 
 export const SEMESTERS = {
   1: { startMonth: 0, endMonth: 6, label: 'jan-jul', totalMonths: 7, maxRegular1x: 20, maxRegular2x: 40, price1x: 1920, price2x: 2880 },
-  2: { startMonth: 7, endMonth: 11, label: 'aug-dez', totalMonths: 5, maxRegular1x: 20, maxRegular2x: 40, price1x: 1920, price2x: 2880 }
+  2: { startMonth: 7, endMonth: 11, label: 'ago-dez', totalMonths: 5, maxRegular1x: 20, maxRegular2x: 40, price1x: 1920, price2x: 2880 }
 }
 
 export function isHoliday(date: Date) {
