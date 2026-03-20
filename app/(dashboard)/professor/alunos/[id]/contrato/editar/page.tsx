@@ -52,7 +52,7 @@ export default function ProfessorEditContratoPage({ params }: { params: Promise<
       
       if (data) {
         // Formatar valor para o estado
-        const valorFormatado = maskCurrency((data.valor * 100).toString())
+        const valorFormatado = maskCurrency((data.valor * 100).toFixed(0))
         setContrato({ 
           ...data, 
           valor: valorFormatado,

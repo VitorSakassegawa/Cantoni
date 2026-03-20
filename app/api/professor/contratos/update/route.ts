@@ -51,7 +51,13 @@ export async function POST(request: NextRequest) {
   if (updateError) return NextResponse.json({ error: updateError.message }, { status: 500 })
 
   // Sincronizar pagamentos pendentes
-  const valorParcela = parseFloat((parseFloat(valor) / 6).toFixed(2))
+  const { data: allPagamentos } = await supabase
+    .from('pagamentos')
+    .select('id')
+    .eq('contrato_id', id)
+    
+  const totalParcels = allPagamentos?.length || 6
+  const valorParcela = parseFloat((parseFloat(valor) / totalParcels).toFixed(2))
   const { data: pendentes } = await supabase
     .from('pagamentos')
     .select('id, data_vencimento')
