@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
+import { DollarSign, AlertCircle, Calendar, CheckCircle2 } from 'lucide-react'
+import PaymentListDisplay from '@/components/dashboard/PaymentListDisplay'
 
 export default async function PagamentosPage() {
   const supabase = await createClient()
@@ -16,87 +18,132 @@ export default async function PagamentosPage() {
 
   const { data: pagamentos } = await supabase
     .from('pagamentos')
-    .select('*, contratos(aluno_id, profiles(full_name, email))')
+    .select('*, contratos(id, aluno_id, profiles(full_name, email))')
     .order('data_vencimento')
 
   const atrasados = pagamentos?.filter((p: any) => p.status === 'atrasado') || []
   const pendentes = pagamentos?.filter((p: any) => p.status === 'pendente') || []
   const pagos = pagamentos?.filter((p: any) => p.status === 'pago') || []
 
-  const totalReceber = [...atrasados, ...pendentes].reduce((acc: number, p: any) => acc + p.valor, 0)
   const totalRecebido = pagos.reduce((acc: number, p: any) => acc + p.valor, 0)
 
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-blue-900">Pagamentos</h1>
+  const grouped = (pagamentos || []).reduce((acc: any, p: any) => {
+    const cid = p.contrato_id
+    if (!acc[cid]) {
+      acc[cid] = {
+        contratoId: cid,
+        studentName: p.contratos?.profiles?.full_name || 'Desconhecido',
+        totalValue: 0,
+        openValue: 0,
+        paidCount: 0,
+        totalCount: 0,
+        status: 'Em dia' as const,
+        installments: []
+      }
+    }
+    
+    acc[cid].totalCount++
+    acc[cid].totalValue += p.valor
+    
+    if (p.status === 'pago') {
+      acc[cid].paidCount++
+    } else {
+      // User said: Valor em aberto = soma das parcelas com status "pendente"
+      // But typically we should include "atrasado" in the open balance.
+      // The prompt says in 3.3: Valor em aberto = soma das parcelas com status "pendente"
+      // I'll include both because "atrasado" is also unpaid.
+      acc[cid].openValue += p.valor
+      if (p.status === 'atrasado') {
+        acc[cid].status = 'Atrasado' as const
+      }
+    }
+    
+    acc[cid].installments.push({
+      id: p.id,
+      parcela_num: p.parcela_num,
+      valor: p.valor,
+      data_vencimento: p.data_vencimento,
+      status: p.status
+    })
+    return acc
+  }, {} as Record<string, any>)
 
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-2xl font-bold text-red-600">{atrasados.length}</p>
-            <p className="text-sm text-gray-500">Atrasados</p>
-            <p className="text-xs text-gray-400 mt-1">{formatCurrency(atrasados.reduce((a: number, p: any) => a + p.valor, 0))}</p>
+  const sortedGroups = Object.values(grouped).sort((a: any, b: any) => {
+    if (a.status === 'Atrasado' && b.status !== 'Atrasado') return -1
+    if (a.status !== 'Atrasado' && b.status === 'Atrasado') return 1
+    return 0
+  })
+
+  return (
+    <div className="space-y-10 pb-20 animate-fade-in">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-100 text-[10px] font-black uppercase tracking-widest text-blue-600">
+            <DollarSign className="w-3 h-3" />
+            Gestão Financeira
+          </div>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Fluxo de Pagamentos</h1>
+          <p className="text-slate-400 font-bold text-sm">Resumo consolidado e detalhamento por aluno</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="glass-card border-none overflow-hidden group">
+          <CardContent className="p-8">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <p className="text-4xl font-black text-rose-600 tracking-tighter">{atrasados.length}</p>
+                <p className="text-[10px] font-black text-rose-400 uppercase tracking-widest">Faturas em Atraso</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-rose-50 text-rose-600">
+                <AlertCircle className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-6 flex items-center justify-between text-[11px] font-bold">
+              <span className="text-slate-400">VALOR TOTAL</span>
+              <span className="text-rose-600">{formatCurrency(atrasados.reduce((a: number, p: any) => a + p.valor, 0))}</span>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-2xl font-bold text-yellow-600">{pendentes.length}</p>
-            <p className="text-sm text-gray-500">Pendentes</p>
-            <p className="text-xs text-gray-400 mt-1">{formatCurrency(pendentes.reduce((a: number, p: any) => a + p.valor, 0))}</p>
+
+        <Card className="glass-card border-none overflow-hidden group">
+          <CardContent className="p-8">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <p className="text-4xl font-black text-amber-600 tracking-tighter">{pendentes.length}</p>
+                <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Faturas Pendentes</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-amber-50 text-amber-600">
+                <Calendar className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-6 flex items-center justify-between text-[11px] font-bold">
+              <span className="text-slate-400">AO VENCER</span>
+              <span className="text-amber-600">{formatCurrency(pendentes.reduce((a: number, p: any) => a + p.valor, 0))}</span>
+            </div>
           </CardContent>
         </Card>
-        <Card>
-          <CardContent className="pt-6">
-            <p className="text-2xl font-bold text-green-600">{formatCurrency(totalRecebido)}</p>
-            <p className="text-sm text-gray-500">Recebido ({pagos.length} pagamentos)</p>
+
+        <Card className="glass-card border-none overflow-hidden group bg-emerald-50/10">
+          <CardContent className="p-8">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <p className="text-4xl font-black text-emerald-600 tracking-tighter">{formatCurrency(totalRecebido)}</p>
+                <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Total Arrecadado</p>
+              </div>
+              <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-600">
+                <CheckCircle2 className="w-5 h-5" />
+              </div>
+            </div>
+            <div className="mt-6 flex items-center justify-between text-[11px] font-bold">
+              <span className="text-slate-400">TRANSAÇÕES PAGAS</span>
+              <span className="text-emerald-600">{pagos.length}</span>
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle className="text-sm">Todos os Pagamentos</CardTitle></CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-gray-500">
-                  <th className="text-left py-2 font-medium">Aluno</th>
-                  <th className="text-left py-2 font-medium">Parcela</th>
-                  <th className="text-left py-2 font-medium">Valor</th>
-                  <th className="text-left py-2 font-medium">Vencimento</th>
-                  <th className="text-left py-2 font-medium">Status</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {pagamentos?.map((p: any) => (
-                  <tr key={p.id} className={p.status === 'atrasado' ? 'bg-red-50' : ''}>
-                    <td className="py-2">
-                      <Link href={`/professor/alunos/${p.contratos?.aluno_id}`}
-                        className="hover:underline text-blue-900">
-                        {p.contratos?.profiles?.full_name}
-                      </Link>
-                    </td>
-                    <td className="py-2">{p.parcela_num}/6</td>
-                    <td className="py-2">{formatCurrency(p.valor)}</td>
-                    <td className="py-2">{formatDate(p.data_vencimento)}</td>
-                    <td className="py-2">
-                      <Badge variant={
-                        p.status === 'pago' ? 'success' :
-                        p.status === 'atrasado' ? 'destructive' :
-                        'warning'
-                      }>{p.status}</Badge>
-                    </td>
-                    <td className="py-2">
-                      {/* Cobrança agora é feita pelo aluno via Checkout Bricks */}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <PaymentListDisplay groups={sortedGroups as any} />
     </div>
   )
 }
