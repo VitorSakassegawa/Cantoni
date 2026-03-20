@@ -29,12 +29,20 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <div className="flex-1 glass-panel rounded-[2rem] border-white/20 flex flex-col overflow-hidden shadow-2xl shadow-blue-900/5">
           <div className="p-8 pb-6">
             <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl lms-gradient text-white font-black flex items-center justify-center shadow-lg shadow-blue-500/20 text-xl">
-                C
+              <div className="w-12 h-12 rounded-2xl lms-gradient overflow-hidden flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <img 
+                  src="/logo-cantoni.png" 
+                  alt="Cantoni Logo" 
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                    e.currentTarget.parentElement!.innerHTML = '<div class="w-full h-full flex items-center justify-center text-white font-black text-xl">C</div>';
+                  }}
+                />
               </div>
               <div className="space-y-0.5">
-                <p className="font-black text-blue-900 leading-none tracking-tight">CANTONI</p>
-                <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em]">Learning LMS</p>
+                <p className="font-black text-blue-900 leading-none tracking-tight uppercase">Cantoni</p>
+                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-tight">Learning Management System</p>
               </div>
             </div>
           </div>
