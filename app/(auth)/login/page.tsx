@@ -12,12 +12,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from 'sonner'
 
 export default function LoginPage() {
-  const [isLogin, setIsLogin] = useState(true)
+  const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [fullName, setFullName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
   const supabase = createClient()
 
@@ -27,7 +28,7 @@ export default function LoginPage() {
     setError('')
 
     try {
-      if (isLogin) {
+      if (authMode === 'login') {
         const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
         if (authError) throw authError
 
@@ -39,8 +40,8 @@ export default function LoginPage() {
 
         toast.success('Bem-vindo de volta!')
         router.push(profile?.role === 'professor' ? '/professor' : '/aluno')
-      } else {
-        const { data, error: authError } = await supabase.auth.signUp({
+      } else if (authMode === 'signup') {
+        const { error: authError } = await supabase.auth.signUp({
           email,
           password,
           options: {
@@ -50,11 +51,32 @@ export default function LoginPage() {
         if (authError) throw authError
         
         toast.success('Conta criada com sucesso! Você já pode entrar.')
-        setIsLogin(true)
+        setAuthMode('login')
       }
     } catch (err: any) {
       setError(err.message || 'Erro na autenticação.')
       toast.error(err.message || 'Erro inesperado.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+    setSuccessMessage('')
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/redefinir-senha`,
+      })
+      if (error) throw error
+      setSuccessMessage('E-mail de recuperação enviado! Verifique sua caixa de entrada.')
+      toast.success('Link de recuperação enviado!')
+    } catch (err: any) {
+      setError(err.message)
+      toast.error(err.message)
     } finally {
       setLoading(false)
     }
@@ -77,14 +99,20 @@ export default function LoginPage() {
 
         <Card className="glass-card border-none shadow-2xl shadow-blue-900/5 overflow-hidden">
           <CardHeader className="text-center pb-2">
-            <CardTitle className="text-xl font-bold text-gray-900">{isLogin ? 'Entrar no Portal' : 'Criar nova conta'}</CardTitle>
+            <CardTitle className="text-xl font-bold text-gray-900">
+              {authMode === 'login' && 'Entrar no Portal'}
+              {authMode === 'signup' && 'Criar nova conta'}
+              {authMode === 'forgot' && 'Recuperar Senha'}
+            </CardTitle>
             <CardDescription className="text-xs font-semibold uppercase tracking-tight text-gray-400">
-              {isLogin ? 'Acesse seus materiais e aulas' : 'Comece sua jornada no inglês agora'}
+              {authMode === 'login' && 'Acesse seus materiais e aulas'}
+              {authMode === 'signup' && 'Comece sua jornada no inglês agora'}
+              {authMode === 'forgot' && 'Enviaremos um link para seu e-mail'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleAuth} className="space-y-5">
-              {!isLogin && (
+            <form onSubmit={authMode === 'forgot' ? handleResetPassword : handleAuth} className="space-y-5">
+              {authMode === 'signup' && (
                 <div className="space-y-1.5">
                   <Label htmlFor="fullName" className="text-[10px] font-black uppercase text-gray-400 ml-1">Nome Completo</Label>
                   <Input
@@ -109,18 +137,32 @@ export default function LoginPage() {
                   required
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-[10px] font-black uppercase text-gray-400 ml-1">Senha</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  className="bg-white/50 border-gray-100 rounded-xl focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
+              
+              {authMode !== 'forgot' && (
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                    <Label htmlFor="password" className="text-[10px] font-black uppercase text-gray-400 ml-1">Senha</Label>
+                    {authMode === 'login' && (
+                      <button 
+                        type="button" 
+                        onClick={() => setAuthMode('forgot')}
+                        className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:underline"
+                      >
+                        Esqueci a senha
+                      </button>
+                    )}
+                  </div>
+                  <Input
+                    id="password"
+                    type="password"
+                    placeholder="••••••••"
+                    className="bg-white/50 border-gray-100 rounded-xl focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+              )}
               
               {error && (
                 <div className="p-3 bg-red-50 rounded-lg border border-red-100">
@@ -128,18 +170,36 @@ export default function LoginPage() {
                 </div>
               )}
 
+              {successMessage && (
+                <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                  <p className="text-emerald-600 text-[10px] font-bold uppercase">{successMessage}</p>
+                </div>
+              )}
+
               <Button type="submit" className="w-full bg-[#1e3a5f] hover:bg-[#162a45] text-white font-bold py-6 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98]" disabled={loading}>
-                {loading ? (isLogin ? 'Entrando...' : 'Criando...') : (isLogin ? 'Acessar Painel' : 'Criar Conta')}
+                {loading ? 'Processando...' : (
+                  authMode === 'login' ? 'Acessar Painel' : 
+                  authMode === 'signup' ? 'Criar Conta' : 'Recuperar Senha'
+                )}
               </Button>
 
-              <div className="text-center pt-4 border-t border-gray-100/50">
+              <div className="text-center pt-4 border-t border-gray-100/50 flex flex-col gap-3">
                 <button
                   type="button"
-                  onClick={() => setIsLogin(!isLogin)}
+                  onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
                   className="text-xs font-bold text-[#1e3a5f] hover:underline underline-offset-4"
                 >
-                  {isLogin ? 'Não tem conta? Crie uma agora' : 'Já tem conta? Faça o login'}
+                  {authMode === 'login' ? 'Não tem conta? Crie uma agora' : 'Já tem conta? Faça o login'}
                 </button>
+                {authMode === 'forgot' && (
+                   <button
+                   type="button"
+                   onClick={() => setAuthMode('login')}
+                   className="text-[10px] font-black text-gray-400 uppercase tracking-widest hover:text-slate-900 transition-colors"
+                 >
+                   Voltar para o Login
+                 </button>
+                )}
               </div>
             </form>
           </CardContent>
