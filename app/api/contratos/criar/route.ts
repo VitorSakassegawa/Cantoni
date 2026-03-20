@@ -35,7 +35,14 @@ export async function POST(request: NextRequest) {
     nivelAtual,
     diaVencimento,
     formaPagamento,
+    tipoContrato,
+    descontoValor,
+    descontoPercentual,
+    aulasTotais,
   } = await request.json()
+
+
+
 
   const serviceSupabase = await createServiceClient()
 
@@ -67,15 +74,20 @@ export async function POST(request: NextRequest) {
       data_fim: dataFim,
       semestre,
       ano,
-      aulas_totais: plano.aulas_totais,
-      aulas_restantes: plano.aulas_totais,
+      aulas_totais: aulasTotais || plano.aulas_totais,
+      aulas_restantes: aulasTotais || plano.aulas_totais,
+
       livro_atual: livroAtual,
       nivel_atual: nivelAtual,
       horario: horario,
       valor: valor,
       dia_vencimento: diaVencimento,
       forma_pagamento: formaPagamento,
+      tipo_contrato: tipoContrato || 'semestral',
+      desconto_valor: descontoValor || 0,
+      desconto_percentual: descontoPercentual || 0,
     })
+
     .select()
     .single()
 
@@ -87,7 +99,8 @@ export async function POST(request: NextRequest) {
   const inicio = new Date(dataInicio)
   const fim = new Date(dataFim)
 
-  const datasAulas = gerarGradeAulas(inicio, fim, diasDaSemana, plano.aulas_totais)
+  const datasAulas = gerarGradeAulas(inicio, fim, diasDaSemana, aulasTotais || plano.aulas_totais)
+
 
   // Create Google Calendar events + aulas records
   const aulasParaInserir: any[] = []
@@ -142,9 +155,11 @@ Instruções:
   await serviceSupabase.from('aulas').insert(aulasParaInserir)
 
   // Create installments (pagamentos)
-  const valorParcela = parseFloat((valor / 6).toFixed(2))
+  const numParcelas = tipoContrato === 'ad-hoc' ? 1 : 6
+  const valorParcela = parseFloat((valor / numParcelas).toFixed(2))
   const pagamentosParaInserir = []
-  for (let i = 1; i <= 6; i++) {
+  for (let i = 1; i <= numParcelas; i++) {
+
     const mesVenc = new Date(dataInicio)
     mesVenc.setMonth(mesVenc.getMonth() + i - 1)
     

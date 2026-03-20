@@ -190,3 +190,60 @@ Instruções:
 
   return { success: true, novaAula }
 }
+
+export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Não autenticado')
+
+  const serviceSupabase = await createServiceClient()
+
+  const { data: aula, error: fetchError } = await serviceSupabase
+    .from('aulas')
+    .select('*, contratos(*, planos(*), profiles(*))')
+    .eq('id', aulaId)
+    .single()
+
+  if (fetchError || !aula) throw new Error('Aula não encontrada')
+
+  const contrato = aula.contratos as any
+  const plano = contrato.planos
+
+  if (contrato.aluno_id !== user.id) {
+    throw new Error('Apenas o aluno pode solicitar remarcação')
+  }
+
+  // Verificar limite de remarcações
+  const mes = startOfMonth(new Date(aula.data_hora))
+  const mesStr = mes.toISOString().split('T')[0]
+
+  const { data: remarcacao } = await serviceSupabase
+    .from('remarcacoes_mes')
+    .select('*')
+    .eq('aluno_id', contrato.aluno_id)
+    .eq('mes', mesStr)
+    .single()
+
+  const qtdAtual = remarcacao?.quantidade || 0
+  if (qtdAtual >= plano.remarca_max_mes) {
+    throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
+  }
+
+  // Atualizar para status pendente e salvar a data solicitada
+  const { error: updateError } = await serviceSupabase
+    .from('aulas')
+    .update({ 
+      status: 'pendente_remarcacao',
+      data_hora_solicitada: novaDataHora 
+    })
+    .eq('id', aulaId)
+
+  if (updateError) throw new Error('Erro ao solicitar remarcação')
+
+  revalidatePath('/professor')
+  revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
+  revalidatePath('/aluno')
+
+  return { success: true }
+}
+

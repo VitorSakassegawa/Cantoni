@@ -3,7 +3,8 @@ export type Nivel = 'iniciante' | 'basico' | 'intermediario' | 'avancado' | 'con
 export type TipoAula = 'regular' | 'conversacao' | 'certificado'
 export type Semestre = 'jan-jun' | 'jul-dez'
 export type StatusContrato = 'ativo' | 'vencido' | 'cancelado'
-export type StatusAula = 'agendada' | 'confirmada' | 'dada' | 'cancelada' | 'remarcada'
+export type StatusAula = 'agendada' | 'confirmada' | 'dada' | 'cancelada' | 'remarcada' | 'pendente_remarcacao'
+
 export type StatusPagamento = 'pendente' | 'pago' | 'atrasado' | 'vencido'
 export type FormaPagemento = 'pix' | 'cartao'
 
@@ -56,9 +57,11 @@ export interface Aula {
   remarcada_de?: number
   meet_link?: string
   homework?: string
-  homework_completed: boolean
-  homework_notificado: boolean
-  created_at: string
+  homework_completed: boolean;
+  homework_notificado: boolean;
+  data_hora_solicitada?: string;
+  created_at: string;
+
 }
 
 export interface RemarcacaoMes {

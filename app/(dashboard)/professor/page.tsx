@@ -8,6 +8,8 @@ import { formatCurrency, formatDateTime, formatDateOnly } from '@/lib/utils'
 import { Users, BookOpen, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react'
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, parseISO, isSameDay, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { RotateCcw } from 'lucide-react'
+
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -88,6 +90,13 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .select('*, profiles(full_name, email, birth_date, nivel), planos(freq_semana, remarca_max_mes), pagamentos(status, parcela_num, valor, data_vencimento)')
     .eq('status', 'ativo')
     .order('created_at', { ascending: false })
+
+  const { data: solicitacoesRemarcacao } = await supabase
+    .from('aulas')
+    .select('*, contratos!inner(profiles(full_name))')
+    .eq('status', 'pendente_remarcacao')
+    .order('data_hora_solicitada')
+
 
   return (
     <div className="space-y-10 pb-16 animate-fade-in">
@@ -252,9 +261,45 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           </div>
         </div>
 
-        {/* Sidebar Rights: Alunos Recentes */}
+        {/* Sidebar Rights: Alunos Recentes & Solicitações */}
         <div className="xl:col-span-4 space-y-6">
-          <Card className="glass-card border-none overflow-hidden h-full">
+          {solicitacoesRemarcacao && solicitacoesRemarcacao.length > 0 && (
+            <Card className="glass-card border-none overflow-hidden bg-amber-50/30 border-amber-100 ring-2 ring-amber-500/10">
+              <CardHeader className="pb-4 bg-amber-50/50 border-b border-amber-100/50">
+                <CardTitle className="text-xs font-black text-amber-600 flex items-center gap-2 uppercase tracking-[0.2em]">
+                  <RotateCcw className="w-4 h-4" /> Solicitações de Remarcação
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-amber-100/50">
+                  {solicitacoesRemarcacao.map((sol: any) => (
+                    <div key={sol.id} className="p-5 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight">
+                          {sol.contratos?.profiles?.full_name}
+                        </p>
+                        <Badge variant="warning" className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0">Solicitado</Badge>
+                      </div>
+                      <div className="flex flex-col gap-1 text-[10px] text-slate-500 font-bold">
+                        <div className="flex items-center gap-2">
+                          <span className="text-slate-400">De:</span> {formatDateTime(sol.data_hora)}
+                        </div>
+                        <div className="flex items-center gap-2 text-amber-700">
+                          <span className="text-amber-500">Para:</span> {formatDateTime(sol.data_hora_solicitada)}
+                        </div>
+                      </div>
+                      <Link href={`/professor/alunos/${sol.contrato_id}`} className="block w-full text-center py-2.5 rounded-xl bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-amber-700 shadow-lg shadow-amber-600/20 transition-all">
+                        Analisar Pedido
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card className="glass-card border-none overflow-hidden">
+
             <CardHeader className="flex flex-row items-center justify-between pb-4 bg-slate-50/50 border-b border-slate-100">
               <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
                 Meus Alunos

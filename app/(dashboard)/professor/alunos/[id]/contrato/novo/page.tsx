@@ -58,6 +58,12 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
   const [isOutroMaterial, setIsOutroMaterial] = useState(false)
   const [diaVencimento, setDiaVencimento] = useState('5')
   const [formaPagamento, setFormaPagamento] = useState('pix')
+  const [tipoContrato, setTipoContrato] = useState('semestral')
+  const [descontoValor, setDescontoValor] = useState('')
+  const [descontoPercentual, setDescontoPercentual] = useState('')
+  const [aulasTotais, setAulasTotais] = useState('20')
+
+
 
   useEffect(() => {
     async function loadStudent() {
@@ -98,9 +104,15 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
           valor: parseFloat(valor.replace(/\D/g, '')) / 100,
           livroAtual: livro,
           nivelAtual: nivel,
+          aulasTotais: parseInt(aulasTotais),
           diaVencimento: parseInt(diaVencimento),
+
           formaPagamento,
+          tipoContrato,
+          descontoValor: parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100,
+          descontoPercentual: parseFloat(descontoPercentual || '0'),
         }),
+
       })
 
       const data = await res.json()
@@ -171,6 +183,17 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
                   </div>
 
                   <div className="space-y-2.5">
+                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Quantidade Total de Aulas</Label>
+                    <Input 
+                      type="number"
+                      className="h-14 rounded-2xl bg-slate-50 border-slate-100 text-slate-900 font-bold" 
+                      value={aulasTotais} 
+                      onChange={e => setAulasTotais(e.target.value)} 
+                    />
+                  </div>
+
+
+                  <div className="space-y-2.5">
                     <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nível de Inglês</Label>
                     <select 
                       className="w-full h-14 rounded-2xl bg-slate-50 border-slate-100 px-4 font-bold text-slate-900 focus:outline-none focus:border-blue-500"
@@ -219,6 +242,48 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
                     />
                   </div>
 
+                  <div className="col-span-2 space-y-4">
+                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Tipo de Contrato / Modalidade</Label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setTipoContrato('semestral')}
+                        className={`flex-1 h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${tipoContrato === 'semestral' ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400'}`}
+                      >
+                        Semestral (Padrão)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setTipoContrato('ad-hoc')}
+                        className={`flex-1 h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${tipoContrato === 'ad-hoc' ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400'}`}
+                      >
+                        Ad-hoc (Hora/Aula)
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Desconto (Valor Fixo)</Label>
+                    <Input 
+                      className="h-14 rounded-2xl bg-slate-50 border-slate-100 text-slate-900 font-bold" 
+                      placeholder="R$ 0,00" 
+                      value={descontoValor} 
+                      onChange={e => setDescontoValor(maskCurrency(e.target.value))} 
+                    />
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Desconto (Percentual %)</Label>
+                    <Input 
+                      type="number"
+                      className="h-14 rounded-2xl bg-slate-50 border-slate-100 text-slate-900 font-bold" 
+                      placeholder="0%" 
+                      value={descontoPercentual} 
+                      onChange={e => setDescontoPercentual(e.target.value)} 
+                    />
+                  </div>
+
+
                   <div className="col-span-2 space-y-2.5">
                     <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Forma de Pagamento</Label>
                     <div className="flex gap-2">
@@ -241,6 +306,7 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
 
                   <div className="col-span-2 space-y-4">
                     <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Dias Escolhidos</Label>
+
                     <div className="flex flex-wrap gap-2">
                       {DIAS_SEMANA.map(dia => (
                         <button
