@@ -28,15 +28,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
       {/* Sidebar */}
       <aside className="w-72 flex flex-col m-4 mr-0 z-10">
         <div className="flex-1 glass-panel rounded-[2rem] border-white/20 flex flex-col overflow-hidden shadow-2xl shadow-blue-900/5">
-          <div className="p-8 pb-6">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-2xl lms-gradient overflow-hidden flex items-center justify-center shadow-lg shadow-blue-500/20">
-                <Logo src="/logo-cantoni.png" fallbackAvatar="C" />
+          <div className="p-8 pb-4">
+            <div className="flex flex-col items-center text-center space-y-4">
+              <div className="w-48 h-24 overflow-hidden flex items-center justify-center">
+                <Logo src="/logo-cantoni.svg" fallbackAvatar="C" />
               </div>
-              <div className="space-y-0.5">
-                <p className="font-black text-blue-900 leading-none tracking-tight uppercase">Cantoni</p>
-                <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-tight">Learning Management System</p>
-              </div>
+              <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] leading-tight max-w-[140px]">
+                Learning Management System
+              </p>
             </div>
           </div>
 

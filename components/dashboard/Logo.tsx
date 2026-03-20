@@ -22,7 +22,7 @@ export function Logo({ src, fallbackAvatar }: LogoProps) {
     <img 
       src={src} 
       alt="Logo" 
-      className="w-full h-full object-contain"
+      className="w-full h-auto object-contain max-h-32 p-2"
       onError={() => setError(true)}
     />
   )
