@@ -5,9 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { formatCurrency, formatDateTime, formatDateOnly } from '@/lib/utils'
-import { Users, BookOpen, AlertCircle, Clock } from 'lucide-react'
+import { Users, BookOpen, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2 } from 'lucide-react'
+import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, parseISO, isSameDay, isToday } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
-export default async function ProfessorDashboard() {
+interface PageProps {
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}
+
+export default async function ProfessorDashboard({ searchParams }: PageProps) {
+  const resolvedParams = await searchParams
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
@@ -15,41 +22,63 @@ export default async function ProfessorDashboard() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'professor') redirect('/aluno')
 
+  // Week navigation logic
+  const weekParam = typeof resolvedParams.week === 'string' ? resolvedParams.week : null
+  const selectedDate = weekParam ? parseISO(weekParam) : new Date()
+  
+  // Start of week (Monday)
+  const weekStart = startOfWeek(selectedDate, { weekStartsOn: 1 })
+  const weekEnd = endOfWeek(selectedDate, { weekStartsOn: 1 })
+
+  const weekStartISO = weekStart.toISOString()
+  const weekEndISO = weekEnd.toISOString()
+
+  // Navigation URLs
+  const prevWeek = format(subWeeks(weekStart, 1), 'yyyy-MM-dd')
+  const nextWeek = format(addWeeks(weekStart, 1), 'yyyy-MM-dd')
+
+  // Fetch classes for the whole week
+  const { data: aulasSemana } = await supabase
+    .from('aulas')
+    .select('*, contratos(profiles(full_name))')
+    .gte('data_hora', weekStartISO)
+    .lte('data_hora', weekEndISO)
+    .order('data_hora')
+
+  // Group classes by day (Monday to Sunday)
+  const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
+    const day = new Date(weekStart)
+    day.setDate(weekStart.getDate() + i)
+    return day
+  })
+
+  const aulasPorDia = daysOfWeek.map(day => ({
+    day,
+    aulas: aulasSemana?.filter((aula: any) => isSameDay(new Date(aula.data_hora), day)) || []
+  }))
+
+  // Rest of the data
   const today = new Date()
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
   const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
-
-  // Aulas de hoje
   const { data: aulasHoje } = await supabase
     .from('aulas')
-    .select('*, contratos(profiles(full_name))')
+    .select('id')
     .gte('data_hora', todayStart)
     .lt('data_hora', todayEnd)
     .in('status', ['agendada', 'confirmada'])
-    .order('data_hora')
 
-  // Pagamentos pendentes/atrasados
   const { data: pagamentosPendentes } = await supabase
     .from('pagamentos')
     .select('*, contratos(profiles(full_name, email))')
     .in('status', ['pendente', 'atrasado'])
     .order('data_vencimento')
 
-  // Total alunos ativos
   const { count: totalAlunos } = await supabase
     .from('contratos')
     .select('*', { count: 'exact', head: true })
     .eq('status', 'ativo')
 
-  // Alunos com remarcações perto do limite este mês
-  const mesAtual = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0]
-  const { data: remarcacoesMes } = await supabase
-    .from('remarcacoes_mes')
-    .select('*, profiles(full_name), aluno_id')
-    .eq('mes', mesAtual)
-    .gte('quantidade', 1)
-
-  // Lista de alunos com contratos ativos
   const { data: alunosAtivos } = await supabase
     .from('contratos')
     .select('*, profiles(full_name, email, birth_date, nivel), planos(freq_semana, remarca_max_mes), pagamentos(status, parcela_num, valor, data_vencimento)')
@@ -67,7 +96,7 @@ export default async function ProfessorDashboard() {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-blue-100">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-              Painel de Controle
+              Gabriel Cantoni LMS
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
               Bom dia, Gabriel! 🍎
@@ -146,116 +175,124 @@ export default async function ProfessorDashboard() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-        {/* Aulas de hoje */}
-        <Card className="glass-card border-none overflow-hidden flex flex-col">
-          <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
-            <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              Cronograma de Hoje
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0 flex-1">
-            {aulasHoje && aulasHoje.length > 0 ? (
-              <div className="divide-y divide-slate-100">
-                {aulasHoje.map((aula: any) => (
-                  <div key={aula.id} className="p-6 flex items-center justify-between group hover:bg-slate-50/80 transition-all">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black group-hover:scale-110 transition-transform">
-                        {new Date(aula.data_hora).getHours()}h
-                      </div>
-                      <div>
-                        <p className="font-black text-slate-900 tracking-tight leading-none group-hover:text-blue-900">
-                          {(aula.contratos as any)?.profiles?.full_name}
-                        </p>
-                        <p className="text-[10px] text-slate-400 font-bold uppercase mt-1 tracking-widest">
-                          {new Date(aula.data_hora).toLocaleTimeString('pt-BR', { minute: '2-digit' })} — 45 MIN
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      {aula.meet_link && (
-                        <a href={aula.meet_link} target="_blank" rel="noopener noreferrer"
-                          className="px-4 py-2 rounded-xl lms-gradient text-white text-[10px] font-black uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:translate-y-[-2px] transition-all">
-                          Meeting
-                        </a>
-                      )}
-                      <Badge className="bg-emerald-50 text-emerald-600 border-none text-[9px] font-black uppercase px-2 py-0.5">{aula.status}</Badge>
-                    </div>
+      <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
+        {/* Cronograma Semanal */}
+        <div className="xl:col-span-8 space-y-6">
+          <div className="flex items-center justify-between bg-white/50 p-4 rounded-[2rem] border border-white/40 shadow-sm backdrop-blur-md">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/30">
+                <CalendarIcon className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-blue-900 uppercase tracking-widest leading-none">Minha Semana</h3>
+                <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                  {format(weekStart, 'dd/MM', { locale: ptBR })} — {format(weekEnd, 'dd/MM', { locale: ptBR })}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Link href={`/professor?week=${prevWeek}`} className="p-2.5 rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-transparent hover:border-slate-100">
+                <ChevronLeft className="w-4 h-4" />
+              </Link>
+              <Link href="/professor" className="px-5 py-2 rounded-xl bg-white text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-blue-600 border border-slate-100 shadow-sm transition-all hover:shadow-md">
+                Hoje
+              </Link>
+              <Link href={`/professor?week=${nextWeek}`} className="p-2.5 rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-transparent hover:border-slate-100">
+                <ChevronRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-4">
+            {aulasPorDia.map(({ day, aulas }) => {
+              const isActive = isToday(day)
+              return (
+                <div key={day.toISOString()} className={`flex flex-col gap-3 p-4 rounded-3xl transition-all duration-300 ${isActive ? 'bg-blue-50/50 ring-2 ring-blue-100' : 'bg-slate-50/30 hover:bg-white/50 border border-slate-100'}`}>
+                  <div className="text-center pb-2 border-b border-slate-100">
+                    <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
+                      {format(day, 'eee', { locale: ptBR })}
+                    </p>
+                    <p className={`text-xl font-black mt-1 ${isActive ? 'text-blue-900' : 'text-slate-600'}`}>
+                      {format(day, 'dd')}
+                    </p>
                   </div>
+
+                  <div className="flex-1 space-y-3 min-h-[100px]">
+                    {aulas.length > 0 ? (
+                      aulas.map((aula: any) => {
+                        const isDada = aula.status === 'dada'
+                        return (
+                          <div key={aula.id} className={`p-4 rounded-2xl border transition-all relative overflow-hidden group ${isDada ? 'bg-slate-100/50 border-slate-100 opacity-60' : 'bg-white border-blue-50 shadow-sm hover:shadow-md hover:border-blue-100'}`}>
+                            {isDada && (
+                              <div className="absolute top-1 right-1">
+                                <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                              </div>
+                            )}
+                            <p className={`text-[10px] font-black leading-tight ${isDada ? 'text-slate-400 line-through' : 'text-slate-900 group-hover:text-blue-900'}`}>
+                              {(aula.contratos as any)?.profiles?.full_name?.split(' ')[0]}
+                            </p>
+                            <p className="text-[9px] font-bold text-slate-400 mt-1">
+                              {format(new Date(aula.data_hora), 'HH:mm')}
+                            </p>
+                            {!isDada && aula.meet_link && (
+                              <a href={aula.meet_link} target="_blank" rel="noopener noreferrer" className="mt-2 block text-center py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+                                Meet
+                              </a>
+                            )}
+                          </div>
+                        )
+                      })
+                    ) : (
+                      <div className="flex items-center justify-center h-full text-[8px] font-bold text-slate-300 uppercase tracking-widest">
+                        Livre
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Sidebar Rights: Alunos Recentes */}
+        <div className="xl:col-span-4 space-y-6">
+          <Card className="glass-card border-none overflow-hidden h-full">
+            <CardHeader className="flex flex-row items-center justify-between pb-4 bg-slate-50/50 border-b border-slate-100">
+              <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+                Meus Alunos
+              </CardTitle>
+              <Link href="/professor/alunos" className="text-[9px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors">
+                Ver Todos
+              </Link>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="divide-y divide-slate-100">
+                {alunosAtivos?.slice(0, 8).map((contrato: any) => (
+                  <Link key={contrato.id} href={`/professor/alunos/${contrato.aluno_id}`} className="p-5 flex items-center justify-between group hover:bg-slate-50/80 transition-all">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">
+                        {contrato.profiles?.full_name?.charAt(0)}
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-[11px] font-black text-slate-900 tracking-tight leading-none group-hover:text-blue-900 truncate">
+                          {contrato.profiles?.full_name}
+                        </p>
+                        <div className="flex items-center gap-2 mt-1.5">
+                          <Badge className="bg-blue-50/50 text-blue-600 border-none text-[8px] font-black uppercase px-1.5 py-0">
+                            {contrato.profiles?.nivel || 'N/D'}
+                          </Badge>
+                          <span className="text-[9px] font-bold text-slate-400">{contrato.aulas_restantes} aulas</span>
+                        </div>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 transition-all transform group-hover:translate-x-1" />
+                  </Link>
                 ))}
               </div>
-            ) : (
-              <div className="h-full flex flex-col items-center justify-center py-20 text-slate-300">
-                <BookOpen className="w-12 h-12 mb-4 opacity-10" />
-                <p className="text-xs font-black uppercase tracking-widest">Tudo livre por hoje</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Alunos recentes */}
-        <Card className="glass-card border-none overflow-hidden">
-          <CardHeader className="flex flex-row items-center justify-between pb-4 bg-slate-50/50 border-b border-slate-100">
-            <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              Gestão de Alunos
-            </CardTitle>
-            <Link href="/professor/alunos" className="text-[10px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors">
-              Ver Painel →
-            </Link>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-400">
-                    <th className="text-left py-6 px-8 font-black text-[10px] uppercase tracking-widest">Aluno</th>
-                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest text-center">Aulas</th>
-                    <th className="text-right py-6 px-8 font-black text-[10px] uppercase tracking-widest">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {alunosAtivos?.slice(0, 5).map((contrato: any) => {
-                    const pagAtual = contrato.pagamentos?.find(
-                      (p: any) => p.status === 'pendente' || p.status === 'atrasado'
-                    )
-                    return (
-                      <tr key={contrato.id} className="group hover:bg-slate-50/50 transition-all duration-300">
-                        <td className="py-6 px-8">
-                          <p className="font-black text-slate-900 tracking-tight leading-none group-hover:text-blue-900">
-                            {contrato.profiles?.full_name}
-                          </p>
-                          <div className="flex flex-wrap items-center gap-2 mt-1">
-                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest italic">
-                              {formatDateOnly(contrato.profiles?.birth_date)}
-                            </p>
-                            <Badge className="bg-blue-50 text-blue-600 border-none text-[8px] font-black uppercase px-1.5 py-0">
-                              {contrato.profiles?.nivel || 'N/D'}
-                            </Badge>
-                          </div>
-                        </td>
-                        <td className="py-6 px-4 text-center">
-                          <div className="inline-flex flex-col items-center bg-blue-50/50 px-3 py-1.5 rounded-xl border border-blue-100">
-                            <span className="font-black text-blue-900 text-sm leading-none">{contrato.aulas_restantes}</span>
-                            <span className="text-[9px] text-blue-400 font-black uppercase tracking-tight">lives</span>
-                          </div>
-                        </td>
-                        <td className="py-6 px-8 text-right">
-                          {pagAtual ? (
-                            <Badge variant={pagAtual.status === 'atrasado' ? 'destructive' : 'warning'} className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg">
-                              {pagAtual.status}
-                            </Badge>
-                          ) : (
-                            <Badge className="bg-emerald-50 text-emerald-600 border-none text-[9px] font-black uppercase px-2 py-0.5 rounded-lg">Regular</Badge>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
