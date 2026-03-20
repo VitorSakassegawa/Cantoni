@@ -53,7 +53,8 @@ export async function POST(request: NextRequest) {
 
   // Calculate Specs for tagging and installments
   const startObj = new Date(dataInicio + 'T12:00:00')
-  const specs = calculateContractSpecs(startObj, planoId, diasDaSemana)
+  const endObj = dataFim ? new Date(dataFim + 'T12:00:00') : undefined
+  const specs = calculateContractSpecs(startObj, planoId, diasDaSemana, tipoContrato, endObj)
 
   // Create contract
   const { data: contrato, error: contratoErr } = await serviceSupabase

@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select } from '@/components/ui/select'
-import { Calendar, BookOpen, Clock, Info, Percent, DollarSign } from 'lucide-react'
+import { Calendar, BookOpen, Clock, Info, Percent, DollarSign, AlertTriangle } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 import { maskCurrency } from '@/lib/utils'
@@ -48,9 +48,13 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
   const [dataFim, setDataFim] = useState('')
   const [horario, setHorario] = useState('18:00')
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
-  const [valor, setValor] = useState('')
-  const [aulasTotais, setAulasTotais] = useState('20')
+  
+  const [baseValue, setBaseValue] = useState(0)
+  const [valorFinalComMascara, setValorFinalComMascara] = useState('')
+  
+  const [aulasTotais, setAulasTotais] = useState('0')
   const [bonusAulas, setBonusAulas] = useState(0)
+  const [isCrossSemester, setIsCrossSemester] = useState(false)
   
   const [descontoValor, setDescontoValor] = useState('')
   const [descontoPercentual, setDescontoPercentual] = useState('')
@@ -60,34 +64,96 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
   const [diaVencimento, setDiaVencimento] = useState('5')
   const [formaPagamento, setFormaPagamento] = useState('pix')
 
-  // Auto-calculation
+  // Auto-calculation on any relevant field change
   useEffect(() => {
     if (dataInicio && diasSelecionados.length > 0) {
       try {
         const start = new Date(dataInicio + 'T12:00:00')
-        const specs = calculateContractSpecs(start, parseInt(planoId), diasSelecionados)
+        const manualEnd = dataFim ? new Date(dataFim + 'T12:00:00') : undefined
         
-        setDataFim(specs.endDate.toISOString().split('T')[0])
+        const specs = calculateContractSpecs(
+          start, 
+          parseInt(planoId), 
+          diasSelecionados, 
+          tipoContrato,
+          manualEnd
+        )
+        
+        if (!dataFim || tipoContrato === 'semestral') {
+          setDataFim(specs.endDate.toISOString().split('T')[0])
+        }
+        
         setAulasTotais(specs.totalLessons.toString())
         setBonusAulas(specs.bonusLessons)
+        setBaseValue(specs.totalValue)
+        setIsCrossSemester(specs.isCrossSemester)
 
-        // Apply discounts
-        const dValor = parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100
-        const dPerc = parseFloat(descontoPercentual || '0')
-        
-        let finalValue = specs.totalValue
-        if (dPerc > 0) finalValue = finalValue * (1 - dPerc / 100)
-        if (dValor > 0) finalValue = finalValue - dValor
-
-        setValor(maskCurrency((finalValue * 100).toString()))
+        // Initial Final Value without discounts yet
+        updateFinalValue(specs.totalValue, descontoValor, descontoPercentual)
       } catch (e) {
         console.error('Calculation error:', e)
       }
     }
-  }, [dataInicio, planoId, diasSelecionados, tipoContrato, descontoValor, descontoPercentual])
+  }, [dataInicio, dataFim, planoId, diasSelecionados, tipoContrato])
+
+  // Cross-feeding Logic
+  const handleDescontoValorChange = (val: string) => {
+    setDescontoValor(val)
+    if (baseValue > 0) {
+      const numericVal = parseFloat(val.replace(/\D/g, '') || '0') / 100
+      const percentage = (numericVal / baseValue) * 100
+      setDescontoPercentual(percentage > 0 ? percentage.toFixed(1) : '')
+      updateFinalValue(baseValue, val, percentage > 0 ? percentage.toFixed(1) : '')
+    }
+  }
+
+  const handleDescontoPercentualChange = (val: string) => {
+    setDescontoPercentual(val)
+    if (baseValue > 0) {
+      const numericPerc = parseFloat(val || '0')
+      const dollarValue = (baseValue * numericPerc) / 100
+      const maskedDollar = maskCurrency((dollarValue * 100).toFixed(0))
+      setDescontoValor(dollarValue > 0 ? maskedDollar : '')
+      updateFinalValue(baseValue, dollarValue > 0 ? maskedDollar : '', val)
+    }
+  }
+
+  const updateFinalValue = (base: number, dValor: string, dPerc: string) => {
+    const dv = parseFloat(dValor.replace(/\D/g, '') || '0') / 100
+    const dp = parseFloat(dPerc || '0')
+    
+    // We don't stack them here, we assume they represent the SAME discount
+    // If user typed % first, we use that. If they typed R$, we use that.
+    // Actually, in cross-feeding, they are equivalent.
+    let finalValue = base - dv
+    if (finalValue < 0) finalValue = 0
+    setValorFinalComMascara(maskCurrency((finalValue * 100).toString()))
+  }
+
+  const toggleDia = (dia: number) => {
+    if (tipoContrato === 'semestral') {
+      const limit = parseInt(planoId)
+      if (!diasSelecionados.includes(dia) && diasSelecionados.length >= limit) {
+        toast.error(`O plano ${planoId}x permite apenas ${limit} dia(s) na semana.`)
+        return
+      }
+    }
+    setDiasSelecionados(prev => 
+      prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]
+    )
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (isCrossSemester && tipoContrato === 'semestral') {
+      toast.error('Contratos semestrais não podem ultrapassar o limite do semestre (Jul/Dez). Crie dois contratos separados.')
+      return
+    }
+    if (diasSelecionados.length < parseInt(planoId)) {
+      toast.error(`Selecione ${planoId} dia(s) para este plano.`)
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -103,7 +169,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           ano: new Date(dataInicio).getFullYear(),
           diasDaSemana: diasSelecionados,
           horario,
-          valor: parseFloat(valor.replace(/\D/g, '')) / 100,
+          valor: parseFloat(valorFinalComMascara.replace(/\D/g, '')) / 100,
           livroAtual: livro,
           nivelAtual: nivel,
           aulasTotais: parseInt(aulasTotais),
@@ -129,6 +195,19 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
 
   return (
     <div className="space-y-8 animate-fade-in">
+      {isCrossSemester && tipoContrato === 'semestral' && (
+        <div className="bg-rose-50 border-2 border-rose-100 rounded-[2rem] p-8 flex items-start gap-6 animate-pulse">
+          <AlertTriangle className="w-10 h-10 text-rose-500 shrink-0" />
+          <div className="space-y-2">
+            <h4 className="font-black text-rose-900 uppercase text-xs tracking-widest">Atenção: Limite Semestral Excedido</h4>
+            <p className="text-rose-800/70 text-sm font-medium leading-relaxed">
+              Planos **Semestral Padrão** devem ser limitados a um único semestre (Jan-Jul ou Ago-Dez). 
+              Seu período atual atravessa essa fronteira. Por favor, ajuste a data de término ou crie dois contratos separados.
+            </p>
+          </div>
+        </div>
+      )}
+
       <Card className="glass-card border-none overflow-hidden hover:shadow-2xl transition-all">
         <div className="lms-gradient h-2" />
         <CardHeader className="p-8 pb-4">
@@ -143,15 +222,21 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Tipo de Contrato</Label>
-              <Select value={tipoContrato} onChange={e => setTipoContrato(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
+              <Select value={tipoContrato} onChange={e => {
+                setTipoContrato(e.target.value)
+                if (e.target.value === 'semestral') setIsCrossSemester(false)
+              }} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
                 <option value="semestral">Semestral Padrão</option>
-                <option value="ad-hoc">Ad-hoc (Hora/Aula)</option>
+                <option value="ad-hoc">Personalizado (Hora/Aula)</option>
               </Select>
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Plano (Aulas Semanais)</Label>
-              <Select value={planoId} onChange={e => setPlanoId(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Plano (Periodicidade)</Label>
+              <Select value={planoId} onChange={e => {
+                setPlanoId(e.target.value)
+                setDiasSelecionados([]) // Reset days on plan change
+              }} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
                 <option value="1">VIP 1x por semana</option>
                 <option value="2">VIP 2x por semana</option>
               </Select>
@@ -179,6 +264,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
                 className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
                 value={dataFim} 
                 onChange={e => setDataFim(e.target.value)} 
+                disabled={tipoContrato === 'semestral'}
                 required
               />
             </div>
@@ -198,17 +284,18 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           </div>
 
           <div className="space-y-4">
-            <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Dias da Semana</Label>
+            <div className="flex justify-between items-end pl-1 pr-1">
+              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.15em]">Escolha os {planoId} dia(s) da semana</Label>
+              <Badge variant="outline" className="text-[8px] font-black uppercase border-slate-200 text-slate-400">
+                {diasSelecionados.length} / {planoId} SELECIONADOS
+              </Badge>
+            </div>
             <div className="flex flex-wrap gap-2">
               {DIAS_SEMANA.map((dia) => (
                 <button
                   key={dia.value}
                   type="button"
-                  onClick={() => {
-                    setDiasSelecionados(prev => 
-                      prev.includes(dia.value) ? prev.filter(d => d !== dia.value) : [...prev, dia.value]
-                    )
-                  }}
+                  onClick={() => toggleDia(dia.value)}
                   className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
                     diasSelecionados.includes(dia.value)
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 scale-105'
@@ -226,29 +313,30 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           {/* Section 3: Investimento */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Investimento Total (Calculado)</Label>
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Investimento Final (Total)</Label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
                 <Input 
-                  className="h-14 rounded-2xl bg-emerald-50/50 border-emerald-100 text-emerald-700 font-black text-lg pl-11 focus:ring-emerald-500" 
-                  value={valor} 
-                  onChange={e => setValor(maskCurrency(e.target.value))} 
-                  required
+                  className="h-14 rounded-2xl bg-emerald-50 border-emerald-100 text-emerald-700 font-black text-lg pl-11 focus:ring-emerald-500" 
+                  value={valorFinalComMascara} 
+                  readOnly
                 />
               </div>
-              <p className="text-[9px] text-slate-400 font-bold pl-1 uppercase tracking-widest italic">Valor baseado em {aulasTotais} aulas úteis</p>
+              <p className="text-[9px] text-slate-400 font-bold pl-1 uppercase tracking-widest italic">
+                {tipoContrato === 'semestral' ? 'Base Semestral' : 'Base R$ 90,00/aula'} x {aulasTotais} aulas
+              </p>
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Total de Aulas</Label>
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Total de Aulas Planejadas</Label>
               <div className="relative">
                 <Input 
                   type="number" 
                   className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
                   value={aulasTotais} 
-                  onChange={e => setAulasTotais(e.target.value)} 
+                  readOnly
                 />
-                {bonusAulas > 0 && (
+                {bonusAulas > 0 && tipoContrato === 'semestral' && (
                   <Badge className="absolute right-3 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-700 border-none text-[8px] font-black uppercase">
                     {bonusAulas} BÔNUS INCLUSAS
                   </Badge>
@@ -257,37 +345,41 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
             </div>
           </div>
 
-          {/* Section 4: Descontos */}
-          {(valor && valor !== 'R$ 0,00') && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 duration-500">
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-400">Desconto Fixo (R$)</Label>
+          {/* Section 4: Descontos Cross-feeding */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 duration-500">
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500">Desconto Fixo (R$)</Label>
+              <div className="relative">
+                <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
-                  className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
+                  className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold pl-11" 
                   value={descontoValor} 
-                  onChange={e => setDescontoValor(maskCurrency(e.target.value))} 
+                  onChange={e => handleDescontoValorChange(maskCurrency(e.target.value))} 
                   placeholder="R$ 0,00"
                 />
               </div>
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-400">Desconto Percentual (%)</Label>
+            </div>
+            <div className="space-y-3">
+              <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500">Desconto Percentual (%)</Label>
+              <div className="relative">
+                <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
                   type="number"
-                  className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
+                  className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold pl-11" 
                   value={descontoPercentual} 
-                  onChange={e => setDescontoPercentual(e.target.value)} 
+                  onChange={e => handleDescontoPercentualChange(e.target.value)} 
                   placeholder="0"
                 />
               </div>
             </div>
-          )}
+          </div>
 
           <div className="h-px bg-slate-50" />
 
-          {/* Section 5: Detalhes */}
+          {/* Section 5: Detalhes Acadêmicos */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Livro Atual</Label>
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Livro / Material</Label>
               <Input 
                 className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
                 value={livro} 
@@ -296,7 +388,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nível Atual</Label>
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nível</Label>
               <Select value={nivel} onChange={e => setNivel(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
                 {NIVEIS.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
               </Select>
@@ -305,7 +397,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Dia Vencimento</Label>
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Vencimento (Dia)</Label>
               <Input 
                 type="number" 
                 className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
@@ -314,10 +406,10 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Forma Pagamento</Label>
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Pagamento</Label>
               <Select value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
                 <option value="pix">PIX</option>
-                <option value="cartao">Cartão de Crédito</option>
+                <option value="cartao">Cartão</option>
                 <option value="dinheiro">Dinheiro</option>
               </Select>
             </div>
@@ -325,23 +417,37 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
         </CardContent>
       </Card>
 
-      <div className="p-6 bg-slate-50 rounded-3xl border border-slate-100 space-y-4">
+      <div className="p-8 bg-blue-50 rounded-[2.5rem] border border-blue-100 space-y-4">
         <div className="flex items-center gap-3">
           <Info className="w-5 h-5 text-blue-500" />
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-900">Resumo Técnico</p>
+          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-900">Resumo de Regras Aplicadas</h4>
         </div>
-        <p className="text-[10px] text-slate-500 leading-relaxed font-medium">
-          Valor calculado via pro-rata dia baseado em dias úteis no semestre, excluindo feriados ANBIMA.
-          Regra de 20/40 aulas semestrais considerada para cálculo do valor base.
-        </p>
+        <ul className="grid md:grid-cols-2 gap-4">
+          <li className="flex gap-3 items-start">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+            <p className="text-[10px] text-blue-800 font-medium">Semestral: Jan-Jul / Ago-Dez. Travado por semestre.</p>
+          </li>
+          <li className="flex gap-3 items-start">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+            <p className="text-[10px] text-blue-800 font-medium">Personalizado: R$ 90,00 por aula. Sem trava de data.</p>
+          </li>
+          <li className="flex gap-3 items-start">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+            <p className="text-[10px] text-blue-800 font-medium">Feriados ANBIMA são pulados automaticamente.</p>
+          </li>
+          <li className="flex gap-3 items-start">
+            <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
+            <p className="text-[10px] text-blue-800 font-medium">Dias selecionados limitados pela modalidade (1x ou 2x).</p>
+          </li>
+        </ul>
       </div>
 
       <Button 
         onClick={handleSubmit}
-        className="w-full h-16 rounded-[2rem] lms-gradient text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-95 transition-all"
-        disabled={loading}
+        className="w-full h-20 rounded-[2.5rem] lms-gradient text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50"
+        disabled={loading || (isCrossSemester && tipoContrato === 'semestral')}
       >
-        {loading ? 'Processando...' : 'Finalizar Cadastro de Contrato'}
+        {loading ? 'Processando Contrato...' : 'Finalizar Registro Acadêmico'}
       </Button>
     </div>
   )
