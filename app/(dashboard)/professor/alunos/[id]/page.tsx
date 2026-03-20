@@ -92,8 +92,11 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
             <Link href={`/professor/alunos/${id}/perfil`}>
               <Button variant="outline" className="h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50">Editar Perfil</Button>
             </Link>
-            <Button className="h-12 px-6 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Novo Contrato</Button>
+            <Link href={`/professor/alunos/${id}/contrato/novo`}>
+              <Button className="h-12 px-6 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Novo Contrato</Button>
+            </Link>
           </div>
+
         </div>
       </div>
 
@@ -258,8 +261,11 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
               <AlertCircle className="w-12 h-12 text-amber-500 mb-2" />
               <h3 className="text-xl font-black text-amber-900 tracking-tight">Sem Contrato Ativo</h3>
               <p className="text-amber-800/70 font-medium max-w-md">Este aluno não possui um contrato vigente para o semestre atual. É necessário configurar um novo contrato para gerar o cronograma de aulas.</p>
-              <Button className="h-12 px-8 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-amber-500/20 mt-4">Configurar Contrato Agora</Button>
+              <Link href={`/professor/alunos/${id}/contrato/novo`}>
+                <Button className="h-12 px-8 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-amber-500/20 mt-4">Configurar Contrato Agora</Button>
+              </Link>
             </div>
+
           )}
 
           {/* Pagamentos View */}
