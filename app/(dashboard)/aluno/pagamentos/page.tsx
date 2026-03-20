@@ -6,12 +6,18 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate, formatDateOnly } from '@/lib/utils'
 import { CreditCard, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
-import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
+import PaymentWrapper from '@/components/dashboard/PaymentWrapper'
 
 export default async function AlunoPagamentosPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', user.id)
+    .single()
 
   const { data: contrato } = await supabase
     .from('contratos')
@@ -70,11 +76,14 @@ export default async function AlunoPagamentosPage() {
                     <td className="py-6 px-4 text-xs font-bold text-slate-500">
                       {p.data_pagamento ? formatDate(p.data_pagamento) : <span className="text-slate-200">Aguardando</span>}
                     </td>
-                    <td className="py-6 px-8 text-right">
-                      {p.status !== 'pago' && p.pix_copia_cola ? (
-                        <div className="flex justify-end">
-                           <CopiarPixBtn codigo={p.pix_copia_cola} />
-                        </div>
+                    <td className="py-6 px-8 text-right flex justify-end">
+                      {p.status !== 'pago' ? (
+                        <PaymentWrapper 
+                          paymentId={p.id} 
+                          amount={Number(p.valor)} 
+                          email={profile?.email || ''} 
+                          nome={profile?.full_name || ''} 
+                        />
                       ) : (
                         <Badge variant={
                           p.status === 'pago' ? 'success' :
