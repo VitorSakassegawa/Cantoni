@@ -10,6 +10,7 @@ import { ChevronLeft, Mail, Phone, Fingerprint, Calendar, GraduationCap, BookOpe
 import AulaRow from '@/components/dashboard/AulaRow'
 import GerarCobrancaBtn from '@/components/dashboard/GerarCobrancaBtn'
 import StatusContratoSelect from '@/components/dashboard/StatusContratoSelect'
+import ContratoForm from '@/components/dashboard/ContratoForm'
 
 export default async function AlunoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -257,16 +258,20 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
               </CardContent>
             </Card>
           ) : (
-            <div className="bg-amber-50 border border-amber-100 rounded-[2.5rem] p-10 flex flex-col items-center text-center gap-4">
-              <AlertCircle className="w-12 h-12 text-amber-500 mb-2" />
-              <h3 className="text-xl font-black text-amber-900 tracking-tight">Sem Contrato Ativo</h3>
-              <p className="text-amber-800/70 font-medium max-w-md">Este aluno não possui um contrato vigente para o semestre atual. É necessário configurar um novo contrato para gerar o cronograma de aulas.</p>
-              <Link href={`/professor/alunos/${id}/contrato/novo`}>
-                <Button className="h-12 px-8 rounded-2xl bg-amber-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-amber-500/20 mt-4">Configurar Contrato Agora</Button>
-              </Link>
+            <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-700">
+              <div className="bg-amber-50 border border-amber-100 rounded-[2.5rem] p-10 flex flex-col items-center text-center gap-4 mb-10">
+                <AlertCircle className="w-12 h-12 text-amber-500 mb-2" />
+                <h3 className="text-xl font-black text-amber-900 tracking-tight">Finalizar Cadastro: Novo Contrato</h3>
+                <p className="text-amber-800/70 font-medium max-w-md">Para que o aluno possa acessar as aulas e realizar pagamentos, você precisa configurar o contrato inicial abaixo.</p>
+              </div>
+              
+              <ContratoForm 
+                alunoId={id} 
+                defaultNivel={aluno.nivel} 
+              />
             </div>
-
           )}
+
 
           {/* Pagamentos View */}
           <Card className="glass-card border-none overflow-hidden">

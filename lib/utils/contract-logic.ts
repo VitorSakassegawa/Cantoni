@@ -42,6 +42,9 @@ export function getSemesterInfo(date: Date) {
   }
 }
 
+const UNIT_RATE_1X = 1920 / 20 // 96
+const UNIT_RATE_2X = 2880 / 40 // 72
+
 export function calculateContractSpecs(startDate: Date, planoId: number, diasDaSemana: number[]) {
   const sem = getSemesterInfo(startDate)
   const endDate = sem.end
@@ -54,29 +57,37 @@ export function calculateContractSpecs(startDate: Date, planoId: number, diasDaS
 
   const freq = planoId === 1 ? '1x' : '2x'
   const maxRegular = freq === '1x' ? sem.maxRegular1x : sem.maxRegular2x
-  const totalValue = freq === '1x' ? sem.price1x : sem.price2x
+  const fullPrice = freq === '1x' ? sem.price1x : sem.price2x
+  const unitRate = freq === '1x' ? UNIT_RATE_1X : UNIT_RATE_2X
   
-  // Partial Months Calculation
-  // We count the months from startDate to endDate inclusive of the starting month
+  let regularLessons = 0
+  let bonusLessons = 0
+  let totalValue = 0
+
+  if (lessonDates.length >= maxRegular) {
+    regularLessons = maxRegular
+    bonusLessons = lessonDates.length - maxRegular
+    totalValue = fullPrice
+  } else {
+    regularLessons = lessonDates.length
+    bonusLessons = 0
+    totalValue = regularLessons * unitRate
+  }
+
+  // Monthly installments calculation
   const startMonth = startOfMonth(startDate)
   const endMonthDate = endOfMonth(endDate)
   const remainingMonths = differenceInMonths(endMonthDate, startMonth) + 1
-  
-  // Value per month = Total Semester Value / Semester Total Months
-  const valuePerMonth = totalValue / sem.totalMonths
-  const partialValue = valuePerMonth * remainingMonths
-
-  // Proportional Regular Lessons
-  const proportionalRegularMax = Math.ceil((maxRegular / sem.totalMonths) * remainingMonths)
 
   return {
     semesterLabel: sem.label,
     endDate,
     totalLessons: lessonDates.length,
-    regularLessons: Math.min(lessonDates.length, proportionalRegularMax),
-    bonusLessons: Math.max(0, lessonDates.length - proportionalRegularMax),
-    totalValue: Math.round(partialValue * 100) / 100,
+    regularLessons,
+    bonusLessons,
+    totalValue: Math.round(totalValue * 100) / 100,
     remainingMonths,
     lessonDates
   }
 }
+
