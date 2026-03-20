@@ -438,6 +438,9 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
                 <option value="cartao">Cartão</option>
                 <option value="dinheiro">Dinheiro</option>
               </Select>
+              <p className="text-[9px] text-slate-400 font-bold pl-1 uppercase tracking-tight italic">
+                O aluno poderá trocar a forma de pagamento (PIX/Cartão) no checkout final.
+              </p>
             </div>
           </div>
         </CardContent>

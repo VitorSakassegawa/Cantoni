@@ -74,11 +74,16 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .in('status', ['agendada', 'confirmada'])
 
 
-  const { data: pagamentosPendentes } = await supabase
+  // Fetch all relevant payments (Paid, Pending, Overdue)
+  const { data: allPayments } = await supabase
     .from('pagamentos')
     .select('*, contratos(profiles(full_name, email))')
-    .in('status', ['pendente', 'atrasado'])
+    .in('status', ['pago', 'pendente', 'atrasado'])
     .order('data_vencimento')
+
+  const pagamentosPagos = allPayments?.filter((p: any) => p.status === 'pago') || []
+  const pagamentosPendentes = allPayments?.filter((p: any) => p.status === 'pendente') || []
+  const pagamentosAtrasados = allPayments?.filter((p: any) => p.status === 'atrasado') || []
 
   const { count: totalAlunos } = await supabase
     .from('contratos')
@@ -132,7 +137,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <div className="glass-card border-none overflow-hidden group p-8 relative">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <BookOpen className="w-16 h-16 text-blue-900" />
@@ -143,17 +148,6 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           </div>
           <div className="mt-4 h-1 w-12 bg-blue-600 rounded-full" />
         </div>
-
-        <Link href="/professor/pagamentos?status=pendente" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-amber-200 transition-all cursor-pointer">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <AlertCircle className="w-16 h-16 text-amber-900" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-4xl font-black text-amber-600 tracking-tighter">{pagamentosPendentes?.length || 0}</p>
-            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Faturas Pendentes</p>
-          </div>
-          <div className="mt-4 h-1 w-12 bg-amber-500 rounded-full" />
-        </Link>
 
         <Link href="/professor/alunos?status=ativo" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-emerald-200 transition-all cursor-pointer">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
@@ -166,14 +160,35 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           <div className="mt-4 h-1 w-12 bg-emerald-500 rounded-full" />
         </Link>
 
+        {/* Financial KPIs */}
+        <Link href="/professor/pagamentos?status=pago" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-blue-200 transition-all cursor-pointer">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <CheckCircle2 className="w-16 h-16 text-blue-900" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-4xl font-black text-blue-600 tracking-tighter">{pagamentosPagos.length}</p>
+            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Faturas Pagas</p>
+          </div>
+          <div className="mt-4 h-1 w-12 bg-blue-500 rounded-full" />
+        </Link>
+
+        <Link href="/professor/pagamentos?status=pendente" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-amber-200 transition-all cursor-pointer">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <AlertCircle className="w-16 h-16 text-amber-900" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-4xl font-black text-amber-600 tracking-tighter">{pagamentosPendentes.length}</p>
+            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Faturas Pendentes</p>
+          </div>
+          <div className="mt-4 h-1 w-12 bg-amber-500 rounded-full" />
+        </Link>
+
         <Link href="/professor/pagamentos?status=atrasado" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-red-200 transition-all cursor-pointer">
           <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
             <Clock className="w-16 h-16 text-red-900" />
           </div>
           <div className="space-y-1">
-            <p className="text-4xl font-black text-red-600 tracking-tighter">
-              {pagamentosPendentes?.filter((p: any) => p.status === 'atrasado').length || 0}
-            </p>
+            <p className="text-4xl font-black text-red-600 tracking-tighter">{pagamentosAtrasados.length}</p>
             <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Faturas Atrasadas</p>
           </div>
           <div className="mt-4 h-1 w-12 bg-red-500 rounded-full" />
