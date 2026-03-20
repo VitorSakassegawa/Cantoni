@@ -10,7 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { maskCPF, maskPhone, maskDate, maskCurrency } from '@/lib/utils'
-import { User, Mail, Phone, Fingerprint, Calendar, BookOpen, Clock, CheckCircle2, ChevronRight, GraduationCap, Info, AlertCircle } from 'lucide-react'
+import { User, Mail, Phone, Fingerprint, Calendar, BookOpen, Clock, CheckCircle2, ChevronRight, GraduationCap, Info, AlertCircle, ArrowRight } from 'lucide-react'
+import ContratoForm from '@/components/dashboard/ContratoForm'
 import {
   Dialog,
   DialogContent,
@@ -20,14 +21,6 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 
-const DIAS_SEMANA = [
-  { label: 'Segunda', value: 1 },
-  { label: 'Terça', value: 2 },
-  { label: 'Quarta', value: 3 },
-  { label: 'Quinta', value: 4 },
-  { label: 'Sexta', value: 5 },
-  { label: 'Sábado', value: 6 },
-]
 
 const NIVEIS = [
   { value: 'iniciante', label: 'Iniciante' },
@@ -38,14 +31,6 @@ const NIVEIS = [
   { value: 'certificado', label: 'Preparatório' },
 ]
 
-const EVOLVE_LEVELS = [
-  { id: 'evolve-1', label: 'Evolve Level 1', cefr: 'A1', desc: 'Beginner basics: greetings, family, numbers.' },
-  { id: 'evolve-2', label: 'Evolve Level 2', cefr: 'A2', desc: 'Elementary: everyday topics; immersive speaking lessons.' },
-  { id: 'evolve-3', label: 'Evolve Level 3', cefr: 'B1', desc: 'Intermediate: communication skills, grammar, vocabulary.' },
-  { id: 'evolve-4', label: 'Evolve Level 4', cefr: 'B1+', desc: 'Upper intermediate: decision-making tasks.' },
-  { id: 'evolve-5', label: 'Evolve Level 5', cefr: 'B2', desc: 'Advanced intermediate: complex discussions.' },
-  { id: 'evolve-6', label: 'Evolve Level 6', cefr: 'C1', desc: 'Proficient: nuanced expression; advanced speaking.' },
-]
 
 export default function NovoAlunoPage() {
   const router = useRouter()
@@ -67,23 +52,6 @@ export default function NovoAlunoPage() {
   const [birthDate, setBirthDate] = useState('')
   const [birthDateDisplay, setBirthDateDisplay] = useState('')
 
-  // Contrato form
-  const [planoId, setPlanoId] = useState('1')
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
-  const [horario, setHorario] = useState('18:00')
-  const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
-  const [valor, setValor] = useState('')
-  const [livro, setLivro] = useState('')
-  const [isOutroMaterial, setIsOutroMaterial] = useState(false)
-  const [diaVencimento, setDiaVencimento] = useState('5')
-  const [formaPagamento, setFormaPagamento] = useState('pix')
-
-  function toggleDia(dia: number) {
-    setDiasSelecionados(prev =>
-      prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]
-    )
-  }
 
   async function handleCriarAluno(e?: React.FormEvent, mode: 'next' | 'finish' = 'next') {
     if (e) e.preventDefault()
@@ -177,43 +145,7 @@ export default function NovoAlunoPage() {
     }
   }
 
-  async function handleCriarContrato(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
-
-    try {
-      const planoNum = parseInt(planoId)
-      const res = await fetch('/api/contratos/criar', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          alunoId: newAlunoId,
-          planoId: planoNum,
-          dataInicio,
-          dataFim,
-          semestre: new Date(dataInicio).getMonth() < 6 ? 'jan-jun' : 'jul-dez',
-          ano: new Date(dataInicio).getFullYear(),
-          diasDaSemana: diasSelecionados,
-          horario,
-          valor: parseFloat(valor.replace(/\D/g, '')) / 100,
-          livroAtual: livro,
-          nivelAtual: nivel,
-          diaVencimento: parseInt(diaVencimento),
-          formaPagamento,
-        }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Erro ao criar contrato')
-
-      router.push(`/professor/alunos/${newAlunoId}`)
-    } catch (err: any) {
-      setError(err.message)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // handleCriarContrato is now handled by the ContratoForm component
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -365,180 +297,26 @@ export default function NovoAlunoPage() {
                   </div>
                 </form>
               ) : (
-                <form onSubmit={handleCriarContrato} className="space-y-8">
-                  <div className="grid sm:grid-cols-2 gap-8">
-                    <div className="col-span-2 space-y-2.5">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Plano Financeiro</Label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <button
-                          type="button"
-                          onClick={() => setPlanoId('1')}
-                          className={`p-6 rounded-3xl border-2 text-left transition-all relative overflow-hidden ${planoId === '1' ? 'bg-white border-blue-600 ring-4 ring-blue-500/5' : 'bg-slate-50 border-slate-100 opacity-60'}`}
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <Clock className={`w-8 h-8 ${planoId === '1' ? 'text-blue-600' : 'text-slate-400'}`} />
-                            {planoId === '1' && <Badge className="bg-blue-600 text-white">ATIVO</Badge>}
-                          </div>
-                          <p className="font-black text-slate-900 uppercase text-xs tracking-widest">1x por Semana</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">20 aulas / semestre</p>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => setPlanoId('2')}
-                          className={`p-6 rounded-3xl border-2 text-left transition-all relative overflow-hidden ${planoId === '2' ? 'bg-white border-blue-600 ring-4 ring-blue-500/5' : 'bg-slate-50 border-slate-100 opacity-60'}`}
-                        >
-                          <div className="flex justify-between items-start mb-4">
-                            <Clock className={`w-8 h-8 ${planoId === '2' ? 'text-blue-600' : 'text-slate-400'}`} />
-                            {planoId === '2' && <Badge className="bg-blue-600 text-white">ATIVO</Badge>}
-                          </div>
-                          <p className="font-black text-slate-900 uppercase text-xs tracking-widest">2x por Semana</p>
-                          <p className="text-[10px] text-slate-400 font-bold uppercase mt-1">40 aulas / semestre</p>
-                        </button>
+                <div className="space-y-8">
+                  <div className="bg-blue-50/50 rounded-[2rem] p-8 border border-blue-100 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center text-blue-600">
+                        <User className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-black uppercase text-blue-400 tracking-widest leading-none mb-1">Perfil Criado</p>
+                        <h4 className="font-black text-slate-900 tracking-tight">{nome}</h4>
                       </div>
                     </div>
-
-                    <div className="space-y-2.5">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data Início</Label>
-                      <Input type="date" className="h-14 rounded-2xl bg-slate-50" value={dataInicio} onChange={e => setDataInicio(e.target.value)} required />
-                    </div>
-                    <div className="space-y-2.5">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data Fim</Label>
-                      <Input type="date" className="h-14 rounded-2xl bg-slate-50" value={dataFim} onChange={e => setDataFim(e.target.value)} required />
-                    </div>
-
-                    <div className="space-y-2.5">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Horário das Aulas</Label>
-                      <Input type="time" className="h-14 rounded-2xl bg-slate-50" value={horario} onChange={e => setHorario(e.target.value)} required />
-                    </div>
-                    <div className="space-y-2.5">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Investimento (TOTAL)</Label>
-                      <div className="relative group/input">
-                        <Input 
-                          className="h-14 rounded-2xl bg-blue-50 border-blue-100 text-blue-900 font-black" 
-                          placeholder="R$ 0,00" 
-                          value={valor} 
-                          onChange={e => setValor(maskCurrency(e.target.value))} 
-                          required 
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2.5">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Dia de Vencimento</Label>
-                      <Input 
-                        type="number" 
-                        min="1" 
-                        max="31" 
-                        className="h-14 rounded-2xl bg-slate-50 font-bold" 
-                        value={diaVencimento} 
-                        onChange={e => setDiaVencimento(e.target.value)} 
-                        required 
-                      />
-                    </div>
-
-                    <div className="space-y-2.5">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Forma de Pagamento</Label>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setFormaPagamento('pix')}
-                          className={`flex-1 h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${formaPagamento === 'pix' ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200'}`}
-                        >
-                          PIX
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setFormaPagamento('cartao')}
-                          className={`flex-1 h-14 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${formaPagamento === 'cartao' ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400 hover:border-blue-200'}`}
-                        >
-                          Cartão
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="col-span-2 space-y-4">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Dias Escolhidos</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {DIAS_SEMANA.map(dia => (
-                          <button
-                            key={dia.value}
-                            type="button"
-                            onClick={() => toggleDia(dia.value)}
-                            className={`h-12 px-6 rounded-2xl border-2 font-black text-[10px] uppercase tracking-widest transition-all ${diasSelecionados.includes(dia.value) ? 'bg-blue-600 border-blue-600 text-white shadow-lg' : 'bg-white border-slate-100 text-slate-400'}`}
-                          >
-                            {dia.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="col-span-2 space-y-4">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Material Didático (Cambridge Evolve)</Label>
-                      {!isOutroMaterial ? (
-                        <div className="grid sm:grid-cols-2 gap-3">
-                          {EVOLVE_LEVELS.map(l => (
-                            <button
-                              key={l.id}
-                              type="button"
-                              onClick={() => setLivro(l.label)}
-                              className={`p-4 rounded-[2rem] border-2 text-left transition-all ${livro === l.label ? 'bg-white border-blue-600 ring-4 ring-blue-500/5' : 'bg-slate-50 border-slate-100 opacity-60'}`}
-                            >
-                              <div className="flex justify-between items-start mb-1">
-                                <p className="font-black text-slate-900 uppercase text-[10px] tracking-widest">{l.label}</p>
-                                <Badge className="bg-blue-100 text-blue-600 border-none text-[8px]">{l.cefr}</Badge>
-                              </div>
-                              <p className="text-[9px] text-slate-400 font-medium leading-tight">{l.desc}</p>
-                            </button>
-                          ))}
-                          <button
-                            type="button"
-                            onClick={() => { setIsOutroMaterial(true); setLivro(''); }}
-                            className="p-4 rounded-[2rem] border-2 border-dashed border-slate-200 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-all flex items-center justify-center font-black text-[10px] uppercase tracking-widest"
-                          >
-                            Outro Material
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <div className="relative group/input">
-                            <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
-                            <Input 
-                              className="pl-12 h-14 rounded-2xl bg-slate-50" 
-                              placeholder="Nome do Material" 
-                              value={livro} 
-                              onChange={e => setLivro(e.target.value)} 
-                              autoFocus
-                            />
-                          </div>
-                          <button 
-                            type="button" 
-                            onClick={() => { setIsOutroMaterial(false); setLivro(''); }}
-                            className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline pl-1"
-                          >
-                            Voltar para Evolve
-                          </button>
-                        </div>
-                      )}
-                      
-                      <div className="bg-blue-50/50 rounded-2xl p-4 flex items-start gap-4 border border-blue-100/50">
-                        <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                        <p className="text-[9px] text-blue-800/60 font-medium leading-relaxed">
-                          <strong>Evolve</strong> is a six-level American English course from Cambridge, designed to build speaking confidence through student-centered activities and real-world topics.
-                        </p>
-                      </div>
-                    </div>
+                    <Button variant="ghost" className="h-10 rounded-xl text-[10px] font-black uppercase text-slate-400" onClick={() => setStep('aluno')}>EDITAR PERFIL</Button>
                   </div>
 
-                  {error && <p className="text-red-500 text-xs font-black uppercase tracking-widest">{error}</p>}
-
-                  <div className="pt-6 flex justify-between gap-4">
-                    <Button type="button" variant="ghost" onClick={() => setStep('aluno')} className="h-14 px-8 rounded-2xl text-slate-400 font-black text-[10px] uppercase tracking-widest">VOLTAR</Button>
-                    <Button type="submit" disabled={loading || diasSelecionados.length === 0} className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">
-                      {loading ? 'FINALIZANDO...' : 'CONCLUIR MATRÍCULA'}
-                    </Button>
-                  </div>
-                </form>
+                  <ContratoForm 
+                    alunoId={newAlunoId} 
+                    defaultNivel={nivel} 
+                    onSuccess={() => router.push(`/professor/alunos/${newAlunoId}`)}
+                  />
+                </div>
               )}
             </CardContent>
           </Card>
