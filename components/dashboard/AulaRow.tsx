@@ -161,10 +161,10 @@ export default function AulaRow({ aula, index, isProfessor }: Props) {
                   <a href={(aula as any).homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[9px] text-blue-500 hover:underline font-bold">
                     <ImageIcon className="w-3 h-3" /> Ver Print
                   </a>
-                ) : !isProfessor && (
+                ) : (
                   <label className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-800 cursor-pointer font-bold">
                     <Upload className="w-3 h-3" /> 
-                    {uploading ? 'Enviando...' : 'Anexar Print'}
+                    {uploading ? 'Enviando...' : isProfessor ? 'Subir Print' : 'Anexar Print'}
                     <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
                   </label>
                 )}

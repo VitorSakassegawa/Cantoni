@@ -254,28 +254,28 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           </Link>
         </div>
 
-        <div className="glass-card p-8 bg-gradient-to-br from-blue-600 to-blue-800 text-white flex flex-col justify-between relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-10">
+        <div className="glass-card p-8 bg-slate-900 text-white flex flex-col justify-between relative overflow-hidden ring-1 ring-white/10 shadow-2xl">
+          <div className="absolute top-0 right-0 p-8 opacity-5">
             <CheckCircle2 className="w-32 h-32" />
           </div>
           <div className="space-y-6 relative z-10">
-            <h3 className="text-xs font-black uppercase tracking-[0.2em] opacity-60">Status de Recebíveis</h3>
-            <div className="space-y-4">
-              <div className="flex justify-between items-end border-b border-white/10 pb-4">
-                <span className="text-[10px] font-bold uppercase opacity-70 tracking-widest">Pendentes</span>
-                <span className="text-xl font-black">{formatCurrency(pagamentosPendentes.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">Status de Recebíveis</h3>
+            <div className="space-y-5">
+              <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Pendentes</span>
+                <span className="text-2xl font-black text-white">{formatCurrency(pagamentosPendentes.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
               </div>
-              <div className="flex justify-between items-end border-b border-white/10 pb-4">
-                <span className="text-[10px] font-bold uppercase opacity-70 tracking-widest text-rose-200">Em Atraso</span>
-                <span className="text-xl font-black text-rose-100">{formatCurrency(pagamentosAtrasados.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
+              <div className="flex justify-between items-end border-b border-white/5 pb-4">
+                <span className="text-[10px] font-black uppercase text-rose-400 tracking-widest">Em Atraso</span>
+                <span className="text-2xl font-black text-rose-500">{formatCurrency(pagamentosAtrasados.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
               </div>
               <div className="flex justify-between items-end pt-2">
-                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-300">Total Pago</span>
-                <span className="text-2xl font-black text-emerald-50">{formatCurrency(pagamentosPagos.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400">Total Pago</span>
+                <span className="text-3xl font-black text-emerald-500">{formatCurrency(pagamentosPagos.reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0))}</span>
               </div>
             </div>
           </div>
-          <p className="text-[8px] font-bold opacity-40 uppercase tracking-widest mt-8 pointer-events-none">Atualizado via Mercado Pago Real-time</p>
+          <p className="text-[8px] font-bold text-slate-500 uppercase tracking-widest mt-10 pointer-events-none">Atualizado via Mercado Pago Real-time</p>
         </div>
       </div>
 

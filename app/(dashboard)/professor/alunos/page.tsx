@@ -60,8 +60,8 @@ export default async function AlunosPage() {
       <div className="grid gap-6">
         {alunos?.map((aluno: any) => {
           const contrato = contratos?.find((c: any) => c.aluno_id === aluno.id)
-          const pagPendente = contrato?.pagamentos?.find(
-            (p: any) => p.status === 'pendente' || p.status === 'atrasado'
+          const pagAtrasado = contrato?.pagamentos?.find(
+            (p: any) => p.status === 'atrasado'
           )
           
           return (
@@ -117,9 +117,9 @@ export default async function AlunosPage() {
                     </div>
 
                     <div className="flex items-center gap-3 min-w-[140px] justify-end">
-                      {pagPendente ? (
-                        <Badge variant={pagPendente.status === 'atrasado' ? 'destructive' : 'warning'} className="px-3 py-1 text-[10px] font-black uppercase tracking-widest">
-                          {pagPendente.status === 'atrasado' ? 'ATRASADO' : 'PENDENTE'}
+                      {pagAtrasado ? (
+                        <Badge variant="destructive" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                          ATRASADO
                         </Badge>
                       ) : contrato && (
                         <Badge className="bg-emerald-500 text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest">EM DIA</Badge>
