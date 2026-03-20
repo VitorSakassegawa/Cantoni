@@ -8,7 +8,6 @@ import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/li
 import Link from 'next/link'
 import { ChevronLeft, Mail, Phone, Fingerprint, Calendar, GraduationCap, BookOpen, Clock, AlertCircle, TrendingUp, CreditCard } from 'lucide-react'
 import AulaRow from '@/components/dashboard/AulaRow'
-import GerarCobrancaBtn from '@/components/dashboard/GerarCobrancaBtn'
 import StatusContratoSelect from '@/components/dashboard/StatusContratoSelect'
 import ContratoForm from '@/components/dashboard/ContratoForm'
 import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
@@ -321,11 +320,11 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                           </Badge>
                         </td>
                         <td className="px-8 py-5 text-right">
-                          {p.status !== 'pago' && !p.infinitepay_invoice_id && (
-                            <GerarCobrancaBtn pagamentoId={p.id} />
+                          {p.mercadopago_id && (
+                            <Badge className="bg-blue-100 text-blue-600 border-none text-[8px] font-black uppercase tracking-tighter">MP: {p.mercadopago_id}</Badge>
                           )}
-                          {p.pix_copia_cola && (
-                            <Badge className="bg-emerald-100 text-emerald-600 border-none text-[8px] font-black uppercase tracking-tighter">PIX GERADO</Badge>
+                          {!p.mercadopago_id && p.status !== 'pago' && (
+                            <span className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Aguardando Bricks</span>
                           )}
                         </td>
                       </tr>

@@ -40,7 +40,7 @@ export interface Contrato {
   status: StatusContrato
   livro_atual?: string
   nivel_atual?: string
-  infinitepay_customer_id?: string
+  mercadopago_customer_id?: string
   created_at: string
   profiles?: Profile
   planos?: Plano
@@ -79,7 +79,8 @@ export interface Pagamento {
   data_vencimento: string
   data_pagamento?: string
   forma?: FormaPagemento
-  infinitepay_invoice_id?: string
+  mercadopago_id?: string
+  mercadopago_status?: string
   pix_qrcode_base64?: string
   pix_copia_cola?: string
   status: StatusPagamento

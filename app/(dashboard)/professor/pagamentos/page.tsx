@@ -4,7 +4,6 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate } from '@/lib/utils'
-import GerarCobrancaBtn from '@/components/dashboard/GerarCobrancaBtn'
 import Link from 'next/link'
 
 export default async function PagamentosPage() {
@@ -89,9 +88,7 @@ export default async function PagamentosPage() {
                       }>{p.status}</Badge>
                     </td>
                     <td className="py-2">
-                      {p.status !== 'pago' && !p.infinitepay_invoice_id && (
-                        <GerarCobrancaBtn pagamentoId={p.id} />
-                      )}
+                      {/* Cobrança agora é feita pelo aluno via Checkout Bricks */}
                     </td>
                   </tr>
                 ))}
