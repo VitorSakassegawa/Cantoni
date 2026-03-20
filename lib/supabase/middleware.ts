@@ -40,6 +40,11 @@ export async function updateSession(request: NextRequest) {
   const isAuth = url.pathname.startsWith('/login')
   const isDashboard =
     url.pathname.startsWith('/professor') || url.pathname.startsWith('/aluno')
+  const isResetPassword = url.pathname.startsWith('/redefinir-senha')
+
+  if (isResetPassword) {
+    return supabaseResponse
+  }
 
   if (!user && isDashboard) {
     url.pathname = '/login'
