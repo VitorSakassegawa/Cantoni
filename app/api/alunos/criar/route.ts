@@ -12,6 +12,11 @@ export async function POST(request: NextRequest) {
 
   const { nome, email, telefone, nivel, tipoAula, cpf, birthDate } = await request.json()
 
+  // Server-side validation
+  if (!nome || !email || !email.includes('@')) {
+    return NextResponse.json({ error: 'Dados obrigatórios inválidos' }, { status: 400 })
+  }
+
   // Use service role to create user
   const adminSupabase = createSupabaseAdmin(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -25,11 +30,13 @@ export async function POST(request: NextRequest) {
     email,
     password: tempPassword,
     email_confirm: true,
+    user_metadata: { full_name: nome }
   })
 
   if (authErr) return NextResponse.json({ error: authErr.message }, { status: 400 })
 
-  const { error: profileErr } = await adminSupabase.from('profiles').insert({
+  // Use upsert to avoid conflict with the 'on_auth_user_created' trigger
+  const { error: profileErr } = await adminSupabase.from('profiles').upsert({
     id: authUser.user.id,
     role: 'aluno',
     full_name: nome,
@@ -39,6 +46,8 @@ export async function POST(request: NextRequest) {
     tipo_aula: tipoAula || null,
     cpf: cpf || null,
     birth_date: birthDate || null,
+  }, { 
+    onConflict: 'id' 
   })
 
   if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 })

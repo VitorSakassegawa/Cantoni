@@ -69,11 +69,60 @@ export default function NovoAlunoPage() {
     setLoading(true)
     setError('')
 
-    // Convert DD/MM/YYYY back to YYYY-MM-DD for the API
+    // 1. Validation Logic
+    if (!email.includes('@') || !email.includes('.')) {
+      setError('Por favor, insira um e-mail válido (ex: joao@exemplo.com)')
+      setLoading(false)
+      return
+    }
+
+    const cleanPhone = telefone.replace(/\D/g, '')
+    if (cleanPhone.length < 10) {
+      setError('O WhatsApp deve ter pelo menos 10 dígitos (DDD + número)')
+      setLoading(false)
+      return
+    }
+
+    const cleanCPF = cpf.replace(/\D/g, '')
+    if (cleanCPF.length > 0 && cleanCPF.length !== 11) {
+      setError('O CPF deve ter exatamente 11 dígitos')
+      setLoading(false)
+      return
+    }
+
+    // Convert DD/MM/YYYY back to YYYY-MM-DD for validation and API
     let isoBirthDate = null
-    if (birthDateDisplay.length === 10) {
-      const [d, m, y] = birthDateDisplay.split('/')
-      isoBirthDate = `${y}-${m}-${d}`
+    if (birthDateDisplay.length > 0) {
+      if (birthDateDisplay.length !== 10) {
+        setError('A data de nascimento deve estar no formato DD/MM/AAAA')
+        setLoading(false)
+        return
+      }
+
+      const [dStr, mStr, yStr] = birthDateDisplay.split('/')
+      const d = parseInt(dStr)
+      const m = parseInt(mStr)
+      const y = parseInt(yStr)
+
+      if (m < 1 || m > 12) {
+        setError('O mês de nascimento deve ser entre 01 e 12')
+        setLoading(false)
+        return
+      }
+
+      if (d < 1 || d > 31) {
+        setError('O dia de nascimento é inválido')
+        setLoading(false)
+        return
+      }
+
+      if (y < 1920 || y > new Date().getFullYear()) {
+        setError('O ano de nascimento é inválido')
+        setLoading(false)
+        return
+      }
+
+      isoBirthDate = `${yStr}-${mStr}-${dStr}`
     }
 
     try {
@@ -84,7 +133,15 @@ export default function NovoAlunoPage() {
       })
       const data = await res.json()
 
-      if (!res.ok) throw new Error(data.error || 'Erro ao criar aluno')
+      if (!res.ok) {
+        // Friendly error mapping for Database Constraints
+        if (data.error?.includes('profiles_email_key')) throw new Error('Este e-mail já está cadastrado no sistema')
+        if (data.error?.includes('profiles_pkey')) throw new Error('Este aluno já possui um perfil ativo')
+        if (data.error?.includes('User already registered')) throw new Error('Este e-mail já está em uso por outro usuário')
+        
+        throw new Error(data.error || 'Erro ao criar aluno')
+      }
+      
       setNewAlunoId(data.alunoId)
       setStep('contrato')
     } catch (err: any) {
