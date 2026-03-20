@@ -11,6 +11,8 @@ import AulaRow from '@/components/dashboard/AulaRow'
 import GerarCobrancaBtn from '@/components/dashboard/GerarCobrancaBtn'
 import StatusContratoSelect from '@/components/dashboard/StatusContratoSelect'
 import ContratoForm from '@/components/dashboard/ContratoForm'
+import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
+import { Trash2 } from 'lucide-react'
 
 export default async function AlunoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -363,6 +365,20 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
               </div>
             </CardContent>
           </Card>
+
+          {/* Danger Zone */}
+          <div className="pt-10 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 opacity-60 hover:opacity-100 transition-opacity">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h4 className="text-[10px] font-black uppercase text-rose-600 tracking-widest mb-1">Zona de Perigo</h4>
+                <p className="text-xs font-medium text-slate-500">Excluir este aluno apagará permanentemente todos os seus dados e registros.</p>
+              </div>
+            </div>
+            <DeleteAlunoBtn alunoId={id} alunoNome={aluno.full_name} />
+          </div>
         </div>
       </div>
     </div>
