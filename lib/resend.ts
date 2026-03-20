@@ -172,32 +172,69 @@ export async function enviarLembreteAula({
   dataHora,
   meetLink,
   homework,
+  homeworkType,
+  homeworkLink,
+  homeworkDueDate,
 }: {
   to: string
   nomeAluno: string
   dataHora: string
   meetLink: string
   homework?: string
+  homeworkType?: string
+  homeworkLink?: string
+  homeworkDueDate?: string
 }) {
   const resend = getResendClient()
+  
+  let homeworkSection = ''
+  if (homework) {
+    homeworkSection = `<p><strong>Lição de casa:</strong> ${homework}</p>`
+  }
+
+  if (homeworkType === 'evolve' && homeworkLink) {
+    homeworkSection += `
+      <div style="background:#f5f3ff;padding:16px;border-radius:12px;margin:12px 0;border:1px solid #ddd6fe">
+        <p style="margin:0;color:#5b21b6;font-weight:bold;font-size:14px">📚 Cambridge Evolve Workbook</p>
+        <p style="margin:8px 0;font-size:13px">Complete os exercícios na plataforma Cambridge One:</p>
+        <a href="${homeworkLink}" style="display:inline-block;padding:10px 20px;background:#6366f1;color:white;text-decoration:none;border-radius:8px;font-weight:bold;font-size:13px">Abrir Cambridge One</a>
+        ${homeworkDueDate ? `<p style="margin:10px 0 0 0;font-size:11px;color:#7c3aed;text-transform:uppercase;font-weight:black;letter-spacing:1px">Prazo: ${homeworkDueDate}</p>` : ''}
+      </div>
+    `
+  } else if (homeworkType === 'esl_brains') {
+    homeworkSection += `
+      <div style="background:#eff6ff;padding:16px;border-radius:12px;margin:12px 0;border:1px solid #dbeafe">
+        <p style="margin:0;color:#1e40af;font-weight:bold;font-size:14px">🧠 ESL Brains</p>
+        <p style="margin:8px 0;font-size:13px">Após realizar a atividade, não esqueça de <strong>anexar o print</strong> na nossa plataforma!</p>
+      </div>
+    `
+  }
+
   return resend.emails.send({
     from: FROM,
     to,
     subject: `📚 Sua aula de inglês é amanhã!`,
     html: `
-      <div style="font-family:sans-serif;max-width:600px;margin:auto">
+      <div style="font-family:sans-serif;max-width:600px;margin:auto;color:#334155">
         <h2 style="color:#1e3a5f">Lembrete de aula 🎓</h2>
         <p>Olá, ${nomeAluno}! Sua aula está chegando:</p>
-        <div style="background:#f0f7ff;padding:20px;border-radius:8px;margin:20px 0">
-          <p style="margin:0;font-size:18px"><strong>${dataHora}</strong></p>
-          <p style="margin:8px 0"><a href="${meetLink}" style="color:#1e3a5f">🔗 Entrar no Google Meet</a></p>
+        <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0 shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1)">
+          <p style="margin:0;font-size:18px;font-weight:black;color:#0f172a">${dataHora}</p>
+          <p style="margin:12px 0 0 0"><a href="${meetLink}" style="display:inline-block;color:#2563eb;font-weight:bold;text-decoration:none">🔗 Entrar no Google Meet</a></p>
         </div>
-        ${homework ? `<p><strong>Lição de casa pendente:</strong> ${homework}</p>` : ''}
-        <p style="color:#dc2626;font-size:13px">⚠️ Cancelamentos precisam de <strong>2 horas de antecedência</strong>. Sem aviso = aula contabilizada como dada.</p>
+        
+        ${homeworkSection}
+
+        <p style="color:#dc2626;font-size:12px;margin-top:30px;padding:12px;background:#fef2f2;border-radius:8px">
+          ⚠️ <strong>Aviso:</strong> Cancelamentos precisam de 2 horas de antecedência.
+        </p>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:30px 0" />
+        <p style="color:#94a3b8;font-size:11px">Teacher Gabriel Cantoni</p>
       </div>
     `,
   })
 }
+
 
 export async function enviarAulaContabilizadaComoDada({
   to,

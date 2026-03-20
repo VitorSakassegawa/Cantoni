@@ -12,6 +12,7 @@ import { maskCurrency } from '@/lib/utils'
 import { Calendar, BookOpen, Clock, ChevronLeft, GraduationCap, Info } from 'lucide-react'
 import Link from 'next/link'
 import { toast } from 'sonner'
+import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 
 const DIAS_SEMANA = [
   { label: 'Segunda', value: 1 },
@@ -62,8 +63,7 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
   const [descontoValor, setDescontoValor] = useState('')
   const [descontoPercentual, setDescontoPercentual] = useState('')
   const [aulasTotais, setAulasTotais] = useState('20')
-
-
+  const [bonusAulas, setBonusAulas] = useState(0)
 
   useEffect(() => {
     async function loadStudent() {
@@ -74,9 +74,24 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
     loadStudent()
   }, [alunoId])
 
+  // Auto-calculation logic
+  useEffect(() => {
+    if (dataInicio && diasSelecionados.length > 0 && tipoContrato === 'semestral') {
+      try {
+        const start = new Date(dataInicio + 'T12:00:00') // avoid timezone issues
+        const specs = calculateContractSpecs(start, parseInt(planoId), diasSelecionados)
+        
+        setDataFim(specs.endDate.toISOString().split('T')[0])
+        setAulasTotais(specs.totalLessons.toString())
+        setBonusAulas(specs.bonusLessons)
+        setValor(maskCurrency((specs.totalValue * 100).toString()))
+      } catch (e) {
+        console.error('Calculation error:', e)
+      }
+    }
+  }, [dataInicio, planoId, diasSelecionados, tipoContrato])
 
   function toggleDia(dia: number) {
-
     setDiasSelecionados(prev =>
       prev.includes(dia) ? prev.filter(d => d !== dia) : [...prev, dia]
     )
@@ -97,7 +112,7 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
           planoId: planoNum,
           dataInicio,
           dataFim,
-          semestre: new Date(dataInicio).getMonth() < 6 ? 'jan-jun' : 'jul-dez',
+          semestre: new Date(dataInicio).getMonth() <= 6 ? 'jan-jul' : 'aug-dez', // matches lib logic
           ano: new Date(dataInicio).getFullYear(),
           diasDaSemana: diasSelecionados,
           horario,
@@ -106,13 +121,11 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
           nivelAtual: nivel,
           aulasTotais: parseInt(aulasTotais),
           diaVencimento: parseInt(diaVencimento),
-
           formaPagamento,
           tipoContrato,
           descontoValor: parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100,
           descontoPercentual: parseFloat(descontoPercentual || '0'),
         }),
-
       })
 
       const data = await res.json()
@@ -127,6 +140,7 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
       setLoading(false)
     }
   }
+
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -184,12 +198,19 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
 
                   <div className="space-y-2.5">
                     <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Quantidade Total de Aulas</Label>
-                    <Input 
-                      type="number"
-                      className="h-14 rounded-2xl bg-slate-50 border-slate-100 text-slate-900 font-bold" 
-                      value={aulasTotais} 
-                      onChange={e => setAulasTotais(e.target.value)} 
-                    />
+                    <div className="relative group">
+                      <Input 
+                        type="number"
+                        className="h-14 rounded-2xl bg-slate-50 border-slate-100 text-slate-900 font-bold" 
+                        value={aulasTotais} 
+                        onChange={e => setAulasTotais(e.target.value)} 
+                      />
+                      {bonusAulas > 0 && (
+                        <Badge className="absolute right-3 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-700 hover:bg-amber-100 border-none text-[8px] font-black">
+                          {bonusAulas} BÔNUS INCLUSAS
+                        </Badge>
+                      )}
+                    </div>
                   </div>
 
 
@@ -396,9 +417,19 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
           
           <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-6 flex items-start gap-4">
             <Info className="w-5 h-5 text-amber-500 shrink-0" />
-            <p className="text-[10px] text-amber-800 font-medium leading-relaxed">
-              Certifique-se de que os dias e horários estão corretos, pois a grade de aulas será gerada com base nestas informações.
-            </p>
+            <div className="space-y-3">
+              <p className="text-[10px] text-amber-800 font-medium leading-relaxed">
+                Certifique-se de que os dias e horários estão corretos. O sistema pulará feriados nacionais automaticamente.
+              </p>
+              <div className="pt-2 space-y-2 border-t border-amber-200/50">
+                <p className="text-[9px] text-amber-900 font-black uppercase tracking-widest">Regras de Rescisão & Aula</p>
+                <ul className="text-[9px] text-amber-800 space-y-1 list-disc pl-3 font-medium">
+                  <li>Comunicação prévia de 30 dias para rescisão.</li>
+                  <li>Cancelamento com menos de 2h = Aula considerada dada.</li>
+                  <li>Reposições limitadas a 2 por mês.</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>

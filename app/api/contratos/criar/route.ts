@@ -5,8 +5,10 @@ import { criarEventoMeet } from '@/lib/google-calendar'
 import { enviarEmailBoasVindas } from '@/lib/resend'
 import { gerarGradeAulas, formatDateTime } from '@/lib/utils'
 import { fromZonedTime } from 'date-fns-tz'
+import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 
 export async function POST(request: NextRequest) {
+  // ... (authorization and data extraction)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
@@ -28,8 +30,8 @@ export async function POST(request: NextRequest) {
     dataFim,
     semestre,
     ano,
-    diasDaSemana, // array de ints [0-6]
-    horario, // "HH:MM"
+    diasDaSemana,
+    horario,
     valor,
     livroAtual,
     nivelAtual,
@@ -41,28 +43,17 @@ export async function POST(request: NextRequest) {
     aulasTotais,
   } = await request.json()
 
-
-
-
   const serviceSupabase = await createServiceClient()
 
-  // Get plano
-  const { data: plano } = await serviceSupabase
-    .from('planos')
-    .select('*')
-    .eq('id', planoId)
-    .single()
+  // Get plano & aluno
+  const { data: plano } = await serviceSupabase.from('planos').select('*').eq('id', planoId).single()
+  const { data: aluno } = await serviceSupabase.from('profiles').select('*').eq('id', alunoId).single()
 
-  if (!plano) return NextResponse.json({ error: 'Plano não encontrado' }, { status: 404 })
+  if (!plano || !aluno) return NextResponse.json({ error: 'Plano ou Aluno não encontrado' }, { status: 404 })
 
-  // Get aluno
-  const { data: aluno } = await serviceSupabase
-    .from('profiles')
-    .select('*')
-    .eq('id', alunoId)
-    .single()
-
-  if (!aluno) return NextResponse.json({ error: 'Aluno não encontrado' }, { status: 404 })
+  // Calculate Specs for tagging and installments
+  const startObj = new Date(dataInicio + 'T12:00:00')
+  const specs = calculateContractSpecs(startObj, planoId, diasDaSemana)
 
   // Create contract
   const { data: contrato, error: contratoErr } = await serviceSupabase
@@ -74,9 +65,8 @@ export async function POST(request: NextRequest) {
       data_fim: dataFim,
       semestre,
       ano,
-      aulas_totais: aulasTotais || plano.aulas_totais,
-      aulas_restantes: aulasTotais || plano.aulas_totais,
-
+      aulas_totais: aulasTotais || specs.totalLessons,
+      aulas_restantes: aulasTotais || specs.totalLessons,
       livro_atual: livroAtual,
       nivel_atual: nivelAtual,
       horario: horario,
@@ -87,88 +77,82 @@ export async function POST(request: NextRequest) {
       desconto_valor: descontoValor || 0,
       desconto_percentual: descontoPercentual || 0,
     })
-
     .select()
     .single()
 
-  if (contratoErr || !contrato) {
-    return NextResponse.json({ error: 'Erro ao criar contrato' }, { status: 500 })
-  }
+  if (contratoErr || !contrato) return NextResponse.json({ error: 'Erro ao criar contrato' }, { status: 500 })
 
-  // Generate lesson schedule
-  const inicio = new Date(dataInicio)
-  const fim = new Date(dataFim)
-
-  const datasAulas = gerarGradeAulas(inicio, fim, diasDaSemana, aulasTotais || plano.aulas_totais)
-
+  // Generate lesson schedule (skips holidays now)
+  const inicio = new Date(dataInicio + 'T12:00:00')
+  const fim = new Date(dataFim + 'T23:59:59')
+  const datasAulas = gerarGradeAulas(inicio, fim, diasDaSemana, parseInt(aulasTotais))
 
   // Create Google Calendar events + aulas records
   const aulasParaInserir: any[] = []
   const primeirasCinco: { data: string; link: string }[] = []
 
-  for (const dateOnly of datasAulas) {
+  for (let i = 0; i < datasAulas.length; i++) {
+    const dateOnly = datasAulas[i]
     const dateStr = dateOnly.toISOString().split('T')[0]
-    const data = fromZonedTime(`${dateStr} ${horario}`, 'America/Sao_Paulo')
+    const dataObj = fromZonedTime(`${dateStr} ${horario}`, 'America/Sao_Paulo')
+    const isBonus = i >= specs.regularLessons // Tags as bonus beyond quota
+
     let eventId = ''
     let meetLink = ''
 
     try {
       const result = await criarEventoMeet({
-        titulo: `🇬🇧 Aula de Inglês — ${aluno.full_name}`,
-        dataHora: data,
+        titulo: `${isBonus ? '🎁 ' : '🇬🇧 '}Aula de Inglês — ${aluno.full_name}`,
+        dataHora: dataObj,
         emailAluno: aluno.email,
         emailProfessor: process.env.RESEND_FROM_EMAIL!,
         descricao: `
-📌 DETALHES DA AULA
+📌 DETALHES DA AULA ${isBonus ? '(BÔNUS)' : ''}
 👤 Aluno: ${aluno.full_name}
 📚 Nível: ${nivelAtual || 'N/A'}
 📖 Livro: ${livroAtual || 'N/A'}
 
 🔗 [Ver no Sistema](${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${alunoId})
-
 ---
 Instruções:
 - Clique no link do Google Meet abaixo para entrar na aula.
-- Caso precise remarcar, utilize o sistema com pelo menos 2h de antecedência.
+- Caso precise remarcar, com 2h de antecedência.
         `.trim()
       })
       eventId = result.eventId
       meetLink = result.meetLink
     } catch (e) {
-      console.error('Google Calendar error for', data, e)
+      console.error('Google Calendar error', e)
     }
 
     aulasParaInserir.push({
       contrato_id: contrato.id,
       google_event_id: eventId || null,
-      data_hora: data.toISOString(),
+      data_hora: dataObj.toISOString(),
       duracao_minutos: 45,
       status: 'agendada',
       meet_link: meetLink,
+      is_bonus: isBonus
     })
 
     if (primeirasCinco.length < 5) {
-      primeirasCinco.push({ data: formatDateTime(data), link: meetLink })
+      primeirasCinco.push({ data: formatDateTime(dataObj), link: meetLink })
     }
   }
 
   await serviceSupabase.from('aulas').insert(aulasParaInserir)
 
-  // Create installments (pagamentos)
-  const numParcelas = tipoContrato === 'ad-hoc' ? 1 : 6
+  // Create installments based on remaining months
+  const numParcelas = tipoContrato === 'ad-hoc' ? 1 : specs.remainingMonths
   const valorParcela = parseFloat((valor / numParcelas).toFixed(2))
   const pagamentosParaInserir = []
+  
   for (let i = 1; i <= numParcelas; i++) {
-
-    const mesVenc = new Date(dataInicio)
+    const mesVenc = new Date(dataInicio + 'T12:00:00')
     mesVenc.setMonth(mesVenc.getMonth() + i - 1)
     
-    // Ajustar para o dia de vencimento escolhido
-    // Se o dia não existir no mês (ex: 31 em fevereiro), o Date do JS ajusta automaticamente para o próximo mês
-    // Mas para vencimento, geralmente queremos o último dia do mês se ultrapassar.
     const ultimoDiaMes = new Date(mesVenc.getFullYear(), mesVenc.getMonth() + 1, 0).getDate()
     const diaEfetivo = Math.min(diaVencimento || 5, ultimoDiaMes)
-    
     const vencimento = new Date(mesVenc.getFullYear(), mesVenc.getMonth(), diaEfetivo)
 
     pagamentosParaInserir.push({
@@ -182,6 +166,7 @@ Instruções:
   }
 
   await serviceSupabase.from('pagamentos').insert(pagamentosParaInserir)
+
 
   // Generate password recovery/setup link
   const { data: linkData } = await serviceSupabase.auth.admin.generateLink({

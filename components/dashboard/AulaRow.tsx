@@ -5,9 +5,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import AulasTimeline from '@/components/dashboard/AulasTimeline'
-import { formatDateTime } from '@/lib/utils'
+import { formatDateTime, formatDateOnly } from '@/lib/utils'
+
 import type { Aula } from '@/lib/types'
-import { Video, RotateCcw, X, AlertCircle } from 'lucide-react'
+import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, ImageIcon, Clock } from 'lucide-react'
+
+import ManageAulaModal from './ManageAulaModal'
+import { uploadHomeworkImage } from '@/lib/actions/homework'
+
 
 import { toast } from 'sonner'
 import { cancelarAula, remarcarAula, solicitarRemarcacao } from '@/lib/actions/aulas'
@@ -42,7 +47,10 @@ export default function AulaRow({ aula, index, isProfessor }: Props) {
   const [loading, setLoading] = useState(false)
   const [showRemarkModal, setShowRemarkModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [showManageModal, setShowManageModal] = useState(false)
   const [novaData, setNovaData] = useState('')
+  const [uploading, setUploading] = useState(false)
+
 
   const canCancel = ['agendada', 'confirmada'].includes(status)
   const canRemark = ['agendada', 'confirmada', 'cancelada'].includes(status)
@@ -88,6 +96,20 @@ export default function AulaRow({ aula, index, isProfessor }: Props) {
       setLoading(false)
     }
   }
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      await uploadHomeworkImage(aula.id, file)
+      toast.success('Exercício enviado com sucesso!')
+      window.location.reload()
+    } catch (err: any) {
+      toast.error(err.message || 'Erro no upload')
+    } finally {
+      setUploading(false)
+    }
+  }
 
   const aulasSemana = (aula as any).contratos?.planos?.aulas_semana || 1
   const regraTexto = aulasSemana === 1 
@@ -121,17 +143,61 @@ export default function AulaRow({ aula, index, isProfessor }: Props) {
             <span className="text-gray-300">—</span>
           )}
         </td>
-        <td className="py-4 text-xs text-gray-500 max-w-[200px] truncate font-medium">
-          {aula.homework || <span className="text-gray-300 italic">Aula sem conteúdo registrado</span>}
-          {aula.homework && (
-            <span className={`ml-1.5 ${aula.homework_completed ? 'text-green-600' : 'text-yellow-600'}`}>
-              {aula.homework_completed ? '✓' : '⏳'}
-            </span>
-          )}
+        <td className="py-4 text-xs text-gray-500 max-w-[250px] font-medium">
+          <div className="flex flex-col gap-1.5">
+            <div className="flex items-center gap-1.5">
+              {aula.homework || <span className="text-gray-300 italic">Aula sem conteúdo registrado</span>}
+              {aula.homework && (
+                <span className={`shrink-0 ${aula.homework_completed ? 'text-green-600' : 'text-amber-600'}`}>
+                  {aula.homework_completed ? <FileCheck className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
+                </span>
+              )}
+            </div>
+            
+            {(aula as any).homework_type === 'esl_brains' && (
+              <div className="mt-1 flex items-center gap-2">
+                <Badge variant="outline" className="text-[8px] font-black tracking-tighter border-blue-100 text-blue-600">ESL BRAINS</Badge>
+                {(aula as any).homework_image_url ? (
+                  <a href={(aula as any).homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[9px] text-blue-500 hover:underline font-bold">
+                    <ImageIcon className="w-3 h-3" /> Ver Print
+                  </a>
+                ) : !isProfessor && (
+                  <label className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-800 cursor-pointer font-bold">
+                    <Upload className="w-3 h-3" /> 
+                    {uploading ? 'Enviando...' : 'Anexar Print'}
+                    <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                  </label>
+                )}
+              </div>
+            )}
+
+            {(aula as any).homework_type === 'evolve' && (aula as any).homework_link && (
+              <div className="mt-1 flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline" className="text-[8px] font-black tracking-tighter border-indigo-100 text-indigo-600">EVOLVE WORKBOOK</Badge>
+                  <a href={(aula as any).homework_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[9px] text-indigo-500 hover:underline font-bold">
+                    <ExternalLink className="w-3 h-3" /> Abrir Cambridge One
+                  </a>
+                </div>
+                {(aula as any).homework_due_date && (
+                  <p className="text-[9px] text-slate-400 font-black uppercase tracking-tighter">
+                    Entrega até: {formatDateOnly((aula as any).homework_due_date)}
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </td>
+
         <td className="py-4 pr-2">
           <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+            {isProfessor && (
+              <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => setShowManageModal(true)} title="Gerenciar Aula">
+                <Settings2 className="w-3.5 h-3.5" />
+              </Button>
+            )}
             {canRemark && (
+
               <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-900 hover:bg-blue-50" onClick={() => setShowRemarkModal(true)} title="Remarcar">
                 <RotateCcw className="w-3.5 h-3.5" />
               </Button>
@@ -243,6 +309,13 @@ export default function AulaRow({ aula, index, isProfessor }: Props) {
         </DialogContent>
       </Dialog>
 
+      <ManageAulaModal
+        aula={aula}
+        open={showManageModal}
+        onOpenChange={setShowManageModal}
+        onSuccess={() => window.location.reload()}
+      />
     </>
+
   )
 }

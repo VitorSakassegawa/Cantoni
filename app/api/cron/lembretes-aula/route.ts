@@ -42,7 +42,11 @@ export async function GET(request: NextRequest) {
         dataHora: formatDateTime(aula.data_hora),
         meetLink: aula.meet_link || '',
         homework: aula.homework || undefined,
+        homeworkType: aula.homework_type,
+        homeworkLink: aula.homework_link,
+        homeworkDueDate: aula.homework_due_date ? formatDateTime(aula.homework_due_date) : undefined,
       })
+
 
       await supabase
         .from('aulas')

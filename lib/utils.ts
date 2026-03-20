@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { addDays, isWeekend, isSameDay } from 'date-fns'
+import { addDays, isWeekend, isSameDay, isBefore } from 'date-fns'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -67,23 +67,38 @@ export function getSemestreAtual(): { semestre: 'jan-jun' | 'jul-dez'; ano: numb
   return { semestre: 'jul-dez', ano, inicio: new Date(ano, 6, 1), fim: new Date(ano, 11, 31) }
 }
 
+import { FERIADOS_NACIONAIS } from './constants/holidays'
+
+export function isHoliday(date: Date) {
+  const dateStr = date.toISOString().split('T')[0]
+  return FERIADOS_NACIONAIS.includes(dateStr)
+}
+
 export function gerarGradeAulas(
   dataInicio: Date,
   dataFim: Date,
   diaDaSemana: number[], // 0=dom, 1=seg ... 6=sab
-  totalAulas: number
+  totalAulas?: number
 ): Date[] {
   const aulas: Date[] = []
   let current = new Date(dataInicio)
+  
+  // Limite de segurança de 1 ano
+  const maxSearch = addDays(dataInicio, 366)
+  const limitDate = isBefore(dataFim, maxSearch) ? dataFim : maxSearch
 
-  while (aulas.length < totalAulas && current <= dataFim) {
+  while (current <= limitDate) {
     if (diaDaSemana.includes(current.getDay())) {
-      aulas.push(new Date(current))
+      if (!isHoliday(current)) {
+        aulas.push(new Date(current))
+      }
     }
+    if (totalAulas && aulas.length >= totalAulas) break
     current = addDays(current, 1)
   }
   return aulas
 }
+
 
 export function maskCPF(value: string): string {
   const cleanValue = value.replace(/\D/g, '')

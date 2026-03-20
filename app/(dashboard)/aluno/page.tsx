@@ -54,8 +54,10 @@ export default async function AlunoDashboard() {
     .from('aulas')
     .select('*')
     .eq('contrato_id', contrato?.id || 0)
-    .order('data_hora', { ascending: false })
+    .gte('data_hora', now)
+    .order('data_hora', { ascending: true })
     .limit(5)
+
 
   const { data: pagamentos } = await supabase
     .from('pagamentos')
@@ -301,8 +303,9 @@ export default async function AlunoDashboard() {
         <Card className="glass-card border-none overflow-hidden">
           <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
             <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              Histórico de Aulas
+              Próximas Aulas
             </CardTitle>
+
           </CardHeader>
           <CardContent className="p-0">
             <div className="overflow-x-auto">
@@ -318,8 +321,9 @@ export default async function AlunoDashboard() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {ultimasAulas?.map((aula: any, i: number) => (
-                    <AulaRow key={aula.id} aula={aula} index={ultimasAulas.length - i} />
+                    <AulaRow key={aula.id} aula={aula} index={i + 1} />
                   ))}
+
                 </tbody>
               </table>
               {(!ultimasAulas || ultimasAulas.length === 0) && (
