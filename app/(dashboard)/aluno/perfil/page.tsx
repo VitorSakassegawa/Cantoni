@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
-import { maskCPF, maskPhone } from '@/lib/utils'
+import { maskCPF, maskPhone, maskDate } from '@/lib/utils'
 import { User, Mail, Phone, Fingerprint, Calendar, AlertCircle } from 'lucide-react'
 
 export default function PerfilPage() {
@@ -17,6 +17,7 @@ export default function PerfilPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<any>(null)
+  const [birthDateDisplay, setBirthDateDisplay] = useState('')
 
   useEffect(() => {
     async function loadProfile() {
@@ -30,6 +31,11 @@ export default function PerfilPage() {
         .single()
       
       setProfile(data)
+      if (data?.birth_date) {
+        // YYYY-MM-DD -> DD/MM/YYYY
+        const [y, m, d] = data.birth_date.split('-')
+        setBirthDateDisplay(`${d}/${m}/${y}`)
+      }
       setLoading(false)
     }
     loadProfile()
@@ -37,7 +43,12 @@ export default function PerfilPage() {
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault()
-    setSaving(true)
+    // Convert DD/MM/YYYY back to YYYY-MM-DD
+    let isoBirthDate = null
+    if (birthDateDisplay.length === 10) {
+      const [d, m, y] = birthDateDisplay.split('/')
+      isoBirthDate = `${y}-${m}-${d}`
+    }
 
     try {
       const res = await fetch('/api/perfil/update', {
@@ -47,7 +58,7 @@ export default function PerfilPage() {
           full_name: profile.full_name,
           phone: profile.phone,
           cpf: profile.cpf,
-          birth_date: profile.birth_date,
+          birth_date: isoBirthDate,
         }),
       })
 
@@ -146,10 +157,11 @@ export default function PerfilPage() {
                 <div className="relative group/input">
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
                   <Input
-                    type="date"
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 block"
-                    value={profile?.birth_date || ''}
-                    onChange={e => setProfile({ ...profile, birth_date: e.target.value })}
+                    type="text"
+                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
+                    placeholder="DD/MM/AAAA"
+                    value={birthDateDisplay}
+                    onChange={e => setBirthDateDisplay(maskDate(e.target.value))}
                   />
                 </div>
               </div>

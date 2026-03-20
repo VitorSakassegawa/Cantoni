@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { maskCPF, maskPhone } from '@/lib/utils'
+import { maskCPF, maskPhone, maskDate } from '@/lib/utils'
 import { User, Mail, Phone, Fingerprint, Calendar, BookOpen, Clock, CheckCircle2, ChevronRight, GraduationCap } from 'lucide-react'
 
 const DIAS_SEMANA = [
@@ -47,6 +47,7 @@ export default function NovoAlunoPage() {
   const [tipoAula, setTipoAula] = useState('regular')
   const [cpf, setCpf] = useState('')
   const [birthDate, setBirthDate] = useState('')
+  const [birthDateDisplay, setBirthDateDisplay] = useState('')
 
   // Contrato form
   const [planoId, setPlanoId] = useState('1')
@@ -68,11 +69,18 @@ export default function NovoAlunoPage() {
     setLoading(true)
     setError('')
 
+    // Convert DD/MM/YYYY back to YYYY-MM-DD for the API
+    let isoBirthDate = null
+    if (birthDateDisplay.length === 10) {
+      const [d, m, y] = birthDateDisplay.split('/')
+      isoBirthDate = `${y}-${m}-${d}`
+    }
+
     try {
       const res = await fetch('/api/alunos/criar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nome, email, telefone, nivel, tipoAula, cpf, birthDate }),
+        body: JSON.stringify({ nome, email, telefone, nivel, tipoAula, cpf, birthDate: isoBirthDate }),
       })
       const data = await res.json()
 
@@ -224,10 +232,11 @@ export default function NovoAlunoPage() {
                       <div className="relative group/input">
                         <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
                         <Input
-                          className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 block"
-                          type="date"
-                          value={birthDate}
-                          onChange={e => setBirthDate(e.target.value)}
+                          className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
+                          type="text"
+                          placeholder="DD/MM/AAAA"
+                          value={birthDateDisplay}
+                          onChange={e => setBirthDateDisplay(maskDate(e.target.value))}
                         />
                       </div>
                     </div>
