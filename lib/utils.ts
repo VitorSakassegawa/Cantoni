@@ -104,3 +104,12 @@ export function maskDate(value: string): string {
     .replace(/(\d{2})(\d)/, '$1/$2')
     .replace(/(\/\d{4})\d+?$/, '$1')
 }
+export function maskCurrency(value: string): string {
+  const cleanValue = value.replace(/\D/g, '')
+  const numberValue = parseFloat(cleanValue) / 100
+  if (isNaN(numberValue)) return ''
+  return new Intl.NumberFormat('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  }).format(numberValue)
+}

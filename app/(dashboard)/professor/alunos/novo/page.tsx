@@ -9,8 +9,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { maskCPF, maskPhone, maskDate } from '@/lib/utils'
-import { User, Mail, Phone, Fingerprint, Calendar, BookOpen, Clock, CheckCircle2, ChevronRight, GraduationCap } from 'lucide-react'
+import { maskCPF, maskPhone, maskDate, maskCurrency } from '@/lib/utils'
+import { User, Mail, Phone, Fingerprint, Calendar, BookOpen, Clock, CheckCircle2, ChevronRight, GraduationCap, Info } from 'lucide-react'
 
 const DIAS_SEMANA = [
   { label: 'Segunda', value: 1 },
@@ -28,6 +28,15 @@ const NIVEIS = [
   { value: 'avancado', label: 'Avançado' },
   { value: 'conversacao', label: 'Conversação' },
   { value: 'certificado', label: 'Preparatório' },
+]
+
+const EVOLVE_LEVELS = [
+  { id: 'evolve-1', label: 'Evolve Level 1', cefr: 'A1', desc: 'Beginner basics: greetings, family, numbers.' },
+  { id: 'evolve-2', label: 'Evolve Level 2', cefr: 'A2', desc: 'Elementary: everyday topics; immersive speaking lessons.' },
+  { id: 'evolve-3', label: 'Evolve Level 3', cefr: 'B1', desc: 'Intermediate: communication skills, grammar, vocabulary.' },
+  { id: 'evolve-4', label: 'Evolve Level 4', cefr: 'B1+', desc: 'Upper intermediate: decision-making tasks.' },
+  { id: 'evolve-5', label: 'Evolve Level 5', cefr: 'B2', desc: 'Advanced intermediate: complex discussions.' },
+  { id: 'evolve-6', label: 'Evolve Level 6', cefr: 'C1', desc: 'Proficient: nuanced expression; advanced speaking.' },
 ]
 
 export default function NovoAlunoPage() {
@@ -57,6 +66,7 @@ export default function NovoAlunoPage() {
   const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
   const [valor, setValor] = useState('')
   const [livro, setLivro] = useState('')
+  const [isOutroMaterial, setIsOutroMaterial] = useState(false)
 
   function toggleDia(dia: number) {
     setDiasSelecionados(prev =>
@@ -170,7 +180,7 @@ export default function NovoAlunoPage() {
           ano: new Date(dataInicio).getFullYear(),
           diasDaSemana: diasSelecionados,
           horario,
-          valor: parseFloat(valor),
+          valor: parseFloat(valor.replace(/\D/g, '')) / 100,
           livroAtual: livro,
           nivelAtual: nivel,
         }),
@@ -376,7 +386,13 @@ export default function NovoAlunoPage() {
                     </div>
                     <div className="space-y-2.5">
                       <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Investimento (TOTAL)</Label>
-                      <Input type="number" step="0.01" className="h-14 rounded-2xl bg-blue-50 border-blue-100 text-blue-900 font-black" placeholder="R$ 0,00" value={valor} onChange={e => setValor(e.target.value)} required />
+                      <Input 
+                        className="h-14 rounded-2xl bg-blue-50 border-blue-100 text-blue-900 font-black" 
+                        placeholder="R$ 0,00" 
+                        value={valor} 
+                        onChange={e => setValor(maskCurrency(e.target.value))} 
+                        required 
+                      />
                     </div>
 
                     <div className="col-span-2 space-y-4">
@@ -395,11 +411,59 @@ export default function NovoAlunoPage() {
                       </div>
                     </div>
 
-                    <div className="col-span-2 space-y-2.5">
-                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Material Didático</Label>
-                      <div className="relative group/input">
-                        <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
-                        <Input className="pl-12 h-14 rounded-2xl bg-slate-50" placeholder="Ex: Evolve 1" value={livro} onChange={e => setLivro(e.target.value)} />
+                    <div className="col-span-2 space-y-4">
+                      <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Material Didático (Cambridge Evolve)</Label>
+                      {!isOutroMaterial ? (
+                        <div className="grid sm:grid-cols-2 gap-3">
+                          {EVOLVE_LEVELS.map(l => (
+                            <button
+                              key={l.id}
+                              type="button"
+                              onClick={() => setLivro(l.label)}
+                              className={`p-4 rounded-[2rem] border-2 text-left transition-all ${livro === l.label ? 'bg-white border-blue-600 ring-4 ring-blue-500/5' : 'bg-slate-50 border-slate-100 opacity-60'}`}
+                            >
+                              <div className="flex justify-between items-start mb-1">
+                                <p className="font-black text-slate-900 uppercase text-[10px] tracking-widest">{l.label}</p>
+                                <Badge className="bg-blue-100 text-blue-600 border-none text-[8px]">{l.cefr}</Badge>
+                              </div>
+                              <p className="text-[9px] text-slate-400 font-medium leading-tight">{l.desc}</p>
+                            </button>
+                          ))}
+                          <button
+                            type="button"
+                            onClick={() => { setIsOutroMaterial(true); setLivro(''); }}
+                            className="p-4 rounded-[2rem] border-2 border-dashed border-slate-200 text-slate-400 hover:border-blue-400 hover:text-blue-500 transition-all flex items-center justify-center font-black text-[10px] uppercase tracking-widest"
+                          >
+                            Outro Material
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <div className="relative group/input">
+                            <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
+                            <Input 
+                              className="pl-12 h-14 rounded-2xl bg-slate-50" 
+                              placeholder="Nome do Material" 
+                              value={livro} 
+                              onChange={e => setLivro(e.target.value)} 
+                              autoFocus
+                            />
+                          </div>
+                          <button 
+                            type="button" 
+                            onClick={() => { setIsOutroMaterial(false); setLivro(''); }}
+                            className="text-[10px] font-black text-blue-500 uppercase tracking-widest hover:underline pl-1"
+                          >
+                            Voltar para Evolve
+                          </button>
+                        </div>
+                      )}
+                      
+                      <div className="bg-blue-50/50 rounded-2xl p-4 flex items-start gap-4 border border-blue-100/50">
+                        <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
+                        <p className="text-[9px] text-blue-800/60 font-medium leading-relaxed">
+                          <strong>Evolve</strong> is a six-level American English course from Cambridge, designed to build speaking confidence through student-centered activities and real-world topics.
+                        </p>
                       </div>
                     </div>
                   </div>

@@ -226,7 +226,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                         <div className="w-8 h-8 rounded-xl bg-white shadow-sm flex items-center justify-center text-blue-600"><Clock className="w-4 h-4" /></div>
                         <div>
                           <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Horário Base</p>
-                          <p className="text-xs font-black text-slate-900">{contrato.horario}h</p>
+                          <p className="text-xs font-black text-slate-900">{contrato.horario || '--:--'}h</p>
                         </div>
                       </div>
                     </div>

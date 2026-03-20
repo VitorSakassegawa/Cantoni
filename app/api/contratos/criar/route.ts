@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       aulas_restantes: plano.aulas_totais,
       livro_atual: livroAtual,
       nivel_atual: nivelAtual,
+      horario: horario,
     })
     .select()
     .single()
