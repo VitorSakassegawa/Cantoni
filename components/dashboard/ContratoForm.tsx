@@ -22,13 +22,20 @@ const DIAS_SEMANA = [
   { label: 'Sábado', value: 6 },
 ]
 
-const NIVEIS = [
-  { value: 'iniciante', label: 'Iniciante' },
-  { value: 'basico', label: 'Básico' },
-  { value: 'intermediario', label: 'Intermediário' },
-  { value: 'avancado', label: 'Avançado' },
-  { value: 'conversacao', label: 'Conversação' },
-  { value: 'preparatorio', label: 'Preparatório' },
+const NIVEIS_CAMBRIDGE = [
+  { value: 'a1_beginner', label: 'Beginner (Iniciante) - A1' },
+  { value: 'a2_elementary', label: 'Elementary (Básico) - A2' },
+  { value: 'b1_pre_intermediate', label: 'Pre-Intermediate (Pré-Int) - B1' },
+  { value: 'b1_intermediate', label: 'Intermediate (Intermediário) - B1+' },
+  { value: 'b2_upper_intermediate', label: 'Upper Intermediate (Pós-Int) - B2' },
+  { value: 'c1_advanced', label: 'Advanced (Avançado) - C1' },
+  { value: 'c2_proficiency', label: 'Proficiency (Proficiente) - C2' },
+]
+
+const OPCOES_LIVRO = [
+  { value: 'evolve', label: 'Cambridge Evolve' },
+  { value: 'esl_brains', label: 'ESL Brains Platform' },
+  { value: 'outro', label: 'Outro (Especificar)' },
 ]
 
 interface ContratoFormProps {
@@ -59,8 +66,9 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
   const [descontoValor, setDescontoValor] = useState('')
   const [descontoPercentual, setDescontoPercentual] = useState('')
   
-  const [livro, setLivro] = useState('')
-  const [nivel, setNivel] = useState(defaultNivel || 'iniciante')
+  const [livroSelect, setLivroSelect] = useState('evolve')
+  const [livroManual, setLivroManual] = useState('')
+  const [nivel, setNivel] = useState(defaultNivel || 'a1_beginner')
   const [diaVencimento, setDiaVencimento] = useState('5')
   const [formaPagamento, setFormaPagamento] = useState('pix')
 
@@ -121,10 +129,6 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
   const updateFinalValue = (base: number, dValor: string, dPerc: string) => {
     const dv = parseFloat(dValor.replace(/\D/g, '') || '0') / 100
     const dp = parseFloat(dPerc || '0')
-    
-    // We don't stack them here, we assume they represent the SAME discount
-    // If user typed % first, we use that. If they typed R$, we use that.
-    // Actually, in cross-feeding, they are equivalent.
     let finalValue = base - dv
     if (finalValue < 0) finalValue = 0
     setValorFinalComMascara(maskCurrency((finalValue * 100).toString()))
@@ -149,14 +153,20 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
       toast.error('Contratos semestrais não podem ultrapassar o limite do semestre (Jul/Dez). Crie dois contratos separados.')
       return
     }
-    if (diasSelecionados.length < parseInt(planoId)) {
+    if (tipoContrato === 'semestral' && diasSelecionados.length < parseInt(planoId)) {
       toast.error(`Selecione ${planoId} dia(s) para este plano.`)
+      return
+    }
+    if (diasSelecionados.length === 0) {
+      toast.error('Selecione ao menos um dia da semana.')
       return
     }
 
     setLoading(true)
 
     try {
+      const finalLivro = livroSelect === 'outro' ? livroManual : OPCOES_LIVRO.find(o => o.value === livroSelect)?.label
+
       const res = await fetch('/api/contratos/criar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -170,7 +180,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           diasDaSemana: diasSelecionados,
           horario,
           valor: parseFloat(valorFinalComMascara.replace(/\D/g, '')) / 100,
-          livroAtual: livro,
+          livroAtual: finalLivro,
           nivelAtual: nivel,
           aulasTotais: parseInt(aulasTotais),
           diaVencimento: parseInt(diaVencimento),
@@ -232,11 +242,16 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Plano (Periodicidade)</Label>
-              <Select value={planoId} onChange={e => {
-                setPlanoId(e.target.value)
-                setDiasSelecionados([]) // Reset days on plan change
-              }} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
+              <Label className={`text-[10px] font-black uppercase pl-1 tracking-[0.15em] ${tipoContrato === 'ad-hoc' ? 'text-slate-300' : 'text-slate-400'}`}>Plano (Periodicidade)</Label>
+              <Select 
+                value={planoId} 
+                onChange={e => {
+                  setPlanoId(e.target.value)
+                  setDiasSelecionados([]) 
+                }} 
+                disabled={tipoContrato === 'ad-hoc'}
+                className={`h-14 rounded-2xl border-slate-100 font-bold ${tipoContrato === 'ad-hoc' ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50 text-slate-900'}`}
+              >
                 <option value="1">VIP 1x por semana</option>
                 <option value="2">VIP 2x por semana</option>
               </Select>
@@ -285,9 +300,11 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
 
           <div className="space-y-4">
             <div className="flex justify-between items-end pl-1 pr-1">
-              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.15em]">Escolha os {planoId} dia(s) da semana</Label>
+              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.15em]">
+                {tipoContrato === 'semestral' ? `Escolha o(s) ${planoId} dia(s) da semana` : 'Escolha os dias da semana'}
+              </Label>
               <Badge variant="outline" className="text-[8px] font-black uppercase border-slate-200 text-slate-400">
-                {diasSelecionados.length} / {planoId} SELECIONADOS
+                {diasSelecionados.length} SELECIONADOS
               </Badge>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -346,7 +363,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           </div>
 
           {/* Section 4: Descontos Cross-feeding */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in slide-in-from-top-2 duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500">Desconto Fixo (R$)</Label>
               <div className="relative">
@@ -379,18 +396,27 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           {/* Section 5: Detalhes Acadêmicos */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Livro / Material</Label>
-              <Input 
-                className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
-                value={livro} 
-                onChange={e => setLivro(e.target.value)} 
-                placeholder="Ex: Evolve 1"
-              />
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Livro / Material de Apoio</Label>
+              <Select 
+                value={livroSelect} 
+                onChange={e => setLivroSelect(e.target.value)} 
+                className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold"
+              >
+                {OPCOES_LIVRO.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+              </Select>
+              {livroSelect === 'outro' && (
+                <Input 
+                  className="h-12 rounded-xl bg-slate-50 border-blue-100 font-medium animate-in slide-in-from-top-2" 
+                  value={livroManual} 
+                  onChange={e => setLivroManual(e.target.value)} 
+                  placeholder="Digite o nome do material..."
+                />
+              )}
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nível</Label>
+              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nível CEFR (Cambridge)</Label>
               <Select value={nivel} onChange={e => setNivel(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
-                {NIVEIS.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
+                {NIVEIS_CAMBRIDGE.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
               </Select>
             </div>
           </div>
@@ -437,7 +463,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
           </li>
           <li className="flex gap-3 items-start">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-            <p className="text-[10px] text-blue-800 font-medium">Dias selecionados limitados pela modalidade (1x ou 2x).</p>
+            <p className="text-[10px] text-blue-800 font-medium">Material principal e níveis alinhados ao CEFR.</p>
           </li>
         </ul>
       </div>
