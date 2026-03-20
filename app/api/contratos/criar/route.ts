@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
       livro_atual: livroAtual,
       nivel_atual: nivelAtual,
       horario: horario,
+      valor: valor,
     })
     .select()
     .single()

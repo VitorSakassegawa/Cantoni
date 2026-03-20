@@ -81,7 +81,10 @@ export default function ProfessorEditContratoPage({ params }: { params: Promise<
         }),
       })
 
-      if (!res.ok) throw new Error('Erro ao atualizar contrato')
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Erro ao atualizar contrato')
+      }
       toast.success('Contrato atualizado com sucesso!')
       router.push(`/professor/alunos/${aluno_id}`)
     } catch (err: any) {
