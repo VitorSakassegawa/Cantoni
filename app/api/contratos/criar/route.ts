@@ -81,7 +81,10 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  if (contratoErr || !contrato) return NextResponse.json({ error: 'Erro ao criar contrato' }, { status: 500 })
+  if (contratoErr || !contrato) {
+    console.error('Contrato insert error:', contratoErr)
+    return NextResponse.json({ error: 'Erro ao criar contrato no banco de dados', details: contratoErr }, { status: 500 })
+  }
 
   // Generate lesson schedule (skips holidays now)
   const inicio = new Date(dataInicio + 'T12:00:00')
@@ -141,7 +144,10 @@ Instruções:
     }
   }
 
-  await serviceSupabase.from('aulas').insert(aulasParaInserir)
+  const { error: insertAulasErr } = await serviceSupabase.from('aulas').insert(aulasParaInserir)
+  if (insertAulasErr) {
+    console.error('Aulas insert error:', insertAulasErr)
+  }
 
   // Create installments based on remaining months
   const numParcelas = tipoContrato === 'ad-hoc' ? 1 : specs.remainingMonths
@@ -166,7 +172,10 @@ Instruções:
     })
   }
 
-  await serviceSupabase.from('pagamentos').insert(pagamentosParaInserir)
+  const { error: insertPagamentosErr } = await serviceSupabase.from('pagamentos').insert(pagamentosParaInserir)
+  if (insertPagamentosErr) {
+    console.error('Pagamentos insert error:', insertPagamentosErr)
+  }
 
 
   // Generate password recovery/setup link
