@@ -73,9 +73,17 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
               <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-1">{aluno.full_name}</h1>
               <div className="flex flex-wrap items-center gap-3">
                 <Badge className="bg-blue-100 text-blue-700 border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest">Aluno</Badge>
-                <Badge variant="outline" className="border-slate-200 text-slate-400 px-3 py-1 text-[10px] font-black uppercase tracking-widest">Inscrito desde {new Date(aluno.created_at).getFullYear()}</Badge>
+                {aluno.data_inscricao && (
+                  <Badge variant="outline" className="border-slate-200 text-slate-400 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                    Inscrito em {formatDateOnly(aluno.data_inscricao)}
+                  </Badge>
+                )}
+                {!contrato && (
+                  <Badge variant="destructive" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest">Sem Contrato Ativo</Badge>
+                )}
               </div>
             </div>
+
           </div>
           <div className="flex items-center gap-3">
             <Link href={`/professor/alunos/${id}/perfil`}>

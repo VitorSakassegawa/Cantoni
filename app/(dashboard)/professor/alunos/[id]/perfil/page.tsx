@@ -22,6 +22,7 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<any>(null)
   const [birthDateDisplay, setBirthDateDisplay] = useState('')
+  const [inscricaoDateDisplay, setInscricaoDateDisplay] = useState('')
 
   useEffect(() => {
     async function loadProfile() {
@@ -35,6 +36,9 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
         setProfile(data)
         if (data.birth_date) {
           setBirthDateDisplay(formatDateOnly(data.birth_date))
+        }
+        if (data.data_inscricao) {
+          setInscricaoDateDisplay(formatDateOnly(data.data_inscricao))
         }
       }
       setLoading(false)
@@ -53,6 +57,12 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
       isoBirthDate = `${y}-${m}-${d}`
     }
 
+    let isoInscricaoDate = null
+    if (inscricaoDateDisplay && inscricaoDateDisplay.length === 10) {
+      const [d, m, y] = inscricaoDateDisplay.split('/')
+      isoInscricaoDate = `${y}-${m}-${d}`
+    }
+
     try {
       const res = await fetch('/api/professor/alunos/update', {
         method: 'POST',
@@ -63,6 +73,7 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
           phone: profile.phone,
           cpf: profile.cpf,
           birth_date: isoBirthDate,
+          data_inscricao: isoInscricaoDate,
           nivel: profile.nivel,
         }),
       })
@@ -176,7 +187,22 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
                   />
                 </div>
               </div>
+
+              <div className="space-y-2.5">
+                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Matrícula</Label>
+                <div className="relative group/input">
+                  <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
+                  <Input
+                    type="text"
+                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
+                    placeholder="DD/MM/AAAA"
+                    value={inscricaoDateDisplay}
+                    onChange={e => setInscricaoDateDisplay(maskDate(e.target.value))}
+                  />
+                </div>
+              </div>
             </div>
+
 
             <div className="pt-6 flex justify-end items-center gap-6">
               <Button

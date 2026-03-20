@@ -37,13 +37,15 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
   const prevWeek = format(subWeeks(weekStart, 1), 'yyyy-MM-dd')
   const nextWeek = format(addWeeks(weekStart, 1), 'yyyy-MM-dd')
 
-  // Fetch classes for the whole week
+  // Fetch classes for the whole week - only for active contracts
   const { data: aulasSemana } = await supabase
     .from('aulas')
-    .select('*, contratos(profiles(full_name))')
+    .select('*, contratos!inner(status, profiles(full_name))')
+    .eq('contratos.status', 'ativo')
     .gte('data_hora', weekStartISO)
     .lte('data_hora', weekEndISO)
     .order('data_hora')
+
 
   // Group classes by day (Monday to Sunday)
   const daysOfWeek = Array.from({ length: 7 }, (_, i) => {
@@ -120,60 +122,53 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="glass-card border-none overflow-hidden group">
-          <CardContent className="pt-8 relative">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <BookOpen className="w-16 h-16 text-blue-900" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-4xl font-black text-blue-900 tracking-tighter">{aulasHoje?.length || 0}</p>
-              <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Aulas para Hoje</p>
-            </div>
-            <div className="mt-4 h-1 w-12 bg-blue-600 rounded-full" />
-          </CardContent>
-        </Card>
+        <div className="glass-card border-none overflow-hidden group p-8 relative">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <BookOpen className="w-16 h-16 text-blue-900" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-4xl font-black text-blue-900 tracking-tighter">{aulasHoje?.length || 0}</p>
+            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Aulas para Hoje</p>
+          </div>
+          <div className="mt-4 h-1 w-12 bg-blue-600 rounded-full" />
+        </div>
 
-        <Card className="glass-card border-none overflow-hidden group">
-          <CardContent className="pt-8 relative">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <AlertCircle className="w-16 h-16 text-amber-900" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-4xl font-black text-amber-600 tracking-tighter">{pagamentosPendentes?.length || 0}</p>
-              <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Faturas Pendentes</p>
-            </div>
-            <div className="mt-4 h-1 w-12 bg-amber-500 rounded-full" />
-          </CardContent>
-        </Card>
+        <Link href="/professor/pagamentos?status=pendente" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-amber-200 transition-all cursor-pointer">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <AlertCircle className="w-16 h-16 text-amber-900" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-4xl font-black text-amber-600 tracking-tighter">{pagamentosPendentes?.length || 0}</p>
+            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Faturas Pendentes</p>
+          </div>
+          <div className="mt-4 h-1 w-12 bg-amber-500 rounded-full" />
+        </Link>
 
-        <Card className="glass-card border-none overflow-hidden group">
-          <CardContent className="pt-8 relative">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Users className="w-16 h-16 text-emerald-900" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-4xl font-black text-emerald-600 tracking-tighter">{totalAlunos || 0}</p>
-              <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Alunos Ativos</p>
-            </div>
-            <div className="mt-4 h-1 w-12 bg-emerald-500 rounded-full" />
-          </CardContent>
-        </Card>
+        <Link href="/professor/alunos?status=ativo" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-emerald-200 transition-all cursor-pointer">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Users className="w-16 h-16 text-emerald-900" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-4xl font-black text-emerald-600 tracking-tighter">{totalAlunos || 0}</p>
+            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Alunos Ativos</p>
+          </div>
+          <div className="mt-4 h-1 w-12 bg-emerald-500 rounded-full" />
+        </Link>
 
-        <Card className="glass-card border-none overflow-hidden group">
-          <CardContent className="pt-8 relative">
-            <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-              <Clock className="w-16 h-16 text-red-900" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-4xl font-black text-red-600 tracking-tighter">
-                {pagamentosPendentes?.filter((p: any) => p.status === 'atrasado').length || 0}
-              </p>
-              <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Faturas Atrasadas</p>
-            </div>
-            <div className="mt-4 h-1 w-12 bg-red-500 rounded-full" />
-          </CardContent>
-        </Card>
+        <Link href="/professor/pagamentos?status=atrasado" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-red-200 transition-all cursor-pointer">
+          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+            <Clock className="w-16 h-16 text-red-900" />
+          </div>
+          <div className="space-y-1">
+            <p className="text-4xl font-black text-red-600 tracking-tighter">
+              {pagamentosPendentes?.filter((p: any) => p.status === 'atrasado').length || 0}
+            </p>
+            <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Faturas Atrasadas</p>
+          </div>
+          <div className="mt-4 h-1 w-12 bg-red-500 rounded-full" />
+        </Link>
       </div>
+
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
         {/* Cronograma Semanal */}

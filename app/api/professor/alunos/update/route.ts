@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Apenas professores podem editar alunos' }, { status: 403 })
   }
 
-  const { aluno_id, full_name, phone, cpf, birth_date, nivel } = await request.json()
+  const { aluno_id, full_name, phone, cpf, birth_date, nivel, data_inscricao } = await request.json()
 
   if (!aluno_id) return NextResponse.json({ error: 'ID do aluno é obrigatório' }, { status: 400 })
 
@@ -29,8 +29,10 @@ export async function POST(request: NextRequest) {
       cpf,
       birth_date,
       nivel,
+      data_inscricao,
     })
     .eq('id', aluno_id)
+
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
