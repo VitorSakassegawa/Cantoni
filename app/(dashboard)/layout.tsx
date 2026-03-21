@@ -62,6 +62,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   Alunos
                 </Link>
                 <Link
+                  href="/professor/aulas"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  Minhas Aulas
+                </Link>
+                <Link
                   href="/professor/pagamentos"
                   className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
                 >

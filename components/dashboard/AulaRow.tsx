@@ -31,6 +31,7 @@ interface Props {
   aula: Aula
   index: number
   isProfessor?: boolean
+  studentName?: string
 }
 
 const STATUS_BADGE: Record<string, any> = {
@@ -42,7 +43,7 @@ const STATUS_BADGE: Record<string, any> = {
   pendente_remarcacao: 'warning',
 }
 
-export default function AulaRow({ aula, index, isProfessor }: Props) {
+export default function AulaRow({ aula, index, isProfessor, studentName }: Props) {
   const [status, setStatus] = useState<any>(aula.status)
   const [loading, setLoading] = useState(false)
   const [showRemarkModal, setShowRemarkModal] = useState(false)
@@ -153,6 +154,15 @@ export default function AulaRow({ aula, index, isProfessor }: Props) {
                 </span>
               )}
             </div>
+            
+            {studentName && (
+              <div className="flex flex-col">
+                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-tight">Aluno</span>
+                <span className="text-sm font-black text-slate-900 truncate max-w-[120px]">
+                  {studentName}
+                </span>
+              </div>
+            )}
             
             <div className="mt-1 flex items-center gap-2">
               {(aula as any).homework_type && (

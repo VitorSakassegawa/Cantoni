@@ -25,13 +25,23 @@ export default function AulasTimeline({ aulas }: Props) {
               <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Status</th>
               <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Google Meet</th>
               <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Lição / Conteúdo</th>
+              <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Aluno</th>
               <th className="px-4 py-6 text-right pr-8"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {displayedAulas.map((aula, i) => (
-              <AulaRow key={aula.id} aula={aula} index={i + 1} />
-            ))}
+            {displayedAulas.map((aula, i) => {
+              const studentName = aula.contratos?.profiles?.full_name
+              return (
+                <AulaRow 
+                  key={aula.id} 
+                  aula={aula} 
+                  index={i + 1} 
+                  isProfessor={!!studentName}
+                  studentName={studentName}
+                />
+              )
+            })}
           </tbody>
         </table>
 
