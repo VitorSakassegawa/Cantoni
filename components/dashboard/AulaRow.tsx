@@ -120,8 +120,8 @@ export default function AulaRow({ aula, index, isProfessor, studentName }: Props
   return (
     <>
       <tr className="hover:bg-gray-50/50 transition-colors group">
-        <td className="py-4 text-gray-400 text-xs pl-2">{index}</td>
-        <td className="py-4 font-medium text-sm">
+        <td className="py-4 text-gray-400 text-xs pl-2 text-center">{index}</td>
+        <td className="py-4 font-medium text-sm whitespace-nowrap">
           {formatDateTime(aula.data_hora)}
           {aula.data_hora_solicitada && status === 'pendente_remarcacao' && (
             <div className="text-[10px] text-amber-600 font-bold mt-1">
@@ -130,14 +130,14 @@ export default function AulaRow({ aula, index, isProfessor, studentName }: Props
           )}
         </td>
         <td className="py-4">
-          <Badge variant={STATUS_BADGE[status] || 'outline'} className="capitalize text-[10px] font-black uppercase tracking-widest px-2 py-0.5">
-            {status.replace('_', ' ')}
+          <Badge variant={STATUS_BADGE[status] || 'outline'} className="capitalize text-[10px] font-black uppercase tracking-widest px-2 py-0.5 whitespace-nowrap">
+            {status === 'dada' ? 'FINALIZADO' : status.replace('_', ' ')}
           </Badge>
         </td>
         <td className="py-4">
           {aula.meet_link ? (
             <a href={aula.meet_link} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-blue-900 hover:text-blue-700 font-bold text-xs transition-colors">
+              className="flex items-center gap-1.5 text-blue-900 hover:text-blue-700 font-bold text-xs transition-colors whitespace-nowrap">
               <Video className="w-3.5 h-3.5" /> Google Meet
             </a>
           ) : (
@@ -154,15 +154,6 @@ export default function AulaRow({ aula, index, isProfessor, studentName }: Props
                 </span>
               )}
             </div>
-            
-            {studentName && (
-              <div className="flex flex-col">
-                <span className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-tight">Aluno</span>
-                <span className="text-sm font-black text-slate-900 truncate max-w-[120px]">
-                  {studentName}
-                </span>
-              </div>
-            )}
             
             <div className="mt-1 flex items-center gap-2">
               {(aula as any).homework_type && (
@@ -205,6 +196,26 @@ export default function AulaRow({ aula, index, isProfessor, studentName }: Props
             )}
           </div>
         </td>
+
+        {/* Tipo de Aluno Column */}
+        {isProfessor && (
+          <td className="py-4 px-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+            {(aula as any).contratos?.planos?.freq_semana 
+              ? 'Semestral' 
+              : 'Personalizado'}
+          </td>
+        )}
+
+        {/* Aluno Column */}
+        {isProfessor && (
+          <td className="py-4 pr-4">
+            {studentName && (
+              <span className="text-sm font-black text-slate-900 truncate block max-w-[150px]">
+                {studentName}
+              </span>
+            )}
+          </td>
+        )}
 
         <td className="py-4 pr-2">
           <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">

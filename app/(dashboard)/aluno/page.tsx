@@ -312,7 +312,7 @@ export default async function AlunoDashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400">
-                    <th className="text-left py-6 px-8 font-black text-[10px] uppercase tracking-widest">Aula #</th>
+                    <th className="text-center py-6 px-8 font-black text-[10px] uppercase tracking-widest">Aula #</th>
                     <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Data e Horário</th>
                     <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Status</th>
                     <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Google Meet</th>

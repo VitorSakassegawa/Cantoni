@@ -20,11 +20,12 @@ export default function AulasTimeline({ aulas }: Props) {
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-slate-100/50 text-slate-400">
-              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Aula #</th>
+              <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap text-center">Aula #</th>
               <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Data e Horário</th>
               <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Status</th>
               <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Google Meet</th>
               <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Lição / Conteúdo</th>
+              <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Tipo</th>
               <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest whitespace-nowrap">Aluno</th>
               <th className="px-4 py-6 text-right pr-8"></th>
             </tr>
