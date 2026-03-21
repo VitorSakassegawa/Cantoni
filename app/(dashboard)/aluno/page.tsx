@@ -330,6 +330,7 @@ export default async function AlunoDashboard() {
               aulas={ultimasAulas || []} 
               showStudentName={false} 
               showContractType={false} 
+              isProfessor={false}
             />
           </CardContent>
         </Card>

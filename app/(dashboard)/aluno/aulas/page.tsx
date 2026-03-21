@@ -57,7 +57,7 @@ export default async function AlunoAulasPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <AulasTimeline aulas={aulas || []} />
+          <AulasTimeline aulas={aulas || []} isProfessor={false} />
         </CardContent>
       </Card>
     </div>

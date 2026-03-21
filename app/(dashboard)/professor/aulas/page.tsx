@@ -96,7 +96,7 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <AulasTimeline aulas={aulas || []} />
+          <AulasTimeline aulas={aulas || []} isProfessor={true} />
         </CardContent>
       </Card>
       

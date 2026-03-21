@@ -9,12 +9,14 @@ interface Props {
   aulas: any[]
   showStudentName?: boolean
   showContractType?: boolean
+  isProfessor?: boolean
 }
 
 export default function AulasTimeline({ 
   aulas, 
   showStudentName = true, 
-  showContractType = true 
+  showContractType = true,
+  isProfessor = false 
 }: Props) {
   const [showAll, setShowAll] = useState(false)
   const initialCount = 5
@@ -45,7 +47,7 @@ export default function AulasTimeline({
                     key={aula.id} 
                     aula={aula} 
                     index={i + 1} 
-                    isProfessor={!!studentName}
+                    isProfessor={isProfessor}
                     studentName={studentName}
                     showStudentName={showStudentName}
                     showContractType={showContractType}

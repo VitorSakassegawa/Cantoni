@@ -259,7 +259,7 @@ export default function AulaRow({
         )}
 
         <td className="py-6 pr-2">
-          <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex gap-1 justify-end transition-opacity">
             {isProfessor && (
               <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all" onClick={() => setShowManageModal(true)} title="Gerenciar Aula">
                 <Settings2 className="w-4 h-4" />
