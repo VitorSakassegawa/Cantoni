@@ -11,6 +11,7 @@ import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, parseISO, isSameDay
 import { ptBR } from 'date-fns/locale'
 import { RotateCcw } from 'lucide-react'
 import CurrentDateGreeting from '@/components/dashboard/CurrentDateGreeting'
+import ReschedulingRequestsList from '@/components/dashboard/ReschedulingRequestsList'
 
 
 interface PageProps {
@@ -334,53 +335,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           )}
 
           {solicitacoesRemarcacao && solicitacoesRemarcacao.length > 0 && (
-            <Card className="glass-card border-none overflow-hidden bg-amber-50/30 border-amber-100 ring-2 ring-amber-500/10">
-              <CardHeader className="pb-4 bg-amber-50/50 border-b border-amber-100/50">
-                <CardTitle className="text-xs font-black text-amber-600 flex items-center gap-2 uppercase tracking-[0.2em]">
-                  <RotateCcw className="w-4 h-4" /> Solicitações de Remarcação
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="divide-y divide-amber-100/50">
-                  {solicitacoesRemarcacao.map((sol: any) => {
-                    const hasNovaData = sol.data_hora_solicitada && !formatDateTime(sol.data_hora_solicitada).includes('Não informada')
-                    return (
-                      <div key={sol.id} className="p-5 space-y-3">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight">
-                            {sol.contratos?.profiles?.full_name}
-                          </p>
-                          <Badge 
-                            variant={hasNovaData ? "warning" : "secondary"} 
-                            className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0"
-                          >
-                            {hasNovaData ? "Solicitado" : "Pendente (Aluno)"}
-                          </Badge>
-                        </div>
-                        <div className="flex flex-col gap-1 text-[10px] text-slate-500 font-bold">
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400">De:</span> {formatDateTime(sol.data_hora)}
-                          </div>
-                          <div className={`flex items-center gap-2 ${hasNovaData ? 'text-amber-700' : 'text-slate-400 italic'}`}>
-                            <span className={hasNovaData ? 'text-amber-500' : 'text-slate-300'}>Para:</span> {hasNovaData ? formatDateTime(sol.data_hora_solicitada) : "Aguardando aluno propor data"}
-                          </div>
-                        </div>
-                        <Link 
-                          href={`/professor/alunos/${sol.contracts?.aluno_id || sol.contratos?.aluno_id}?aulaId=${sol.id}`} 
-                          className={`block w-full text-center py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg transition-all ${
-                            hasNovaData 
-                              ? "bg-amber-600 hover:bg-amber-700 shadow-amber-600/20" 
-                              : "bg-slate-400 hover:bg-slate-500 shadow-slate-400/20"
-                          }`}
-                        >
-                          {hasNovaData ? "Analisar Pedido" : "Ver Aluno"}
-                        </Link>
-                      </div>
-                    )
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+            <ReschedulingRequestsList initialSolicitacoes={solicitacoesRemarcacao} />
           )}
 
           {/* Próximas Pausas / Recessos */}

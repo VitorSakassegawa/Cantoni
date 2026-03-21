@@ -11,6 +11,7 @@ import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, Externa
 
 import ManageAulaModal from './ManageAulaModal'
 import RescheduleCalendar from './RescheduleCalendar'
+import ReviewRescheduleModal from './ReviewRescheduleModal'
 import { uploadHomeworkImage } from '@/lib/actions/homework'
 
 import { toast } from 'sonner'
@@ -71,7 +72,6 @@ export default function AulaRow({
   const [selectedTime, setSelectedTime] = useState('18:00')
   const [uploading, setUploading] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  const [justificativa, setJustificativa] = useState('')
   const [showReviewModal, setShowReviewModal] = useState(false)
 
   useEffect(() => {
@@ -407,80 +407,15 @@ export default function AulaRow({
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showReviewModal} onOpenChange={setShowReviewModal}>
-        <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
-          <div className="bg-amber-500 h-2 w-full" />
-          <div className="p-8 space-y-6">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Analisar Remarcação</DialogTitle>
-              <DialogDescription className="text-slate-500 font-medium text-sm">
-                O aluno sugeriu uma nova data e horário. O que deseja fazer?
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="space-y-6">
-              <div className="p-6 rounded-3xl bg-amber-50 border border-amber-100 flex flex-col items-center text-center gap-2">
-                <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Nova Data Sugerida</p>
-                <p className="text-xl font-black text-slate-900">{aula.data_hora_solicitada ? formatDateTime(aula.data_hora_solicitada) : '—'}</p>
-                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 mt-2">
-                  <Clock className="w-3.5 h-3.5" />
-                  Aula Original: {formatDateTime(aula.data_hora)}
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Justificativa (em caso de rejeição)</Label>
-                <textarea 
-                  className="w-full h-24 p-4 rounded-2xl bg-white border-2 border-slate-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 transition-all font-bold text-slate-900 outline-none text-xs resize-none"
-                  placeholder="Explique porque não pode aceitar este horário ou sugira outro no botão 'Sugerir Alternativa'..."
-                  value={justificativa}
-                  onChange={e => setJustificativa(e.target.value)}
-                />
-              </div>
-            </div>
-
-            <DialogFooter className="grid grid-cols-2 gap-3 sm:flex-row">
-              <Button 
-                variant="ghost" 
-                className="col-span-1 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-600 hover:bg-red-50 hover:text-red-700" 
-                onClick={async () => {
-                  setLoading(true)
-                  try {
-                    await rejeitarRemarcacao(aula.id, justificativa)
-                    toast.success('Solicitação rejeitada. O aluno será notificado.')
-                    setShowReviewModal(false)
-                    router.refresh()
-                  } catch (e: any) {
-                    toast.error(e.message)
-                  } finally {
-                    setLoading(false)
-                  }
-                }}
-                disabled={loading}
-              >
-                Rejeitar
-              </Button>
-              <Button 
-                className="col-span-1 h-12 rounded-2xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700" 
-                onClick={handleRemark} 
-                disabled={loading}
-              >
-                {loading ? 'Processando...' : 'Aprovar Data'}
-              </Button>
-              <Button 
-                variant="outline"
-                className="col-span-2 h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50"
-                onClick={() => {
-                  setShowReviewModal(false)
-                  setShowRemarkModal(true)
-                }}
-              >
-                Escolher outro horário
-              </Button>
-            </DialogFooter>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <ReviewRescheduleModal 
+        aula={aula}
+        open={showReviewModal}
+        onOpenChange={setShowReviewModal}
+        onSuggestAlternative={() => {
+          setShowReviewModal(false)
+          setShowRemarkModal(true)
+        }}
+      />
 
       <ManageAulaModal
         aula={aula}
