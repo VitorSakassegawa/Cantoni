@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatDateTime, formatDateOnly } from '@/lib/utils'
@@ -57,6 +58,7 @@ export default function AulaRow({
   showStudentName = false, 
   showContractType = false 
 }: Props) {
+  const router = useRouter()
   const [status, setStatus] = useState<any>(aula.status)
   const [dataHoraSolicitada, setDataHoraSolicitada] = useState<any>(aula.data_hora_solicitada)
   const [loading, setLoading] = useState(false)
@@ -105,6 +107,7 @@ export default function AulaRow({
           setStatus('remarcada')
           toast.success('Aula remarcada com sucesso!')
           setShowRemarkModal(false)
+          router.refresh()
         }
       } else {
         const res = await solicitarRemarcacao(aula.id, novaDataStr)
@@ -113,7 +116,7 @@ export default function AulaRow({
           setDataHoraSolicitada(novaDataStr)
           toast.success('Solicitação de remarcação enviada ao professor!')
           setShowRemarkModal(false)
-          window.location.reload()
+          router.refresh()
         }
       }
     } catch (error: any) {

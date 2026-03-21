@@ -234,20 +234,26 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
   const isoData = new Date(novaDataHora).toISOString()
   console.log('[solicitarRemarcacao] ISO gerado:', isoData)
 
-  const { error: updateError } = await serviceSupabase
+  const { data: verify, error: updateError } = await serviceSupabase
     .from('aulas')
     .update({ 
       status: 'pendente_remarcacao',
       data_hora_solicitada: isoData 
     })
     .eq('id', aulaId)
+    .select()
+    .single()
 
   if (updateError) {
     console.error('[solicitarRemarcacao] Erro no update:', updateError)
     throw new Error(`Erro ao solicitar remarcação: ${updateError.message}`)
   }
 
-  console.log('[solicitarRemarcacao] Sucesso!')
+  console.log('[solicitarRemarcacao] Sucesso! Verificação:', { 
+    id: verify.id, 
+    status: verify.status, 
+    solicitada: verify.data_hora_solicitada 
+  })
 
   revalidatePath('/professor')
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
