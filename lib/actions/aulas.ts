@@ -111,8 +111,10 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
     .single()
 
   const qtdAtual = remarcacao?.quantidade || 0
+  // Se for uma aula que já estava pendente (recesso ou aguardando decisão), não conta como nova remarcação do aluno
+  const isResolvingConflict = aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
-  if (!isProfessor && qtdAtual >= plano.remarca_max_mes) {
+  if (!isProfessor && !isResolvingConflict && qtdAtual >= plano.remarca_max_mes) {
     throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
   }
 
@@ -168,13 +170,15 @@ Instruções:
 
   if (insertError) throw new Error('Erro ao criar nova aula')
 
-  await serviceSupabase
-    .from('remarcacoes_mes')
-    .upsert({
-      aluno_id: contrato.aluno_id,
-      mes: mesStr,
-      quantidade: qtdAtual + 1,
-    }, { onConflict: 'aluno_id,mes' })
+  if (!isResolvingConflict) {
+    await serviceSupabase
+      .from('remarcacoes_mes')
+      .upsert({
+        aluno_id: contrato.aluno_id,
+        mes: mesStr,
+        quantidade: qtdAtual + 1,
+      }, { onConflict: 'aluno_id,mes' })
+  }
 
   await enviarConfirmacaoRemarcacao({
     to: aluno.email,
@@ -225,7 +229,9 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
     .single()
 
   const qtdAtual = remarcacao?.quantidade || 0
-  if (qtdAtual >= plano.remarca_max_mes) {
+  const isResolvingConflict = aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
+
+  if (!isResolvingConflict && qtdAtual >= plano.remarca_max_mes) {
     throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
   }
 
