@@ -332,27 +332,42 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-amber-100/50">
-                  {solicitacoesRemarcacao.map((sol: any) => (
-                    <div key={sol.id} className="p-5 space-y-3">
-                      <div className="flex items-center justify-between">
-                        <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight">
-                          {sol.contratos?.profiles?.full_name}
-                        </p>
-                        <Badge variant="warning" className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0">Solicitado</Badge>
-                      </div>
-                      <div className="flex flex-col gap-1 text-[10px] text-slate-500 font-bold">
-                        <div className="flex items-center gap-2">
-                          <span className="text-slate-400">De:</span> {formatDateTime(sol.data_hora)}
+                  {solicitacoesRemarcacao.map((sol: any) => {
+                    const hasNovaData = sol.data_hora_solicitada && !formatDateTime(sol.data_hora_solicitada).includes('Não informada')
+                    return (
+                      <div key={sol.id} className="p-5 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] font-black text-slate-900 uppercase tracking-tight">
+                            {sol.contratos?.profiles?.full_name}
+                          </p>
+                          <Badge 
+                            variant={hasNovaData ? "warning" : "secondary"} 
+                            className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0"
+                          >
+                            {hasNovaData ? "Solicitado" : "Pendente (Aluno)"}
+                          </Badge>
                         </div>
-                        <div className="flex items-center gap-2 text-amber-700">
-                          <span className="text-amber-500">Para:</span> {formatDateTime(sol.data_hora_solicitada)}
+                        <div className="flex flex-col gap-1 text-[10px] text-slate-500 font-bold">
+                          <div className="flex items-center gap-2">
+                            <span className="text-slate-400">De:</span> {formatDateTime(sol.data_hora)}
+                          </div>
+                          <div className={`flex items-center gap-2 ${hasNovaData ? 'text-amber-700' : 'text-slate-400 italic'}`}>
+                            <span className={hasNovaData ? 'text-amber-500' : 'text-slate-300'}>Para:</span> {hasNovaData ? formatDateTime(sol.data_hora_solicitada) : "Aguardando aluno propor data"}
+                          </div>
                         </div>
+                        <Link 
+                          href={`/professor/alunos/${sol.contrato_id}`} 
+                          className={`block w-full text-center py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg transition-all ${
+                            hasNovaData 
+                              ? "bg-amber-600 hover:bg-amber-700 shadow-amber-600/20" 
+                              : "bg-slate-400 hover:bg-slate-500 shadow-slate-400/20"
+                          }`}
+                        >
+                          {hasNovaData ? "Analisar Pedido" : "Ver Aluno"}
+                        </Link>
                       </div>
-                      <Link href={`/professor/alunos/${sol.contrato_id}`} className="block w-full text-center py-2.5 rounded-xl bg-amber-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-amber-700 shadow-lg shadow-amber-600/20 transition-all">
-                        Analisar Pedido
-                      </Link>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
               </CardContent>
             </Card>

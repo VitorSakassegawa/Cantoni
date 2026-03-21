@@ -68,7 +68,7 @@ export default function AulaRow({
   const [isExpanded, setIsExpanded] = useState(false)
 
   const canCancel = ['agendada', 'confirmada'].includes(status)
-  const canRemark = ['agendada', 'confirmada', 'cancelada'].includes(status)
+  const canRemark = ['agendada', 'confirmada', 'cancelada', 'pendente_remarcacao'].includes(status)
 
   async function handleCancel() {
     setLoading(true)
@@ -142,9 +142,15 @@ export default function AulaRow({
         <td className="py-6 font-bold text-slate-700 text-sm whitespace-nowrap">
           <div className="flex flex-col">
             <span>{formatDateTime(aula.data_hora)}</span>
-            {aula.data_hora_solicitada && status === 'pendente_remarcacao' && (
-              <span className="text-[10px] text-amber-600 font-black mt-1 uppercase tracking-tighter">
-                Solicitado p/: {formatDateTime(aula.data_hora_solicitada)}
+            {status === 'pendente_remarcacao' && (
+              <span className="text-[10px] font-black mt-1 uppercase tracking-tighter">
+                {aula.data_hora_solicitada && !formatDateTime(aula.data_hora_solicitada).includes('Não informada') ? (
+                  <span className="text-amber-600">Solicitado p/: {formatDateTime(aula.data_hora_solicitada)}</span>
+                ) : (
+                  <span className="text-slate-400 italic font-bold">
+                    {isProfessor ? "Aguardando aluno sugerir data" : "Por favor, sugira uma nova data"}
+                  </span>
+                )}
               </span>
             )}
           </div>
@@ -275,13 +281,11 @@ export default function AulaRow({
                 <X className="w-4 h-4" />
               </Button>
             )}
-            {isProfessor && status === 'pendente_remarcacao' && (
+            {isProfessor && status === 'pendente_remarcacao' && aula.data_hora_solicitada && !formatDateTime(aula.data_hora_solicitada).includes('Não informada') && (
               <Button size="sm" variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl" onClick={() => {
-                if (aula.data_hora_solicitada) {
-                  const d = new Date(aula.data_hora_solicitada)
-                  setSelectedDate(d)
-                  setSelectedTime(format(d, 'HH:mm'))
-                }
+                const d = new Date(aula.data_hora_solicitada!)
+                setSelectedDate(d)
+                setSelectedTime(format(d, 'HH:mm'))
                 setShowRemarkModal(true)
               }}>
                 Analisar
