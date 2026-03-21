@@ -77,11 +77,14 @@ export default function AulaRow({
   useEffect(() => {
     const aulaIdParam = searchParams.get('aulaId')
     if (aulaIdParam === aula.id.toString()) {
-      if (status === 'pendente_remarcacao' && isProfessor) {
+      if (status === 'pendente_remarcacao' && isProfessor && aula.data_hora_solicitada) {
+        const d = new Date(aula.data_hora_solicitada)
+        setSelectedDate(d)
+        setSelectedTime(format(d, 'HH:mm'))
         setShowReviewModal(true)
       }
     }
-  }, [searchParams, aula.id, status, isProfessor])
+  }, [searchParams, aula.id, status, isProfessor, aula.data_hora_solicitada])
 
   const canCancel = ['agendada', 'confirmada'].includes(status)
   const canRemark = ['agendada', 'confirmada', 'cancelada', 'pendente_remarcacao', 'pendente_remarcacao_rejeitada'].includes(status)
