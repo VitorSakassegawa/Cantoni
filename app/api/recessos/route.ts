@@ -47,8 +47,8 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // Se for recesso do professor, identificar conflitos de aulas
-  if (tipo === 'recesso') {
+  // Se for recesso ou feriado do professor, identificar conflitos de aulas
+  if (tipo === 'recesso' || tipo === 'feriado' || tipo === 'ferias') {
     const { data: aulasImpactadas } = await supabase
       .from('aulas')
       .select('id')
@@ -60,7 +60,10 @@ export async function POST(request: NextRequest) {
       const ids = aulasImpactadas.map((a: { id: string }) => a.id)
       await supabase
         .from('aulas')
-        .update({ status: 'pendente_remarcacao' })
+        .update({ 
+          status: 'pendente_remarcacao',
+          motivo_remarcacao: `Conflito: ${titulo} (${tipo})`
+        })
         .in('id', ids)
     }
   }

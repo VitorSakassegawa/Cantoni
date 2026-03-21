@@ -61,6 +61,7 @@ export interface Aula {
   homework_notificado: boolean;
   data_hora_solicitada?: string;
   justificativa_professor?: string;
+  motivo_remarcacao?: string;
   created_at: string;
 
 }

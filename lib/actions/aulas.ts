@@ -164,6 +164,9 @@ Instruções:
       status: 'agendada',
       remarcada_de: aulaId,
       meet_link: novoMeetLink,
+      motivo_remarcacao: aula.motivo_remarcacao 
+        ? `${aula.motivo_remarcacao} (Original: ${formatDateTime(aula.data_hora)})`
+        : `Solicitado pelo aluno (Original: ${formatDateTime(aula.data_hora)})`
     })
     .select()
     .single()

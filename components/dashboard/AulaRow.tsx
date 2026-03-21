@@ -187,6 +187,18 @@ export default function AulaRow({
                 )}
               </div>
             )}
+            {aula.motivo_remarcacao && (
+              <div className="mt-1 flex flex-col gap-1">
+                {(aula.motivo_remarcacao.includes('Conflito') || aula.motivo_remarcacao.includes('Férias') || aula.motivo_remarcacao.includes('Feriado')) && (
+                  <Badge className="w-fit bg-emerald-100 text-emerald-700 border-none text-[8px] font-black uppercase px-1.5 py-0">
+                    Abonada (S/ Limite)
+                  </Badge>
+                )}
+                <span className="text-[9px] font-medium text-slate-400 italic">
+                  {aula.motivo_remarcacao}
+                </span>
+              </div>
+            )}
           </div>
         </td>
         <td className="py-6">
