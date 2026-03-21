@@ -23,13 +23,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
+import { Select } from "@/components/ui/select"
+import { format } from 'date-fns'
 
 interface Props {
   aula: Aula
@@ -319,15 +314,10 @@ export default function AulaRow({
 
               <div className="space-y-3">
                 <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Horário Sugerido</Label>
-                <Select value={selectedTime} onValueChange={setSelectedTime}>
-                  <SelectTrigger className="h-12 rounded-2xl border-slate-100 bg-white font-bold px-6">
-                    <SelectValue placeholder="Escolha um horário" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-2xl border-slate-100">
-                    {HORARIOS_DISPONIVEIS.map(h => (
-                      <SelectItem key={h} value={h} className="font-bold">{h}h</SelectItem>
-                    ))}
-                  </SelectContent>
+                <Select value={selectedTime} onChange={e => setSelectedTime(e.target.value)} className="h-12 rounded-2xl border-slate-100 bg-white font-bold px-6 outline-none ring-0">
+                  {HORARIOS_DISPONIVEIS.map(h => (
+                    <option key={h} value={h} className="font-bold text-slate-900">{h}h</option>
+                  ))}
                 </Select>
               </div>
               
