@@ -57,11 +57,10 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
   const months = Array.from({ length: 12 }, (_, i) => addMonths(startOfYear(new Date(year, 0, 1)), i))
 
   const getDayStatus = (date: Date) => {
+    const dateStr = format(date, 'yyyy-MM-dd')
     const found = recessos.find(r => {
-      // Usar T12:00:00 para garantir que a data seja interpretada corretamente no fuso local
-      const start = parseISO(r.data_inicio + 'T12:00:00')
-      const end = parseISO(r.data_fim + 'T12:00:00')
-      return isWithinInterval(date, { start, end })
+      // Comparação direta de strings YYYY-MM-DD para evitar problemas de fuso horário
+      return dateStr >= r.data_inicio && dateStr <= r.data_fim
     })
     return found
   }
@@ -78,11 +77,12 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Calendário Acadêmico Cantoni</p>
         </div>
 
-        <div className="flex items-center gap-4 bg-white/50 p-2 rounded-2xl border border-white/40 shadow-sm backdrop-blur-md">
-           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-orange-100 text-orange-700 text-[10px] font-black uppercase tracking-widest">
+        {/* Legend matching user image exactly */}
+        <div className="flex items-center gap-2 bg-white p-1.5 rounded-full border border-slate-100 shadow-sm">
+           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 text-orange-700 text-[9px] font-black uppercase tracking-wider">
               <Umbrella className="w-3.5 h-3.5" /> Recesso / Férias
            </div>
-           <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-rose-100 text-rose-700 text-[10px] font-black uppercase tracking-widest">
+           <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-rose-50 text-rose-700 text-[9px] font-black uppercase tracking-wider">
               <Flag className="w-3.5 h-3.5" /> Feriados
            </div>
         </div>
