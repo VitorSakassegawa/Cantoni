@@ -10,6 +10,7 @@ import { Users, BookOpen, AlertCircle, Clock, ChevronLeft, ChevronRight, Calenda
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, parseISO, isSameDay, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { RotateCcw } from 'lucide-react'
+import CurrentDateGreeting from '@/components/dashboard/CurrentDateGreeting'
 
 
 interface PageProps {
@@ -126,9 +127,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
               Bom dia, Gabriel! 🍎
             </h1>
-            <p className="text-blue-100/70 font-bold text-sm tracking-wide uppercase">
-              {today.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
-            </p>
+            <CurrentDateGreeting />
           </div>
           
           <div className="flex gap-4">

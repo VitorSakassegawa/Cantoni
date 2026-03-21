@@ -195,18 +195,14 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         dataFim,
         semestre: new Date(dataInicio).getMonth() <= 5 ? 'jan-jun' : 'jul-dez',
         ano: new Date(dataInicio).getFullYear(),
-        diasDaSemana: diasSelecionados,
-        horario,
-        valor: parseFloat(valorFinalComMascara.replace(/\D/g, '')) / 100,
-        livroAtual: finalLivro,
-        nivelAtual: nivel,
-        aulasTotais: parseInt(aulasTotais),
-        diaVencimento: parseInt(diaVencimento),
-        formaPagamento,
+        dia_vencimento: parseInt(diaVencimento),
+        forma_pagamento: formaPagamento,
         tipoContrato,
         descontoValor: parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100,
         descontoPercentual: parseFloat(descontoPercentual || '0'),
         numParcelas: parseInt(numParcelas),
+        livro_atual: finalLivro,
+        nivel_atual: nivel,
       }
 
       if (isEdit) {
