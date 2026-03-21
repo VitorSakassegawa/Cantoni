@@ -9,6 +9,7 @@ import type { Aula } from '@/lib/types'
 import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 
 import ManageAulaModal from './ManageAulaModal'
+import RescheduleCalendar from './RescheduleCalendar'
 import { uploadHomeworkImage } from '@/lib/actions/homework'
 
 import { toast } from 'sonner'
@@ -21,8 +22,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface Props {
   aula: Aula
@@ -43,6 +50,10 @@ const STATUS_BADGE: Record<string, any> = {
   pendente_remarcacao: 'warning',
 }
 
+const HORARIOS_DISPONIVEIS = [
+  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+]
+
 export default function AulaRow({ 
   aula, 
   index, 
@@ -56,7 +67,8 @@ export default function AulaRow({
   const [showRemarkModal, setShowRemarkModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
   const [showManageModal, setShowManageModal] = useState(false)
-  const [novaData, setNovaData] = useState('')
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  const [selectedTime, setSelectedTime] = useState('18:00')
   const [uploading, setUploading] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
 
@@ -80,18 +92,26 @@ export default function AulaRow({
   }
 
   async function handleRemark() {
-    if (!novaData) return toast.error('Selecione uma data e hora')
+    if (!selectedDate) return toast.error('Selecione uma data no calendário')
+    
+    // Combining date and time
+    const [hours, minutes] = selectedTime.split(':')
+    const finalDate = new Date(selectedDate)
+    finalDate.setHours(parseInt(hours), parseInt(minutes), 0, 0)
+    
+    const novaDataStr = finalDate.toISOString()
+
     setLoading(true)
     try {
       if (isProfessor) {
-        const res = await remarcarAula(aula.id, novaData)
+        const res = await remarcarAula(aula.id, novaDataStr)
         if (res.success) {
           setStatus('remarcada')
           toast.success('Aula remarcada com sucesso!')
           setShowRemarkModal(false)
         }
       } else {
-        const res = await solicitarRemarcacao(aula.id, novaData)
+        const res = await solicitarRemarcacao(aula.id, novaDataStr)
         if (res.success) {
           setStatus('pendente_remarcacao')
           toast.success('Solicitação de remarcação enviada ao professor!')
@@ -119,11 +139,6 @@ export default function AulaRow({
       setUploading(false)
     }
   }
-
-  const aulasSemana = (aula as any).contratos?.planos?.aulas_semana || 1
-  const regraTexto = aulasSemana === 1 
-    ? "Você tem direito a 1 remarcação por mês."
-    : `Você tem direito a ${aulasSemana} remarcações por mês.`
 
   return (
     <>
@@ -267,7 +282,11 @@ export default function AulaRow({
             )}
             {isProfessor && status === 'pendente_remarcacao' && (
               <Button size="sm" variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl" onClick={() => {
-                setNovaData(aula.data_hora_solicitada?.split('.')[0] || '')
+                if (aula.data_hora_solicitada) {
+                  const d = new Date(aula.data_hora_solicitada)
+                  setSelectedDate(d)
+                  setSelectedTime(format(d, 'HH:mm'))
+                }
                 setShowRemarkModal(true)
               }}>
                 Analisar
@@ -278,63 +297,56 @@ export default function AulaRow({
       </tr>
 
       <Dialog open={showRemarkModal} onOpenChange={setShowRemarkModal}>
-        <DialogContent className="sm:max-w-[550px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
+        <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
           <div className="bg-blue-600 h-2 w-full" />
-          <div className="p-10 space-y-8">
+          <div className="p-8 space-y-6">
             <DialogHeader>
-              <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight leading-none mb-2">Remarcar Aula</DialogTitle>
-              <DialogDescription className="text-slate-500 font-medium text-base">
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Remarcar Aula</DialogTitle>
+              <DialogDescription className="text-slate-500 font-medium text-sm">
                 {isProfessor 
-                  ? "Confirme a nova data solicitada pelo aluno ou sugira um novo horário." 
-                  : "Escolha uma nova data e hora. Sua solicitação será analisada pelo professor."}
+                  ? "Selecione a nova data e horário para esta aula." 
+                  : "Escolha um dia disponível no calendário e o horário desejado."}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="space-y-8 py-4">
-              <div className="space-y-4">
-                <Label htmlFor="datetime" className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Nova Data e Hora Sugerida</Label>
-                <div className="relative group">
-                  <Input
-                    id="datetime"
-                    type="datetime-local"
-                    className="h-16 rounded-2xl border-slate-100 bg-slate-50/50 focus:ring-4 focus:ring-blue-100 focus:border-blue-500 font-bold text-lg px-6 transition-all"
-                    value={novaData}
-                    onChange={e => setNovaData(e.target.value)}
-                  />
-                </div>
+            <div className="space-y-6">
+              <div className="bg-slate-50/50 p-4 rounded-3xl border border-slate-100">
+                <RescheduleCalendar 
+                  selectedDate={selectedDate} 
+                  onDateSelect={setSelectedDate} 
+                />
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Horário Sugerido</Label>
+                <Select value={selectedTime} onValueChange={setSelectedTime}>
+                  <SelectTrigger className="h-12 rounded-2xl border-slate-100 bg-white font-bold px-6">
+                    <SelectValue placeholder="Escolha um horário" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-2xl border-slate-100">
+                    {HORARIOS_DISPONIVEIS.map(h => (
+                      <SelectItem key={h} value={h} className="font-bold">{h}h</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               {!isProfessor && (
-                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-1000">
-                  <div className="p-6 rounded-3xl bg-blue-50/50 border border-blue-100/50 text-blue-900 text-sm leading-relaxed relative overflow-hidden group/card shadow-sm">
-                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/card:scale-110 transition-transform">
-                      <RotateCcw className="w-12 h-12" />
-                    </div>
-                    <p className="font-black flex items-center gap-2 mb-2 uppercase tracking-widest text-[10px] text-blue-600">
-                      Regras de Remarcação
-                    </p>
-                    <p className="font-medium">
-                      {regraTexto} Conforme o contrato semestral (quem faz {aulasSemana} aula/semana).
-                    </p>
-                  </div>
-                  
-                  <div className="p-6 rounded-3xl bg-slate-50 border border-slate-100 text-slate-500 text-[11px] leading-snug font-medium italic">
-                    "Nota: O professor irá validar a solicitação de acordo com a disponibilidade da agenda acadêmica."
-                  </div>
+                <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100/50 text-[11px] leading-snug font-medium text-blue-800">
+                   Sua solicitação entrará como **pendente** até que o professor confirme a disponibilidade.
                 </div>
               )}
             </div>
 
-            <DialogFooter className="flex-col sm:flex-row gap-3 pt-4">
-              <Button variant="ghost" className="h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all flex-1" onClick={() => setShowRemarkModal(false)}>Voltar</Button>
-              <Button className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]" onClick={handleRemark} disabled={loading}>
+            <DialogFooter className="flex-col sm:flex-row gap-3">
+              <Button variant="ghost" className="h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50" onClick={() => setShowRemarkModal(false)}>Voltar</Button>
+              <Button className="h-12 px-8 rounded-2xl lms-gradient text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20" onClick={handleRemark} disabled={loading || !selectedDate}>
                 {loading ? 'Processando...' : isProfessor ? 'Confirmar Remarcação' : 'Enviar Solicitação'}
               </Button>
             </DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
-
 
       <Dialog open={showCancelModal} onOpenChange={setShowCancelModal}>
         <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
