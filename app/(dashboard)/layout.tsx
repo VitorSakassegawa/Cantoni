@@ -68,7 +68,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <BookOpen className="w-4 h-4" />
                   </div>
-                  Minhas Aulas
+                  Aulas
                 </Link>
                 <Link
                   href="/professor/pagamentos"
@@ -100,7 +100,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <BookOpen className="w-4 h-4" />
                   </div>
-                  Minhas Aulas
+                  Aulas
                 </Link>
                 <Link
                   href="/aluno/pagamentos"

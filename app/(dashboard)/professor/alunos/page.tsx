@@ -118,15 +118,21 @@ export default async function AlunosPage() {
 
                     <div className="flex items-center gap-3 min-w-[140px] justify-end">
                       {pagAtrasado ? (
-                        <Badge variant="destructive" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                        <Badge variant="destructive" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/10">
                           ATRASADO
                         </Badge>
+                      ) : contrato?.status_financeiro === 'pendente' ? (
+                        <Badge variant="warning" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/10">
+                          PENDENTE
+                        </Badge>
                       ) : contrato && (
-                        <Badge className="bg-emerald-500 text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest">EM DIA</Badge>
+                        <Badge className="bg-emerald-500 text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/10">
+                          EM DIA
+                        </Badge>
                       )}
                       
                       <Link href={`/professor/alunos/${aluno.id}`}>
-                        <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all">
+                        <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-sm">
                           <ExternalLink className="w-5 h-5" />
                         </Button>
                       </Link>

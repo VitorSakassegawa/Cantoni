@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { formatCurrency, formatDateTime, formatDateOnly } from '@/lib/utils'
@@ -283,8 +284,46 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           </div>
         </div>
 
-        {/* Sidebar Rights: Alunos Recentes & Solicitações */}
+        {/* Sidebar Rights: Alunos Recentes & Solicitações & Alertas */}
         <div className="xl:col-span-4 space-y-6">
+          {/* Alertas Financeiros */}
+          {alunosAtivos?.some((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => p.status === 'atrasado')) && (
+            <Card className="glass-card border-none overflow-hidden bg-red-50/30 border-red-100 ring-2 ring-red-500/10 scale-100 hover:scale-[1.02] transition-all">
+              <CardHeader className="pb-4 bg-red-50/50 border-b border-red-100/50">
+                <CardTitle className="text-xs font-black text-red-600 flex items-center gap-2 uppercase tracking-[0.2em]">
+                  <AlertCircle className="w-4 h-4" /> Pendências Financeiras
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-red-100/50">
+                  {alunosAtivos?.filter((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => p.status === 'atrasado')).map((contrato: any) => {
+                    const isAtrasado = contrato.pagamentos?.some((p: any) => p.status === 'atrasado')
+                    return (
+                      <div key={contrato.id} className="p-5 flex items-center justify-between group">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-2xl ${isAtrasado ? 'bg-red-100 text-red-600' : 'bg-amber-100 text-amber-600'} flex items-center justify-center font-black text-xs`}>
+                             {contrato.profiles?.full_name?.charAt(0)}
+                          </div>
+                          <div>
+                            <p className="text-[11px] font-black text-slate-900 tracking-tight leading-none">{contrato.profiles?.full_name}</p>
+                            <p className={`text-[9px] font-bold mt-1 uppercase ${isAtrasado ? 'text-red-500' : 'text-amber-500'}`}>
+                              {isAtrasado ? 'Pagamento Atrasado' : 'Aulas no Limite / S/ Pgto'}
+                            </p>
+                          </div>
+                        </div>
+                        <Link href={`/professor/alunos/${contrato.aluno_id}`}>
+                          <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl hover:bg-red-100 text-red-600 transition-all">
+                            <ChevronRight className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    )
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {solicitacoesRemarcacao && solicitacoesRemarcacao.length > 0 && (
             <Card className="glass-card border-none overflow-hidden bg-amber-50/30 border-amber-100 ring-2 ring-amber-500/10">
               <CardHeader className="pb-4 bg-amber-50/50 border-b border-amber-100/50">

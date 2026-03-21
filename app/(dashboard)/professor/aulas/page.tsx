@@ -29,7 +29,7 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
     .from('aulas')
     .select('*, contratos!inner(status, aluno_id, profiles!inner(full_name))')
     .eq('contratos.status', 'ativo')
-    .order('data_hora', { ascending: false })
+    .order('data_hora', { ascending: true })
 
   if (search) {
     query = query.ilike('contratos.profiles.full_name', `%${search}%`)

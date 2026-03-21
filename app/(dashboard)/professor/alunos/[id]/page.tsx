@@ -78,6 +78,11 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
               <h1 className="text-4xl font-black text-slate-900 tracking-tighter mb-1">{aluno.full_name}</h1>
               <div className="flex flex-wrap items-center gap-3">
                 <Badge className="bg-blue-100 text-blue-700 border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest">Aluno</Badge>
+                {contrato?.status_financeiro === 'pendente' && (
+                  <Badge variant="warning" className="bg-amber-100 text-amber-700 border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest animate-pulse shadow-lg shadow-amber-500/20">
+                    <AlertCircle className="w-3 h-3 mr-1" /> PAGAMENTO PENDENTE
+                  </Badge>
+                )}
                 {aluno.data_inscricao && (
                   <Badge variant="outline" className="border-slate-200 text-slate-400 px-3 py-1 text-[10px] font-black uppercase tracking-widest">
                     Inscrito em {formatDateOnly(aluno.data_inscricao)}
@@ -91,6 +96,12 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
 
           </div>
           <div className="flex items-center gap-3">
+            {contrato?.status_financeiro === 'pendente' && (
+               <div className="hidden md:flex flex-col items-end mr-2">
+                 <p className="text-[8px] font-black text-amber-600 uppercase tracking-widest">Atenção</p>
+                 <p className="text-[10px] font-bold text-slate-400">Regularize o financeiro antes de renovar</p>
+               </div>
+            )}
             <Link href={`/professor/alunos/${id}/perfil`}>
               <Button variant="outline" className="h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50">Editar Perfil</Button>
             </Link>

@@ -271,6 +271,46 @@ export async function concluirAula(aulaId: number) {
   const aulasDadas = (contrato.aulas_dadas || 0) + 1
   const aulasRestantes = Math.max(0, (contrato.aulas_restantes || 0) - 1)
 
+  // Financial Dependency check
+  let statusFinanceiro = contrato.status_financeiro || 'em_dia'
+  const freqSemana = contrato.planos?.freq_semana || 1
+  const lessonsPerCycle = freqSemana * 4 // 4 or 8
+
+  // Ad Hoc vs Weekly check
+  const isAdHoc = !contrato.planos?.freq_semana 
+  const thresholdReached = isAdHoc 
+    ? aulasDadas >= contrato.aulas_totais
+    : aulasDadas % lessonsPerCycle === 0
+
+  if (thresholdReached) {
+    // Check payments
+    const { data: payments } = await serviceSupabase
+      .from('pagamentos')
+      .select('*')
+      .eq('contrato_id', contrato.id)
+      .order('parcela_num', { ascending: true })
+
+    const currentCycle = isAdHoc ? 1 : Math.ceil(aulasDadas / lessonsPerCycle)
+    const currentPayment = payments?.find((p: any) => p.parcela_num === currentCycle)
+
+    if (!currentPayment || currentPayment.status !== 'pago') {
+      statusFinanceiro = 'pendente'
+      
+      // Notify Student
+      try {
+        const { enviarAlertaPendenciaFinanceira } = await import('@/lib/resend')
+        await enviarAlertaPendenciaFinanceira({
+          to: contrato.profiles.email,
+          nomeAluno: contrato.profiles.full_name,
+          aulasConcluidas: aulasDadas,
+          proximosPassos: `Identificamos que a aula de número ${aulasDadas} foi concluída, atingindo o limite do seu ciclo atual. Para continuar com as próximas aulas sem interrupção, por favor realize o pagamento da parcela correspondente no painel financeiro.`
+        })
+      } catch (err) {
+        console.error('Error sending financial alert email:', err)
+      }
+    }
+  }
+
   // Update aula and contract
   const { error: updateAulaErr } = await serviceSupabase
     .from('aulas')
@@ -283,7 +323,8 @@ export async function concluirAula(aulaId: number) {
     .from('contratos')
     .update({ 
       aulas_dadas: aulasDadas,
-      aulas_restantes: aulasRestantes 
+      aulas_restantes: aulasRestantes,
+      status_financeiro: statusFinanceiro
     })
     .eq('id', contrato.id)
 
@@ -293,6 +334,6 @@ export async function concluirAula(aulaId: number) {
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
   revalidatePath('/aluno')
 
-  return { success: true, aulasDadas, aulasRestantes }
+  return { success: true, aulasDadas, aulasRestantes, statusFinanceiro }
 }
 

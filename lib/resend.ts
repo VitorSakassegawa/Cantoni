@@ -299,3 +299,45 @@ export async function enviarConfirmacaoRemarcacao({
     `,
   })
 }
+export async function enviarAlertaPendenciaFinanceira({
+  to,
+  nomeAluno,
+  aulasConcluidas,
+  proximosPassos,
+}: {
+  to: string
+  nomeAluno: string
+  aulasConcluidas: number
+  proximosPassos: string
+}) {
+  const resend = getResendClient()
+  return resend.emails.send({
+    from: FROM,
+    to,
+    subject: '🔔 Importante: Conclusão de aulas e pendência financeira',
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:auto;color:#334155;line-height:1.6">
+        <h2 style="color:#1e3a5f">Olá, ${nomeAluno}! 👋</h2>
+        <p>Gostaríamos de informar que você atingiu o limite de aulas concluídas referente ao seu plano atual.</p>
+        
+        <div style="background:#fff7ed;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #ffedd5">
+          <p style="margin:0;color:#9a3412;font-weight:bold;font-size:16px">📊 Resumo de Aulas</p>
+          <p style="font-size:14px;color:#c2410c"><strong>Aulas realizadas: ${aulasConcluidas}</strong></p>
+          <hr style="border:none;border-top:1px solid #fed7aa;margin:15px 0" />
+          <p style="font-size:14px;margin-bottom:0"><strong>Atenção:</strong> Identificamos que ainda não consta o pagamento da mensalidade/pacote correspondente no nosso sistema.</p>
+        </div>
+
+        <h3 style="color:#1e3a5f">💳 Próximos Passos</h3>
+        <p style="font-size:14px">${proximosPassos}</p>
+
+        <div style="background:#f8fafc;padding:20px;border-radius:12px;margin:20px 0;font-size:13px;color:#64748b;border:1px solid #e2e8f0">
+          <p style="margin:0">Caso você já tenha realizado o pagamento nas últimas 24h, por favor desconsidere este aviso ou envie o comprovante diretamente para o Teacher Gabriel.</p>
+        </div>
+
+        <p style="margin-top:30px;font-weight:bold">Estamos à disposição para qualquer dúvida!</p>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:30px 0" />
+        <p style="color:#94a3b8;font-size:11px">Teacher Gabriel Cantoni — Cantoni English</p>
+      </div>
+    `,
+  })
+}
