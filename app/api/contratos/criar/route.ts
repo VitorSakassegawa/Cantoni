@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
   const customHolidays: string[] = []
   
   if (recessosDb) {
-    recessosDb.forEach(r => {
+    recessosDb.forEach((r: { data_inicio: string; data_fim: string }) => {
       const start = new Date(r.data_inicio + 'T12:00:00')
       const end = new Date(r.data_fim + 'T12:00:00')
       let curr = new Date(start)

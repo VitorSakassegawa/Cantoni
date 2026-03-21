@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import { Calendar, Umbrella, Flag, Plus, X, Trash2 } from 'lucide-react'
+import { Calendar, Umbrella, Flag, Plus, X, Trash2, Info } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface Props {

@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       .eq('status', 'agendada')
 
     if (aulasImpactadas && aulasImpactadas.length > 0) {
-      const ids = aulasImpactadas.map(a => a.id)
+      const ids = aulasImpactadas.map((a: { id: string }) => a.id)
       await supabase
         .from('aulas')
         .update({ status: 'pendente_remarcacao' })
