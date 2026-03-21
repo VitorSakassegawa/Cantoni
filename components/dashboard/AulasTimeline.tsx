@@ -40,6 +40,8 @@ export default function AulasTimeline({ aulas }: Props) {
                   index={i + 1} 
                   isProfessor={!!studentName}
                   studentName={studentName}
+                  showStudentName={true}
+                  showContractType={true}
                 />
               )
             })}

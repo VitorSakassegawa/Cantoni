@@ -32,18 +32,28 @@ interface Props {
   index: number
   isProfessor?: boolean
   studentName?: string
+  showStudentName?: boolean
+  showContractType?: boolean
 }
 
 const STATUS_BADGE: Record<string, any> = {
   agendada: 'secondary',
   confirmada: 'default',
   dada: 'success',
+  finalizado: 'success',
   cancelada: 'outline',
   remarcada: 'warning',
   pendente_remarcacao: 'warning',
 }
 
-export default function AulaRow({ aula, index, isProfessor, studentName }: Props) {
+export default function AulaRow({ 
+  aula, 
+  index, 
+  isProfessor, 
+  studentName, 
+  showStudentName = false, 
+  showContractType = false 
+}: Props) {
   const [status, setStatus] = useState<any>(aula.status)
   const [loading, setLoading] = useState(false)
   const [showRemarkModal, setShowRemarkModal] = useState(false)
@@ -198,16 +208,16 @@ export default function AulaRow({ aula, index, isProfessor, studentName }: Props
         </td>
 
         {/* Tipo de Aluno Column */}
-        {isProfessor && (
+        {showContractType && (
           <td className="py-4 px-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
-            {(aula as any).contratos?.planos?.freq_semana 
-              ? 'Semestral' 
-              : 'Personalizado'}
+            {(aula as any).contratos 
+              ? ((aula as any).contratos.tipo_contrato === 'ad-hoc' ? 'Personalizado' : 'Semestral')
+              : '—'}
           </td>
         )}
 
         {/* Aluno Column */}
-        {isProfessor && (
+        {showStudentName && (
           <td className="py-4 pr-4">
             {studentName && (
               <span className="text-sm font-black text-slate-900 truncate block max-w-[150px]">

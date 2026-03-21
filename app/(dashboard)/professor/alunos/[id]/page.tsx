@@ -41,7 +41,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
 
   const { data: aulas } = await supabase
     .from('aulas')
-    .select('*')
+    .select('*, contratos!inner(tipo_contrato)')
     .eq('contrato_id', contrato?.id || 0)
     .order('data_hora')
 
@@ -365,13 +365,19 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                       <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Meet</th>
                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lição / Conteúdo</th>
                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Aluno</th>
                       <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest pr-10">Ações</th>
                     </tr>
                   </thead>
                   <tbody>
                     {aulas?.map((aula: any, i: number) => (
-                      <AulaRow key={aula.id} aula={aula} index={i + 1} isProfessor />
+                      <AulaRow 
+                        key={aula.id} 
+                        aula={aula} 
+                        index={i + 1} 
+                        isProfessor={true} 
+                        showContractType={true}
+                        showStudentName={false}
+                      />
                     ))}
                   </tbody>
                 </table>

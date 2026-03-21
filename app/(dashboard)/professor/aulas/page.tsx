@@ -27,7 +27,7 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
   // Fetch classes for the professor's active contracts
   let query = supabase
     .from('aulas')
-    .select('*, contratos!inner(status, aluno_id, profiles!inner(full_name))')
+    .select('*, contratos!inner(status, aluno_id, tipo_contrato, profiles!inner(full_name))')
     .eq('contratos.status', 'ativo')
     .order('data_hora', { ascending: true })
 

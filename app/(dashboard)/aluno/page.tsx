@@ -317,6 +317,7 @@ export default async function AlunoDashboard() {
                     <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Status</th>
                     <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Google Meet</th>
                     <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Conteúdo</th>
+                    <th className="py-6 px-4 text-right"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
