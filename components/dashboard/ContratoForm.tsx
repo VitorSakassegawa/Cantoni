@@ -41,37 +41,58 @@ const OPCOES_LIVRO = [
 interface ContratoFormProps {
   alunoId: string
   defaultNivel?: string
+  initialData?: any // Full contract object for editing
   onSuccess?: () => void
 }
 
-export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: ContratoFormProps) {
+export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuccess }: ContratoFormProps) {
+  const isEdit = !!initialData
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
   // Fields
-  const [tipoContrato, setTipoContrato] = useState('semestral')
-  const [planoId, setPlanoId] = useState('1')
-  const [dataInicio, setDataInicio] = useState('')
-  const [dataFim, setDataFim] = useState('')
-  const [horario, setHorario] = useState('18:00')
-  const [diasSelecionados, setDiasSelecionados] = useState<number[]>([])
+  const [tipoContrato, setTipoContrato] = useState(initialData?.tipo_contrato || 'semestral')
+  const [planoId, setPlanoId] = useState(initialData?.plano_id?.toString() || '1')
+  const [dataInicio, setDataInicio] = useState(initialData?.data_inicio || '')
+  const [dataFim, setDataFim] = useState(initialData?.data_fim || '')
+  const [horario, setHorario] = useState(initialData?.horario || '18:00')
+  const [diasSelecionados, setDiasSelecionados] = useState<number[]>(initialData?.dias_da_semana || [])
   
-  const [baseValue, setBaseValue] = useState(0)
-  const [valorFinalComMascara, setValorFinalComMascara] = useState('')
+  const [baseValue, setBaseValue] = useState(initialData?.valor || 0)
+  const [valorFinalComMascara, setValorFinalComMascara] = useState(
+    initialData?.valor ? maskCurrency((initialData.valor * 100).toFixed(0)) : ''
+  )
   
-  const [aulasTotais, setAulasTotais] = useState('0')
+  const [aulasTotais, setAulasTotais] = useState(initialData?.aulas_totais?.toString() || '0')
   const [bonusAulas, setBonusAulas] = useState(0)
   const [isCrossSemester, setIsCrossSemester] = useState(false)
   
-  const [descontoValor, setDescontoValor] = useState('')
-  const [descontoPercentual, setDescontoPercentual] = useState('')
+  const [descontoValor, setDescontoValor] = useState(
+    initialData?.desconto_valor ? maskCurrency((initialData.desconto_valor * 100).toFixed(0)) : ''
+  )
+  const [descontoPercentual, setDescontoPercentual] = useState(initialData?.desconto_percentual?.toString() || '')
   
   const [livroSelect, setLivroSelect] = useState('evolve')
   const [livroManual, setLivroManual] = useState('')
-  const [nivel, setNivel] = useState(defaultNivel || 'a1_beginner')
-  const [diaVencimento, setDiaVencimento] = useState('5')
-  const [formaPagamento, setFormaPagamento] = useState('pix')
+  const [nivel, setNivel] = useState(initialData?.nivel_atual || defaultNivel || 'a1_beginner')
+  const [diaVencimento, setDiaVencimento] = useState(initialData?.dia_vencimento?.toString() || '5')
+  const [formaPagamento, setFormaPagamento] = useState(initialData?.forma_pagamento || 'pix')
   const [numParcelas, setNumParcelas] = useState('6')
+
+  // Effect to handle Evolve book logic on initial load
+  useEffect(() => {
+    if (initialData?.livro_atual) {
+      const isEvolve = initialData.livro_atual.toLowerCase().includes('evolve')
+      const isESL = initialData.livro_atual.toLowerCase().includes('esl brains')
+      
+      if (isEvolve) setLivroSelect('evolve')
+      else if (isESL) setLivroSelect('esl_brains')
+      else {
+        setLivroSelect('outro')
+        setLivroManual(initialData.livro_atual)
+      }
+    }
+  }, [initialData])
 
   // Auto-calculation on any relevant field change
   useEffect(() => {
@@ -167,35 +188,46 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
 
     try {
       const finalLivro = livroSelect === 'outro' ? livroManual : OPCOES_LIVRO.find(o => o.value === livroSelect)?.label
+      const payload: any = {
+        alunoId,
+        planoId: parseInt(planoId),
+        dataInicio,
+        dataFim,
+        semestre: new Date(dataInicio).getMonth() <= 5 ? 'jan-jun' : 'jul-dez',
+        ano: new Date(dataInicio).getFullYear(),
+        diasDaSemana: diasSelecionados,
+        horario,
+        valor: parseFloat(valorFinalComMascara.replace(/\D/g, '')) / 100,
+        livroAtual: finalLivro,
+        nivelAtual: nivel,
+        aulasTotais: parseInt(aulasTotais),
+        diaVencimento: parseInt(diaVencimento),
+        formaPagamento,
+        tipoContrato,
+        descontoValor: parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100,
+        descontoPercentual: parseFloat(descontoPercentual || '0'),
+        numParcelas: parseInt(numParcelas),
+      }
 
-      const res = await fetch('/api/contratos/criar', {
+      if (isEdit) {
+        payload.id = initialData.id
+        payload.status = initialData.status
+      }
+
+      const endpoint = isEdit ? '/api/professor/contratos/update' : '/api/contratos/criar'
+      
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          alunoId,
-          planoId: parseInt(planoId),
-          dataInicio,
-          dataFim,
-          semestre: new Date(dataInicio).getMonth() <= 5 ? 'jan-jun' : 'jul-dez',
-          ano: new Date(dataInicio).getFullYear(),
-          diasDaSemana: diasSelecionados,
-          horario,
-          valor: parseFloat(valorFinalComMascara.replace(/\D/g, '')) / 100,
-          livroAtual: finalLivro,
-          nivelAtual: nivel,
-          aulasTotais: parseInt(aulasTotais),
-          diaVencimento: parseInt(diaVencimento),
-          formaPagamento,
-          tipoContrato,
-          descontoValor: parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100,
-          descontoPercentual: parseFloat(descontoPercentual || '0'),
-          numParcelas: parseInt(numParcelas),
-        }),
+        body: JSON.stringify(payload),
       })
 
-      if (!res.ok) throw new Error('Erro ao criar contrato')
+      if (!res.ok) {
+        const errorData = await res.json()
+        throw new Error(errorData.error || `Erro ao ${isEdit ? 'atualizar' : 'criar'} contrato`)
+      }
       
-      toast.success('Contrato criado com sucesso!')
+      toast.success(`Contrato ${isEdit ? 'atualizado' : 'criado'} com sucesso!`)
       if (onSuccess) onSuccess()
       else router.push(`/professor/alunos/${alunoId}`)
     } catch (err: any) {
@@ -486,7 +518,7 @@ export default function ContratoForm({ alunoId, defaultNivel, onSuccess }: Contr
         className="w-full h-20 rounded-[2.5rem] lms-gradient text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 hover:scale-[1.01] active:scale-95 transition-all disabled:opacity-50"
         disabled={loading || (isCrossSemester && tipoContrato === 'semestral')}
       >
-        {loading ? 'Processando Contrato...' : 'Finalizar Registro Acadêmico'}
+        {loading ? 'Processando...' : isEdit ? 'Salvar Alterações do Contrato' : 'Finalizar Registro Acadêmico'}
       </Button>
     </div>
   )
