@@ -87,10 +87,25 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Erro ao criar contrato no banco de dados', details: contratoErr }, { status: 500 })
   }
 
-  // Generate lesson schedule (skips holidays now)
+  // Generate lesson schedule (skips holidays and recess now)
+  const { data: recessosDb } = await serviceSupabase.from('recessos').select('data_inicio, data_fim')
+  const customHolidays: string[] = []
+  
+  if (recessosDb) {
+    recessosDb.forEach(r => {
+      const start = new Date(r.data_inicio + 'T12:00:00')
+      const end = new Date(r.data_fim + 'T12:00:00')
+      let curr = new Date(start)
+      while (curr <= end) {
+        customHolidays.push(curr.toISOString().split('T')[0])
+        curr.setDate(curr.getDate() + 1)
+      }
+    })
+  }
+
   const inicio = new Date(dataInicio + 'T12:00:00')
   const fim = new Date(dataFim + 'T23:59:59')
-  const datasAulas = gerarGradeAulas(inicio, fim, diasDaSemana, parseInt(aulasTotais))
+  const datasAulas = gerarGradeAulas(inicio, fim, diasDaSemana, parseInt(aulasTotais), customHolidays)
 
   // Create Google Calendar events + aulas records
   const aulasParaInserir: any[] = []

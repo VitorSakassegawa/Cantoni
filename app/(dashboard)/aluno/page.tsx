@@ -7,7 +7,7 @@ import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/li
 import AulaRow from '@/components/dashboard/AulaRow'
 import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
-import { Video, BookOpen, Calendar, User, CreditCard } from 'lucide-react'
+import { Video, BookOpen, Calendar, User, CreditCard, Umbrella } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function AlunoDashboard() {
@@ -184,6 +184,23 @@ export default async function AlunoDashboard() {
                 <p className="text-sm font-bold text-blue-400/60 uppercase tracking-widest">Sem aulas agendadas</p>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Próximas Pausas / Recessos */}
+        <Card className="glass-card border-none overflow-hidden bg-white/50">
+          <CardHeader className="pb-4 border-b border-slate-100/50">
+            <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+              <Umbrella className="w-4 h-4 text-orange-500" /> Próximas Pausas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+             <div className="p-5 text-center space-y-4">
+               <p className="text-[10px] text-slate-500 font-medium tracking-tight">Consulte o calendário para planejar suas aulas em feriados e recessos.</p>
+               <Link href="/aluno/calendario" className="inline-block px-6 py-2 rounded-xl bg-orange-50 text-orange-600 text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all">
+                 Ver Calendário Completo
+               </Link>
+             </div>
           </CardContent>
         </Card>
 

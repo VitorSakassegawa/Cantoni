@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { formatCurrency, formatDateTime, formatDateOnly } from '@/lib/utils'
-import { Users, BookOpen, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, DollarSign } from 'lucide-react'
+import { Users, BookOpen, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, DollarSign, Umbrella } from 'lucide-react'
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, parseISO, isSameDay, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { RotateCcw } from 'lucide-react'
@@ -357,6 +357,23 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               </CardContent>
             </Card>
           )}
+
+          {/* Próximas Pausas / Recessos */}
+          <Card className="glass-card border-none overflow-hidden bg-white/50">
+            <CardHeader className="pb-4 border-b border-slate-100/50">
+              <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+                <Umbrella className="w-4 h-4 text-orange-500" /> Próximas Pausas
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+               <div className="p-5 text-center space-y-4">
+                 <p className="text-[10px] text-slate-500 font-medium">Consulte o calendário acadêmico para ver feriados e recessos planejados.</p>
+                 <Link href="/professor/calendario" className="inline-block px-6 py-2 rounded-xl bg-orange-50 text-orange-600 text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all">
+                   Ver Calendário Completo
+                 </Link>
+               </div>
+            </CardContent>
+          </Card>
 
           <Card className="glass-card border-none overflow-hidden">
 

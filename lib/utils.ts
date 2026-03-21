@@ -69,16 +69,17 @@ export function getSemestreAtual(): { semestre: 'jan-jun' | 'jul-dez'; ano: numb
 
 import { FERIADOS_NACIONAIS } from './constants/holidays'
 
-export function isHoliday(date: Date) {
+export function isHoliday(date: Date, customHolidays: string[] = []) {
   const dateStr = date.toISOString().split('T')[0]
-  return FERIADOS_NACIONAIS.includes(dateStr)
+  return FERIADOS_NACIONAIS.includes(dateStr) || customHolidays.includes(dateStr)
 }
 
 export function gerarGradeAulas(
   dataInicio: Date,
   dataFim: Date,
   diaDaSemana: number[], // 0=dom, 1=seg ... 6=sab
-  totalAulas?: number
+  totalAulas?: number,
+  customHolidays: string[] = []
 ): Date[] {
   const aulas: Date[] = []
   let current = new Date(dataInicio)
@@ -89,7 +90,7 @@ export function gerarGradeAulas(
 
   while (current <= limitDate) {
     if (diaDaSemana.includes(current.getDay())) {
-      if (!isHoliday(current)) {
+      if (!isHoliday(current, customHolidays)) {
         aulas.push(new Date(current))
       }
     }

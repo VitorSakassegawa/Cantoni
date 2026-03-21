@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, BookOpen, Users, LayoutDashboard, CreditCard, User } from 'lucide-react'
+import { LogOut, BookOpen, Users, LayoutDashboard, CreditCard, User, Calendar } from 'lucide-react'
 import { Logo } from '@/components/dashboard/Logo'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -80,6 +80,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   Financeiro
                 </Link>
                 <Link
+                  href="/professor/calendario"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  Calendário
+                </Link>
+                <Link
                   href="/professor/perfil"
                   className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
                 >
@@ -110,6 +119,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
                     <CreditCard className="w-4 h-4" />
                   </div>
                   Financeiro
+                </Link>
+                <Link
+                  href="/aluno/calendario"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <Calendar className="w-4 h-4" />
+                  </div>
+                  Calendário
                 </Link>
                 <Link
                   href="/aluno/perfil"
