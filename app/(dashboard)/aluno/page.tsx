@@ -55,9 +55,11 @@ export default async function AlunoDashboard() {
     .from('aulas')
     .select('*')
     .eq('contrato_id', contrato?.id || 0)
-    .gte('data_hora', now)
+    .or(`status.eq.pendente_remarcacao,and(data_hora.gte.${now})`)
     .order('data_hora', { ascending: true })
-    .limit(5)
+    .limit(10)
+
+  const temRemarcacaoPendente = ultimasAulas?.some((a: any) => a.status === 'pendente_remarcacao' && !a.data_hora_solicitada)
 
 
   const { data: pagamentos } = await supabase
@@ -117,7 +119,7 @@ export default async function AlunoDashboard() {
       
       {/* Alerta de Pagamento em Atraso */}
       {pagamentoPendente?.status === 'atrasado' && (
-        <div className="bg-rose-50 border border-rose-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-rose-500/5 animate-bounce-slow">
+        <div className="bg-rose-50 border border-rose-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-rose-500/5">
           <div className="flex items-center gap-4 text-rose-600">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center shrink-0">
               <CreditCard className="w-6 h-6" />
@@ -130,6 +132,24 @@ export default async function AlunoDashboard() {
           <button className="h-10 px-8 rounded-xl bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20">
             PAGAR AGORA
           </button>
+        </div>
+      )}
+
+      {/* Alerta de Remarcação Pendente */}
+      {temRemarcacaoPendente && (
+        <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-amber-500/5">
+          <div className="flex items-center gap-4 text-amber-600">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
+              <Calendar className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="font-black text-amber-900 text-sm uppercase tracking-tight">Ação Necessária: Remarcação</p>
+              <p className="text-xs text-amber-700/70 font-medium">Você tem aulas que precisam de uma nova data sugerida por você.</p>
+            </div>
+          </div>
+          <Link href="#aulas-timeline" className="h-10 px-8 rounded-xl bg-amber-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20 flex items-center">
+            Sugerir Datas
+          </Link>
         </div>
       )}
 
@@ -317,7 +337,7 @@ export default async function AlunoDashboard() {
       )}
 
       {/* Tabs / Bottom Sections */}
-      <div className="grid grid-cols-1 gap-10">
+      <div id="aulas-timeline" className="grid grid-cols-1 gap-10">
         <Card className="glass-card border-none overflow-hidden">
           <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
             <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">

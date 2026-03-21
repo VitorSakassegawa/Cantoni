@@ -46,7 +46,7 @@ const STATUS_BADGE: Record<string, any> = {
 }
 
 const HORARIOS_DISPONIVEIS = [
-  '08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00'
+  '07:00' ,'08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'
 ]
 
 export default function AulaRow({ 
@@ -111,6 +111,7 @@ export default function AulaRow({
           setStatus('pendente_remarcacao')
           toast.success('Solicitação de remarcação enviada ao professor!')
           setShowRemarkModal(false)
+          window.location.reload()
         }
       }
     } catch (error: any) {
@@ -327,7 +328,7 @@ export default function AulaRow({
               
               {!isProfessor && (
                 <div className="p-4 rounded-2xl bg-blue-50/50 border border-blue-100/50 text-[11px] leading-snug font-medium text-blue-800">
-                   Sua solicitação entrará como **pendente** até que o professor confirme a disponibilidade.
+                   Sua solicitação entrará como <span className="font-bold">pendente</span> até que o professor confirme a disponibilidade.
                 </div>
               )}
             </div>

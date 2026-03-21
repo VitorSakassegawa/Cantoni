@@ -104,11 +104,21 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .eq('status', 'ativo')
     .order('created_at', { ascending: false })
 
-  const { data: solicitacoesRemarcacao } = await supabase
+  const { data: rawSolicitacoes } = await supabase
     .from('aulas')
     .select('*, contratos!inner(profiles(full_name))')
     .eq('status', 'pendente_remarcacao')
-    .order('data_hora_solicitada')
+  
+  const solicitacoesRemarcacao = rawSolicitacoes?.sort((a: any, b: any) => {
+    // Priority: with date first
+    if (a.data_hora_solicitada && !b.data_hora_solicitada) return -1
+    if (!a.data_hora_solicitada && b.data_hora_solicitada) return 1
+    // Then by date
+    if (a.data_hora_solicitada && b.data_hora_solicitada) {
+      return new Date(a.data_hora_solicitada).getTime() - new Date(b.data_hora_solicitada).getTime()
+    }
+    return 0
+  }) || []
 
 
   return (
