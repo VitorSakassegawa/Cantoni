@@ -315,7 +315,7 @@ export default function AulaRow({
                 Analisar
               </Button>
             )}
-            {canRemark && !['pendente_remarcacao'].includes(status) && (
+            {canRemark && (status !== 'pendente_remarcacao' || !aula.data_hora_solicitada) && (
               <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-blue-600 hover:bg-blue-50 transition-all" onClick={() => setShowRemarkModal(true)} title="Remarcar">
                 <RotateCcw className="w-4 h-4" />
               </Button>
