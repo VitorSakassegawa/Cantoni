@@ -229,16 +229,25 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
     throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
   }
 
-  // Atualizar para status pendente e salvar a data solicitada
+  console.log('[solicitarRemarcacao] Início:', { aulaId, novaDataHora })
+  
+  const isoData = new Date(novaDataHora).toISOString()
+  console.log('[solicitarRemarcacao] ISO gerado:', isoData)
+
   const { error: updateError } = await serviceSupabase
     .from('aulas')
     .update({ 
       status: 'pendente_remarcacao',
-      data_hora_solicitada: novaDataHora 
+      data_hora_solicitada: isoData 
     })
     .eq('id', aulaId)
 
-  if (updateError) throw new Error('Erro ao solicitar remarcação')
+  if (updateError) {
+    console.error('[solicitarRemarcacao] Erro no update:', updateError)
+    throw new Error(`Erro ao solicitar remarcação: ${updateError.message}`)
+  }
+
+  console.log('[solicitarRemarcacao] Sucesso!')
 
   revalidatePath('/professor')
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)

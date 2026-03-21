@@ -58,6 +58,7 @@ export default function AulaRow({
   showContractType = false 
 }: Props) {
   const [status, setStatus] = useState<any>(aula.status)
+  const [dataHoraSolicitada, setDataHoraSolicitada] = useState<any>(aula.data_hora_solicitada)
   const [loading, setLoading] = useState(false)
   const [showRemarkModal, setShowRemarkModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -109,6 +110,7 @@ export default function AulaRow({
         const res = await solicitarRemarcacao(aula.id, novaDataStr)
         if (res.success) {
           setStatus('pendente_remarcacao')
+          setDataHoraSolicitada(novaDataStr)
           toast.success('Solicitação de remarcação enviada ao professor!')
           setShowRemarkModal(false)
           window.location.reload()
@@ -145,8 +147,8 @@ export default function AulaRow({
             <span>{formatDateTime(aula.data_hora)}</span>
             {status === 'pendente_remarcacao' && (
               <span className="text-[10px] font-black mt-1 uppercase tracking-tighter">
-                {aula.data_hora_solicitada && !formatDateTime(aula.data_hora_solicitada).includes('Não informada') ? (
-                  <span className="text-amber-600">Solicitado p/: {formatDateTime(aula.data_hora_solicitada)}</span>
+                {dataHoraSolicitada && !formatDateTime(dataHoraSolicitada).includes('Não informada') ? (
+                  <span className="text-amber-600">Solicitado p/: {formatDateTime(dataHoraSolicitada)}</span>
                 ) : (
                   <span className="text-slate-400 italic font-bold">
                     {isProfessor ? "Aguardando aluno sugerir data" : "Por favor, sugira uma nova data"}

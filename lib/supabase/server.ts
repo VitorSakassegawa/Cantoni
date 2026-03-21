@@ -50,21 +50,7 @@ export async function createServiceClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !key) {
-    const dummyClient = {
-      auth: { getUser: async () => ({ data: { user: null }, error: null }) },
-      from: () => {
-        const chain = {
-          select: () => chain,
-          eq: () => chain,
-          single: async () => ({ data: null, error: null }),
-          maybeSingle: async () => ({ data: null, error: null }),
-          order: () => chain,
-          limit: () => chain,
-        }
-        return chain
-      }
-    }
-    return dummyClient as any
+    throw new Error('Supabase URL or Service Role Key missing. Check environment variables.')
   }
 
   return createServerClient(
