@@ -58,8 +58,9 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
 
   const getDayStatus = (date: Date) => {
     const found = recessos.find(r => {
-      const start = parseISO(r.data_inicio)
-      const end = parseISO(r.data_fim)
+      // Usar T12:00:00 para garantir que a data seja interpretada corretamente no fuso local
+      const start = parseISO(r.data_inicio + 'T12:00:00')
+      const end = parseISO(r.data_fim + 'T12:00:00')
       return isWithinInterval(date, { start, end })
     })
     return found

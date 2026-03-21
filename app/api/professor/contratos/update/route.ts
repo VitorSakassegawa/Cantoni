@@ -31,6 +31,14 @@ export async function POST(request: NextRequest) {
   } = await request.json()
   if (!id) return NextResponse.json({ error: 'ID do contrato é obrigatório' }, { status: 400 })
 
+  const vFloat = parseFloat(valor)
+  const dvInt = parseInt(dia_vencimento)
+
+  if (isNaN(vFloat) || isNaN(dvInt)) {
+     console.error(`[UpdateContrato] Dados numéricos inválidos: valor=${valor}, dia_vencimento=${dia_vencimento}`)
+     return NextResponse.json({ error: 'Dados numéricos inválidos' }, { status: 400 })
+  }
+
   const { error: updateError } = await supabase
     .from('contratos')
     .update({
@@ -39,8 +47,8 @@ export async function POST(request: NextRequest) {
       livro_atual,
       nivel_atual,
       horario,
-      valor: parseFloat(valor),
-      dia_vencimento: parseInt(dia_vencimento),
+      valor: vFloat,
+      dia_vencimento: dvInt,
       forma_pagamento,
       status
     })
