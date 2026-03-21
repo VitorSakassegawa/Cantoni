@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/lib/utils'
 import AulaRow from '@/components/dashboard/AulaRow'
+import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
 import { Video, BookOpen, Calendar, User, CreditCard } from 'lucide-react'
 import Link from 'next/link'
@@ -308,31 +309,11 @@ export default async function AlunoDashboard() {
 
           </CardHeader>
           <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-400">
-                    <th className="text-center py-6 px-8 font-black text-[10px] uppercase tracking-widest">Aula #</th>
-                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Data e Horário</th>
-                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Status</th>
-                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Google Meet</th>
-                    <th className="text-left py-6 px-4 font-black text-[10px] uppercase tracking-widest">Conteúdo</th>
-                    <th className="py-6 px-4 text-right"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {ultimasAulas?.map((aula: any, i: number) => (
-                    <AulaRow key={aula.id} aula={aula} index={i + 1} />
-                  ))}
-
-                </tbody>
-              </table>
-              {(!ultimasAulas || ultimasAulas.length === 0) && (
-                <div className="py-20 text-center">
-                  <p className="text-sm font-bold text-slate-300 uppercase tracking-widest">Nenhuma aula registrada</p>
-                </div>
-              )}
-            </div>
+            <AulasTimeline 
+              aulas={ultimasAulas || []} 
+              showStudentName={false} 
+              showContractType={false} 
+            />
           </CardContent>
         </Card>
 

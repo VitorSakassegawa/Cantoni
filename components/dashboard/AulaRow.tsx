@@ -3,16 +3,13 @@
 import { useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import Link from 'next/link'
-import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import { formatDateTime, formatDateOnly } from '@/lib/utils'
 
 import type { Aula } from '@/lib/types'
-import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, ImageIcon, Clock } from 'lucide-react'
+import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 
 import ManageAulaModal from './ManageAulaModal'
 import { uploadHomeworkImage } from '@/lib/actions/homework'
-
 
 import { toast } from 'sonner'
 import { cancelarAula, remarcarAula, solicitarRemarcacao } from '@/lib/actions/aulas'
@@ -61,7 +58,7 @@ export default function AulaRow({
   const [showManageModal, setShowManageModal] = useState(false)
   const [novaData, setNovaData] = useState('')
   const [uploading, setUploading] = useState(false)
-
+  const [isExpanded, setIsExpanded] = useState(false)
 
   const canCancel = ['agendada', 'confirmada'].includes(status)
   const canRemark = ['agendada', 'confirmada', 'cancelada'].includes(status)
@@ -107,13 +104,14 @@ export default function AulaRow({
       setLoading(false)
     }
   }
+
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
     if (!file) return
     setUploading(true)
     try {
       await uploadHomeworkImage(aula.id, file)
-      toast.success('Exercício enviado com sucesso!')
+      toast.success('Anexo enviado com sucesso!')
       window.location.reload()
     } catch (err: any) {
       toast.error(err.message || 'Erro no upload')
@@ -129,96 +127,119 @@ export default function AulaRow({
 
   return (
     <>
-      <tr className="hover:bg-gray-50/50 transition-colors group">
-        <td className="py-4 text-gray-400 text-xs pl-2 text-center">{index}</td>
-        <td className="py-4 font-medium text-sm whitespace-nowrap">
-          {formatDateTime(aula.data_hora)}
-          {aula.data_hora_solicitada && status === 'pendente_remarcacao' && (
-            <div className="text-[10px] text-amber-600 font-bold mt-1">
-              Solicitado para: {formatDateTime(aula.data_hora_solicitada)}
-            </div>
-          )}
+      <tr className="hover:bg-slate-50/80 transition-all group border-b border-slate-50">
+        <td className="py-6 text-slate-400 text-[10px] font-black pl-2 text-center w-8">{index}</td>
+        <td className="py-6 font-bold text-slate-700 text-sm whitespace-nowrap">
+          <div className="flex flex-col">
+            <span>{formatDateTime(aula.data_hora)}</span>
+            {aula.data_hora_solicitada && status === 'pendente_remarcacao' && (
+              <span className="text-[10px] text-amber-600 font-black mt-1 uppercase tracking-tighter">
+                Solicitado p/: {formatDateTime(aula.data_hora_solicitada)}
+              </span>
+            )}
+          </div>
         </td>
-        <td className="py-4">
-          <Badge variant={STATUS_BADGE[status] || 'outline'} className="capitalize text-[10px] font-black uppercase tracking-widest px-2 py-0.5 whitespace-nowrap">
+        <td className="py-6">
+          <Badge variant={STATUS_BADGE[status] || 'outline'} className="capitalize text-[9px] font-black uppercase tracking-[0.1em] px-3 py-1 whitespace-nowrap rounded-lg">
             {status === 'dada' ? 'FINALIZADO' : status.replace('_', ' ')}
           </Badge>
         </td>
-        <td className="py-4">
+        <td className="py-6">
           {aula.meet_link ? (
             <a href={aula.meet_link} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-blue-900 hover:text-blue-700 font-bold text-xs transition-colors whitespace-nowrap">
-              <Video className="w-3.5 h-3.5" /> Google Meet
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap group/meet">
+              <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center group-hover/meet:bg-blue-100 transition-colors">
+                <Video className="w-3.5 h-3.5" />
+              </div>
+              Meet
             </a>
           ) : (
-            <span className="text-gray-300">—</span>
+            <span className="text-slate-200">—</span>
           )}
         </td>
-        <td className="py-4 text-xs text-gray-500 max-w-[250px] font-medium">
-          <div className="flex flex-col gap-1.5">
-            <div className="flex items-center gap-1.5">
-              {aula.homework || <span className="text-gray-300 italic">Aula sem conteúdo registrado</span>}
-              {aula.homework && (
-                <span className={`shrink-0 ${aula.homework_completed ? 'text-green-600' : 'text-amber-600'}`}>
-                  {aula.homework_completed ? <FileCheck className="w-3.5 h-3.5" /> : <Clock className="w-3.5 h-3.5" />}
-                </span>
+        <td className="py-6 text-xs text-slate-500 max-w-[300px]">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1.5">
+              <div className={`transition-all duration-300 relative ${!isExpanded && aula.homework && aula.homework.length > 80 ? 'max-h-[3.5rem] overflow-hidden' : ''}`}>
+                <div className="flex items-start gap-2">
+                  <div className="flex-1">
+                    {aula.homework ? (
+                      <p className="whitespace-pre-wrap leading-relaxed text-slate-600 font-medium text-[11px]">
+                        {aula.homework}
+                      </p>
+                    ) : (
+                      <span className="text-slate-300 italic text-[11px]">Aula sem conteúdo registrado</span>
+                    )}
+                  </div>
+                  {aula.homework && (
+                    <div className={`shrink-0 mt-0.5 p-1 rounded-md ${aula.homework_completed ? 'bg-green-50 text-green-600' : 'bg-amber-50 text-amber-600'}`}>
+                      {aula.homework_completed ? <FileCheck className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
+                    </div>
+                  )}
+                </div>
+                {!isExpanded && aula.homework && aula.homework.length > 80 && (
+                  <div className="absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+                )}
+              </div>
+              
+              {aula.homework && aula.homework.length > 80 && (
+                <button 
+                  onClick={() => setIsExpanded(!isExpanded)}
+                  className="text-[9px] font-black uppercase text-blue-500 hover:text-blue-700 flex items-center gap-0.5 transition-colors w-fit tracking-widest"
+                >
+                  {isExpanded ? (
+                    <><ChevronUp className="w-3 h-3" /> Ver Menos</>
+                  ) : (
+                    <><ChevronDown className="w-3 h-3" /> Ver Tudo</>
+                  )}
+                </button>
               )}
             </div>
             
-            <div className="mt-1 flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               {(aula as any).homework_type && (
-                <Badge variant="outline" className={`text-[8px] font-black tracking-tighter uppercase ${
-                  (aula as any).homework_type === 'esl_brains' ? 'border-blue-100 text-blue-600' : 
-                  (aula as any).homework_type === 'evolve' ? 'border-indigo-100 text-indigo-600' : 
-                  'border-slate-100 text-slate-500'
+                <Badge variant="outline" className={`text-[8px] font-black tracking-widest uppercase rounded-md border-0 ${
+                  (aula as any).homework_type === 'esl_brains' ? 'bg-blue-50 text-blue-600' : 
+                  (aula as any).homework_type === 'evolve' ? 'bg-indigo-50 text-indigo-600' : 
+                  'bg-slate-50 text-slate-500'
                 }`}>
                   {(aula as any).homework_type.replace('_', ' ')}
                 </Badge>
               )}
               
               {(aula as any).homework_image_url ? (
-                <a href={(aula as any).homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[9px] text-blue-500 hover:underline font-bold">
-                  <ImageIcon className="w-3 h-3" /> Ver Anexo
+                <a href={(aula as any).homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/50 px-2 py-1 rounded-md transition-all">
+                  <Paperclip className="w-3 h-3" /> Ver Anexo
                 </a>
               ) : (
-                <label className="flex items-center gap-1 text-[9px] text-blue-600 hover:text-blue-800 cursor-pointer font-bold">
+                <label className="flex items-center gap-1.5 text-[9px] text-slate-400 hover:text-blue-600 cursor-pointer font-black uppercase tracking-widest transition-all">
                   <Upload className="w-3 h-3" /> 
-                  {uploading ? 'Enviando...' : isProfessor ? 'Subir Print' : 'Anexar Print'}
-                  <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={uploading} />
+                  {uploading ? 'Enviando...' : isProfessor ? 'Subir Anexo' : 'Anexar Arquivo'}
+                  <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
                 </label>
               )}
-            </div>
 
-            {(aula as any).homework_type === 'evolve' && (aula as any).homework_link && (
-              <div className="mt-1 flex flex-col gap-1">
+              {(aula as any).homework_type === 'evolve' && (aula as any).homework_link && (
                 <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-[8px] font-black tracking-tighter border-indigo-100 text-indigo-600">EVOLVE WORKBOOK</Badge>
-                  <a href={(aula as any).homework_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 text-[9px] text-indigo-500 hover:underline font-bold">
-                    <ExternalLink className="w-3 h-3" /> Abrir Cambridge One
+                  <a href={(aula as any).homework_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-widest bg-indigo-50/50 px-2 py-1 rounded-md transition-all">
+                    <ExternalLink className="w-3 h-3" /> Cambridge One
                   </a>
                 </div>
-                {(aula as any).homework_due_date && (
-                  <p className="text-[9px] text-slate-400 font-black uppercase tracking-tighter">
-                    Entrega até: {formatDateOnly((aula as any).homework_due_date)}
-                  </p>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </td>
 
-        {/* Tipo de Aluno Column */}
         {showContractType && (
-          <td className="py-4 px-4 text-xs font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">
+          <td className="py-6 px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">
             {(aula as any).contratos 
               ? ((aula as any).contratos.tipo_contrato === 'ad-hoc' ? 'Personalizado' : 'Semestral')
               : '—'}
           </td>
         )}
 
-        {/* Aluno Column */}
         {showStudentName && (
-          <td className="py-4 pr-4">
+          <td className="py-6 pr-4">
             {studentName && (
               <span className="text-sm font-black text-slate-900 truncate block max-w-[150px]">
                 {studentName}
@@ -227,26 +248,25 @@ export default function AulaRow({
           </td>
         )}
 
-        <td className="py-4 pr-2">
+        <td className="py-6 pr-2">
           <div className="flex gap-1 justify-end opacity-0 group-hover:opacity-100 transition-opacity">
             {isProfessor && (
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-slate-400 hover:text-blue-600 hover:bg-blue-50" onClick={() => setShowManageModal(true)} title="Gerenciar Aula">
-                <Settings2 className="w-3.5 h-3.5" />
+              <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all" onClick={() => setShowManageModal(true)} title="Gerenciar Aula">
+                <Settings2 className="w-4 h-4" />
               </Button>
             )}
             {canRemark && (
-
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-900 hover:bg-blue-50" onClick={() => setShowRemarkModal(true)} title="Remarcar">
-                <RotateCcw className="w-3.5 h-3.5" />
+              <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-blue-600 hover:bg-blue-50 transition-all" onClick={() => setShowRemarkModal(true)} title="Remarcar">
+                <RotateCcw className="w-4 h-4" />
               </Button>
             )}
             {canCancel && (
-              <Button size="icon" variant="ghost" className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => setShowCancelModal(true)} title="Cancelar">
-                <X className="w-3.5 h-3.5" />
+              <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-all" onClick={() => setShowCancelModal(true)} title="Cancelar">
+                <X className="w-4 h-4" />
               </Button>
             )}
             {isProfessor && status === 'pendente_remarcacao' && (
-              <Button size="sm" variant="outline" className="h-8 text-[10px] font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50" onClick={() => {
+              <Button size="sm" variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl" onClick={() => {
                 setNovaData(aula.data_hora_solicitada?.split('.')[0] || '')
                 setShowRemarkModal(true)
               }}>
@@ -354,6 +374,5 @@ export default function AulaRow({
         onSuccess={() => window.location.reload()}
       />
     </>
-
   )
 }

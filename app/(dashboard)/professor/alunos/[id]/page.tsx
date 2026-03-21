@@ -8,6 +8,7 @@ import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/li
 import Link from 'next/link'
 import { ChevronLeft, Mail, Phone, Fingerprint, Calendar, GraduationCap, BookOpen, Clock, AlertCircle, TrendingUp, CreditCard } from 'lucide-react'
 import AulaRow from '@/components/dashboard/AulaRow'
+import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import StatusContratoSelect from '@/components/dashboard/StatusContratoSelect'
 import ContratoForm from '@/components/dashboard/ContratoForm'
 import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
@@ -355,33 +356,11 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="border-b border-slate-100/50">
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">#</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Data / Hora</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                      <th className="px-4 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">Meet</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Lição / Conteúdo</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo</th>
-                      <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest pr-10">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {aulas?.map((aula: any, i: number) => (
-                      <AulaRow 
-                        key={aula.id} 
-                        aula={aula} 
-                        index={i + 1} 
-                        isProfessor={true} 
-                        showContractType={true}
-                        showStudentName={false}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <AulasTimeline 
+                aulas={aulas || []} 
+                showStudentName={false} 
+                showContractType={true} 
+              />
             </CardContent>
           </Card>
 

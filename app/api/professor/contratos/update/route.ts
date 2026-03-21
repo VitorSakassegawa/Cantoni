@@ -65,17 +65,44 @@ export async function POST(request: NextRequest) {
 
   if (pendentes && pendentes.length > 0) {
     for (const p of pendentes) {
-      const currentLoc = new Date(p.data_vencimento + 'T12:00:00') // Usar T12 to avoid timezone shifts
-      const newDate = new Date(currentLoc.getFullYear(), currentLoc.getMonth(), parseInt(dia_vencimento))
-      
-      await supabase
-        .from('pagamentos')
-        .update({
-          valor: valorParcela,
-          forma: forma_pagamento,
-          data_vencimento: newDate.toISOString().split('T')[0]
-        })
-        .eq('id', p.id)
+      // Robust date parsing
+      if (!p.data_vencimento) continue
+
+      try {
+        const currentLoc = new Date(p.data_vencimento + 'T12:00:00')
+        
+        // Check if date is valid after parsing
+        if (isNaN(currentLoc.getTime())) {
+          console.warn(`[UpdateContrato] Data de vencimento inválida para pagamento ${p.id}: ${p.data_vencimento}`)
+          continue
+        }
+
+        const diaVenc = parseInt(dia_vencimento)
+        if (isNaN(diaVenc)) {
+           console.warn(`[UpdateContrato] Dia de vencimento inválido: ${dia_vencimento}`)
+           continue
+        }
+
+        const newDate = new Date(currentLoc.getFullYear(), currentLoc.getMonth(), diaVenc)
+        
+        // Final guard before toISOString
+        if (isNaN(newDate.getTime())) {
+          console.warn(`[UpdateContrato] Erro ao calcular nova data para pagamento ${p.id}`)
+          continue
+        }
+
+        await supabase
+          .from('pagamentos')
+          .update({
+            valor: valorParcela,
+            forma: forma_pagamento,
+            data_vencimento: newDate.toISOString().split('T')[0]
+          })
+          .eq('id', p.id)
+      } catch (err) {
+        console.error(`[UpdateContrato] Erro ao processar pagamento ${p.id}:`, err)
+        // Skip this one and continue
+      }
     }
   }
 

@@ -140,7 +140,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                 className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold"
               >
                 <option value="regular">Regular / LMS</option>
-                <option value="esl_brains">ESL Brains (Upload de Print)</option>
+                <option value="esl_brains">ESL Brains (Upload de Anexo)</option>
                 <option value="evolve">Cambridge Evolve (Workbook)</option>
               </Select>
             </div>
