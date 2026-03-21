@@ -106,7 +106,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
   const { data: rawSolicitacoes } = await supabase
     .from('aulas')
-    .select('*, contratos!inner(profiles(full_name))')
+    .select('*, contratos!inner(aluno_id, profiles(full_name))')
     .eq('status', 'pendente_remarcacao')
   
   const solicitacoesRemarcacao = rawSolicitacoes?.sort((a: any, b: any) => {
@@ -366,7 +366,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                           </div>
                         </div>
                         <Link 
-                          href={`/professor/alunos/${sol.contrato_id}`} 
+                          href={`/professor/alunos/${sol.contratos.aluno_id}`} 
                           className={`block w-full text-center py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg transition-all ${
                             hasNovaData 
                               ? "bg-amber-600 hover:bg-amber-700 shadow-amber-600/20" 
