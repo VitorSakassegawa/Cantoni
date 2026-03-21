@@ -360,6 +360,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                 aulas={aulas || []} 
                 showStudentName={false} 
                 showContractType={true} 
+                isProfessor={true}
               />
             </CardContent>
           </Card>

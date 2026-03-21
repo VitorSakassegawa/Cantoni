@@ -352,3 +352,42 @@ export async function concluirAula(aulaId: number) {
   return { success: true, aulasDadas, aulasRestantes, statusFinanceiro }
 }
 
+
+export async function rejeitarRemarcacao(aulaId: number, justificativa: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Não autenticado')
+
+  const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (prof?.role !== 'professor') throw new Error('Apenas o professor pode rejeitar remarcações')
+
+  const serviceSupabase = await createServiceClient()
+
+  // Get aula to find aluno_id for revalidation
+  const { data: aula } = await serviceSupabase
+    .from('aulas')
+    .select('*, contratos(aluno_id)')
+    .eq('id', aulaId)
+    .single()
+
+  if (!aula) throw new Error('Aula não encontrada')
+
+  const { error } = await serviceSupabase
+    .from('aulas')
+    .update({
+      status: 'pendente_remarcacao_rejeitada',
+      justificativa_professor: justificativa,
+      data_hora_solicitada: null
+    })
+    .eq('id', aulaId)
+
+  if (error) throw new Error('Erro ao rejeitar remarcação')
+
+  revalidatePath('/professor')
+  if (aula.contratos?.aluno_id) {
+    revalidatePath(`/professor/alunos/${aula.contratos.aluno_id}`)
+  }
+  revalidatePath('/aluno')
+
+  return { success: true }
+}

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatDateTime, formatDateOnly } from '@/lib/utils'
@@ -14,7 +14,7 @@ import RescheduleCalendar from './RescheduleCalendar'
 import { uploadHomeworkImage } from '@/lib/actions/homework'
 
 import { toast } from 'sonner'
-import { cancelarAula, remarcarAula, solicitarRemarcacao } from '@/lib/actions/aulas'
+import { cancelarAula, remarcarAula, solicitarRemarcacao, rejeitarRemarcacao } from '@/lib/actions/aulas'
 import {
   Dialog,
   DialogContent,
@@ -44,6 +44,7 @@ const STATUS_BADGE: Record<string, any> = {
   cancelada: 'outline',
   remarcada: 'warning',
   pendente_remarcacao: 'warning',
+  pendente_remarcacao_rejeitada: 'destructive',
 }
 
 const HORARIOS_DISPONIVEIS = [
@@ -59,6 +60,7 @@ export default function AulaRow({
   showContractType = false 
 }: Props) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [status, setStatus] = useState<any>(aula.status)
   const [dataHoraSolicitada, setDataHoraSolicitada] = useState<any>(aula.data_hora_solicitada)
   const [loading, setLoading] = useState(false)
@@ -69,9 +71,20 @@ export default function AulaRow({
   const [selectedTime, setSelectedTime] = useState('18:00')
   const [uploading, setUploading] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
+  const [justificativa, setJustificativa] = useState('')
+  const [showReviewModal, setShowReviewModal] = useState(false)
+
+  useEffect(() => {
+    const aulaIdParam = searchParams.get('aulaId')
+    if (aulaIdParam === aula.id.toString()) {
+      if (status === 'pendente_remarcacao' && isProfessor) {
+        setShowReviewModal(true)
+      }
+    }
+  }, [searchParams, aula.id, status, isProfessor])
 
   const canCancel = ['agendada', 'confirmada'].includes(status)
-  const canRemark = ['agendada', 'confirmada', 'cancelada', 'pendente_remarcacao'].includes(status)
+  const canRemark = ['agendada', 'confirmada', 'cancelada', 'pendente_remarcacao', 'pendente_remarcacao_rejeitada'].includes(status)
 
   async function handleCancel() {
     setLoading(true)
@@ -158,6 +171,18 @@ export default function AulaRow({
                   </span>
                 )}
               </span>
+            )}
+            {status === 'pendente_remarcacao_rejeitada' && (
+              <div className="mt-1 flex flex-col">
+                <span className="text-[10px] font-black uppercase tracking-tighter text-red-600">
+                  Reserva Rejeitada
+                </span>
+                {aula.justificativa_professor && (
+                  <span className="text-[10px] font-medium text-slate-500 bg-red-50/50 p-1 rounded-md border border-red-100/30 mt-0.5">
+                    " {aula.justificativa_professor} "
+                  </span>
+                )}
+              </div>
             )}
           </div>
         </td>
@@ -277,7 +302,17 @@ export default function AulaRow({
                 <Settings2 className="w-4 h-4" />
               </Button>
             )}
-            {canRemark && (
+            {isProfessor && status === 'pendente_remarcacao' && aula.data_hora_solicitada && !formatDateTime(aula.data_hora_solicitada).includes('Não informada') && (
+              <Button size="sm" variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl" onClick={() => {
+                const d = new Date(aula.data_hora_solicitada!)
+                setSelectedDate(d)
+                setSelectedTime(format(d, 'HH:mm'))
+                setShowReviewModal(true)
+              }}>
+                Analisar
+              </Button>
+            )}
+            {canRemark && !['pendente_remarcacao'].includes(status) && (
               <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-blue-600 hover:bg-blue-50 transition-all" onClick={() => setShowRemarkModal(true)} title="Remarcar">
                 <RotateCcw className="w-4 h-4" />
               </Button>
@@ -285,16 +320,6 @@ export default function AulaRow({
             {canCancel && (
               <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-red-600 hover:text-red-700 hover:bg-red-50 transition-all" onClick={() => setShowCancelModal(true)} title="Cancelar">
                 <X className="w-4 h-4" />
-              </Button>
-            )}
-            {isProfessor && status === 'pendente_remarcacao' && aula.data_hora_solicitada && !formatDateTime(aula.data_hora_solicitada).includes('Não informada') && (
-              <Button size="sm" variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl" onClick={() => {
-                const d = new Date(aula.data_hora_solicitada!)
-                setSelectedDate(d)
-                setSelectedTime(format(d, 'HH:mm'))
-                setShowRemarkModal(true)
-              }}>
-                Analisar
               </Button>
             )}
           </div>
@@ -373,6 +398,81 @@ export default function AulaRow({
               <Button variant="ghost" className="h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all flex-1" onClick={() => setShowCancelModal(false)}>Voltar</Button>
               <Button variant="destructive" className="h-14 px-10 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]" onClick={handleCancel} disabled={loading}>
                 {loading ? 'Processando...' : 'Confirmar Cancelamento'}
+              </Button>
+            </DialogFooter>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showReviewModal} onOpenChange={setShowReviewModal}>
+        <DialogContent className="sm:max-w-[500px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
+          <div className="bg-amber-500 h-2 w-full" />
+          <div className="p-8 space-y-6">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Analisar Remarcação</DialogTitle>
+              <DialogDescription className="text-slate-500 font-medium text-sm">
+                O aluno sugeriu uma nova data e horário. O que deseja fazer?
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="space-y-6">
+              <div className="p-6 rounded-3xl bg-amber-50 border border-amber-100 flex flex-col items-center text-center gap-2">
+                <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Nova Data Sugerida</p>
+                <p className="text-xl font-black text-slate-900">{aula.data_hora_solicitada ? formatDateTime(aula.data_hora_solicitada) : '—'}</p>
+                <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 mt-2">
+                  <Clock className="w-3.5 h-3.5" />
+                  Aula Original: {formatDateTime(aula.data_hora)}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Justificativa (em caso de rejeição)</Label>
+                <textarea 
+                  className="w-full h-24 p-4 rounded-2xl bg-white border-2 border-slate-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 transition-all font-bold text-slate-900 outline-none text-xs resize-none"
+                  placeholder="Explique porque não pode aceitar este horário ou sugira outro no botão 'Sugerir Alternativa'..."
+                  value={justificativa}
+                  onChange={e => setJustificativa(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="grid grid-cols-2 gap-3 sm:flex-row">
+              <Button 
+                variant="ghost" 
+                className="col-span-1 h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-red-600 hover:bg-red-50 hover:text-red-700" 
+                onClick={async () => {
+                  setLoading(true)
+                  try {
+                    await rejeitarRemarcacao(aula.id, justificativa)
+                    toast.success('Solicitação rejeitada. O aluno será notificado.')
+                    setShowReviewModal(false)
+                    router.refresh()
+                  } catch (e: any) {
+                    toast.error(e.message)
+                  } finally {
+                    setLoading(false)
+                  }
+                }}
+                disabled={loading}
+              >
+                Rejeitar
+              </Button>
+              <Button 
+                className="col-span-1 h-12 rounded-2xl bg-emerald-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 hover:bg-emerald-700" 
+                onClick={handleRemark} 
+                disabled={loading}
+              >
+                {loading ? 'Processando...' : 'Aprovar Data'}
+              </Button>
+              <Button 
+                variant="outline"
+                className="col-span-2 h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50"
+                onClick={() => {
+                  setShowReviewModal(false)
+                  setShowRemarkModal(true)
+                }}
+              >
+                Escolher outro horário
               </Button>
             </DialogFooter>
           </div>

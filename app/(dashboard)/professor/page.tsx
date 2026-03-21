@@ -366,7 +366,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                           </div>
                         </div>
                         <Link 
-                          href={`/professor/alunos/${sol.contratos.aluno_id}`} 
+                          href={`/professor/alunos/${sol.contracts?.aluno_id || sol.contratos?.aluno_id}?aulaId=${sol.id}`} 
                           className={`block w-full text-center py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg transition-all ${
                             hasNovaData 
                               ? "bg-amber-600 hover:bg-amber-700 shadow-amber-600/20" 
