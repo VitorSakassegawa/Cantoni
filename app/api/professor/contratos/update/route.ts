@@ -27,7 +27,10 @@ export async function POST(request: NextRequest) {
     valor,
     dia_vencimento,
     forma_pagamento,
-    status
+    status,
+    dias_da_semana,
+    descontoValor,
+    descontoPercentual
   } = await request.json()
   if (!id) return NextResponse.json({ error: 'ID do contrato é obrigatório' }, { status: 400 })
 
@@ -50,7 +53,10 @@ export async function POST(request: NextRequest) {
       valor: vFloat,
       dia_vencimento: dvInt,
       forma_pagamento,
-      status
+      status,
+      dias_da_semana,
+      desconto_valor: descontoValor || 0,
+      desconto_percentual: descontoPercentual || 0
     })
 
     .eq('id', id)

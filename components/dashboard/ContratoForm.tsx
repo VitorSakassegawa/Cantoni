@@ -68,14 +68,14 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [isCrossSemester, setIsCrossSemester] = useState(false)
   
   const [descontoValor, setDescontoValor] = useState(
-    initialData?.desconto_valor ? maskCurrency((initialData.desconto_valor * 100).toFixed(0)) : ''
+    initialData?.desconto_valor !== undefined ? maskCurrency((initialData.desconto_valor * 100).toFixed(0)) : ''
   )
   const [descontoPercentual, setDescontoPercentual] = useState(initialData?.desconto_percentual?.toString() || '')
   
   const [livroSelect, setLivroSelect] = useState('evolve')
   const [livroManual, setLivroManual] = useState('')
   const [nivel, setNivel] = useState(initialData?.nivel_atual || defaultNivel || 'a1_beginner')
-  const [diaVencimento, setDiaVencimento] = useState(initialData?.dia_vencimento?.toString() || '5')
+  const [diaVencimento, setDiaVencimento] = useState(initialData?.dia_vencimento?.toString() || initialData?.diaVencimento?.toString() || '5')
   const [formaPagamento, setFormaPagamento] = useState(initialData?.forma_pagamento || 'pix')
   const [numParcelas, setNumParcelas] = useState('6')
 

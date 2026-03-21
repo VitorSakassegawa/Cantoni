@@ -78,6 +78,7 @@ export async function POST(request: NextRequest) {
       tipo_contrato: tipoContrato || 'semestral',
       desconto_valor: descontoValor || 0,
       desconto_percentual: descontoPercentual || 0,
+      dias_da_semana: diasDaSemana,
     })
     .select()
     .single()
