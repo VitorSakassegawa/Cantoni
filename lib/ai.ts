@@ -9,9 +9,9 @@ function getGenAI() {
   return new GoogleGenerativeAI(apiKey)
 }
 
-// Best practice for Logic (Pro) and Speed/Audio (Flash)
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-flash'
+// Mode discovery confirmed: gemini-2.5-flash and gemini-2.0-flash are available
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.0-flash'
 const STABLE_FALLBACK = 'gemini-1.5-flash'
 
 export async function generateAIContent(prompt: string, modelName: string = PRIMARY_MODEL) {
@@ -63,9 +63,8 @@ export async function generateLessonSummary(notes: string) {
 export async function generateAIAudio(text: string) {
   try {
     const genAI = getGenAI()
-    // Gemini 2.0 Flash offers superior natural speech synthesis (v1beta)
-    // Primary: 2.0-flash, Fallback: 1.5-flash
-    let modelName = "gemini-2.0-flash"
+    // Use gemini-2.5-flash if available as multimodal, else 2.0-flash
+    let modelName = "gemini-2.5-flash"
     let model = genAI.getGenerativeModel({ model: modelName })
     
     // Prompt to generate speech with characteristic description
