@@ -11,7 +11,7 @@ export async function enviarResumoAI(aulaId: number) {
   // 1. Fetch lesson and student details
   const { data: aula, error: aulaError } = await supabase
     .from('aulas')
-    .select('*, contratos(alunos(nome, email))')
+    .select('*, contratos(*, profiles(full_name, email))')
     .eq('id', aulaId)
     .single()
 
@@ -19,7 +19,7 @@ export async function enviarResumoAI(aulaId: number) {
     throw new Error('Aula não encontrada')
   }
 
-  const student = (aula.contratos as any)?.alunos
+  const student = (aula.contratos as any)?.profiles
   if (!student || !student.email) {
     throw new Error('E-mail do aluno não encontrado')
   }
@@ -33,7 +33,7 @@ export async function enviarResumoAI(aulaId: number) {
     const summaryMarkdown = await generateLessonSummary(aula.class_notes)
 
     // 3. Send email via Resend
-    const dataFmt = new Date(aula.data).toLocaleString('pt-BR', {
+    const dataFmt = new Date(aula.data_hora).toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
@@ -43,7 +43,7 @@ export async function enviarResumoAI(aulaId: number) {
 
     await enviarResumoAulaAI({
       to: student.email,
-      nomeAluno: student.nome,
+      nomeAluno: student.full_name,
       dataHora: dataFmt,
       resumoMarkdown: summaryMarkdown
     })
@@ -56,7 +56,7 @@ export async function enviarResumoAI(aulaId: number) {
 
     if (updateError) throw updateError
 
-    revalidatePath('/professor/alunos/[id]', 'page')
+    revalidatePath('/professor')
     return { success: true }
   } catch (error: any) {
     console.error('Error generating/sending AI summary:', error)

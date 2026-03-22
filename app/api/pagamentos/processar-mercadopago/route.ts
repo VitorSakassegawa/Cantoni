@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { payment } from '@/lib/mercadopago'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,15 +30,13 @@ export async function POST(req: NextRequest) {
     const mpResponse = await payment.create({ body })
 
     // 4. Update local database
-    // Note: We are using mercadopago_id column which should be added via migration
-    const { error: updateErr } = await supabase
+    // We use createServiceClient here because anonymous users don't have UPDATE permissions on pagamentos
+    const serviceSupabase = await createServiceClient()
+    const { error: updateErr } = await serviceSupabase
       .from('pagamentos')
       .update({
-        // @ts-ignore - columns to be added
         mercadopago_id: mpResponse.id?.toString(),
-        // @ts-ignore
         mercadopago_status: mpResponse.status,
-        // @ts-ignore
         mercadopago_payment_method: mpResponse.payment_method_id,
         status: mpResponse.status === 'approved' ? 'pago' : 'pendente',
         data_pagamento: mpResponse.status === 'approved' ? new Date().toISOString().split('T')[0] : null,

@@ -10,14 +10,21 @@ function getGenAI() {
 }
 
 // Mode discovery confirmed: gemini-2.5-flash and gemini-2.0-flash are available
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.0-flash'
-const STABLE_FALLBACK = 'gemini-1.5-flash'
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
+const STABLE_FALLBACK = 'gemini-2.0-flash'
 
-export async function generateAIContent(prompt: string, modelName: string = PRIMARY_MODEL) {
+export async function generateAIContent(
+  prompt: string, 
+  modelName: string = PRIMARY_MODEL,
+  responseMimeType: string = 'text/plain'
+) {
   try {
     const genAI = getGenAI()
-    const model = genAI.getGenerativeModel({ model: modelName })
+    const model = genAI.getGenerativeModel({ 
+      model: modelName,
+      generationConfig: { responseMimeType }
+    })
     const result = await model.generateContent(prompt)
     const response = await result.response
     return response.text()
@@ -27,12 +34,12 @@ export async function generateAIContent(prompt: string, modelName: string = PRIM
     // Check for 403 or specific preview model errors
     if (modelName === PRIMARY_MODEL) {
       console.log(`Retrying with fallback model: ${FALLBACK_MODEL}`)
-      return generateAIContent(prompt, FALLBACK_MODEL)
+      return generateAIContent(prompt, FALLBACK_MODEL, responseMimeType)
     }
 
     if (modelName === FALLBACK_MODEL) {
       console.log(`Retrying with stable fallback: ${STABLE_FALLBACK}`)
-      return generateAIContent(prompt, STABLE_FALLBACK)
+      return generateAIContent(prompt, STABLE_FALLBACK, responseMimeType)
     }
 
     throw error
@@ -63,44 +70,21 @@ export async function generateLessonSummary(notes: string) {
 export async function generateAIAudio(text: string) {
   try {
     const genAI = getGenAI()
-    // Use gemini-2.5-flash if available as multimodal, else 2.0-flash
-    let modelName = "gemini-2.5-flash"
-    let model = genAI.getGenerativeModel({ model: modelName })
+    // Using discovered TTS model
+    const modelName = "gemini-2.5-flash-preview-tts"
+    const model = genAI.getGenerativeModel({ model: modelName })
 
-    // Prompt to generate speech with characteristic description
     const result = await model.generateContent({
-      contents: [{
-        role: 'user', parts: [{
-          text: `Generate spoken audio for this text: "${text}". 
-      Voicing Instructions: Use a natural, expressive human-like English voice. 
-      Professional tone, clear articulation, slight breathing pauses.` }]
-      }],
-      generationConfig: {
-        responseMimeType: "audio/wav"
-      }
+      contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}".` }] }],
+      // Omitting responseMimeType as it caused 400 Bad Request
     })
 
     const response = await result.response
-    const audioData = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data
-
-    return audioData || null
+    // Audio is usually in parts[0].inlineData
+    const part = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)
+    return part?.inlineData?.data || null
   } catch (error) {
-    console.error('Error with primary audio model, retrying with fallback:', error)
-    try {
-      const genAI = getGenAI()
-      const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
-      const result = await fallbackModel.generateContent({
-        contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}".` }] }],
-        generationConfig: {
-          responseMimeType: "audio/wav"
-        }
-      })
-      const response = await result.response
-      const audioData = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data
-      return audioData || null
-    } catch (innerError) {
-      console.error('Stable audio fallback also failed:', innerError)
-      return null
-    }
+    console.error('Error with primary audio model:', error)
+    return null
   }
 }

@@ -6,7 +6,7 @@ export type StatusContrato = 'ativo' | 'vencido' | 'cancelado'
 export type StatusAula = 'agendada' | 'confirmada' | 'dada' | 'cancelada' | 'remarcada' | 'pendente_remarcacao' | 'pendente_remarcacao_rejeitada'
 
 export type StatusPagamento = 'pendente' | 'pago' | 'atrasado' | 'vencido'
-export type FormaPagemento = 'pix' | 'cartao'
+export type FormaPagamento = 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'credit_card' | 'debit_card'
 
 export interface Profile {
   id: string
@@ -82,7 +82,7 @@ export interface Pagamento {
   valor: number
   data_vencimento: string
   data_pagamento?: string
-  forma?: FormaPagemento
+  forma?: FormaPagamento
   mercadopago_id?: string
   mercadopago_status?: string
   pix_qrcode_base64?: string

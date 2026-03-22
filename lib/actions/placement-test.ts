@@ -32,9 +32,15 @@ export async function generatePlacementQuestions(
   `
   
   try {
-    const response = await generateAIContent(prompt)
+    const response = await generateAIContent(prompt, undefined, 'application/json')
     if (!response) throw new Error('AI returned empty response')
-    const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim()
+    
+    let jsonStr = response.trim()
+    // Remove potential markdown markers if AI still includes them despite JSON mode
+    if (jsonStr.startsWith('```')) {
+      jsonStr = jsonStr.replace(/^```(json)?/, '').replace(/```$/, '').trim()
+    }
+
     const parsed = JSON.parse(jsonStr)
     
     // Deep clone to ensure it's a plain object for Next.js 15

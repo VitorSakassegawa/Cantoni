@@ -47,7 +47,6 @@ export async function POST(req: NextRequest) {
         const { error: updateErr } = await supabase
           .from('pagamentos')
           .update({
-            // @ts-ignore
             mercadopago_status: status,
             status: localStatus,
             data_pagamento: localStatus === 'pago' ? new Date().toISOString().split('T')[0] : null
