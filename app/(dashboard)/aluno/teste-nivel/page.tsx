@@ -27,6 +27,7 @@ export default function LevelTestPage() {
   const [showProcessing, setShowProcessing] = useState(false)
   const [audioDuration, setAudioDuration] = useState(0)
   const [audioCurrentTime, setAudioCurrentTime] = useState(0)
+  const [cachedAudio, setCachedAudio] = useState<string | null>(null)
 
   useEffect(() => {
     // Stop any speaking when leaving or changing state
@@ -126,6 +127,7 @@ export default function LevelTestPage() {
       setModule(nextModule)
       setCurrentQuestionIndex(0)
       setPlayCount(0) // Reset audio play count for next module
+      setCachedAudio(null) // Clear audio cache for next module
       
       // Load next module
       setLoading(true)
@@ -150,7 +152,13 @@ export default function LevelTestPage() {
 
     setLoadingAudio(true)
     try {
-      const audioBase64 = await getPlacementAudio(currentModuleData.text)
+      let audioBase64 = cachedAudio
+      if (!audioBase64) {
+        audioBase64 = await getPlacementAudio(currentModuleData.text)
+        if (audioBase64) {
+          setCachedAudio(audioBase64)
+        }
+      }
       
       if (!audioBase64) {
         toast.error('Falha ao gerar áudio com IA. Tente novamente.')
@@ -408,29 +416,31 @@ export default function LevelTestPage() {
               ) : (
                 <div className="p-12 rounded-[3.5rem] bg-slate-900 text-white flex flex-col items-center justify-center gap-6 text-center border-none shadow-2xl relative overflow-hidden group">
                   <div className="absolute inset-0 bg-indigo-600/10 group-hover:bg-indigo-600/20 transition-colors" />
-                  <div className="relative z-10 space-y-4">
+                  <div className="relative z-10 space-y-5">
                     <button
                       onClick={playAudio}
                       disabled={playCount >= 2 || loadingAudio || audioCurrentTime > 0}
-                      className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all ${
-                        playCount >= 2 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-indigo-600 text-white hover:scale-110 active:scale-95 shadow-2xl shadow-indigo-500/40'
+                      className={`mx-auto w-32 h-32 rounded-full flex flex-col items-center justify-center gap-1 transition-all ${
+                        playCount >= 2 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-indigo-600 text-white hover:scale-105 active:scale-95 shadow-2xl shadow-indigo-500/40'
                       }`}
                     >
                       {loadingAudio ? (
-                        <Loader2 className="w-8 h-8 animate-spin" />
+                        <Loader2 className="w-10 h-10 animate-spin" />
                       ) : audioCurrentTime > 0 ? (
-                        <div className="flex flex-col items-center">
-                          <Volume2 className="w-6 h-6 animate-pulse" />
-                          <span className="text-[10px] mt-1 font-mono">
+                        <>
+                          <Volume2 className="w-8 h-8 animate-pulse" />
+                          <span className="text-xs mt-1 font-mono font-bold">
                             {Math.floor(audioCurrentTime)}/{Math.floor(audioDuration || 0)}s
                           </span>
-                        </div>
+                        </>
                       ) : (
-                        <Volume2 className="w-8 h-8" />
+                        <>
+                          <Volume2 className="w-10 h-10" />
+                          <span className="text-xs mt-1 font-black uppercase tracking-widest">{playCount}/2</span>
+                        </>
                       )}
-                      {!loadingAudio && audioCurrentTime === 0 && <span className="text-[10px] font-black mt-1 uppercase tracking-widest">{playCount}/2</span>}
                     </button>
-                    <div className="space-y-1">
+                    <div className="space-y-2">
                       <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
                         {loadingAudio ? 'PROCESSANDO VOZ IA...' : audioCurrentTime > 0 ? 'REPRODUZINDO ÁUDIO...' : playCount >= 2 ? 'LIMITE ATINGIDO' : 'OUVIR ÁUDIO DA QUESTÃO'}
                       </p>
