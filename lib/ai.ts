@@ -63,8 +63,8 @@ export async function generateLessonSummary(notes: string) {
 export async function generateAIAudio(text: string) {
   try {
     const genAI = getGenAI()
-    // Using gemini-1.5-flash which is stable and supports multimodal
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    // Using gemini-2.0-flash which is the latest stable supporting high-quality TTS
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
     
     // Prompt to generate speech
     const result = await model.generateContent({
