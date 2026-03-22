@@ -194,6 +194,43 @@ export default function LevelTestPage() {
     )
   }
 
+  if (step === 'auto-eval') {
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4 text-center space-y-12 animate-in fade-in zoom-in-95 duration-700">
+        <div className="space-y-4">
+          <h2 className="text-xs font-black text-indigo-600 uppercase tracking-[0.3em]">Step 01: Percepção</h2>
+          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">Como você avalia seu inglês hoje?</h1>
+          <p className="text-slate-500 font-medium text-sm">Isso ajudará a definir o ponto de partida do algoritmo.</p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-4">
+          {[
+            { level: 'A1', title: 'Iniciante (A1)', desc: 'Consigo entender frases básicas e me apresentar.' },
+            { level: 'A2', title: 'Básico (A2)', desc: 'Entendo conversas simples sobre rotina e trabalho.' },
+            { level: 'B1', title: 'Intermediário (B1)', desc: 'Consigo lidar com a maioria das situações em viagens.' },
+            { level: 'B2', title: 'Independente (B2)', desc: 'Falo com fluidez e entendo textos complexos.' },
+            { level: 'C1', title: 'Avançado (C1)', desc: 'Uso a língua de forma flexível e para fins profissionais.' }
+          ].map((item) => (
+            <button
+              key={item.level}
+              onClick={() => handleAutoEval(item.level)}
+              disabled={loading}
+              className="p-8 rounded-[2.5rem] bg-white border-2 border-slate-100 hover:border-indigo-600 hover:shadow-2xl hover:shadow-indigo-500/10 transition-all text-left group flex items-center justify-between gap-6"
+            >
+              <div className="space-y-1">
+                <p className="text-lg font-black text-slate-900 group-hover:text-indigo-600 transition-colors uppercase tracking-tight">{item.title}</p>
+                <p className="text-xs text-slate-500 font-medium leading-tight">{item.desc}</p>
+              </div>
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 group-hover:bg-indigo-600 group-hover:text-white flex items-center justify-center transition-all">
+                {loading && currentLevel === item.level ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   if (step === 'quiz') {
     const question = questions[currentQuestionIndex]
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100
@@ -258,48 +295,51 @@ export default function LevelTestPage() {
     )
   }
 
-  // Result view
-  return (
-    <div className="max-w-2xl mx-auto py-12 px-4 text-center space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div className="w-24 h-24 rounded-[2.5rem] bg-indigo-600 text-white flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/30">
-        {finishing ? <Loader2 className="w-10 h-10 animate-spin" /> : <Trophy className="w-10 h-10" />}
-      </div>
-      
-      <div className="space-y-4">
-        <h1 className="text-4xl font-black text-slate-900 leading-tight">Mapeamento Concluído!</h1>
-        <p className="text-slate-500 text-lg font-medium">Processamos {answers.length} pontos de dados com critérios <strong>Cambridge/CEFR</strong>.</p>
-      </div>
-
-      <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl border-indigo-50 border relative overflow-hidden">
-        <div className="relative z-10 space-y-6">
-          <div className="space-y-1">
-            <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Nível Oficial Sugerido</p>
-            <div className="text-8xl font-black text-indigo-600 tracking-tighter">{result?.suggestedLevel || '...'}</div>
-            <p className="text-sm font-bold text-slate-400 uppercase tracking-tight">{result?.suggestedNivel || 'Processando...'}</p>
-          </div>
-          
-          <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left space-y-4">
-            <div className="flex items-center gap-3 text-indigo-600">
-              <Sparkles className="w-4 h-4" />
-              <p className="text-[10px] font-black uppercase tracking-widest">Validação Técnica</p>
-            </div>
-            <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
-              Diagnóstico concluído para o nível <strong>{result?.suggestedLevel}</strong>. 
-              Sua jornada de aprendizado foi calibrada com sucesso.
-            </p>
-          </div>
-
-          <div className="pt-8 border-t border-slate-100 mt-8">
-            <Link href="/aluno" className="inline-block w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
-              ACESSAR MEU DASHBOARD
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
+  if (step === 'result') {
+    return (
+      <div className="max-w-2xl mx-auto py-12 px-4 text-center space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <div className="w-24 h-24 rounded-[2.5rem] bg-indigo-600 text-white flex items-center justify-center mx-auto shadow-2xl shadow-indigo-500/30">
+          {finishing ? <Loader2 className="w-10 h-10 animate-spin" /> : <Trophy className="w-10 h-10" />}
         </div>
-        <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 opacity-50" />
-        <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-50 rounded-full -ml-24 -mb-24 opacity-50" />
+        
+        <div className="space-y-4">
+          <h1 className="text-4xl font-black text-slate-900 leading-tight">Mapeamento Concluído!</h1>
+          <p className="text-slate-500 text-lg font-medium">Processamos {answers.length} pontos de dados com critérios <strong>Cambridge/CEFR</strong>.</p>
+        </div>
+
+        <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl border-indigo-50 border relative overflow-hidden">
+          <div className="relative z-10 space-y-6">
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Nível Oficial Sugerido</p>
+              <div className="text-8xl font-black text-indigo-600 tracking-tighter">{result?.suggestedLevel || '...'}</div>
+              <p className="text-sm font-bold text-slate-400 uppercase tracking-tight">{result?.suggestedNivel || 'Processando...'}</p>
+            </div>
+            
+            <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left space-y-4">
+              <div className="flex items-center gap-3 text-indigo-600">
+                <Sparkles className="w-4 h-4" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Validação Técnica</p>
+              </div>
+              <p className="text-[11px] text-slate-500 font-medium leading-relaxed">
+                Diagnóstico concluído para o nível <strong>{result?.suggestedLevel}</strong>. 
+                Sua jornada de aprendizado foi calibrada com sucesso.
+              </p>
+            </div>
+
+            <div className="pt-8 border-t border-slate-100 mt-8">
+              <Link href="/aluno" className="inline-block w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
+                ACESSAR MEU DASHBOARD
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 opacity-50" />
+          <div className="absolute bottom-0 left-0 w-48 h-48 bg-blue-50 rounded-full -ml-24 -mb-24 opacity-50" />
+        </div>
       </div>
-    </div>
-  )
+    )
+  }
+
+  return null
 }
 
