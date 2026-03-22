@@ -18,6 +18,33 @@ export default function PerfilPage() {
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<any>(null)
   const [birthDateDisplay, setBirthDateDisplay] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [updatingPassword, setUpdatingPassword] = useState(false)
+
+  async function handleUpdatePassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (newPassword !== confirmPassword) {
+      toast.error('As senhas não coincidem.')
+      return
+    }
+    if (newPassword.length < 6) {
+      toast.error('A senha deve ter pelo menos 6 caracteres.')
+      return
+    }
+
+    setUpdatingPassword(true)
+    const { error } = await supabase.auth.updateUser({ password: newPassword })
+    setUpdatingPassword(false)
+
+    if (error) {
+      toast.error('Erro ao atualizar senha: ' + error.message)
+    } else {
+      toast.success('Senha atualizada com sucesso!')
+      setNewPassword('')
+      setConfirmPassword('')
+    }
+  }
 
   useEffect(() => {
     async function loadProfile() {
@@ -195,6 +222,59 @@ export default function PerfilPage() {
           </p>
         </div>
       </div>
+
+      <Card className="glass-card border-none overflow-hidden hover:translate-y-0 hover:shadow-2xl">
+        <CardHeader className="pb-6 bg-slate-50/50 border-b border-slate-100/50">
+          <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+            Segurança
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-10">
+          <form onSubmit={handleUpdatePassword} className="space-y-6">
+            <div className="grid gap-8 sm:grid-cols-2">
+              <div className="space-y-2.5">
+                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nova Senha</Label>
+                <div className="relative">
+                  <Input
+                    type="password"
+                    className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4"
+                    value={newPassword}
+                    onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Mínimo 6 caracteres"
+                    minLength={6}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2.5">
+                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Confirmar Nova Senha</Label>
+                <div className="relative">
+                  <Input
+                    type="password"
+                    className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4"
+                    value={confirmPassword}
+                    onChange={e => setConfirmPassword(e.target.value)}
+                    placeholder="Repita a nova senha"
+                    minLength={6}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end">
+              <Button
+                type="submit"
+                disabled={updatingPassword}
+                className="h-12 px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-widest shadow-md transition-all disabled:opacity-50"
+              >
+                {updatingPassword ? 'ALTERANDO...' : 'ALTERAR SENHA'}
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   )
 }

@@ -12,9 +12,13 @@ export async function POST(request: NextRequest) {
 
   const { nome, email, telefone, nivel, tipoAula, cpf, birthDate } = await request.json()
 
-  // Server-side validation
-  if (!nome || !email || !email.includes('@')) {
-    return NextResponse.json({ error: 'Dados obrigatórios inválidos' }, { status: 400 })
+  if (!nome || !email || !email.includes('@') || !cpf) {
+    return NextResponse.json({ error: 'Dados obrigatórios (Nome, Email, CPF) inválidos' }, { status: 400 })
+  }
+
+  const cleanCPF = cpf.replace(/\D/g, '')
+  if (cleanCPF.length !== 11) {
+    return NextResponse.json({ error: 'CPF inválido, deve conter 11 dígitos numéricos' }, { status: 400 })
   }
 
   // Use service role to create user
@@ -23,8 +27,8 @@ export async function POST(request: NextRequest) {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   )
 
-  // Generate temp password
-  const tempPassword = Math.random().toString(36).slice(-12) + 'A1!'
+  // Use first 6 numbers of CPF as password
+  const tempPassword = cleanCPF.substring(0, 6)
 
   const { data: authUser, error: authErr } = await adminSupabase.auth.admin.createUser({
     email,

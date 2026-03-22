@@ -44,8 +44,8 @@ export default function NovoAlunoPage() {
     }
 
     const cleanCPF = cpf.replace(/\D/g, '')
-    if (cleanCPF.length > 0 && cleanCPF.length !== 11) {
-      setError('O CPF deve ter exatamente 11 dígitos')
+    if (cleanCPF.length !== 11) {
+      setError('O CPF é obrigatório e deve ter exatamente 11 dígitos')
       setLoading(false)
       return
     }
@@ -183,6 +183,7 @@ export default function NovoAlunoPage() {
                         value={cpf}
                         onChange={e => setCpf(maskCPF(e.target.value))}
                         placeholder="000.000.000-00"
+                        required
                       />
                     </div>
                   </div>
