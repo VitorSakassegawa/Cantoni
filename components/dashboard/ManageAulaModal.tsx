@@ -14,10 +14,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { updateLessonHomework } from '@/lib/actions/homework'
 import { concluirAula } from '@/lib/actions/aulas'
-import { BookOpen, Link as LinkIcon, Video, CheckCircle2 } from 'lucide-react'
+import { BookOpen, Link as LinkIcon, Video, CheckCircle2, Sparkles, Send } from 'lucide-react'
 
 interface Props {
   aula: any
@@ -36,6 +37,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     homework_due_date: aula.homework_due_date ? aula.homework_due_date.split('T')[0] : '',
     meet_link: aula.meet_link || '',
     has_homework: aula.has_homework ?? true,
+    class_notes: aula.class_notes || '',
   })
 
   async function handleSave() {
@@ -109,8 +111,9 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
             </div>
           )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 py-2">
-            <div className="md:col-span-2 space-y-3">
+          <div className="grid grid-cols-1 gap-6 py-2">
+            {/* Google Meet Link */}
+            <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Link do Google Meet</Label>
               <div className="relative group">
                 <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
@@ -123,7 +126,32 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
               </div>
             </div>
 
-            <div className="md:col-span-2 space-y-4 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100/50">
+            {/* Class Notes / AI Summary */}
+            <div className="space-y-3 p-6 bg-indigo-50/30 rounded-[2rem] border border-indigo-100/50">
+              <div className="flex items-center justify-between mb-2">
+                <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-600 pl-1">Notas da Aula / Key Points</Label>
+                <Badge className="bg-indigo-600 text-white border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5 flex items-center gap-1">
+                  <Sparkles className="w-2.5 h-2.5" /> AI Ready
+                </Badge>
+              </div>
+              <Textarea
+                className="min-h-[120px] rounded-xl border-indigo-100 bg-white focus:ring-indigo-500 font-medium text-sm placeholder:text-slate-300"
+                value={formData.class_notes}
+                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, class_notes: e.target.value })}
+                placeholder="O que foi discutido hoje? Tópicos principais, erros comuns, novas palavras..."
+              />
+              <div className="flex justify-end pt-2">
+                <Button 
+                  disabled={!formData.class_notes || loading}
+                  className="bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-indigo-600/10 hover:bg-indigo-700 transition-all opacity-50 cursor-not-allowed"
+                  title="Configure sua GEMINI_API_KEY para habilitar resumos automáticos"
+                >
+                  <Send className="w-3 h-3" /> Gerar Resumo via IA
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-4 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100/50">
               <div className="flex items-center justify-between">
                 <div>
                   <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Tarefa / Homework</Label>
@@ -157,15 +185,15 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Tipo de Tarefa</Label>
-                      <Select 
+                      <select 
                         value={formData.homework_type} 
                         onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, homework_type: e.target.value as any })}
-                        className="h-12 rounded-xl border-slate-100 bg-white font-bold text-xs"
+                        className="h-12 w-full rounded-xl border border-slate-100 bg-white font-bold text-xs px-4"
                       >
                         <option value="regular">Regular / LMS</option>
                         <option value="esl_brains">ESL Brains (Upload de Anexo)</option>
                         <option value="evolve">Cambridge Evolve (Workbook)</option>
-                      </Select>
+                      </select>
                     </div>
 
                     <div className="space-y-3">

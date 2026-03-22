@@ -12,7 +12,9 @@ import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import StatusContratoSelect from '@/components/dashboard/StatusContratoSelect'
 import ContratoForm from '@/components/dashboard/ContratoForm'
 import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
-import { Trash2 } from 'lucide-react'
+import SkillsRadar from '@/components/dashboard/SkillsRadar'
+import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
+import { BrainCircuit, Sparkles, Trash2 } from 'lucide-react'
 
 export default async function AlunoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -58,6 +60,15 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
     .eq('aluno_id', id)
     .order('mes', { ascending: false })
     .limit(3)
+
+  const { data: avaliacoes } = await supabase
+    .from('avaliacoes_habilidades')
+    .select('*')
+    .eq('aluno_id', id)
+    .order('mes_referencia', { ascending: false })
+    .limit(1)
+
+  const currentAvaliacao = avaliacoes?.[0]
 
   const progresso = contrato ? (contrato.aulas_dadas / contrato.aulas_totais) * 100 : 0
 
@@ -154,38 +165,17 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
           </Card>
 
           <Card className="glass-card border-none overflow-hidden hover:shadow-xl transition-all">
-            <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100/50">
-              <CardTitle className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Remarcações</CardTitle>
+            <CardHeader className="pb-4 bg-indigo-50 border-b border-indigo-100/50">
+              <CardTitle className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+                <BrainCircuit className="w-3 h-3" /> Skill Evolution
+              </CardTitle>
             </CardHeader>
-            <CardContent className="pt-6">
-              {remarcacoes?.length ? (
-                <div className="space-y-4">
-                  {remarcacoes.map((r: any) => {
-                    const max = contrato?.planos?.remarca_max_mes || 1
-                    const isExceeded = r.quantidade >= max
-                    return (
-                      <div key={r.id} className="flex flex-col gap-2">
-                        <div className="flex justify-between items-center">
-                          <p className="text-[10px] font-black text-slate-900 uppercase tracking-tighter">
-                            {new Date(r.mes).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
-                          </p>
-                          <Badge className={isExceeded ? 'bg-rose-100 text-rose-600 border-none' : 'bg-slate-100 text-slate-600 border-none'}>
-                            {r.quantidade} / {max}
-                          </Badge>
-                        </div>
-                        <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                          <div className={`h-full rounded-full ${isExceeded ? 'bg-rose-500' : 'bg-blue-500'}`} style={{ width: `${Math.min((r.quantidade / max) * 100, 100)}%` }} />
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              ) : (
-                <div className="text-center py-6">
-                  <Clock className="w-8 h-8 text-slate-100 mx-auto mb-2" />
-                  <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest">Sem registros</p>
-                </div>
-              )}
+            <CardContent className="pt-6 space-y-6">
+              <SkillsRadar data={avaliacoes || []} />
+              <div className="pt-6 border-t border-slate-100">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Atualizar Avaliação (Mensal)</p>
+                <SkillEvaluationForm alunoId={id} initialData={currentAvaliacao} />
+              </div>
             </CardContent>
           </Card>
         </div>

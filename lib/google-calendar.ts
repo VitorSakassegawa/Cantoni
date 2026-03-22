@@ -46,7 +46,7 @@ export async function criarEventoMeet({
       location: 'Google Meet',
       start: { dateTime: dataHora.toISOString(), timeZone: 'America/Sao_Paulo' },
       end: { dateTime: dataFim.toISOString(), timeZone: 'America/Sao_Paulo' },
-      attendees: [{ email: emailAluno }, { email: emailProfessor }],
+      attendees: [{ email: emailAluno }],
       conferenceData: {
         createRequest: {
           requestId: `meet-${Date.now()}`,

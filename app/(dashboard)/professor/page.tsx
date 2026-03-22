@@ -12,6 +12,9 @@ import { ptBR } from 'date-fns/locale'
 import { RotateCcw } from 'lucide-react'
 import CurrentDateGreeting from '@/components/dashboard/CurrentDateGreeting'
 import ReschedulingRequestsList from '@/components/dashboard/ReschedulingRequestsList'
+import FinanceDash from '@/components/dashboard/FinanceDash'
+import { addMonths, startOfMonth as startOfMonthDate, endOfMonth as endOfMonthDate } from 'date-fns'
+import { BrainCircuit, Sparkles } from 'lucide-react'
 
 
 interface PageProps {
@@ -121,6 +124,24 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     return 0
   }) || []
 
+  // --- FINANCE DATA CALCULATION ---
+  const mrr = alunosAtivos?.reduce((acc: number, curr: any) => {
+    const activePayment = curr.pagamentos?.find((p: any) => p.status !== 'pago') || curr.pagamentos?.[0]
+    return acc + (activePayment?.valor || 0)
+  }, 0) || 0
+
+  const pendenteTotal = allPayments
+    ?.filter((p: any) => p.status === 'pendente' || p.status === 'atrasado')
+    .reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0) || 0
+
+  const projectionData = Array.from({ length: 6 }, (_, i) => {
+    const monthDate = addMonths(today, i)
+    return {
+      month: format(monthDate, 'MMM', { locale: ptBR }),
+      value: mrr * (i === 0 ? 1 : 1 - (i * 0.02)) // Very simple projection with 2% churn
+    }
+  })
+
 
   return (
     <div className="space-y-10 pb-16 animate-fade-in">
@@ -153,63 +174,53 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
-        <div className="glass-card border-none overflow-hidden group p-8 relative">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <BookOpen className="w-16 h-16 text-blue-900" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-4xl font-black text-blue-900 tracking-tighter">{aulasHoje?.length || 0}</p>
-            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Aulas para Hoje</p>
-          </div>
-          <div className="mt-4 h-1 w-12 bg-blue-600 rounded-full" />
+      {/* Smart Insights & Schedule Optimizer (NEW) */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2">
+           <FinanceDash 
+             mrr={mrr} 
+             arrecadadoMes={totalArrecadadoMes} 
+             pendenteTotal={pendenteTotal} 
+             projectionData={projectionData} 
+           />
         </div>
+        
+        <Card className="glass-card border-none bg-gradient-to-br from-blue-900 to-indigo-900 text-white overflow-hidden relative shadow-2xl">
+          <div className="absolute top-0 right-0 p-8 opacity-10">
+            <Sparkles className="w-24 h-24" />
+          </div>
+          <CardHeader>
+            <CardTitle className="text-xs font-black text-blue-300 flex items-center gap-2 uppercase tracking-[0.2em]">
+              <BrainCircuit className="w-4 h-4" /> Schedule Optimizer
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="p-4 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-md">
+              <p className="text-xs font-bold text-blue-200 uppercase tracking-tighter">Conflitos Detectados</p>
+              <p className="text-2xl font-black mt-1">{solicitacoesRemarcacao.length}</p>
+              <p className="text-[10px] text-blue-300/70 mt-2 italic leading-relaxed">
+                Existem {solicitacoesRemarcacao.length} solicitações de remarcação aguardando sua aprovação ou sugestão de horário.
+              </p>
+            </div>
+            
+            <div className="space-y-3">
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-400">Sugestões de IA</h4>
+              <div className="space-y-2">
+                <div className="p-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between group hover:bg-white/10 transition-all cursor-pointer">
+                  <div className="flex items-center gap-3">
+                    <Clock className="w-4 h-4 text-blue-400" />
+                    <span className="text-[10px] font-bold">Otimizar Gaps matinais</span>
+                  </div>
+                  <ChevronRight className="w-3 h-3 text-white/40 group-hover:translate-x-1 transition-all" />
+                </div>
+              </div>
+            </div>
 
-        <Link href="/professor/alunos?status=ativo" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-emerald-200 transition-all cursor-pointer">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Users className="w-16 h-16 text-emerald-900" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-4xl font-black text-emerald-600 tracking-tighter">{totalAlunos || 0}</p>
-            <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">Alunos Ativos</p>
-          </div>
-          <div className="mt-4 h-1 w-12 bg-emerald-500 rounded-full" />
-        </Link>
-
-        {/* Financial KPIs */}
-        <Link href="/professor/pagamentos?status=pago" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-blue-200 transition-all cursor-pointer">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <CheckCircle2 className="w-16 h-16 text-blue-900" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-4xl font-black text-blue-600 tracking-tighter">{pagamentosPagos.length}</p>
-            <p className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Faturas Pagas (Financeiro)</p>
-          </div>
-          <div className="mt-4 h-1 w-12 bg-blue-500 rounded-full" />
-        </Link>
-
-        <Link href="/professor/pagamentos?status=pendente" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-amber-200 transition-all cursor-pointer">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <AlertCircle className="w-16 h-16 text-amber-900" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-4xl font-black text-amber-600 tracking-tighter">{pagamentosPendentes.length}</p>
-            <p className="text-[10px] font-black text-amber-400 uppercase tracking-widest">Pendentes (Financeiro)</p>
-          </div>
-          <div className="mt-4 h-1 w-12 bg-amber-500 rounded-full" />
-        </Link>
-
-        <Link href="/professor/pagamentos?status=atrasado" className="glass-card border-none overflow-hidden group p-8 relative hover:ring-2 hover:ring-red-200 transition-all cursor-pointer">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Clock className="w-16 h-16 text-red-900" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-4xl font-black text-red-600 tracking-tighter">{pagamentosAtrasados.length}</p>
-            <p className="text-[10px] font-black text-red-400 uppercase tracking-widest">Atrasadas (Financeiro)</p>
-          </div>
-          <div className="mt-4 h-1 w-12 bg-red-500 rounded-full" />
-        </Link>
+            <Button className="w-full bg-white text-blue-900 hover:bg-blue-50 font-black text-[10px] uppercase tracking-widest h-12 rounded-2xl">
+              ABRIR OTIMIZADOR
+            </Button>
+          </CardContent>
+        </Card>
       </div>
 
 

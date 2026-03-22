@@ -38,7 +38,9 @@ export async function updateLessonHomework(aulaId: number, data: {
   homework_type?: 'regular' | 'esl_brains' | 'evolve',
   homework_link?: string,
   homework_due_date?: string,
-  meet_link?: string
+  meet_link?: string,
+  class_notes?: string,
+  ai_summary_sent?: boolean
 }) {
   const supabase = createClient()
   

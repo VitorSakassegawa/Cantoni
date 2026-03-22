@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
 
     try {
       const result = await criarEventoMeet({
-        titulo: `${isBonus ? '🎁 ' : '🇬🇧 '}Aula de Inglês — ${aluno.full_name}`,
+        titulo: `${isBonus ? '🎁 ' : '🇺🇸 '}Aula de Inglês — ${aluno.full_name}`,
         dataHora: dataObj,
         emailAluno: aluno.email,
         emailProfessor: process.env.RESEND_FROM_EMAIL!,
