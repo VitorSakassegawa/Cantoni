@@ -20,7 +20,7 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* MRR Card */}
-        <Card className="glass-card border-none bg-indigo-600 text-white shadow-xl shadow-indigo-600/20 overflow-hidden relative group">
+        <Card className="border-none bg-[#4338ca] text-white shadow-xl shadow-indigo-600/20 overflow-hidden relative group rounded-[2rem]">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <TrendingUp className="w-16 h-16" />
           </div>

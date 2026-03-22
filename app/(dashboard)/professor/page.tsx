@@ -135,10 +135,18 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0) || 0
 
   const projectionData = Array.from({ length: 6 }, (_, i) => {
-    const monthDate = addMonths(today, i)
+    const targetMonth = addMonths(today, i)
+    const targetMonthStr = format(targetMonth, 'yyyy-MM')
+    
+    // Sum all payments (paid or pending) scheduled for this month
+    const monthValue = allPayments?.filter((p: any) => {
+      if (!p.data_vencimento) return false
+      return p.data_vencimento.startsWith(targetMonthStr)
+    }).reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0) || 0
+
     return {
-      month: format(monthDate, 'MMM', { locale: ptBR }),
-      value: mrr * (i === 0 ? 1 : 1 - (i * 0.02)) // Very simple projection with 2% churn
+      month: format(targetMonth, 'MMM', { locale: ptBR }),
+      value: monthValue
     }
   })
 
@@ -185,7 +193,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
            />
         </div>
         
-        <Card className="glass-card border-none bg-gradient-to-br from-blue-900 to-indigo-900 text-white overflow-hidden relative shadow-2xl">
+        <Card className="border-none bg-gradient-to-br from-[#1e1b4b] to-[#312e81] text-white overflow-hidden relative shadow-2xl rounded-[2rem]">
           <div className="absolute top-0 right-0 p-8 opacity-10">
             <Sparkles className="w-24 h-24" />
           </div>
