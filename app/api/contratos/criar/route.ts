@@ -120,7 +120,7 @@ export async function POST(request: NextRequest) {
     const dateStr = dateOnly.toISOString().split('T')[0]
     
     // Normalize horario (HH:mm)
-    const cleanHorario = horario.replace('h', ':').trim()
+    const cleanHorario = (horario || '12:00').replace('h', ':').trim()
     const dataObj = fromZonedTime(`${dateStr} ${cleanHorario}`, 'America/Sao_Paulo')
     
     // Safety check for invalid date
