@@ -45,6 +45,26 @@ export async function generatePlacementQuestions(
   }
 }
 
+async function generateAIInsights(answers: any[], level: string) {
+  const prompt = `
+    Analise o desempenho deste aluno em um teste de nivelamento de inglês CEFR ${level}.
+    Respostas: ${JSON.stringify(answers)}
+
+    Trabalhe como um coordenador pedagógico experiente.
+    Gere um resumo curto (markdown) com:
+    1. **Pontos de Destaque** (O que o aluno domina).
+    2. **Pontos de Melhoria** (Gaps gramaticais ou de leitura/listening).
+    3. **Sugestão Pedagógica** (Foco das primeiras 10 aulas).
+    
+    Seja direto, profissional e encorajador.
+  `
+  try {
+    return await generateAIContent(prompt)
+  } catch (error) {
+    return "Insights automáticos indisponíveis no momento."
+  }
+}
+
 import { createClient } from '@/lib/supabase/server'
 
 export async function evaluatePlacementTest(answers: { correct: boolean }[], attemptedLevel: string) {
@@ -81,6 +101,21 @@ export async function evaluatePlacementTest(answers: { correct: boolean }[], att
     'C1': 'avancado'
   }
 
+  const insights = await generateAIInsights(answers, suggestedLevel)
+
+  const { error: resultError } = await supabase
+    .from('placement_results')
+    .insert({
+      student_id: studentId,
+      cefr_level: suggestedLevel,
+      score,
+      total_questions: total,
+      answers,
+      insights
+    })
+
+  if (resultError) console.error('Error saving placement record:', resultError)
+
   const { error } = await supabase
     .from('profiles')
     .update({ 
@@ -95,5 +130,22 @@ export async function evaluatePlacementTest(answers: { correct: boolean }[], att
     throw new Error('Erro ao atualizar perfil no banco de dados.')
   }
 
-  return { suggestedLevel, suggestedNivel: nivelMap[suggestedLevel], score, total, confirmed }
+  return { suggestedLevel, suggestedNivel: nivelMap[suggestedLevel], score, total, confirmed, insights }
+}
+
+export async function requestNewPlacementTest(studentId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Não autorizado')
+
+  const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (prof?.role !== 'professor') throw new Error('Apenas professores podem solicitar novos testes')
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ placement_test_completed: false })
+    .eq('id', studentId)
+
+  if (error) throw new Error('Falha ao resetar teste')
+  return { success: true }
 }

@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, BookOpen, Users, LayoutDashboard, CreditCard, User, Calendar } from 'lucide-react'
+import { LogOut, BookOpen, Users, LayoutDashboard, CreditCard, User, Calendar, Sparkles } from 'lucide-react'
 import { Logo } from '@/components/dashboard/Logo'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -96,6 +96,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
                     <User className="w-4 h-4" />
                   </div>
                   Meu Perfil
+                </Link>
+                <Link
+                  href="/professor/nivelamento"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <Sparkles className="w-4 h-4" />
+                  </div>
+                  Nivelamento
                 </Link>
               </>
             )}
