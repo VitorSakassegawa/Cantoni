@@ -23,13 +23,13 @@ export async function generateAIContent(prompt: string, modelName: string = PRIM
     return response.text()
   } catch (error: any) {
     console.error(`Error with model ${modelName}:`, error)
-    
+
     // Check for 403 or specific preview model errors
     if (modelName === PRIMARY_MODEL) {
       console.log(`Retrying with fallback model: ${FALLBACK_MODEL}`)
       return generateAIContent(prompt, FALLBACK_MODEL)
     }
-    
+
     if (modelName === FALLBACK_MODEL) {
       console.log(`Retrying with stable fallback: ${STABLE_FALLBACK}`)
       return generateAIContent(prompt, STABLE_FALLBACK)
@@ -66,20 +66,23 @@ export async function generateAIAudio(text: string) {
     // Use gemini-2.5-flash if available as multimodal, else 2.0-flash
     let modelName = "gemini-2.5-flash"
     let model = genAI.getGenerativeModel({ model: modelName })
-    
+
     // Prompt to generate speech with characteristic description
     const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}". 
+      contents: [{
+        role: 'user', parts: [{
+          text: `Generate spoken audio for this text: "${text}". 
       Voicing Instructions: Use a natural, expressive human-like English voice. 
-      Professional tone, clear articulation, slight breathing pauses.` }] }],
+      Professional tone, clear articulation, slight breathing pauses.` }]
+      }],
       generationConfig: {
         responseMimeType: "audio/wav"
       }
     })
-    
+
     const response = await result.response
     const audioData = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data
-    
+
     return audioData || null
   } catch (error) {
     console.error('Error with primary audio model, retrying with fallback:', error)
