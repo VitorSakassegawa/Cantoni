@@ -18,6 +18,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { requestNewPlacementTest } from '@/lib/actions/placement-test'
+import ReactMarkdown from 'react-markdown'
 
 export default function ProfessorNivelamentoPage() {
   const [students, setStudents] = useState<any[]>([])
@@ -235,8 +236,10 @@ export default function ProfessorNivelamentoPage() {
                               <BrainCircuit className="w-4 h-4" />
                               <p className="text-[10px] font-black uppercase tracking-[0.2em]">Insights da IA Pedagógica</p>
                             </div>
-                            <div className="prose prose-sm prose-indigo max-w-none text-slate-600 leading-relaxed font-medium whitespace-pre-wrap">
-                              {test.insights || '*Nenhum insight disponível para este teste.*'}
+                            <div className="prose prose-sm prose-indigo max-w-none text-slate-600 leading-relaxed font-medium markdown-insights">
+                              <ReactMarkdown>
+                                {test.insights || '*Nenhum insight disponível para este teste.*'}
+                              </ReactMarkdown>
                             </div>
                           </div>
 

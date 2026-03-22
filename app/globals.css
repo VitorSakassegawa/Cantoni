@@ -86,3 +86,40 @@ body {
   @apply bg-white/10 text-white shadow-lg;
 }
 
+/* Markdown Content Styles */
+.markdown-insights {
+  @apply text-sm;
+}
+
+.markdown-insights h3 {
+  @apply text-xs font-black text-blue-800 uppercase tracking-widest mt-6 mb-3 border-b border-blue-100/50 pb-2 flex items-center gap-2;
+}
+
+.markdown-insights p {
+  @apply mb-4 leading-relaxed text-slate-600 font-medium;
+}
+
+.markdown-insights p:last-child {
+  @apply mb-0;
+}
+
+.markdown-insights strong {
+  @apply font-black text-slate-800;
+}
+
+.markdown-insights ul {
+  @apply space-y-2 my-4;
+}
+
+.markdown-insights li {
+  @apply relative pl-5 leading-relaxed text-slate-600;
+}
+
+.markdown-insights li::before {
+  content: "✦";
+  @apply absolute left-0 top-0.5 text-[10px] text-blue-400 font-black;
+}
+
+.markdown-insights em {
+  @apply italic font-semibold text-slate-700 bg-slate-100 px-1 py-0.5 rounded-md text-xs;
+}

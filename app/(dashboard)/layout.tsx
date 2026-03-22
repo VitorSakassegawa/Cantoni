@@ -53,6 +53,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
             {isProfessor && (
               <>
                 <Link
+                  href="/professor/pagamentos"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <CreditCard className="w-4 h-4" />
+                  </div>
+                  Financeiro
+                </Link>
+                <Link
                   href="/professor/alunos"
                   className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
                 >
@@ -71,13 +80,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   Aulas
                 </Link>
                 <Link
-                  href="/professor/pagamentos"
+                  href="/professor/nivelamento"
                   className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
                 >
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <CreditCard className="w-4 h-4" />
+                    <Sparkles className="w-4 h-4" />
                   </div>
-                  Financeiro
+                  Nivelamento
                 </Link>
                 <Link
                   href="/professor/calendario"
@@ -97,29 +106,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
                   </div>
                   Meu Perfil
                 </Link>
-                <Link
-                  href="/professor/nivelamento"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  Nivelamento
-                </Link>
               </>
             )}
 
             {!isProfessor && (
               <>
-                <Link
-                  href="/aluno/aulas"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                  Aulas
-                </Link>
                 <Link
                   href="/aluno/pagamentos"
                   className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
@@ -128,6 +119,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
                     <CreditCard className="w-4 h-4" />
                   </div>
                   Financeiro
+                </Link>
+                <Link
+                  href="/aluno/aulas"
+                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
+                >
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  Aulas
                 </Link>
                 <Link
                   href="/aluno/calendario"

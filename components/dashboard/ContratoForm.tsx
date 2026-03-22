@@ -12,6 +12,7 @@ import { Calendar, BookOpen, Clock, Info, Percent, DollarSign, AlertTriangle, Sp
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 import { maskCurrency } from '@/lib/utils'
+import ReactMarkdown from 'react-markdown'
 
 const DIAS_SEMANA = [
   { label: 'Segunda', value: 1 },
@@ -477,8 +478,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                     <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
                        Insights Recentes ({new Date(placementData.created_at).toLocaleDateString('pt-BR')})
                     </div>
-                    <div className="text-[11px] text-slate-600 font-medium leading-relaxed italic line-clamp-3">
-                      {placementData.insights || 'Sem insights disponíveis.'}
+                    <div className="markdown-insights opacity-90 mt-2">
+                      <ReactMarkdown>
+                        {placementData.insights || 'Sem insights disponíveis.'}
+                      </ReactMarkdown>
                     </div>
                   </div>
                   <div className="shrink-0 flex items-center justify-center w-12 h-12 rounded-2xl bg-white shadow-sm border border-blue-100 text-blue-600">
