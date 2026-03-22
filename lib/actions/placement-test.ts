@@ -1,6 +1,6 @@
 'use server'
 
-import { generateAIContent } from '@/lib/ai'
+import { generateAIContent, generateAIAudio } from '@/lib/ai'
 
 export async function generatePlacementQuestions(
   level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' = 'A1',
@@ -130,7 +130,8 @@ export async function evaluatePlacementTest(answers: { correct: boolean }[], att
     throw new Error('Erro ao atualizar perfil no banco de dados.')
   }
 
-  return { suggestedLevel, suggestedNivel: nivelMap[suggestedLevel], score, total, confirmed, insights }
+  const result = { suggestedLevel, suggestedNivel: nivelMap[suggestedLevel], score, total, confirmed, insights }
+  return JSON.parse(JSON.stringify(result))
 }
 
 export async function requestNewPlacementTest(studentId: string) {
@@ -148,4 +149,8 @@ export async function requestNewPlacementTest(studentId: string) {
 
   if (error) throw new Error('Falha ao resetar teste')
   return { success: true }
+}
+
+export async function getPlacementAudio(text: string) {
+  return await generateAIAudio(text)
 }

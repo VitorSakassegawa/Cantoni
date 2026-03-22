@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { generatePlacementQuestions, evaluatePlacementTest } from '@/lib/actions/placement-test'
-import { Sparkles, ArrowRight, CheckCircle2, Trophy, Loader2, Target, Layers, BrainCircuit, BookOpen, Video } from 'lucide-react'
+import { generatePlacementQuestions, evaluatePlacementTest, getPlacementAudio } from '@/lib/actions/placement-test'
+import { Sparkles, ArrowRight, CheckCircle2, Trophy, Loader2, Target, Layers, BrainCircuit, BookOpen, Video, Volume2, RotateCcw } from 'lucide-react'
 import { toast } from 'sonner'
 import Link from 'next/link'
 
@@ -22,6 +22,7 @@ export default function LevelTestPage() {
   const [result, setResult] = useState<any>(null)
   const [score, setScore] = useState(0)
   const [playCount, setPlayCount] = useState(0)
+  const [loadingAudio, setLoadingAudio] = useState(false)
 
   useEffect(() => {
     // Stop any speaking when leaving or changing state
@@ -126,32 +127,32 @@ export default function LevelTestPage() {
     }
   }
 
-  const playAudio = () => {
+  const playAudio = async () => {
     if (playCount >= 2) {
       toast.error('Limite de 2 reproduções atingido.')
       return
     }
     if (!currentModuleData?.text) return
 
-    window.speechSynthesis.cancel()
+    setLoadingAudio(true)
+    try {
+      const audioBase64 = await getPlacementAudio(currentModuleData.text)
+      
+      if (!audioBase64) {
+        toast.error('Falha ao gerar áudio com IA. Tente novamente.')
+        return
+      }
 
-    const utterance = new SpeechSynthesisUtterance(currentModuleData.text)
-    
-    // Better English voice selection
-    const voices = window.speechSynthesis.getVoices()
-    const englishVoice = voices.find(v => 
-      (v.lang.includes('en-US') || v.lang.includes('en-GB')) && 
-      (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Daniel'))
-    ) || voices.find(v => v.lang.includes('en'))
-    
-    if (englishVoice) utterance.voice = englishVoice
-    
-    utterance.lang = 'en-US'
-    utterance.rate = 0.85
-    utterance.pitch = 1.0
-    
-    window.speechSynthesis.speak(utterance)
-    setPlayCount(playCount + 1)
+      const audio = new Audio(`data:audio/wav;base64,${audioBase64}`)
+      audio.onended = () => {
+        setLoadingAudio(false)
+        setPlayCount(prev => prev + 1)
+      }
+      audio.play()
+    } catch (err) {
+      toast.error('Erro ao processar áudio.')
+      setLoadingAudio(false)
+    }
   }
 
   if (step === 'intro') {
@@ -319,18 +320,25 @@ export default function LevelTestPage() {
                   <div className="relative z-10 space-y-4">
                     <button
                       onClick={playAudio}
-                      disabled={playCount >= 2}
-                      className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
-                        playCount >= 2 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-indigo-600 text-white hover:scale-110 active:scale-95 shadow-xl shadow-indigo-500/40'
+                      disabled={playCount >= 2 || loadingAudio}
+                      className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all ${
+                        playCount >= 2 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-indigo-600 text-white hover:scale-110 active:scale-95 shadow-2xl shadow-indigo-500/40'
                       }`}
                     >
-                      <Video className="w-8 h-8" />
+                      {loadingAudio ? (
+                        <RotateCcw className="w-8 h-8 animate-spin" />
+                      ) : (
+                        <Volume2 className="w-8 h-8" />
+                      )}
+                      {!loadingAudio && <span className="text-[10px] font-black mt-1 uppercase tracking-widest">{playCount}/2</span>}
                     </button>
                     <div className="space-y-1">
                       <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
-                        Reproduções: {playCount}/2
+                        {loadingAudio ? 'PROCESSANDO VOZ IA...' : playCount >= 2 ? 'LIMITE ATINGIDO' : 'OUVIR ÁUDIO DA QUESTÃO'}
                       </p>
-                      <p className="text-[11px] text-slate-400 font-medium">Ouvir áudio da questão</p>
+                      <p className="text-[11px] text-slate-400 font-medium">
+                        {loadingAudio ? 'Gerando áudio natural...' : 'Toque para ouvir a simulação'}
+                      </p>
                     </div>
                   </div>
                 </div>

@@ -59,3 +59,27 @@ export async function generateLessonSummary(notes: string) {
   `
   return generateAIContent(prompt)
 }
+
+export async function generateAIAudio(text: string) {
+  try {
+    const genAI = getGenAI()
+    // Using gemini-1.5-flash which is stable and supports multimodal
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    
+    // Prompt to generate speech
+    const result = await model.generateContent({
+      contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}". Use a natural English voice.` }] }],
+      generationConfig: {
+        responseMimeType: "audio/wav"
+      }
+    })
+    
+    const response = await result.response
+    const audioData = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data
+    
+    return audioData || null
+  } catch (error) {
+    console.error('Error generating AI audio:', error)
+    return null
+  }
+}

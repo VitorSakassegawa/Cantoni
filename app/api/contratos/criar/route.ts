@@ -44,6 +44,9 @@ export async function POST(request: NextRequest) {
     numParcelas,
   } = await request.json()
 
+  console.log('--- CONTRACT CREATION DEBUG ---')
+  console.log('Payload:', { alunoId, planoId, dataInicio, dataFim, diasDaSemana, valor, aulasTotais, numParcelas })
+
   const serviceSupabase = await createServiceClient()
 
   // Get plano & aluno
@@ -115,8 +118,18 @@ export async function POST(request: NextRequest) {
   for (let i = 0; i < datasAulas.length; i++) {
     const dateOnly = datasAulas[i]
     const dateStr = dateOnly.toISOString().split('T')[0]
-    const dataObj = fromZonedTime(`${dateStr} ${horario}`, 'America/Sao_Paulo')
-    const isBonus = i >= specs.regularLessons // Tags as bonus beyond quota
+    
+    // Normalize horario (HH:mm)
+    const cleanHorario = horario.replace('h', ':').trim()
+    const dataObj = fromZonedTime(`${dateStr} ${cleanHorario}`, 'America/Sao_Paulo')
+    
+    // Safety check for invalid date
+    if (isNaN(dataObj.getTime())) {
+      console.warn(`Skipping invalid date for lesson ${i}: ${dateStr} ${horario}`)
+      continue
+    }
+
+    const isBonus = i >= specs.regularLessons 
 
     let eventId = ''
     let meetLink = ''
@@ -164,6 +177,12 @@ Instruções:
   const { error: insertAulasErr } = await serviceSupabase.from('aulas').insert(aulasParaInserir)
   if (insertAulasErr) {
     console.error('Aulas insert error:', insertAulasErr)
+    // Optional: Delete the contract if lessons fail? Or at least return error.
+    return NextResponse.json({ 
+      error: 'Contrato criado, mas erro ao gerar grade de aulas.', 
+      details: insertAulasErr,
+      contratoId: contrato.id 
+    }, { status: 500 })
   }
 
   // Create installments based on request or calculation
@@ -193,6 +212,11 @@ Instruções:
   const { error: insertPagamentosErr } = await serviceSupabase.from('pagamentos').insert(pagamentosParaInserir)
   if (insertPagamentosErr) {
     console.error('Pagamentos insert error:', insertPagamentosErr)
+    return NextResponse.json({ 
+      error: 'Contrato e aulas criados, mas erro ao gerar parcelas de pagamento.', 
+      details: insertPagamentosErr,
+      contratoId: contrato.id 
+    }, { status: 500 })
   }
 
 
