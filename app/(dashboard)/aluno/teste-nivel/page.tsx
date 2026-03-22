@@ -148,6 +148,7 @@ export default function LevelTestPage() {
       
       if (!audioBase64) {
         toast.error('Falha ao gerar áudio com IA. Tente novamente.')
+        setLoadingAudio(false)
         return
       }
 

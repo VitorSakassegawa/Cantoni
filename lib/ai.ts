@@ -72,16 +72,14 @@ export async function generateAIAudio(text: string) {
     const genAI = getGenAI()
     // Using discovered TTS model
     const modelName = "gemini-2.5-flash-preview-tts"
-    const model = genAI.getGenerativeModel({ 
-      model: modelName,
-      generationConfig: {
-        // @ts-ignore - responseModalities might not be in the current SDK types yet but is required by the model
-        responseModalities: ["AUDIO"]
-      }
-    })
+    const model = genAI.getGenerativeModel({ model: modelName })
 
     const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}".` }] }],
+      contents: [{ role: 'user', parts: [{ text: `Please provide the audio for the following text: "${text}"` }] }],
+      generationConfig: {
+        // @ts-ignore
+        responseModalities: ["AUDIO"]
+      }
     })
 
     const response = await result.response
