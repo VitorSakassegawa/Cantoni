@@ -9,9 +9,9 @@ function getGenAI() {
   return new GoogleGenerativeAI(apiKey)
 }
 
-// User requested models
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
+// Verified STABLE models (Google SDK v1beta)
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-pro'
 const STABLE_FALLBACK = 'gemini-1.5-flash'
 
 export async function generateAIContent(prompt: string, modelName: string = PRIMARY_MODEL) {
@@ -63,8 +63,8 @@ export async function generateLessonSummary(notes: string) {
 export async function generateAIAudio(text: string) {
   try {
     const genAI = getGenAI()
-    // Gemini 2.5 Flash Preview-TTS as specified by the user
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-tts" })
+    // Gemini-1.5-flash is currently the only stable multimodal for audio/wav via generateContent
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
     
     // Prompt to generate speech
     const result = await model.generateContent({
