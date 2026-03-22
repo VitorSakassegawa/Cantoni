@@ -72,11 +72,16 @@ export async function generateAIAudio(text: string) {
     const genAI = getGenAI()
     // Using discovered TTS model
     const modelName = "gemini-2.5-flash-preview-tts"
-    const model = genAI.getGenerativeModel({ model: modelName })
+    const model = genAI.getGenerativeModel({ 
+      model: modelName,
+      generationConfig: {
+        // @ts-ignore - responseModalities might not be in the current SDK types yet but is required by the model
+        responseModalities: ["AUDIO"]
+      }
+    })
 
     const result = await model.generateContent({
       contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}".` }] }],
-      // Omitting responseMimeType as it caused 400 Bad Request
     })
 
     const response = await result.response
