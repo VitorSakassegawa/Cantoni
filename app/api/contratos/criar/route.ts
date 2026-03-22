@@ -33,10 +33,10 @@ export async function POST(request: NextRequest) {
     diasDaSemana,
     horario,
     valor,
-    livroAtual,
-    nivelAtual,
-    diaVencimento,
-    formaPagamento,
+    livro_atual,
+    nivel_atual,
+    dia_vencimento,
+    forma_pagamento,
     tipoContrato,
     descontoValor,
     descontoPercentual,
@@ -72,12 +72,12 @@ export async function POST(request: NextRequest) {
       ano,
       aulas_totais: aulasTotais || specs.totalLessons,
       aulas_restantes: aulasTotais || specs.totalLessons,
-      livro_atual: livroAtual,
-      nivel_atual: nivelAtual,
+      livro_atual: livro_atual,
+      nivel_atual: nivel_atual,
       horario: horario,
       valor: valor,
-      dia_vencimento: diaVencimento,
-      forma_pagamento: formaPagamento,
+      dia_vencimento: dia_vencimento,
+      forma_pagamento: forma_pagamento,
       tipo_contrato: tipoContrato || 'semestral',
       desconto_valor: descontoValor || 0,
       desconto_percentual: descontoPercentual || 0,
@@ -143,8 +143,8 @@ export async function POST(request: NextRequest) {
         descricao: `
 📌 DETALHES DA AULA ${isBonus ? '(BÔNUS)' : ''}
 👤 Aluno: ${aluno.full_name}
-📚 Nível: ${nivelAtual || 'N/A'}
-📖 Livro: ${livroAtual || 'N/A'}
+📚 Nível: ${nivel_atual || 'N/A'}
+📖 Livro: ${livro_atual || 'N/A'}
 
 🔗 [Ver no Sistema](${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${alunoId})
 ---
@@ -195,7 +195,7 @@ Instruções:
     mesVenc.setMonth(mesVenc.getMonth() + i - 1)
     
     const ultimoDiaMes = new Date(mesVenc.getFullYear(), mesVenc.getMonth() + 1, 0).getDate()
-    const diaEfetivo = Math.min(diaVencimento || 5, ultimoDiaMes)
+    const diaEfetivo = Math.min(dia_vencimento || 5, ultimoDiaMes)
     // Set to 12h to avoid UTC date shifts
     const vencimento = new Date(mesVenc.getFullYear(), mesVenc.getMonth(), diaEfetivo, 12, 0, 0)
 
@@ -205,7 +205,7 @@ Instruções:
       valor: valorParcela,
       data_vencimento: vencimento.toISOString().split('T')[0],
       status: 'pendente',
-      forma: formaPagamento || 'pix',
+      forma: forma_pagamento || 'pix',
     })
   }
 
