@@ -154,6 +154,8 @@ export default function LevelTestPage() {
         return
       }
 
+      setLoadingAudio(false) // Stop loading spinner, start playing states
+
       const audio = new Audio(`data:audio/wav;base64,${audioBase64}`)
       audio.onloadedmetadata = () => {
         setAudioDuration(audio.duration)
@@ -162,7 +164,6 @@ export default function LevelTestPage() {
         setAudioCurrentTime(audio.currentTime)
       }
       audio.onended = () => {
-        setLoadingAudio(false)
         setPlayCount(prev => prev + 1)
         setAudioCurrentTime(0)
       }
@@ -406,13 +407,13 @@ export default function LevelTestPage() {
                   <div className="relative z-10 space-y-4">
                     <button
                       onClick={playAudio}
-                      disabled={playCount >= 2 || loadingAudio}
+                      disabled={playCount >= 2 || loadingAudio || audioCurrentTime > 0}
                       className={`w-24 h-24 rounded-full flex flex-col items-center justify-center transition-all ${
                         playCount >= 2 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-indigo-600 text-white hover:scale-110 active:scale-95 shadow-2xl shadow-indigo-500/40'
                       }`}
                     >
                       {loadingAudio ? (
-                        <RotateCcw className="w-8 h-8 animate-spin" />
+                        <Loader2 className="w-8 h-8 animate-spin" />
                       ) : audioCurrentTime > 0 ? (
                         <div className="flex flex-col items-center">
                           <Volume2 className="w-6 h-6 animate-pulse" />
