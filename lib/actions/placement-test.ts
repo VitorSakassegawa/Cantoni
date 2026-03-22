@@ -33,11 +33,15 @@ export async function generatePlacementQuestions(
   
   try {
     const response = await generateAIContent(prompt)
+    if (!response) throw new Error('AI returned empty response')
     const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim()
-    return JSON.parse(jsonStr)
+    const parsed = JSON.parse(jsonStr)
+    
+    // Deep clone to ensure it's a plain object for Next.js 15
+    return JSON.parse(JSON.stringify(parsed))
   } catch (error) {
     console.error('Error generating advanced questions:', error)
-    return { questions: [] }
+    return { questions: [], error: 'Falha ao gerar questões' }
   }
 }
 

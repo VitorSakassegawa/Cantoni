@@ -24,17 +24,21 @@ export default function LevelTestPage() {
 
   async function startQuiz(startLevel?: any) {
     const levelToUse = startLevel || currentLevel
+    console.log('Starting quiz for level:', levelToUse, 'module:', module)
     setLoading(true)
     try {
       const data = await generatePlacementQuestions(levelToUse, module)
-      if (data.questions?.length) {
+      console.log('AI Response:', data)
+      
+      if (data.questions && data.questions.length > 0) {
         setQuestions(data.questions)
         setCurrentModuleData(data)
         setStep('quiz')
       } else {
-        toast.error('Erro ao gerar questões. Tente novamente.')
+        toast.error(data.error || 'Erro ao gerar questões. Tente novamente.')
       }
     } catch (err) {
+      console.error('Start Quiz Error:', err)
       toast.error('Erro ao conectar com a IA.')
     } finally {
       setLoading(false)
@@ -47,6 +51,8 @@ export default function LevelTestPage() {
   }
 
   function handleAnswer(optionIndex: number) {
+    if (!questions[currentQuestionIndex]) return
+    
     const question = questions[currentQuestionIndex]
     const isCorrect = optionIndex === question.correctAnswer
     
@@ -56,6 +62,7 @@ export default function LevelTestPage() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
     } else {
+      console.log('Module finished, calling finishQuiz...')
       finishQuiz(newAnswers)
     }
   }
@@ -64,12 +71,15 @@ export default function LevelTestPage() {
     // If it's the last module, evaluate. Otherwise, move to next module.
     if (module === 'listening') {
       setFinishing(true)
+      console.log('Final module finished, evaluating answers:', finalAnswers)
       try {
         const data = await evaluatePlacementTest(finalAnswers, currentLevel) 
+        console.log('Evaluation Result Success:', data)
         setResult(data)
         setScore(data.score)
         setStep('result')
       } catch (err) {
+        console.error('Finish Quiz Evaluation Error:', err)
         toast.error('Erro ao salvar resultado.')
       } finally {
         setFinishing(false)
