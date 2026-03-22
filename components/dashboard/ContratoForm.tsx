@@ -243,7 +243,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           <div className="space-y-2">
             <h4 className="font-black text-rose-900 uppercase text-xs tracking-widest">Atenção: Limite Semestral Excedido</h4>
             <p className="text-rose-800/70 text-sm font-medium leading-relaxed">
-              Planos **Semestral Padrão** devem ser limitados a um único semestre (Jan-Jul ou Ago-Dez). 
+              Planos <strong className="font-black text-rose-900">Semestral Padrão</strong> devem ser limitados a um único semestre (Jan-Jul ou Ago-Dez). 
               Seu período atual atravessa essa fronteira. Por favor, ajuste a data de término ou crie dois contratos separados.
             </p>
           </div>

@@ -29,7 +29,7 @@ export default async function ProfessorCalendarioPage() {
         <div className="space-y-2">
            <p className="text-xs font-black text-amber-900 uppercase tracking-widest">Atenção Gabriel</p>
            <p className="text-sm text-amber-800/70 font-medium leading-relaxed">
-             Ao marcar um **Recesso / Férias**, todas as aulas já agendadas dentro do período serão automaticamente alteradas para **Pendente de Remarcação**. 
+             Ao marcar um <strong className="font-black text-amber-900">Recesso / Férias</strong>, todas as aulas já agendadas dentro do período serão automaticamente alteradas para <strong className="font-black text-amber-900">Pendente de Remarcação</strong>. 
              Os alunos receberão um alerta para sugerir novas datas. Feriados nacionais são apenas informativos.
            </p>
         </div>

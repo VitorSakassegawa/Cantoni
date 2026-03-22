@@ -121,7 +121,7 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
                 Contrato Ativo Encontrado
               </DialogTitle>
               <DialogDescription className="text-center text-slate-500 font-medium leading-relaxed">
-                O aluno já possui o contrato **#{activeContrato?.id}** válido até **{activeContrato && formatDateOnly(activeContrato.data_fim)}**.
+                O aluno já possui o contrato <strong className="font-black text-slate-900">#{activeContrato?.id}</strong> válido até <strong className="font-black text-slate-900">{activeContrato && formatDateOnly(activeContrato.data_fim)}</strong>.
                 Deseja prosseguir com a abertura de um novo contrato?
               </DialogDescription>
             </DialogHeader>

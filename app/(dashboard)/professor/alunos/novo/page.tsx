@@ -375,7 +375,7 @@ export default function NovoAlunoPage() {
                 Finalizar sem Contrato?
               </DialogTitle>
               <DialogDescription className="text-center text-slate-500 font-medium leading-relaxed">
-                Deseja concluir o cadastro de **{nome || 'este aluno'}** agora? 
+                Deseja concluir o cadastro de <strong className="font-black text-slate-900">{nome || 'este aluno'}</strong> agora? 
                 O aluno não terá acesso a aulas, frequências ou pagamentos até que um contrato seja vinculado ao seu perfil futuramente.
               </DialogDescription>
             </DialogHeader>
