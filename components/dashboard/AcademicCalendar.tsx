@@ -16,7 +16,8 @@ import {
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Badge } from '@/components/ui/badge'
-import { Calendar as CalendarIcon, Info, Umbrella, Flag, Plus, Trash2 } from 'lucide-react'
+import { Calendar as CalendarIcon, Info, Umbrella, Flag, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import ManageRecessoModal from './ManageRecessoModal'
 
@@ -70,11 +71,29 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-        <div>
-          <h2 className="text-3xl font-black text-slate-900 tracking-tighter flex items-center gap-3">
-             {year}
-          </h2>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1">Calendário Acadêmico Cantoni</p>
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-12 w-12 rounded-2xl bg-white shadow-sm border border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-white active:scale-95 transition-all"
+              onClick={() => setYear(year - 1)}
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </Button>
+            <h2 className="text-5xl font-black text-slate-900 tracking-tighter min-w-[120px] text-center">
+               {year}
+            </h2>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="h-12 w-12 rounded-2xl bg-white shadow-sm border border-slate-100 text-slate-400 hover:text-blue-600 hover:bg-white active:scale-95 transition-all"
+              onClick={() => setYear(year + 1)}
+            >
+              <ChevronRight className="w-6 h-6" />
+            </Button>
+          </div>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1 hidden md:block">Calendário Acadêmico Cantoni</p>
         </div>
 
         {/* Legend matching user image exactly */}

@@ -194,8 +194,12 @@ export default function AulaRow({
                     Abonada (S/ Limite)
                   </Badge>
                 )}
-                <span className="text-[9px] font-medium text-slate-400 italic">
-                  {aula.motivo_remarcacao}
+                <span className={`text-[9px] italic ${
+                  (aula.motivo_remarcacao.includes('Recesso') || aula.motivo_remarcacao.includes('Férias') || aula.motivo_remarcacao.includes('Feriado')) 
+                    ? 'font-black text-blue-600' 
+                    : 'font-medium text-slate-400'
+                }`}>
+                  {aula.motivo_remarcacao.replace(/\*\*/g, '')}
                 </span>
               </div>
             )}
@@ -231,6 +235,8 @@ export default function AulaRow({
                       <p className="whitespace-pre-wrap leading-relaxed text-slate-600 font-medium text-[11px]">
                         {aula.homework}
                       </p>
+                    ) : new Date(aula.data_hora) > new Date() ? (
+                      <span className="text-blue-500/60 font-bold text-[10px] uppercase tracking-tight italic">Nenhuma lição enviada pelo professor para a próxima aula</span>
                     ) : (
                       <span className="text-slate-300 italic text-[11px]">Aula sem conteúdo registrado</span>
                     )}

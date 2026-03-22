@@ -204,6 +204,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         livro_atual: finalLivro,
         nivel_atual: nivel,
         valor: baseValue - (parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100),
+        diasDaSemana: diasSelecionados,
       }
 
       if (isEdit) {
