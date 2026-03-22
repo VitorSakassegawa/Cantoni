@@ -1,20 +1,22 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const API_KEY = process.env.GEMINI_API_KEY || ''
-const genAI = new GoogleGenerativeAI(API_KEY)
+function getGenAI() {
+  const apiKey = process.env.GEMINI_API_KEY || ''
+  if (!apiKey) {
+    console.error('CRITICAL: GEMINI_API_KEY is not defined!')
+    throw new Error('Configuração de IA incompleta (API Key ausente). No Vercel, adicione GEMINI_API_KEY.')
+  }
+  return new GoogleGenerativeAI(apiKey)
+}
 
 // User requested models
 const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview'
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
-const STABLE_FALLBACK = 'gemini-1.5-flash' // Ultra-stable fallback
+const STABLE_FALLBACK = 'gemini-1.5-flash'
 
 export async function generateAIContent(prompt: string, modelName: string = PRIMARY_MODEL) {
-  if (!API_KEY) {
-    console.error('CRITICAL: GEMINI_API_KEY is not defined in environment variables!')
-    throw new Error('Configuração de IA incompleta (API Key ausente).')
-  }
-
   try {
+    const genAI = getGenAI()
     const model = genAI.getGenerativeModel({ model: modelName })
     const result = await model.generateContent(prompt)
     const response = await result.response

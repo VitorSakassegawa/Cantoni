@@ -2,41 +2,48 @@
 
 import { generateAIContent } from '@/lib/ai'
 
-export async function generatePlacementQuestions(level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' = 'A1') {
+export async function generatePlacementQuestions(
+  level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' = 'A1',
+  module: 'grammar' | 'reading' | 'listening' = 'grammar'
+) {
+  const modulePrompts = {
+    grammar: `Gere 15 perguntas de múltipla escolha focadas em Gramática e Vocabulário de nível CEFR ${level}.`,
+    reading: `Gere um pequeno texto em inglês de nível CEFR ${level} (aprox. 150 palavras) seguido de 5 perguntas de múltipla escolha sobre o texto.`,
+    listening: `Gere uma transcrição de um diálogo cotidiano em inglês de nível CEFR ${level} (simulando um áudio) seguido de 5 perguntas de múltipla escolha sobre o que foi discutido.`
+  }
+
   const prompt = `
-    Gere 5 perguntas de múltipla escolha para um teste de nivelamento de inglês no nível CEFR ${level}.
-    As perguntas devem cobrir gramática, vocabulário e compreensão.
+    Trabalhe como um especialista em design de testes Cambridge/CEFR.
+    ${modulePrompts[module]}
     
     Retorne APENAS um JSON no seguinte formato:
     {
+      "module": "${module}",
+      "text": "Texto ou diálogo (apenas para reading/listening, caso contrário null)",
       "questions": [
         {
           "id": 1,
-          "question": "Texto da pergunta",
-          "options": ["Opção A", "Opção B", "Opção C", "Opção D"],
-          "correctAnswer": 0,
-          "explanation": "Por que esta é a correta?"
+          "question": "Pergunta",
+          "options": ["A", "B", "C", "D"],
+          "correctAnswer": 0
         }
       ]
     }
-    
-    Responda apenas com o JSON válido.
   `
   
   try {
     const response = await generateAIContent(prompt)
-    // Clean potential markdown code blocks
     const jsonStr = response.replace(/```json/g, '').replace(/```/g, '').trim()
     return JSON.parse(jsonStr)
   } catch (error) {
-    console.error('Error generating placement questions:', error)
+    console.error('Error generating advanced questions:', error)
     return { questions: [] }
   }
 }
 
 import { createClient } from '@/lib/supabase/server'
 
-export async function evaluatePlacementTest(answers: { correct: boolean }[]) {
+export async function evaluatePlacementTest(answers: { correct: boolean }[], attemptedLevel: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Não autorizado')
@@ -46,27 +53,40 @@ export async function evaluatePlacementTest(answers: { correct: boolean }[]) {
   const total = answers.length
   const ratio = score / total
 
-  let suggestedLevel = 'A1'
-  let suggestedNivel = 'Beginner'
+  let suggestedLevel = attemptedLevel
+  let confirmed = false
 
-  if (ratio >= 0.8) {
-    suggestedLevel = 'B1'
-    suggestedNivel = 'Intermediate'
-  } else if (ratio >= 0.5) {
-    suggestedLevel = 'A2'
-    suggestedNivel = 'Elementary'
+  // Calibragem sugerida: 70% no nível atual confirma o nível. 
+  // Se abaixo de 40%, sugere um nível abaixo.
+  // Se acima de 90%, sugere que o aluno tente o nível acima (lógica adaptativa no front).
+  
+  if (ratio >= 0.7) {
+    confirmed = true
+  } else if (ratio < 0.4) {
+    // Reduz o nível
+    const levels = ['A1', 'A2', 'B1', 'B2', 'C1']
+    const idx = levels.indexOf(attemptedLevel)
+    suggestedLevel = idx > 0 ? levels[idx - 1] : 'A1'
+  }
+
+  const nivelMap: Record<string, string> = {
+    'A1': 'Beginner',
+    'A2': 'Elementary',
+    'B1': 'Intermediate',
+    'B2': 'Upper Intermediate',
+    'C1': 'Advanced'
   }
 
   const { error } = await supabase
     .from('profiles')
     .update({ 
       cefr_level: suggestedLevel,
-      nivel: suggestedNivel,
+      nivel: nivelMap[suggestedLevel] || 'Beginner',
       placement_test_completed: true 
     })
     .eq('id', studentId)
 
   if (error) throw error
 
-  return { suggestedLevel, suggestedNivel, score, total }
+  return { suggestedLevel, suggestedNivel: nivelMap[suggestedLevel], score, total, confirmed }
 }
