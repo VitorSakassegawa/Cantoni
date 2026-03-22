@@ -23,6 +23,8 @@ export default function LevelTestPage() {
   const [score, setScore] = useState(0)
   const [playCount, setPlayCount] = useState(0)
   const [loadingAudio, setLoadingAudio] = useState(false)
+  const [isLastConfirmation, setIsLastConfirmation] = useState(false)
+  const [showProcessing, setShowProcessing] = useState(false)
 
   useEffect(() => {
     // Stop any speaking when leaving or changing state
@@ -71,16 +73,22 @@ export default function LevelTestPage() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
     } else {
-      console.log('Module finished, calling finishQuiz...')
-      finishQuiz(newAnswers)
+      if (module === 'listening') {
+        setIsLastConfirmation(true)
+      } else {
+        finishQuiz(newAnswers)
+      }
     }
   }
 
   async function finishQuiz(finalAnswers: any[]) {
     // If it's the last module, evaluate. Otherwise, move to next module.
     if (module === 'listening') {
+      setIsLastConfirmation(false)
+      setShowProcessing(true)
+      // Small artificial delay for "beauty" transition
+      await new Promise(r => setTimeout(r, 2500))
       setFinishing(true)
-      console.log('Final module finished, evaluating answers:', finalAnswers)
       try {
         const data = await evaluatePlacementTest(finalAnswers, currentLevel) 
         console.log('Evaluation Result Success:', data)
@@ -377,6 +385,73 @@ export default function LevelTestPage() {
               </div>
             </div>
           </Card>
+        </div>
+      </div>
+    )
+  }
+
+  if (showProcessing && !result) {
+    return (
+      <div className="max-w-xl mx-auto py-24 px-4 text-center space-y-12 animate-in fade-in zoom-in-95 duration-1000">
+        <div className="relative w-32 h-32 mx-auto">
+          <div className="absolute inset-0 bg-indigo-600/20 rounded-[2.5rem] animate-ping" />
+          <div className="relative bg-indigo-600 w-32 h-32 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-indigo-500/40">
+            <BrainCircuit className="w-14 h-14 text-white animate-pulse" />
+          </div>
+        </div>
+        
+        <div className="space-y-6">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
+            <Loader2 className="w-3 h-3 animate-spin" /> Analisando Performance
+          </div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">Processando seu Mapeamento...</h1>
+          <p className="text-slate-500 font-medium text-sm leading-relaxed max-w-sm mx-auto">
+            Nossa IA está cruzando seus dados com os parâmetros <strong>Cambridge</strong> para definir seu diagnóstico final.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
+          {['Syntax', 'Lexis', 'Listening'].map((skill, i) => (
+            <div key={i} className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm animate-in slide-in-from-bottom-2 duration-700">
+              <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
+                <div className="h-full bg-indigo-600 transition-all duration-1000" style={{ width: '100%' }} />
+              </div>
+              <p className="text-[8px] font-black text-slate-400 uppercase mt-2">{skill}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (isLastConfirmation) {
+    return (
+      <div className="max-w-2xl mx-auto py-24 px-4 text-center space-y-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <div className="w-20 h-20 rounded-[2rem] bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto shadow-sm">
+          <CheckCircle2 className="w-10 h-10" />
+        </div>
+        
+        <div className="space-y-4">
+          <h2 className="text-xs font-black text-emerald-600 uppercase tracking-[0.3em]">Módulos Concluídos</h2>
+          <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-tight">Excelente trabalho!</h1>
+          <p className="text-slate-500 font-medium text-lg max-w-md mx-auto">
+            Você completou todas as etapas do mapeamento. Clique abaixo para gerar seu diagnóstico técnico.
+          </p>
+        </div>
+
+        <div className="pt-8">
+          <Button 
+            onClick={() => finishQuiz(answers)}
+            className="w-full h-20 rounded-[2.5rem] lms-gradient text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all group overflow-hidden"
+          >
+            <div className="relative z-10 flex items-center justify-center gap-4">
+              <span>FINALIZAR MAPEAMENTO AGORA</span>
+              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </div>
+          </Button>
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-6 italic">
+            O resultado será sincronizado com seu perfil acadêmico instantaneamente.
+          </p>
         </div>
       </div>
     )
