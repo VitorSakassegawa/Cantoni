@@ -430,7 +430,7 @@ export default function LevelTestPage() {
                         {loadingAudio ? 'PROCESSANDO VOZ IA...' : audioCurrentTime > 0 ? 'REPRODUZINDO ÁUDIO...' : playCount >= 2 ? 'LIMITE ATINGIDO' : 'OUVIR ÁUDIO DA QUESTÃO'}
                       </p>
                       <p className="text-[11px] text-slate-400 font-medium max-w-[200px] mx-auto leading-relaxed">
-                        {loadingAudio ? 'Pode demorar até 20 segundos para a IA gerar o arquivo de áudio natural...' : audioCurrentTime > 0 ? 'Preste atenção aos detalhes.' : 'Toque para ouvir a simulação'}
+                        {loadingAudio ? 'Pode demorar até 45 segundos para a IA gerar o arquivo de áudio natural...' : audioCurrentTime > 0 ? 'Preste atenção aos detalhes.' : 'Toque para ouvir a simulação'}
                       </p>
                     </div>
                   </div>

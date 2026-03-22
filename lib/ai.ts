@@ -116,7 +116,7 @@ export async function generateAIAudio(text: string, modelName: string = "gemini-
     })
 
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 20000)
+      setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 45000)
     )
 
     const result: any = await Promise.race([audioPromise, timeoutPromise])
@@ -131,13 +131,6 @@ export async function generateAIAudio(text: string, modelName: string = "gemini-
     throw new Error('No audio data in response')
   } catch (error: any) {
     console.error(`Error with ${modelName}:`, error.message || error)
-    
-    // Fallback logic
-    if (modelName === "gemini-2.5-flash-preview-tts") {
-      console.log('Attempting fallback with gemini-2.0-flash...')
-      return generateAIAudio(text, "gemini-2.0-flash")
-    }
-    
     return null
   } finally {
     console.log(`--- Finished generateAIAudio (${modelName}) ---`)
