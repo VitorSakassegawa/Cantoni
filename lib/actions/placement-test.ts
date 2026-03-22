@@ -9,7 +9,7 @@ export async function generatePlacementQuestions(
   const modulePrompts = {
     grammar: `Gere 15 perguntas de múltipla escolha focadas em Gramática e Vocabulário de nível CEFR ${level}.`,
     reading: `Gere um pequeno texto em inglês de nível CEFR ${level} (aprox. 150 palavras) seguido de 5 perguntas de múltipla escolha sobre o texto.`,
-    listening: `Gere uma transcrição de um diálogo cotidiano em inglês de nível CEFR ${level} (simulando um áudio) seguido de 5 perguntas de múltipla escolha sobre o que foi discutido.`
+    listening: `Gere uma transcrição de um monólogo (ex: relato pessoal, diário, anúncio, ou história narrada por apenas UMA mulher) em inglês de nível CEFR ${level} (simulando um áudio feminino) seguido de 5 perguntas de múltipla escolha sobre o que foi dito.`
   }
 
   const prompt = `
