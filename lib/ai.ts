@@ -9,9 +9,9 @@ function getGenAI() {
   return new GoogleGenerativeAI(apiKey)
 }
 
-// Verified STABLE models (Google SDK v1beta)
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-pro'
+// Best practice for Logic (Pro) and Speed/Audio (Flash)
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-pro'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-flash'
 const STABLE_FALLBACK = 'gemini-1.5-flash'
 
 export async function generateAIContent(prompt: string, modelName: string = PRIMARY_MODEL) {
@@ -63,12 +63,16 @@ export async function generateLessonSummary(notes: string) {
 export async function generateAIAudio(text: string) {
   try {
     const genAI = getGenAI()
-    // Gemini-1.5-flash is currently the only stable multimodal for audio/wav via generateContent
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    // Gemini 2.0 Flash offers superior natural speech synthesis (v1beta)
+    // Primary: 2.0-flash, Fallback: 1.5-flash
+    let modelName = "gemini-2.0-flash"
+    let model = genAI.getGenerativeModel({ model: modelName })
     
-    // Prompt to generate speech
+    // Prompt to generate speech with characteristic description
     const result = await model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}". Use a natural English voice.` }] }],
+      contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}". 
+      Voicing Instructions: Use a natural, expressive human-like English voice. 
+      Professional tone, clear articulation, slight breathing pauses.` }] }],
       generationConfig: {
         responseMimeType: "audio/wav"
       }
@@ -79,7 +83,22 @@ export async function generateAIAudio(text: string) {
     
     return audioData || null
   } catch (error) {
-    console.error('Error generating AI audio:', error)
-    return null
+    console.error('Error with primary audio model, retrying with fallback:', error)
+    try {
+      const genAI = getGenAI()
+      const fallbackModel = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+      const result = await fallbackModel.generateContent({
+        contents: [{ role: 'user', parts: [{ text: `Generate spoken audio for this text: "${text}".` }] }],
+        generationConfig: {
+          responseMimeType: "audio/wav"
+        }
+      })
+      const response = await result.response
+      const audioData = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)?.inlineData?.data
+      return audioData || null
+    } catch (innerError) {
+      console.error('Stable audio fallback also failed:', innerError)
+      return null
+    }
   }
 }
