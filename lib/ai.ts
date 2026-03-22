@@ -10,9 +10,9 @@ function getGenAI() {
 }
 
 // User requested models
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-pro'
-const STABLE_FALLBACK = 'gemini-2.0-flash'
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
+const STABLE_FALLBACK = 'gemini-1.5-flash'
 
 export async function generateAIContent(prompt: string, modelName: string = PRIMARY_MODEL) {
   try {
@@ -63,8 +63,8 @@ export async function generateLessonSummary(notes: string) {
 export async function generateAIAudio(text: string) {
   try {
     const genAI = getGenAI()
-    // Gemini 2.5/2.0 Flash is for HIGH QUALITY TTS as requested
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" })
+    // Gemini 2.5 Flash is requested for HIGH QUALITY TTS
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
     
     // Prompt to generate speech
     const result = await model.generateContent({
