@@ -123,8 +123,8 @@ export default function NovoAlunoPage() {
 
       <div className="grid md:grid-cols-3 gap-10">
         <div className="md:col-span-2 space-y-8">
-          <Card className="glass-card border-none overflow-hidden hover:shadow-2xl">
-            <CardHeader className="pb-8 bg-slate-50/50 border-b border-slate-100/50">
+          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem] hover:shadow-2xl transition-all">
+            <CardHeader className="pb-8 bg-slate-50/80 border-b border-slate-100">
               <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
                 Informações Pessoais
               </CardTitle>

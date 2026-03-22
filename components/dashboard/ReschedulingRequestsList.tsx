@@ -19,8 +19,8 @@ export default function ReschedulingRequests({ initialSolicitacoes }: Props) {
 
   return (
     <>
-      <Card className="glass-card border-none overflow-hidden bg-amber-50/30 border-amber-100 ring-2 ring-amber-500/10">
-        <CardHeader className="pb-4 bg-amber-50/50 border-b border-amber-100/50">
+      <Card className="border-none overflow-hidden bg-amber-50 border-amber-100 ring-4 ring-amber-500/5 shadow-xl shadow-amber-900/5 rounded-[2rem]">
+        <CardHeader className="pb-4 bg-amber-100/30 border-b border-amber-100">
           <CardTitle className="text-xs font-black text-amber-600 flex items-center gap-2 uppercase tracking-[0.2em]">
             <RotateCcw className="w-4 h-4" /> Solicitações de Remarcação
           </CardTitle>

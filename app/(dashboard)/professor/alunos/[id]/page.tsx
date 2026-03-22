@@ -128,9 +128,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
         {/* Sidebar Info */}
         <div className="lg:col-span-1 space-y-8">
-          <Card className="glass-card border-none overflow-hidden hover:shadow-xl transition-all">
-            <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100/50">
-              <CardTitle className="text-[10px] font-black text-blue-400 uppercase tracking-widest">Informações Pessoais</CardTitle>
+          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem] hover:shadow-2xl transition-all">
+            <CardHeader className="pb-4 bg-slate-50/80 border-b border-slate-100">
+              <CardTitle className="text-[10px] font-black text-blue-500 uppercase tracking-widest">Informações Pessoais</CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
               <div className="flex items-start gap-4">
@@ -164,9 +164,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
             </CardContent>
           </Card>
 
-          <Card className="glass-card border-none overflow-hidden hover:shadow-xl transition-all">
-            <CardHeader className="pb-4 bg-indigo-50 border-b border-indigo-100/50">
-              <CardTitle className="text-[10px] font-black text-indigo-400 uppercase tracking-widest flex items-center gap-2">
+          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-indigo-100/40 rounded-[2rem] hover:shadow-2xl transition-all">
+            <CardHeader className="pb-4 bg-indigo-50 border-b border-indigo-100">
+              <CardTitle className="text-[10px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2">
                 <BrainCircuit className="w-3 h-3" /> Skill Evolution
               </CardTitle>
             </CardHeader>
@@ -184,7 +184,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
         <div className="lg:col-span-3 space-y-8">
           {/* Active Contract View */}
           {contrato ? (
-            <Card className="glass-card border-none overflow-hidden hover:shadow-2xl transition-all">
+            <Card className="border-none overflow-hidden bg-white shadow-2xl shadow-blue-900/10 rounded-[2.5rem] hover:shadow-3xl transition-all">
               <div className="lms-gradient h-2 shadow-inner" />
               <CardContent className="p-10">
                 <div className="flex flex-col md:flex-row justify-between gap-10">
@@ -277,9 +277,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
 
 
           {/* Pagamentos View */}
-          <Card className="glass-card border-none overflow-hidden">
-            <CardHeader className="p-8 bg-slate-50/50 border-b border-slate-100/50 flex flex-row items-center justify-between">
-              <CardTitle className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-3">
+          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+            <CardHeader className="p-8 bg-slate-50/80 border-b border-slate-100 flex flex-row items-center justify-between">
+              <CardTitle className="text-xs font-black text-blue-500 uppercase tracking-[0.2em] flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center"><CreditCard className="w-4 h-4" /></div>
                 Fluxo de Pagamentos
               </CardTitle>
@@ -338,9 +338,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
           </Card>
 
           {/* Histórico de Contratos */}
-          <Card className="glass-card border-none overflow-hidden hover:shadow-xl transition-all">
-            <CardHeader className="p-8 bg-slate-50/50 border-b border-slate-100/50">
-              <CardTitle className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-3">
+          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem] hover:shadow-2xl transition-all">
+            <CardHeader className="p-8 bg-slate-50/80 border-b border-slate-100">
+              <CardTitle className="text-xs font-black text-blue-500 uppercase tracking-[0.2em] flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center"><Calendar className="w-4 h-4" /></div>
                 Histórico de Contratos
               </CardTitle>
@@ -403,9 +403,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
           </Card>
 
           {/* Timeline de Aulas */}
-          <Card className="glass-card border-none overflow-hidden">
-            <CardHeader className="p-8 bg-slate-50/50 border-b border-slate-100/50">
-              <CardTitle className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-3">
+          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+            <CardHeader className="p-8 bg-slate-50/80 border-b border-slate-100">
+              <CardTitle className="text-xs font-black text-blue-500 uppercase tracking-[0.2em] flex items-center gap-3">
                 <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center"><BookOpen className="w-4 h-4" /></div>
                 Timeline de Aulas
               </CardTitle>

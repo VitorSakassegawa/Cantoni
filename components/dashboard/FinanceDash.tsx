@@ -38,25 +38,25 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
         </Card>
 
         {/* Realized Revenue */}
-        <Card className="glass-card border-none bg-emerald-50 border-emerald-100 shadow-xl shadow-emerald-500/5 overflow-hidden relative group">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <DollarSign className="w-16 h-16 text-emerald-900" />
+        <Card className="border-none bg-[#059669] text-white shadow-xl shadow-emerald-500/10 overflow-hidden relative group rounded-[2rem]">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <DollarSign className="w-16 h-16 text-white" />
           </div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-emerald-600 flex items-center gap-2">
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-emerald-50 flex items-center gap-2">
               <DollarSign className="w-3 h-3" /> Arrecadado no Mês
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-black text-emerald-900 tracking-tighter">{formatCurrency(arrecadadoMes)}</p>
-            <div className="mt-2 flex items-center gap-2">
-              <div className="h-1.5 flex-1 bg-emerald-200 rounded-full overflow-hidden">
+            <p className="text-3xl font-black text-white tracking-tighter">{formatCurrency(arrecadadoMes)}</p>
+            <div className="mt-4 flex items-center gap-2">
+              <div className="h-1.5 flex-1 bg-white/20 rounded-full overflow-hidden">
                 <div 
-                  className="h-full bg-emerald-500 rounded-full transition-all" 
+                  className="h-full bg-emerald-300 rounded-full transition-all" 
                   style={{ width: `${Math.min(100, (arrecadadoMes / mrr) * 100)}%` }} 
                 />
               </div>
-              <span className="text-[10px] font-black text-emerald-600">
+              <span className="text-[10px] font-black text-white">
                 {Math.round((arrecadadoMes / mrr) * 100)}%
               </span>
             </div>
@@ -64,26 +64,26 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
         </Card>
 
         {/* Pending Revenue */}
-        <Card className="glass-card border-none bg-amber-50 border-amber-100 shadow-xl shadow-amber-500/5 overflow-hidden relative group">
-          <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-            <AlertCircle className="w-16 h-16 text-amber-900" />
+        <Card className="border-none bg-[#9a3412] text-white shadow-xl shadow-orange-900/10 overflow-hidden relative group rounded-[2rem]">
+          <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+            <AlertCircle className="w-16 h-16 text-white" />
           </div>
           <CardHeader className="pb-2">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-amber-600 flex items-center gap-2">
+            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-orange-50 flex items-center gap-2">
               <AlertCircle className="w-3 h-3" /> Em Aberto (Pendente/Atrasado)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-3xl font-black text-amber-900 tracking-tighter">{formatCurrency(pendenteTotal)}</p>
-            <p className="text-[10px] font-bold text-amber-400 mt-2 uppercase tracking-tight">Total a receber ou em atraso</p>
+            <p className="text-3xl font-black text-white tracking-tighter">{formatCurrency(pendenteTotal)}</p>
+            <p className="text-[10px] font-bold text-orange-200 mt-2 uppercase tracking-tight">Total a receber ou em atraso</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Projection Chart */}
-      <Card className="glass-card border-none shadow-2xl shadow-slate-200/50">
-        <CardHeader className="pb-4 border-b border-slate-100/50 flex flex-row items-center justify-between">
-          <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+      <Card className="border-none shadow-xl shadow-slate-200/60 bg-white rounded-[2rem] overflow-hidden">
+        <CardHeader className="pb-4 border-b border-slate-100 flex flex-row items-center justify-between">
+          <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
              Projeção de Ganhos (6 Meses)
           </CardTitle>
           <Badge className="bg-blue-50 text-blue-600 border-none text-[8px] font-black uppercase tracking-widest px-3">Previsão</Badge>

@@ -191,7 +191,7 @@ export default async function AlunoDashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Próxima aula */}
-        <Card className="glass-card border-none group relative overflow-hidden">
+        <Card className="border-none bg-white shadow-xl shadow-blue-200/40 rounded-[2rem] group relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
             <Video className="w-24 h-24 text-blue-900" />
           </div>
@@ -244,9 +244,9 @@ export default async function AlunoDashboard() {
         </Card>
 
         {/* Próximas Pausas / Recessos */}
-        <Card className="glass-card border-none overflow-hidden bg-white/50">
-          <CardHeader className="pb-4 border-b border-slate-100/50">
-            <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+        <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+          <CardHeader className="pb-4 border-b border-slate-100">
+            <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
               <Umbrella className="w-4 h-4 text-orange-500" /> Próximas Pausas
             </CardTitle>
           </CardHeader>
@@ -261,7 +261,7 @@ export default async function AlunoDashboard() {
         </Card>
 
         {/* Flashcards Widget */}
-        <Card className="glass-card border-none overflow-hidden relative group cursor-pointer hover:shadow-2xl transition-all">
+        <Card className="border-none overflow-hidden bg-white shadow-xl shadow-indigo-100/40 rounded-[2rem] relative group cursor-pointer hover:shadow-2xl transition-all">
           <Link href="/aluno/flashcards" className="absolute inset-0 z-20" />
           <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
             <BrainCircuit className="w-24 h-24 text-blue-900" />
@@ -288,7 +288,7 @@ export default async function AlunoDashboard() {
         </Card>
 
         {/* Pagamento atual */}
-        <Card className={`glass-card border-none group transition-all duration-500 ${pagamentoPendente?.status === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
+        <Card className={`border-none bg-white shadow-xl shadow-slate-200/40 rounded-[2rem] group transition-all duration-500 ${pagamentoPendente?.status === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
           <CardHeader className="pb-4">
             <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
               Financeiro
@@ -351,9 +351,8 @@ export default async function AlunoDashboard() {
         </Card>
       </div>
 
-      {/* Progresso CEFR e Semestre */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 glass-card border-none overflow-hidden relative">
+        <Card className="lg:col-span-2 border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem] relative">
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
           <CardHeader className="pb-4">
             <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
@@ -397,7 +396,7 @@ export default async function AlunoDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-none overflow-hidden relative">
+        <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem] relative">
           <CardHeader className="pb-4">
             <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
               Progresso do Contrato
@@ -426,11 +425,10 @@ export default async function AlunoDashboard() {
         </Card>
       </div>
 
-      {/* Tabs / Bottom Sections */}
       <div id="aulas-timeline" className="grid grid-cols-1 gap-10">
-        <Card className="glass-card border-none overflow-hidden">
-          <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
-            <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+        <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+          <CardHeader className="pb-4 bg-slate-50/80 border-b border-slate-100">
+            <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
               Próximas Aulas
             </CardTitle>
 
@@ -445,9 +443,9 @@ export default async function AlunoDashboard() {
           </CardContent>
         </Card>
 
-        <Card className="glass-card border-none overflow-hidden">
-          <CardHeader className="pb-4 bg-slate-50/50 border-b border-slate-100">
-            <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+        <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+          <CardHeader className="pb-4 bg-slate-50/80 border-b border-slate-100">
+            <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
               Extrato Financeiro
             </CardTitle>
           </CardHeader>

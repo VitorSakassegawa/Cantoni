@@ -5,8 +5,8 @@
   --foreground: #0f172a;
   --primary: #1e3a8a;
   --accent: #3b82f6;
-  --glass-bg: rgba(255, 255, 255, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-bg: rgba(255, 255, 255, 0.9);
+  --glass-border: rgba(255, 255, 255, 0.8);
   --sidebar-bg: #1e3a8a;
 }
 
@@ -50,7 +50,7 @@ body {
 }
 
 .glass-input {
-  @apply bg-white/40 border-white/40 backdrop-blur-md focus:bg-white/60 transition-all duration-300;
+  @apply bg-white border-slate-200 backdrop-blur-md focus:bg-white transition-all duration-300;
 }
 
 /* Premium LMS Gradients */
