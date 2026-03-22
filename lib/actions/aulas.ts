@@ -238,10 +238,7 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
     throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
   }
 
-  console.log('[solicitarRemarcacao] Início:', { aulaId, novaDataHora })
-  
   const isoData = new Date(novaDataHora).toISOString()
-  console.log('[solicitarRemarcacao] ISO gerado:', isoData)
 
   const { data: verify, error: updateError } = await serviceSupabase
     .from('aulas')
@@ -258,11 +255,7 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
     throw new Error(`Erro ao solicitar remarcação: ${updateError.message}`)
   }
 
-  console.log('[solicitarRemarcacao] Sucesso! Verificação:', { 
-    id: verify.id, 
-    status: verify.status, 
-    solicitada: verify.data_hora_solicitada 
-  })
+
 
   revalidatePath('/professor')
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)

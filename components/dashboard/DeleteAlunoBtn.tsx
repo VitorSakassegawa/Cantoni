@@ -68,7 +68,7 @@ export default function DeleteAlunoBtn({ alunoId, alunoNome }: Props) {
               Atenção: Perda Total de Dados
             </DialogTitle>
             <DialogDescription className="text-center text-slate-500 font-medium leading-relaxed">
-              Você está prestes a apagar **{alunoNome}** permanentemente. 
+              Você está prestes a apagar <strong className="font-black text-slate-900">{alunoNome}</strong> permanentemente. 
               Esta ação removerá todos os contratos, pagamentos, tarefas e excluirá as aulas do Google Calendar.
               <br/>
               <span className="text-rose-600 font-black uppercase text-[10px] block mt-4 tracking-widest">
