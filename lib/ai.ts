@@ -88,3 +88,37 @@ export async function generateAIAudio(text: string) {
     return null
   }
 }
+
+/**
+ * Robustly extracts and parses JSON from an AI response string.
+ * Handles markdown fences, extra text, and basic malformed JSON.
+ */
+export function extractAndParseJSON(text: string): any {
+  let content = text.trim()
+  
+  // 1. Remove markdown fences if present
+  if (content.startsWith('```')) {
+    content = content.replace(/^```(json)?/, '').replace(/```$/, '').trim()
+  }
+
+  try {
+    return JSON.parse(content)
+  } catch (e) {
+    // 2. If standard parse fails, try to find the first '{' and last '}'
+    const start = content.indexOf('{')
+    const end = content.lastIndexOf('}')
+    
+    if (start !== -1 && end !== -1 && end > start) {
+      const jsonBlock = content.substring(start, end + 1)
+      try {
+        return JSON.parse(jsonBlock)
+      } catch (innerError) {
+        console.error('Failed to parse extracted JSON block:', innerError)
+        // 3. Last ditch: return null or throw to be handled by caller
+        throw new Error('Could not parse JSON from AI response')
+      }
+    }
+    
+    throw e
+  }
+}

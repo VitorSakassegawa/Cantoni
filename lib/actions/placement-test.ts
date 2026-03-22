@@ -1,6 +1,6 @@
 'use server'
 
-import { generateAIContent, generateAIAudio } from '@/lib/ai'
+import { generateAIContent, generateAIAudio, extractAndParseJSON } from '@/lib/ai'
 
 export async function generatePlacementQuestions(
   level: 'A1' | 'A2' | 'B1' | 'B2' | 'C1' = 'A1',
@@ -16,14 +16,17 @@ export async function generatePlacementQuestions(
     Trabalhe como um especialista em design de testes Cambridge/CEFR.
     ${modulePrompts[module]}
     
-    Retorne APENAS um JSON no seguinte formato:
+    REGRAS CRÍTICAS:
+    1. Retorne APENAS o objeto JSON. 
+    2. Sem preâmbulos, sem "Aqui está o seu JSON", sem explicações.
+    3. Garanta que o JSON seja VÁLIDO e siga exatamente este formato:
     {
       "module": "${module}",
       "text": "Texto ou diálogo (apenas para reading/listening, caso contrário null)",
       "questions": [
         {
           "id": 1,
-          "question": "Pergunta",
+          "question": "Pergunta em inglês",
           "options": ["A", "B", "C", "D"],
           "correctAnswer": 0
         }
@@ -35,19 +38,13 @@ export async function generatePlacementQuestions(
     const response = await generateAIContent(prompt, undefined, 'application/json')
     if (!response) throw new Error('AI returned empty response')
     
-    let jsonStr = response.trim()
-    // Remove potential markdown markers if AI still includes them despite JSON mode
-    if (jsonStr.startsWith('```')) {
-      jsonStr = jsonStr.replace(/^```(json)?/, '').replace(/```$/, '').trim()
-    }
-
-    const parsed = JSON.parse(jsonStr)
+    const parsed = extractAndParseJSON(response)
     
     // Deep clone to ensure it's a plain object for Next.js 15
     return JSON.parse(JSON.stringify(parsed))
   } catch (error) {
-    console.error('Error generating advanced questions:', error)
-    return { questions: [], error: 'Falha ao gerar questões' }
+    console.error('Error in generatePlacementQuestions:', error)
+    return { questions: [], error: 'Falha técnica ao processar questões da IA. Por favor, tente novamente.' }
   }
 }
 
