@@ -239,6 +239,42 @@ export default function ProfessorNivelamentoPage() {
                               {test.insights || '*Nenhum insight disponível para este teste.*'}
                             </div>
                           </div>
+
+                          {/* Detailed Q&A Breakdown */}
+                          {test.answers && test.answers.length > 0 && test.answers[0].question && (
+                            <div className="pt-4 space-y-4">
+                              <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
+                                <BookOpen className="w-4 h-4 text-blue-500" />
+                                Detalhamento de Questões ({test.answers.length})
+                              </h4>
+                              <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                                {test.answers.map((ans: any, idx: number) => (
+                                  <div key={idx} className={`p-5 rounded-3xl border-2 ${ans.correct ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'} text-sm shadow-sm`}>
+                                    <div className="flex items-start gap-3">
+                                      <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white ${ans.correct ? 'bg-emerald-500' : 'bg-rose-500'} mt-0.5`}>
+                                        {idx + 1}
+                                      </span>
+                                      <div className="space-y-3 flex-1">
+                                        <p className="font-bold text-slate-800 leading-snug">{ans.question}</p>
+                                        <div className="space-y-1.5 bg-white/60 p-3 rounded-2xl">
+                                          <p className={`text-xs font-semibold ${ans.correct ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                            <span className="opacity-70 font-black uppercase tracking-widest text-[9px] mr-2">Aluno marcou:</span> 
+                                            {ans.options ? ans.options[ans.selected] : `Opção ${ans.selected}`}
+                                          </p>
+                                          {!ans.correct && typeof ans.correctAnswer === 'number' && ans.options && (
+                                            <p className="text-xs font-semibold text-emerald-700">
+                                              <span className="opacity-70 font-black uppercase tracking-widest text-[9px] mr-2">Correta:</span> 
+                                              {ans.options[ans.correctAnswer]}
+                                            </p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     ))}

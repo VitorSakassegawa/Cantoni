@@ -69,7 +69,11 @@ export default function LevelTestPage() {
     const question = questions[currentQuestionIndex]
     const isCorrect = optionIndex === question.correctAnswer
     
-    const newAnswers = [...answers, { questionId: question.id, selected: optionIndex, correct: isCorrect }]
+    const newAnswers = [...answers, { 
+      ...question,
+      selected: optionIndex, 
+      correct: isCorrect 
+    }]
     setAnswers(newAnswers)
 
     if (currentQuestionIndex < questions.length - 1) {
