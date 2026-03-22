@@ -7,7 +7,7 @@ import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/li
 import AulaRow from '@/components/dashboard/AulaRow'
 import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
-import { Video, BookOpen, Calendar, User, CreditCard, Umbrella, Flame, Trophy, Layers, BrainCircuit, ExternalLink } from 'lucide-react'
+import { Video, BookOpen, Calendar, User, CreditCard, Umbrella, Flame, Trophy, Layers, BrainCircuit, ExternalLink, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 
 export default async function AlunoDashboard() {
@@ -162,6 +162,29 @@ export default async function AlunoDashboard() {
           </div>
           <Link href="#aulas-timeline" className="h-10 px-8 rounded-xl bg-amber-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20 flex items-center">
             Sugerir Datas
+          </Link>
+        </div>
+      )}
+
+      {/* Alerta de Teste de Nivelamento Pendente */}
+      {!profile?.placement_test_completed && (
+        <div className="bg-indigo-50 border border-indigo-100 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl shadow-indigo-500/10 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-200/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-300/30 transition-all duration-700" />
+          <div className="flex items-center gap-6 relative z-10">
+            <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/10 rotate-3 group-hover:rotate-0 transition-transform duration-500">
+              <BrainCircuit className="w-8 h-8" />
+            </div>
+            <div>
+              <p className="font-black text-indigo-900 text-lg tracking-tight leading-tight">Mapeamento de Nível com IA ✨</p>
+              <p className="text-sm text-indigo-700/70 font-medium mt-1">Bem-vindo! Vamos mapear seu nível de inglês para personalizar suas aulas?</p>
+            </div>
+          </div>
+          <Link 
+            href="/aluno/teste-nivel" 
+            className="h-14 px-10 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20 flex items-center gap-3 relative z-10"
+          >
+            INICIAR TESTE AGORA
+            <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
       )}

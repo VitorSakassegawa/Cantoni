@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Progress } from '@/components/ui/progress'
-import { generatePlacementQuestions } from '@/lib/actions/placement-test'
-import { Sparkles, ArrowRight, CheckCircle2, Trophy, Loader2 } from 'lucide-react'
+import { generatePlacementQuestions, evaluatePlacementTest } from '@/lib/actions/placement-test'
+import { Sparkles, ArrowRight, CheckCircle2, Trophy, Loader2, Target } from 'lucide-react'
 import { toast } from 'sonner'
+import Link from 'next/link'
 
 export default function LevelTestPage() {
   const [step, setStep] = useState<'intro' | 'quiz' | 'result'>('intro')
@@ -15,6 +16,8 @@ export default function LevelTestPage() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [answers, setAnswers] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
+  const [finishing, setFinishing] = useState(false)
+  const [result, setResult] = useState<any>(null)
   const [score, setScore] = useState(0)
 
   async function startQuiz() {
@@ -44,10 +47,24 @@ export default function LevelTestPage() {
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1)
     } else {
-      // Calculate final score
-      const finalScore = newAnswers.filter(a => a.correct).length
-      setScore(finalScore)
+      finishQuiz(newAnswers)
+    }
+  }
+
+  async function finishQuiz(finalAnswers: any[]) {
+    setFinishing(true)
+    try {
+      // Get user ID from some context or pass it? 
+      // Actually, evaluatePlacementTest handles it on server side if we use auth
+      // Fix: I'll need to get the user ID on the server side in the action
+      const data = await evaluatePlacementTest(finalAnswers) 
+      setResult(data)
+      setScore(data.score)
       setStep('result')
+    } catch (err) {
+      toast.error('Erro ao salvar resultado.')
+    } finally {
+      setFinishing(false)
     }
   }
 
@@ -144,19 +161,19 @@ export default function LevelTestPage() {
       
       <div className="space-y-4">
         <h1 className="text-4xl font-black text-slate-900">Parabéns! Teste concluído.</h1>
-        <p className="text-slate-500 text-lg font-medium">Sua pontuação final foi de {score}/{questions.length}.</p>
+          <p className="text-slate-500 text-lg font-medium">Sua pontuação final foi de {score}/{result?.total || questions.length}.</p>
       </div>
 
       <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl border-indigo-50 border relative overflow-hidden">
         <div className="relative z-10 space-y-6">
           <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">Nível Sugerido</p>
-          <div className="text-8xl font-black text-indigo-600 tracking-tighter">B1</div>
-          <p className="text-sm font-bold text-slate-400 uppercase tracking-tight">Intermediate English</p>
+          <div className="text-8xl font-black text-indigo-600 tracking-tighter">{result?.suggestedLevel || '...'}</div>
+          <p className="text-sm font-bold text-slate-400 uppercase tracking-tight">{result?.suggestedNivel || 'Calculating'}</p>
           
           <div className="pt-8 border-t border-slate-100 mt-8">
-            <Button className="w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20">
+            <Link href="/aluno" className="inline-block w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 flex items-center justify-center">
               Ir para o Dashboard
-            </Button>
+            </Link>
           </div>
         </div>
         <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-50 rounded-full -mr-16 -mt-16 opacity-50" />

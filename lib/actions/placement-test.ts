@@ -34,8 +34,39 @@ export async function generatePlacementQuestions(level: 'A1' | 'A2' | 'B1' | 'B2
   }
 }
 
-export async function evaluatePlacementTest(answers: { questionId: number, selectedOption: number }[], studentId: string) {
-  // Logic to calculate score and update student level in Supabase
-  // For now, return a placeholder
-  return { suggestedLevel: 'B1', score: 80 }
+import { createClient } from '@/lib/supabase/server'
+
+export async function evaluatePlacementTest(answers: { correct: boolean }[]) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Não autorizado')
+  
+  const studentId = user.id
+  const score = answers.filter(a => a.correct).length
+  const total = answers.length
+  const ratio = score / total
+
+  let suggestedLevel = 'A1'
+  let suggestedNivel = 'Beginner'
+
+  if (ratio >= 0.8) {
+    suggestedLevel = 'B1'
+    suggestedNivel = 'Intermediate'
+  } else if (ratio >= 0.5) {
+    suggestedLevel = 'A2'
+    suggestedNivel = 'Elementary'
+  }
+
+  const { error } = await supabase
+    .from('profiles')
+    .update({ 
+      cefr_level: suggestedLevel,
+      nivel: suggestedNivel,
+      placement_test_completed: true 
+    })
+    .eq('id', studentId)
+
+  if (error) throw error
+
+  return { suggestedLevel, suggestedNivel, score, total }
 }
