@@ -68,13 +68,17 @@ export async function generateLessonSummary(notes: string) {
 }
 
 export async function generateAIAudio(text: string) {
+  console.log('--- Starting generateAIAudio ---')
+  console.log('Text length:', text.length)
   try {
     const genAI = getGenAI()
-    // Using discovered TTS model
     const modelName = "gemini-2.5-flash-preview-tts"
+    console.log('Using model:', modelName)
     const model = genAI.getGenerativeModel({ model: modelName })
 
-    const result = await model.generateContent({
+    console.log('Fetching content from Gemini...')
+    // Adding a timeout promise
+    const audioPromise = model.generateContent({
       contents: [{ role: 'user', parts: [{ text: `Please provide the audio for the following text: "${text}"` }] }],
       generationConfig: {
         // @ts-ignore
@@ -82,13 +86,29 @@ export async function generateAIAudio(text: string) {
       }
     })
 
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Gemini TTS Timeout after 25s')), 25000)
+    )
+
+    const result: any = await Promise.race([audioPromise, timeoutPromise])
+    console.log('Gemini response received')
+
     const response = await result.response
-    // Audio is usually in parts[0].inlineData
-    const part = response.candidates?.[0]?.content?.parts?.find(p => p.inlineData)
-    return part?.inlineData?.data || null
-  } catch (error) {
-    console.error('Error with primary audio model:', error)
+    console.log('Response status:', response.status || 'unknown')
+
+    const part = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)
+    if (!part) {
+      console.warn('No inlineData found in response parts')
+      return null
+    }
+
+    console.log('Audio data extracted successfully')
+    return part.inlineData.data || null
+  } catch (error: any) {
+    console.error('Error in generateAIAudio:', error.message || error)
     return null
+  } finally {
+    console.log('--- Finished generateAIAudio ---')
   }
 }
 
