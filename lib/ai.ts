@@ -2,10 +2,9 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
 
-// User requested model: Gemini 3.1 Flash Lite (experimental/internal)
-// Fallback: Gemini 2.5 Flash Lite
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-1.5-flash'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-flash-8b'
+// User requested models
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
 
 export async function generateAIContent(prompt: string, modelName: string = PRIMARY_MODEL) {
   try {
