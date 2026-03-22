@@ -345,3 +345,38 @@ export async function enviarAlertaPendenciaFinanceira({
     `,
   })
 }
+
+export async function enviarResumoAulaAI({
+  to,
+  nomeAluno,
+  dataHora,
+  resumoMarkdown,
+}: {
+  to: string
+  nomeAluno: string
+  dataHora: string
+  resumoMarkdown: string
+}) {
+  const resend = getResendClient()
+  return resend.emails.send({
+    from: FROM,
+    to,
+    subject: `✨ Resumo da sua aula de inglês — ${dataHora}`,
+    html: `
+      <div style="font-family:sans-serif;max-width:600px;margin:auto;color:#334155;line-height:1.6">
+        <h2 style="color:#1e3af5">Hi, ${nomeAluno}! 👋</h2>
+        <p>Aqui está o resumo da nossa aula do dia <strong>${dataHora}</strong>, gerado pela nossa IA:</p>
+        
+        <div style="background:#f0f4ff;padding:24px;border-radius:20px;margin:24px 0;border:1px solid #dbeafe">
+          <div style="color:#1e40af">
+            ${resumoMarkdown.replace(/\n/g, '<br/>')}
+          </div>
+        </div>
+
+        <p style="font-size:14px;color:#64748b">Continue praticando! Qualquer dúvida, me chame. 🇺🇸</p>
+        <hr style="border:none;border-top:1px solid #e2e8f0;margin:30px 0" />
+        <p style="color:#94a3b8;font-size:11px">Teacher Gabriel Cantoni — Cantoni English</p>
+      </div>
+    `,
+  })
+}

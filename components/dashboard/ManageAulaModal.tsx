@@ -18,7 +18,8 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { updateLessonHomework } from '@/lib/actions/homework'
 import { concluirAula } from '@/lib/actions/aulas'
-import { BookOpen, Link as LinkIcon, Video, CheckCircle2, Sparkles, Send } from 'lucide-react'
+import { enviarResumoAI } from '@/lib/actions/ai-summary'
+import { BookOpen, Link as LinkIcon, Video, CheckCircle2, Sparkles, Send, Loader2 } from 'lucide-react'
 
 interface Props {
   aula: any
@@ -30,6 +31,7 @@ interface Props {
 export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }: Props) {
   const [loading, setLoading] = useState(false)
   const [completing, setCompleting] = useState(false)
+  const [summarizing, setSummarizing] = useState(false)
   const [formData, setFormData] = useState({
     homework: aula.homework || '',
     homework_type: aula.homework_type || 'regular',
@@ -70,6 +72,23 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
       toast.error(err.message || 'Erro ao concluir aula')
     } finally {
       setCompleting(false)
+    }
+  }
+
+  async function handleAI() {
+    if (!formData.class_notes) return
+    setSummarizing(true)
+    try {
+      const { success, error } = await enviarResumoAI(aula.id)
+      if (success) {
+        toast.success('Resumo gerado e enviado para o aluno!')
+      } else {
+        toast.error(error || 'Erro ao gerar resumo')
+      }
+    } catch (err: any) {
+      toast.error('Ocorreu um erro inesperado')
+    } finally {
+      setSummarizing(false)
     }
   }
 
@@ -142,11 +161,12 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
               />
               <div className="flex justify-end pt-2">
                 <Button 
-                  disabled={!formData.class_notes || loading}
-                  className="bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-indigo-600/10 hover:bg-indigo-700 transition-all opacity-50 cursor-not-allowed"
-                  title="Configure sua GEMINI_API_KEY para habilitar resumos automáticos"
+                  onClick={handleAI}
+                  disabled={!formData.class_notes || summarizing || loading}
+                  className="bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-indigo-600/10 hover:bg-indigo-700 transition-all"
                 >
-                  <Send className="w-3 h-3" /> Gerar Resumo via IA
+                  {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                  {summarizing ? 'Gerando...' : 'Gerar Resumo via IA'}
                 </Button>
               </div>
             </div>

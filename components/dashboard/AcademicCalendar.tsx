@@ -9,14 +9,11 @@ import {
   startOfMonth, 
   endOfMonth, 
   getDay, 
-  isSameDay, 
-  isToday,
-  parseISO,
-  isWithinInterval
+  isToday
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { Badge } from '@/components/ui/badge'
-import { Calendar as CalendarIcon, Info, Umbrella, Flag, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { FERIADOS_NACIONAIS } from '@/lib/constants/holidays'
+import { Umbrella, Flag, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import ManageRecessoModal from './ManageRecessoModal'
@@ -38,7 +35,6 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
   const [recessos, setRecessos] = useState<Recesso[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch recessos
   const loadRecessos = async () => {
     try {
       const res = await fetch('/api/recessos')
@@ -59,14 +55,20 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
 
   const getDayStatus = (date: Date) => {
     const dateStr = format(date, 'yyyy-MM-dd')
-    const found = recessos.find(r => {
-      // Comparação direta de strings YYYY-MM-DD para evitar problemas de fuso horário
+    const foundRecesso = recessos.find(r => {
       return dateStr >= r.data_inicio && dateStr <= r.data_fim
     })
-    return found
+
+    if (foundRecesso) return foundRecesso
+
+    if (FERIADOS_NACIONAIS.includes(dateStr)) {
+      return { tipo: 'feriado', titulo: 'Feriado Nacional' }
+    }
+
+    return undefined
   }
 
-  if (loading) return <div className="h-96 flex items-center justify-center text-slate-400">Carregando calendário...</div>
+  if (loading) return <div className="h-96 flex items-center justify-center text-slate-400 font-bold uppercase tracking-widest text-[10px]">Carregando calendário...</div>
 
   return (
     <div className="space-y-8 animate-fade-in">
@@ -96,7 +98,6 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest mt-1 hidden md:block">Calendário Acadêmico Cantoni</p>
         </div>
 
-        {/* Legend matching user image exactly */}
         <div className="flex items-center gap-2 bg-white p-1.5 rounded-full border border-slate-100 shadow-sm">
            <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-orange-50 text-orange-700 text-[9px] font-black uppercase tracking-wider">
               <Umbrella className="w-3.5 h-3.5" /> Recesso / Férias
@@ -113,7 +114,7 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
             start: startOfMonth(month),
             end: endOfMonth(month)
           })
-          const startDayOfWeek = getDay(startOfMonth(month)) // 0 (Sun) to 6 (Sat)
+          const startDayOfWeek = getDay(startOfMonth(month))
           const blanks = Array.from({ length: startDayOfWeek })
 
           return (
@@ -138,10 +139,10 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
                     <div 
                       key={dIdx} 
                       className={`
-                        aspect-square flex items-center justify-center text-[10px] font-bold rounded-lg transition-all relative
+                        aspect-square flex items-center justify-center text-[10px] font-bold rounded-lg transition-all relative cursor-default
                         ${status?.tipo === 'recesso' ? 'bg-orange-500 text-white shadow-lg shadow-orange-500/20' : 
                           status?.tipo === 'feriado' ? 'bg-rose-500 text-white shadow-lg shadow-rose-500/20' : 
-                          isSun ? 'text-slate-300' : 'text-slate-600 hover:bg-slate-50'
+                          isSun ? 'text-slate-200' : 'text-slate-600 hover:bg-slate-50'
                         }
                         ${isCurrent ? 'ring-2 ring-blue-400 ring-offset-1' : ''}
                       `}

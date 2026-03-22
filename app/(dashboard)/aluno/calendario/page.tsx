@@ -26,7 +26,7 @@ export default async function AlunoCalendarioPage() {
         <div className="space-y-2">
            <p className="text-xs font-black text-blue-900 uppercase tracking-widest">Informação Importante</p>
            <p className="text-sm text-blue-800/70 font-medium leading-relaxed">
-             Este calendário exibe os feriados nacionais e os períodos de recesso/férias do professor. 
+             Este calendário exibe os feriados nacionais e os períodos de <strong className="font-black text-blue-900">recesso/férias</strong> do professor. 
              Caso uma de suas aulas agendadas coincida com um período de recesso, você receberá um alerta no dashboard para sugerir uma nova data.
            </p>
         </div>
