@@ -150,12 +150,11 @@ export default function LevelTestPage() {
             </div>
 
             <Button 
-              onClick={startQuiz}
-              disabled={loading}
+              onClick={() => setStep('auto-eval')}
               className="mt-12 w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3"
             >
-              {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-              {loading ? 'Processando Algoritmo...' : 'Iniciar Mapeamento Técnico'}
+              <ArrowRight className="w-5 h-5" />
+              Escolher Nível Inicial
             </Button>
           </Card>
 

@@ -70,23 +70,26 @@ export async function evaluatePlacementTest(answers: { correct: boolean }[], att
   }
 
   const nivelMap: Record<string, string> = {
-    'A1': 'Beginner',
-    'A2': 'Elementary',
-    'B1': 'Intermediate',
-    'B2': 'Upper Intermediate',
-    'C1': 'Advanced'
+    'A1': 'iniciante',
+    'A2': 'basico',
+    'B1': 'intermediario',
+    'B2': 'intermediario', // Or map to something else if needed, but per constraint it must be one of the 6
+    'C1': 'avancado'
   }
 
   const { error } = await supabase
     .from('profiles')
     .update({ 
       cefr_level: suggestedLevel,
-      nivel: nivelMap[suggestedLevel] || 'Beginner',
+      nivel: nivelMap[suggestedLevel] || 'iniciante',
       placement_test_completed: true 
     })
     .eq('id', studentId)
 
-  if (error) throw error
+  if (error) {
+    console.error('Database update error:', error)
+    throw new Error('Erro ao atualizar perfil no banco de dados.')
+  }
 
   return { suggestedLevel, suggestedNivel: nivelMap[suggestedLevel], score, total, confirmed }
 }
