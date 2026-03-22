@@ -67,17 +67,12 @@ export async function generateLessonSummary(notes: string) {
   return generateAIContent(prompt)
 }
 
-export async function generateAIAudio(text: string) {
-  console.log('--- Starting generateAIAudio ---')
-  console.log('Text length:', text.length)
+export async function generateAIAudio(text: string, modelName: string = "gemini-2.5-flash-preview-tts"): Promise<string | null> {
+  console.log(`--- Starting generateAIAudio with ${modelName} ---`)
   try {
     const genAI = getGenAI()
-    const modelName = "gemini-2.5-flash-preview-tts"
-    console.log('Using model:', modelName)
     const model = genAI.getGenerativeModel({ model: modelName })
 
-    console.log('Fetching content from Gemini...')
-    // Adding a timeout promise
     const audioPromise = model.generateContent({
       contents: [{ role: 'user', parts: [{ text: `Please provide the audio for the following text: "${text}"` }] }],
       generationConfig: {
@@ -87,28 +82,31 @@ export async function generateAIAudio(text: string) {
     })
 
     const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Gemini TTS Timeout after 25s')), 25000)
+      setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 20000)
     )
 
     const result: any = await Promise.race([audioPromise, timeoutPromise])
-    console.log('Gemini response received')
-
     const response = await result.response
-    console.log('Response status:', response.status || 'unknown')
-
     const part = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)
-    if (!part) {
-      console.warn('No inlineData found in response parts')
-      return null
+    
+    if (part?.inlineData?.data) {
+      console.log(`Audio generated successfully with ${modelName}`)
+      return part.inlineData.data
     }
 
-    console.log('Audio data extracted successfully')
-    return part.inlineData.data || null
+    throw new Error('No audio data in response')
   } catch (error: any) {
-    console.error('Error in generateAIAudio:', error.message || error)
+    console.error(`Error with ${modelName}:`, error.message || error)
+    
+    // Fallback logic
+    if (modelName === "gemini-2.5-flash-preview-tts") {
+      console.log('Attempting fallback with gemini-2.0-flash...')
+      return generateAIAudio(text, "gemini-2.0-flash")
+    }
+    
     return null
   } finally {
-    console.log('--- Finished generateAIAudio ---')
+    console.log(`--- Finished generateAIAudio (${modelName}) ---`)
   }
 }
 
