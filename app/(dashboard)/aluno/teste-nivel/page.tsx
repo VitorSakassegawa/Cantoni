@@ -21,6 +21,7 @@ export default function LevelTestPage() {
   const [finishing, setFinishing] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [score, setScore] = useState(0)
+  const [playCount, setPlayCount] = useState(0)
 
   async function startQuiz(startLevel?: any) {
     const levelToUse = startLevel || currentLevel
@@ -102,6 +103,7 @@ export default function LevelTestPage() {
       const nextModule = module === 'grammar' ? 'reading' : 'listening'
       setModule(nextModule)
       setCurrentQuestionIndex(0)
+      setPlayCount(0) // Reset audio play count for next module
       
       // Load next module
       setLoading(true)
@@ -115,6 +117,21 @@ export default function LevelTestPage() {
         setLoading(false)
       }
     }
+  }
+
+  const playAudio = () => {
+    if (playCount >= 2) {
+      toast.error('Limite de 2 reproduções atingido.')
+      return
+    }
+    if (!currentModuleData?.text) return
+
+    window.speechSynthesis.cancel()
+    const utterance = new SpeechSynthesisUtterance(currentModuleData.text)
+    utterance.lang = 'en-US'
+    utterance.rate = 0.9
+    window.speechSynthesis.speak(utterance)
+    setPlayCount(playCount + 1)
   }
 
   if (step === 'intro') {
@@ -242,6 +259,14 @@ export default function LevelTestPage() {
   }
 
   if (step === 'quiz') {
+    if (!questions.length || !questions[currentQuestionIndex]) {
+      return (
+        <div className="flex flex-col items-center justify-center py-24 gap-4">
+          <Loader2 className="w-12 h-12 text-indigo-600 animate-spin" />
+          <p className="text-slate-500 font-medium">Preparando seu desafio...</p>
+        </div>
+      )
+    }
     const question = questions[currentQuestionIndex]
     const progress = ((currentQuestionIndex + 1) / questions.length) * 100
     const moduleName = module === 'grammar' ? 'Grammar & Vocab' : module === 'reading' ? 'Reading Comprehension' : 'Listening Simulation'
@@ -261,11 +286,35 @@ export default function LevelTestPage() {
             <div className="lg:col-span-5 animate-in slide-in-from-left-4 duration-500">
               <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 {module === 'reading' ? <BookOpen className="w-3.5 h-3.5" /> : <Video className="w-3.5 h-3.5" />}
-                {module === 'reading' ? 'Contexto de Leitura' : 'Transcrição do Áudio'}
+                {module === 'reading' ? 'Contexto de Leitura' : 'Áudio da Questão'}
               </h3>
-              <div className="p-8 rounded-[3.5rem] bg-indigo-50/50 border border-indigo-100/50 text-slate-700 font-medium leading-relaxed text-sm italic shadow-inner">
-                "{currentModuleData.text}"
-              </div>
+              
+              {module === 'reading' ? (
+                <div className="p-8 rounded-[3.5rem] bg-indigo-50/50 border border-indigo-100/50 text-slate-700 font-medium leading-relaxed text-sm italic shadow-inner">
+                  "{currentModuleData.text}"
+                </div>
+              ) : (
+                <div className="p-12 rounded-[3.5rem] bg-slate-900 text-white flex flex-col items-center justify-center gap-6 text-center border-none shadow-2xl relative overflow-hidden group">
+                  <div className="absolute inset-0 bg-indigo-600/10 group-hover:bg-indigo-600/20 transition-colors" />
+                  <div className="relative z-10 space-y-4">
+                    <button
+                      onClick={playAudio}
+                      disabled={playCount >= 2}
+                      className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${
+                        playCount >= 2 ? 'bg-slate-800 text-slate-600 cursor-not-allowed' : 'bg-indigo-600 text-white hover:scale-110 active:scale-95 shadow-xl shadow-indigo-500/40'
+                      }`}
+                    >
+                      <Video className="w-8 h-8" />
+                    </button>
+                    <div className="space-y-1">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                        Reproduções: {playCount}/2
+                      </p>
+                      <p className="text-[11px] text-slate-400 font-medium">Ouvir áudio da questão</p>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -337,8 +386,8 @@ export default function LevelTestPage() {
             </div>
 
             <div className="pt-8 border-t border-slate-100 mt-8">
-              <Link href="/aluno" className="inline-block w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
-                ACESSAR MEU DASHBOARD
+              <Link href="/aluno" className="flex w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-95 no-underline">
+                <span className="translate-y-[1px]">ACESSAR MEU DASHBOARD</span>
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
