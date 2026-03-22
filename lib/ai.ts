@@ -63,8 +63,8 @@ export async function generateLessonSummary(notes: string) {
 export async function generateAIAudio(text: string) {
   try {
     const genAI = getGenAI()
-    // Gemini 2.5 Flash is requested for HIGH QUALITY TTS
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" })
+    // Gemini 2.5 Flash Preview-TTS as specified by the user
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-preview-tts" })
     
     // Prompt to generate speech
     const result = await model.generateContent({
