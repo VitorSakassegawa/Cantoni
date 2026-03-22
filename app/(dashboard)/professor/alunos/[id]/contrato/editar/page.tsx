@@ -8,8 +8,17 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import ContratoForm from '@/components/dashboard/ContratoForm'
 
-export default function ProfessorEditContratoPage({ params }: { params: Promise<{ id: string }> }) {
+export default function ProfessorEditContratoPage({ 
+  params,
+  searchParams
+}: { 
+  params: Promise<{ id: string }>,
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>
+}) {
   const { id: aluno_id } = use(params)
+  const resolvedSearchParams = use(searchParams)
+  const contratoId = resolvedSearchParams.id
+  
   const router = useRouter()
   const supabase = createClient()
   const [loading, setLoading] = useState(true)
@@ -17,12 +26,18 @@ export default function ProfessorEditContratoPage({ params }: { params: Promise<
 
   useEffect(() => {
     async function loadContrato() {
-      const { data } = await supabase
+      let query = supabase
         .from('contratos')
         .select('*')
         .eq('aluno_id', aluno_id)
-        .eq('status', 'ativo')
-        .maybeSingle()
+      
+      if (contratoId) {
+        query = query.eq('id', contratoId)
+      } else {
+        query = query.eq('status', 'ativo')
+      }
+
+      const { data } = await query.maybeSingle()
       
       if (data) {
         setContrato(data)
@@ -30,7 +45,7 @@ export default function ProfessorEditContratoPage({ params }: { params: Promise<
       setLoading(false)
     }
     loadContrato()
-  }, [aluno_id])
+  }, [aluno_id, contratoId, supabase])
 
   if (loading) return (
     <div className="max-w-4xl mx-auto p-20 text-center animate-pulse">

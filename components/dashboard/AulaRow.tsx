@@ -225,7 +225,9 @@ export default function AulaRow({
               <div className={`transition-all duration-300 relative ${!isExpanded && aula.homework && aula.homework.length > 80 ? 'max-h-[3.5rem] overflow-hidden' : ''}`}>
                 <div className="flex items-start gap-2">
                   <div className="flex-1">
-                    {aula.homework ? (
+                    {aula.has_homework === false ? (
+                      <span className="text-slate-400 font-bold text-[11px] uppercase tracking-tight italic">Nenhuma tarefa para esta aula</span>
+                    ) : aula.homework ? (
                       <p className="whitespace-pre-wrap leading-relaxed text-slate-600 font-medium text-[11px]">
                         {aula.homework}
                       </p>

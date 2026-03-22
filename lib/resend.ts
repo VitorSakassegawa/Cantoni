@@ -172,6 +172,7 @@ export async function enviarLembreteAula({
   dataHora,
   meetLink,
   homework,
+  has_homework,
   homeworkType,
   homeworkLink,
   homeworkDueDate,
@@ -181,6 +182,7 @@ export async function enviarLembreteAula({
   dataHora: string
   meetLink: string
   homework?: string
+  has_homework?: boolean
   homeworkType?: string
   homeworkLink?: string
   homeworkDueDate?: string
@@ -188,7 +190,9 @@ export async function enviarLembreteAula({
   const resend = getResendClient()
   
   let homeworkSection = ''
-  if (homework) {
+  if (has_homework === false) {
+    homeworkSection = `<p style="color:#64748b;font-style:italic;font-size:13px">Nenhuma lição de casa atribuída para esta aula.</p>`
+  } else if (homework) {
     homeworkSection = `<p><strong>Lição de casa:</strong> ${homework}</p>`
   }
 

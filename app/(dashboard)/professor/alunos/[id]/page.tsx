@@ -31,13 +31,13 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
 
   if (!aluno) notFound()
 
-  const { data: contrato } = await supabase
+  const { data: contratos } = await supabase
     .from('contratos')
     .select('*, planos(*)')
     .eq('aluno_id', id)
     .order('created_at', { ascending: false })
-    .limit(1)
-    .maybeSingle()
+
+  const contrato = contratos?.find((c: any) => c.status === 'ativo') || contratos?.[0]
 
 
   const { data: aulas } = await supabase
@@ -341,6 +341,71 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                         </td>
                       </tr>
                     ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Histórico de Contratos */}
+          <Card className="glass-card border-none overflow-hidden hover:shadow-xl transition-all">
+            <CardHeader className="p-8 bg-slate-50/50 border-b border-slate-100/50">
+              <CardTitle className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center"><Calendar className="w-4 h-4" /></div>
+                Histórico de Contratos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-100/50">
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID / Tipo</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Período</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Plano</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
+                      <th className="px-8 py-5 text-right text-[10px] font-black text-slate-400 uppercase tracking-widest">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contratos?.map((c: any) => (
+                      <tr key={c.id} className={`border-b border-slate-50 hover:bg-slate-50/50 transition-colors ${c.status === 'ativo' ? 'bg-blue-50/30' : ''}`}>
+                        <td className="px-8 py-5">
+                          <p className="text-sm font-black text-slate-900">#{c.id}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{c.tipo_contrato}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <p className="text-xs font-bold text-slate-700">{formatDateOnly(c.data_inicio)} — {formatDateOnly(c.data_fim)}</p>
+                          <p className="text-[9px] font-medium text-slate-400">{c.semestre} {c.ano}</p>
+                        </td>
+                        <td className="px-8 py-5">
+                          <Badge variant="outline" className="border-slate-200 text-slate-500 text-[9px] font-black uppercase">
+                            {c.planos?.freq_semana}x/semana
+                          </Badge>
+                        </td>
+                        <td className="px-8 py-5">
+                          <Badge variant={
+                            c.status === 'ativo' ? 'success' :
+                            c.status === 'vencido' ? 'outline' :
+                            c.status === 'cancelado' ? 'destructive' : 'warning'
+                          } className="px-3 py-1 text-[9px] font-black uppercase tracking-widest">
+                            {c.status}
+                          </Badge>
+                        </td>
+                        <td className="px-8 py-5 text-right">
+                          <Link href={`/professor/alunos/${id}/contrato/editar?id=${c.id}`}>
+                            <Button variant="ghost" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50">Detalhes</Button>
+                          </Link>
+                        </td>
+                      </tr>
+                    ))}
+                    {(!contratos || contratos.length === 0) && (
+                      <tr>
+                        <td colSpan={5} className="px-8 py-10 text-center">
+                          <p className="text-xs font-medium text-slate-400">Nenhum contrato encontrado para este aluno.</p>
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>

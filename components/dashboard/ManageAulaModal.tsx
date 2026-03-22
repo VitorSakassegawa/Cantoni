@@ -35,6 +35,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     homework_link: aula.homework_link || '',
     homework_due_date: aula.homework_due_date ? aula.homework_due_date.split('T')[0] : '',
     meet_link: aula.meet_link || '',
+    has_homework: aula.has_homework ?? true,
   })
 
   async function handleSave() {
@@ -122,53 +123,79 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
               </div>
             </div>
 
-            <div className="md:col-span-2 space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Tarefa / Homework</Label>
-              <Textarea
-                className="min-h-[100px] rounded-xl border-slate-100 bg-slate-50/50 focus:ring-blue-500 font-medium"
-                value={formData.homework}
-                onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, homework: e.target.value })}
-                placeholder="Ex: Ler capítulo 3 e fazer exercícios..."
-              />
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Tipo de Tarefa</Label>
-              <Select 
-                value={formData.homework_type} 
-                onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, homework_type: e.target.value as any })}
-                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold"
-              >
-                <option value="regular">Regular / LMS</option>
-                <option value="esl_brains">ESL Brains (Upload de Anexo)</option>
-                <option value="evolve">Cambridge Evolve (Workbook)</option>
-              </Select>
-            </div>
-
-            <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Data de Entrega / Due Date</Label>
-              <Input
-                type="date"
-                className="h-12 rounded-xl border-slate-100 bg-slate-50/50 font-bold"
-                value={formData.homework_due_date}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, homework_due_date: e.target.value })}
-              />
-            </div>
-
-            {formData.homework_type === 'evolve' && (
-              <div className="md:col-span-2 space-y-3 animate-in fade-in slide-in-from-top-2 duration-500">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1 text-blue-600">Link Cambridge Workbook</Label>
-                <div className="relative group">
-                  <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
-                  <Input
-                    className="h-12 pl-12 rounded-xl border-blue-100 bg-blue-50/30 focus:ring-blue-500 font-bold"
-                    value={formData.homework_link}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, homework_link: e.target.value })}
-                    placeholder="https://www.cambridgeone.org/..."
-                  />
+            <div className="md:col-span-2 space-y-4 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Tarefa / Homework</Label>
+                  <p className="text-[10px] font-bold text-slate-400/70 pl-1 uppercase tracking-tight">Esta aula possui lição de casa?</p>
+                </div>
+                <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">
+                  <button
+                    onClick={() => setFormData({ ...formData, has_homework: true })}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${formData.has_homework ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    Sim
+                  </button>
+                  <button
+                    onClick={() => setFormData({ ...formData, has_homework: false })}
+                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${!formData.has_homework ? 'bg-slate-200 text-slate-700' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    Não
+                  </button>
                 </div>
               </div>
-            )}
+
+              {formData.has_homework && (
+                <div className="space-y-4 animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Textarea
+                    className="min-h-[100px] rounded-xl border-slate-100 bg-white focus:ring-blue-500 font-medium"
+                    value={formData.homework}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, homework: e.target.value })}
+                    placeholder="Ex: Ler capítulo 3 e fazer exercícios..."
+                  />
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Tipo de Tarefa</Label>
+                      <Select 
+                        value={formData.homework_type} 
+                        onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setFormData({ ...formData, homework_type: e.target.value as any })}
+                        className="h-12 rounded-xl border-slate-100 bg-white font-bold text-xs"
+                      >
+                        <option value="regular">Regular / LMS</option>
+                        <option value="esl_brains">ESL Brains (Upload de Anexo)</option>
+                        <option value="evolve">Cambridge Evolve (Workbook)</option>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-3">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">Data de Entrega</Label>
+                      <Input
+                        type="date"
+                        className="h-12 rounded-xl border-slate-100 bg-white font-bold text-xs"
+                        value={formData.homework_due_date}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, homework_due_date: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  {formData.homework_type === 'evolve' && (
+                    <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-300">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-600 pl-1">Link Cambridge Workbook</Label>
+                      <div className="relative group">
+                        <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
+                        <Input
+                          className="h-12 pl-12 rounded-xl border-blue-100 bg-blue-50/30 focus:ring-blue-500 font-bold text-xs"
+                          value={formData.homework_link}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFormData({ ...formData, homework_link: e.target.value })}
+                          placeholder="https://www.cambridgeone.org/..."
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           <DialogFooter className="flex-col sm:flex-row gap-3 pt-6 border-t border-slate-100">

@@ -38,6 +38,7 @@ export interface Contrato {
   aulas_dadas: number
   aulas_restantes: number
   status: StatusContrato
+  status_financeiro?: 'em_dia' | 'pendente'
   livro_atual?: string
   nivel_atual?: string
   mercadopago_customer_id?: string
@@ -57,6 +58,7 @@ export interface Aula {
   remarcada_de?: number
   meet_link?: string
   homework?: string
+  has_homework: boolean;
   homework_completed: boolean;
   homework_notificado: boolean;
   data_hora_solicitada?: string;

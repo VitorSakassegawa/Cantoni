@@ -34,6 +34,7 @@ export async function uploadHomeworkImage(aulaId: number, file: File) {
 
 export async function updateLessonHomework(aulaId: number, data: {
   homework?: string,
+  has_homework?: boolean,
   homework_type?: 'regular' | 'esl_brains' | 'evolve',
   homework_link?: string,
   homework_due_date?: string,
