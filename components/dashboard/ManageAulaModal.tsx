@@ -94,9 +94,9 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white/95 backdrop-blur-xl">
-        <div className="bg-blue-600 h-2 w-full" />
-        <div className="p-10 space-y-8">
+      <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden flex flex-col max-h-[85vh] bg-white/95 backdrop-blur-xl">
+        <div className="bg-blue-600 h-2 w-full shrink-0" />
+        <div className="p-6 sm:p-10 space-y-8 overflow-y-auto overflow-x-hidden relative">
           <DialogHeader>
             <DialogTitle className="text-3xl font-black text-slate-900 tracking-tight flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl bg-blue-100 text-blue-600 flex items-center justify-center shadow-lg shadow-blue-500/10">
