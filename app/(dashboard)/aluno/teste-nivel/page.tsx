@@ -23,6 +23,13 @@ export default function LevelTestPage() {
   const [score, setScore] = useState(0)
   const [playCount, setPlayCount] = useState(0)
 
+  useEffect(() => {
+    // Stop any speaking when leaving or changing state
+    return () => {
+      window.speechSynthesis.cancel()
+    }
+  }, [step, module])
+
   async function startQuiz(startLevel?: any) {
     const levelToUse = startLevel || currentLevel
     console.log('Starting quiz for level:', levelToUse, 'module:', module)
@@ -127,9 +134,22 @@ export default function LevelTestPage() {
     if (!currentModuleData?.text) return
 
     window.speechSynthesis.cancel()
+
     const utterance = new SpeechSynthesisUtterance(currentModuleData.text)
+    
+    // Better English voice selection
+    const voices = window.speechSynthesis.getVoices()
+    const englishVoice = voices.find(v => 
+      (v.lang.includes('en-US') || v.lang.includes('en-GB')) && 
+      (v.name.includes('Google') || v.name.includes('Natural') || v.name.includes('Samantha') || v.name.includes('Daniel'))
+    ) || voices.find(v => v.lang.includes('en'))
+    
+    if (englishVoice) utterance.voice = englishVoice
+    
     utterance.lang = 'en-US'
-    utterance.rate = 0.9
+    utterance.rate = 0.85
+    utterance.pitch = 1.0
+    
     window.speechSynthesis.speak(utterance)
     setPlayCount(playCount + 1)
   }

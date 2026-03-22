@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select } from '@/components/ui/select'
-import { Calendar, BookOpen, Clock, Info, Percent, DollarSign, AlertTriangle } from 'lucide-react'
+import { Calendar, BookOpen, Clock, Info, Percent, DollarSign, AlertTriangle, Sparkles, BrainCircuit, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 import { maskCurrency } from '@/lib/utils'
@@ -79,8 +79,27 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [formaPagamento, setFormaPagamento] = useState(initialData?.forma_pagamento || 'pix')
   const [numParcelas, setNumParcelas] = useState('6')
 
+  const [placementData, setPlacementData] = useState<any>(null)
+  const [loadingPlacement, setLoadingPlacement] = useState(false)
+
   // Effect to handle Evolve book logic on initial load
   useEffect(() => {
+    async function fetchPlacement() {
+      if (!alunoId) return
+      setLoadingPlacement(true)
+      try {
+        const { data, error } = await fetch(`/api/professor/nivelamento?alunoId=${alunoId}`).then(res => res.json())
+        if (data && data.length > 0) {
+          setPlacementData(data[0]) // Latest test
+        }
+      } catch (err) {
+        console.error('Error fetching placement for contract:', err)
+      } finally {
+        setLoadingPlacement(false)
+      }
+    }
+    fetchPlacement()
+    
     if (initialData?.livro_atual) {
       const isEvolve = initialData.livro_atual.toLowerCase().includes('evolve')
       const isESL = initialData.livro_atual.toLowerCase().includes('esl brains')
@@ -422,6 +441,59 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               </div>
             </div>
           </div>
+
+          <div className="h-px bg-slate-50" />
+
+          <div className="h-px bg-slate-50" />
+
+          {/* New Placement Indicators Section */}
+          {!isEdit && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
+              <div className="flex items-center gap-2 mb-4 text-blue-600">
+                <BrainCircuit className="w-4 h-4" />
+                <p className="text-[10px] font-black uppercase tracking-widest">Indicadores Pedagógicos</p>
+              </div>
+              
+              {loadingPlacement ? (
+                <div className="h-24 bg-slate-50 rounded-3xl border border-dashed border-slate-200 animate-pulse flex items-center justify-center text-xs text-slate-400 font-medium italic">
+                  Analisando mapeamento do aluno...
+                </div>
+              ) : placementData ? (
+                <div className="bg-blue-50/50 p-6 rounded-[2.5rem] border border-blue-100 flex flex-col md:flex-row gap-6 items-center">
+                  <div className="text-center md:border-r border-blue-100 md:pr-8 space-y-1">
+                    <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Nível Sugerido</p>
+                    <div className="text-4xl font-black text-blue-600">{placementData.cefr_level}</div>
+                    <Button 
+                      onClick={() => setNivel(placementData.cefr_level.toLowerCase())}
+                      variant="ghost" 
+                      size="sm"
+                      className="text-[9px] h-6 px-2 text-blue-500 hover:text-blue-600 font-black uppercase hover:bg-blue-100"
+                    >
+                      Aplicar Nível
+                    </Button>
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                       Insights Recentes ({new Date(placementData.created_at).toLocaleDateString('pt-BR')})
+                    </div>
+                    <div className="text-[11px] text-slate-600 font-medium leading-relaxed italic line-clamp-3">
+                      {placementData.insights || 'Sem insights disponíveis.'}
+                    </div>
+                  </div>
+                  <div className="shrink-0 flex items-center justify-center w-12 h-12 rounded-2xl bg-white shadow-sm border border-blue-100 text-blue-600">
+                    <Target className="w-5 h-5" />
+                  </div>
+                </div>
+              ) : (
+                <div className="p-6 rounded-[2.5rem] bg-amber-50 border border-amber-100 flex items-center gap-4">
+                  <AlertTriangle className="w-5 h-5 text-amber-500" />
+                  <p className="text-[11px] text-amber-700 font-medium leading-tight">
+                    <strong className="font-black italic uppercase text-[9px]">Atenção:</strong> Aluno ainda não realizou o mapeamento técnico. Recomenda-se aguardar os indicadores para um planejamento assertivo.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="h-px bg-slate-50" />
 
