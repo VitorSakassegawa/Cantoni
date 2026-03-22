@@ -1,23 +1,38 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '')
+const API_KEY = process.env.GEMINI_API_KEY || ''
+const genAI = new GoogleGenerativeAI(API_KEY)
 
 // User requested models
 const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview'
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
+const STABLE_FALLBACK = 'gemini-1.5-flash' // Ultra-stable fallback
 
 export async function generateAIContent(prompt: string, modelName: string = PRIMARY_MODEL) {
+  if (!API_KEY) {
+    console.error('CRITICAL: GEMINI_API_KEY is not defined in environment variables!')
+    throw new Error('Configuração de IA incompleta (API Key ausente).')
+  }
+
   try {
     const model = genAI.getGenerativeModel({ model: modelName })
     const result = await model.generateContent(prompt)
     const response = await result.response
     return response.text()
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Error with model ${modelName}:`, error)
-    if (modelName !== FALLBACK_MODEL) {
+    
+    // Check for 403 or specific preview model errors
+    if (modelName === PRIMARY_MODEL) {
       console.log(`Retrying with fallback model: ${FALLBACK_MODEL}`)
       return generateAIContent(prompt, FALLBACK_MODEL)
     }
+    
+    if (modelName === FALLBACK_MODEL) {
+      console.log(`Retrying with stable fallback: ${STABLE_FALLBACK}`)
+      return generateAIContent(prompt, STABLE_FALLBACK)
+    }
+
     throw error
   }
 }
