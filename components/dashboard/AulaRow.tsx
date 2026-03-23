@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { formatDateTime, formatDateOnly } from '@/lib/utils'
 
 import type { Aula } from '@/lib/types'
-import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp, Globe } from 'lucide-react'
 
 import ManageAulaModal from './ManageAulaModal'
 import RescheduleCalendar from './RescheduleCalendar'
@@ -76,6 +76,7 @@ export default function AulaRow({
   const [isExpanded, setIsExpanded] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showAIModal, setShowAIModal] = useState(false)
+  const [summaryLang, setSummaryLang] = useState<'pt' | 'en'>('pt')
 
   useEffect(() => {
     const aulaIdParam = searchParams.get('aulaId')
@@ -280,7 +281,7 @@ export default function AulaRow({
                 </Badge>
               )}
               
-              {(aula as any).ai_summary && (
+              {((aula as any).ai_summary_pt || (aula as any).ai_summary_en) && (
                 <button 
                   onClick={() => setShowAIModal(true)}
                   className="flex items-center gap-1.5 text-[9px] text-amber-600 hover:text-amber-700 font-black uppercase tracking-widest bg-amber-50/50 px-2 py-1 rounded-md transition-all border border-amber-100/50"
@@ -461,19 +462,40 @@ export default function AulaRow({
           <div className="bg-amber-500 h-2 w-full flex-shrink-0" />
           <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
             <DialogHeader className="mb-6">
-              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
-                  <Sparkles className="w-5 h-5" />
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                    <Sparkles className="w-5 h-5" />
+                  </div>
+                  Resumo da Aula (IA)
+                </DialogTitle>
+                
+                <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
+                  <button
+                    onClick={() => setSummaryLang('pt')}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${summaryLang === 'pt' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    PT
+                  </button>
+                  <button
+                    onClick={() => setSummaryLang('en')}
+                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${summaryLang === 'en' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                  >
+                    EN
+                  </button>
                 </div>
-                Resumo da Aula (IA)
-              </DialogTitle>
+              </div>
               <DialogDescription className="text-slate-500 font-medium">
-                Conteúdo sumarizado automaticamente pela inteligência artificial.
+                {summaryLang === 'pt' 
+                  ? 'Conteúdo sumarizado automaticamente pela inteligência artificial.' 
+                  : 'Lesson content automatically summarized by artificial intelligence.'}
               </DialogDescription>
             </DialogHeader>
 
-            <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4">
-              <ReactMarkdown>{(aula as any).ai_summary}</ReactMarkdown>
+            <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4 prose-table:border-collapse prose-th:bg-slate-50 prose-th:text-[10px] prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-td:text-xs prose-td:font-medium">
+              <ReactMarkdown>
+                {summaryLang === 'pt' ? (aula as any).ai_summary_pt : (aula as any).ai_summary_en}
+              </ReactMarkdown>
             </div>
           </div>
           <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100">
@@ -481,7 +503,7 @@ export default function AulaRow({
               className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest"
               onClick={() => setShowAIModal(false)}
             >
-              Fechar Resumo
+              {summaryLang === 'pt' ? 'Fechar Resumo' : 'Close Summary'}
             </Button>
           </DialogFooter>
         </DialogContent>

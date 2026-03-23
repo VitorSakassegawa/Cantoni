@@ -68,24 +68,67 @@ export async function generateLessonSummary(notes: string) {
   return generateAIContent(prompt)
 }
 
-export async function generateLessonAnalysis(notes: string) {
+export async function generateLessonAnalysisV2(notes: string, studentInfo: { name: string, level: string, lessonType: string, date: string }) {
   const prompt = `
-    Analise as seguintes notas de aula de inglês e gere um objeto JSON contendo:
-    1. "summary": Um resumo formatado em Markdown extremamente motivador e profissional para o aluno (o mesmo formato do summary tradicional).
-    2. "vocabulary": Uma lista de objetos { "word": string, "translation": string, "example": string } contendo as novas palavras ou expressões chave identificadas na aula.
-    
-    Notas da Aula:
+    You are an expert English language assistant specialized in transforming lesson transcripts into structured learning summaries.
+    Your task is to convert raw transcripts from 1:1 English lessons into a standardized lesson summary.
+
+    STRICT RULES:
+    - Always follow the exact template structure provided.
+    - Do NOT invent or assume information that is not present in the transcript.
+    - If information is missing, write "Not observed".
+    - Keep the language clear, simple, and professional.
+    - Adapt explanations to the student level (${studentInfo.level}).
+    - Be concise and objective.
+    - Avoid repetition.
+    - Do NOT include any performance feedback or evaluation.
+    - Only extract real corrections and examples from the transcript.
+    - Vocabulary must be relevant and actually used during the lesson.
+    - Corrections must include a short explanation.
+    - Do NOT skip any section of the template.
+    - Use tables exactly where specified.
+
+    Student Name: ${studentInfo.name}
+    Level: ${studentInfo.level}
+    Lesson Type: ${studentInfo.lessonType}
+    Duration: [XX minutes]
+    Date: ${studentInfo.date}
+
+    Transcript:
     "${notes}"
+
+    Generate the lesson summary using the template below.
     
-    IMPORTANTE: Responda APENAS com o objeto JSON puro, sem blocos de código ou texto adicional.
-    
-    Exemplo de formato esperado:
-    {
-      "summary": "# Resumo...\\n\\n**Principais Tópicos**...",
-      "vocabulary": [
-        { "word": "Break the ice", "translation": "Quebrar o gelo", "example": "It's hard to break the ice in a new job." }
-      ]
-    }
+    IMPORTANT: You must return a JSON object with the following fields:
+    - "summary_en": The full summary in English (Markdown).
+    - "summary_pt": The full summary in Portuguese (Markdown).
+    - "vocabulary": A list of objects { "word": string, "translation": string, "example": string }.
+    - "homework": A string describing the homework task mentioned.
+    - "due_date": A string (YYYY-MM-DD) if a deadline was explicitly mentioned, otherwise null.
+
+    TEMPLATE (to be used for both summary_en and summary_pt, translated accordingly):
+    📘 Lesson Summary – [Student Name]  
+    Date: [DD/MM/YYYY]  
+    Level: [A1–C2]  
+    Lesson Type: [TYPE]  
+    Duration: [XX min]
+
+    ---
+    🎯 Lesson Objective
+    ---
+    🧠 What We Covered
+    ---
+    🗣️ Key Vocabulary & Expressions (Use Tables)
+    ---
+    ❗ Corrections & Improvements (Use Tables)
+    ---
+    🧩 Common Mistakes Pattern
+    ---
+    📝 Homework / Practice
+    ---
+    🔁 Review From Previous Lesson
+    ---
+    🚀 Next Lesson Plan
   `
   const response = await generateAIContent(prompt, PRIMARY_MODEL, 'application/json')
   return extractAndParseJSON(response)

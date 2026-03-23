@@ -18,8 +18,8 @@ import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { updateLessonHomework } from '@/lib/actions/homework'
 import { concluirAula } from '@/lib/actions/aulas'
-import { enviarResumoAI } from '@/lib/actions/ai-summary'
-import { BookOpen, Link as LinkIcon, Video, CheckCircle2, Sparkles, Send, Loader2 } from 'lucide-react'
+import { enviarResumoAI, getAIAnalysisV2 } from '@/lib/actions/ai-summary'
+import { BookOpen, Link as LinkIcon, Video, CheckCircle2, Sparkles, Send, Loader2, MailCheck } from 'lucide-react'
 
 interface Props {
   aula: any
@@ -41,6 +41,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     has_homework: aula.has_homework ?? true,
     class_notes: aula.class_notes || '',
   })
+  const [aiResult, setAiResult] = useState<any>(null)
 
   async function handleSave() {
     setLoading(true)
@@ -79,14 +80,50 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     if (!formData.class_notes) return
     setSummarizing(true)
     try {
-      const { success, error } = await enviarResumoAI(aula.id, formData.class_notes)
+      const result = await getAIAnalysisV2(aula.id, formData.class_notes)
+      
+      setAiResult(result)
+      
+      // Auto-populate homework if found
+      if (result.homework && result.homework !== 'Not defined') {
+        setFormData(prev => ({ 
+          ...prev, 
+          homework: result.homework,
+          has_homework: true 
+        }))
+      }
+      
+      if (result.due_date) {
+        setFormData(prev => ({ ...prev, homework_due_date: result.due_date }))
+      }
+
+      toast.success('Análise concluída! Homework extraído e resumo pronto para envio.')
+    } catch (err: any) {
+      console.error(err)
+      toast.error('Ocorreu um erro na análise de IA')
+    } finally {
+      setSummarizing(false)
+    }
+  }
+
+  async function handleSendSummary() {
+    if (!aiResult) return
+    setSummarizing(true)
+    try {
+      const { success, error } = await enviarResumoAI(
+        aula.id, 
+        { pt: aiResult.summary_pt, en: aiResult.summary_en },
+        aiResult.vocabulary
+      )
+      
       if (success) {
-        toast.success('Resumo gerado e enviado para o aluno!')
+        toast.success('Resumo enviado com sucesso para o aluno!')
+        setAiResult(null) // Reset after sending
       } else {
-        toast.error(error || 'Erro ao gerar resumo')
+        toast.error(error || 'Erro ao enviar resumo')
       }
     } catch (err: any) {
-      toast.error('Ocorreu um erro inesperado')
+      toast.error('Erro ao processar envio')
     } finally {
       setSummarizing(false)
     }
@@ -159,15 +196,26 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                 onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setFormData({ ...formData, class_notes: e.target.value })}
                 placeholder="O que foi discutido hoje? Tópicos principais, erros comuns, novas palavras..."
               />
-              <div className="flex justify-end pt-2">
-                <Button 
-                  onClick={handleAI}
-                  disabled={!formData.class_notes || summarizing || loading}
-                  className="bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-indigo-600/10 hover:bg-indigo-700 transition-all"
-                >
-                  {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
-                  {summarizing ? 'Gerando...' : 'Gerar Resumo via IA'}
-                </Button>
+              <div className="flex justify-end pt-2 gap-2">
+                {aiResult ? (
+                  <Button 
+                    onClick={handleSendSummary}
+                    disabled={summarizing || loading}
+                    className="bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-emerald-600/10 hover:bg-emerald-700 transition-all animate-in zoom-in-95 duration-300"
+                  >
+                    {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <MailCheck className="w-3 h-3" />}
+                    {summarizing ? 'Enviando...' : 'Enviar Resumo ao Aluno'}
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={handleAI}
+                    disabled={!formData.class_notes || summarizing || loading}
+                    className="bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-indigo-600/10 hover:bg-indigo-700 transition-all"
+                  >
+                    {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    {summarizing ? 'Analisando...' : 'Analisar Aula com IA'}
+                  </Button>
+                )}
               </div>
             </div>
 
