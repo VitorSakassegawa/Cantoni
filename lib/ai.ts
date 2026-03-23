@@ -97,8 +97,6 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: { nam
     Transcript:
     "${notes}"
 
-    Generate the lesson summary using the template below.
-    
     IMPORTANT: You must return a JSON object with the following fields:
     - "summary_en": The full summary in English (Markdown).
     - "summary_pt": The full summary in Portuguese (Markdown).
@@ -106,29 +104,44 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: { nam
     - "homework": A string describing the homework task mentioned.
     - "due_date": A string (YYYY-MM-DD) if a deadline was explicitly mentioned, otherwise null.
 
+    For tables inside the summaries, ensure they are perfectly valid Markdown with header separators (e.g., | :--- | :--- |).
+    Do NOT add empty columns at the end. Use exactly the columns specified.
+
     TEMPLATE (to be used for both summary_en and summary_pt, translated accordingly):
-    📘 Lesson Summary – [Student Name]  
-    Date: [DD/MM/YYYY]  
-    Level: [A1–C2]  
-    Lesson Type: [TYPE]  
-    Duration: [XX min]
+    📘 Resumo da Aula – APRO
+    Data: [DD/MM/YYYY]  
+    Nível: [A1–C2]  
+    Tipo de Aula: [TYPE]  
+    Duração: [XX min]
 
     ---
-    🎯 Lesson Objective
-    ---
-    🧠 What We Covered
-    ---
-    🗣️ Key Vocabulary & Expressions (Use Tables)
-    ---
-    ❗ Corrections & Improvements (Use Tables)
-    ---
-    🧩 Common Mistakes Pattern
-    ---
-    📝 Homework / Practice
-    ---
-    🔁 Review From Previous Lesson
-    ---
-    🚀 Next Lesson Plan
+    🎯 Objetivo da Aula
+    [One or two sentences describing the main goals]
+
+    🧠 O Que Cobrimos
+    [Detailed bullet points of topics, grammar, and activities]
+
+    🗣️ Vocabulário & Expressões
+    | Palavra | Tradução | Exemplo |
+    | :--- | :--- | :--- |
+    | [Word] | [Translation] | [Example sentence] |
+
+    ❗ Correções & Melhorias
+    | Erro | Correção | Explicação |
+    | :--- | :--- | :--- |
+    | [Mistake] | [Corrected] | [Why/Context] |
+
+    🧩 Padrão de Erros Comuns
+    [Summary of recurring linguistic patterns or difficulties observed]
+
+    📝 Lição de Casa / Prática
+    [Description of specific tasks and due dates if mentioned]
+
+    🔁 Revisão da Aula Anterior
+    [Briefly mention points from previous lessons that were reviewed]
+
+    🚀 Plano para a Próxima Aula
+    [Topics or goals for the next session]
   `
   const response = await generateAIContent(prompt, PRIMARY_MODEL, 'application/json')
   return extractAndParseJSON(response)

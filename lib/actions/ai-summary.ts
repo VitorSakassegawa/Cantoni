@@ -16,7 +16,13 @@ export async function getAIAnalysisV2(aulaId: number, content?: string) {
 
   if (aulaError || !aula) throw new Error('Aula não encontrada')
 
-  const student = (aula.contratos as any)?.profiles
+  let student = (aula.contratos as any)?.profiles
+  if (Array.isArray(aula.contratos)) {
+    student = (aula.contratos[0] as any)?.profiles
+  }
+  if (Array.isArray(student)) {
+    student = student[0]
+  }
   const currentNotes = content || aula.class_notes
   if (!currentNotes) throw new Error('Nenhuma nota encontrada')
 
@@ -44,7 +50,14 @@ export async function enviarResumoAI(aulaId: number, summaries: { pt: string, en
     throw new Error('Aula não encontrada')
   }
 
-  const student = (aula.contratos as any)?.profiles
+  let student = (aula.contratos as any)?.profiles
+  if (Array.isArray(aula.contratos)) {
+    student = (aula.contratos[0] as any)?.profiles
+  }
+  if (Array.isArray(student)) {
+    student = student[0]
+  }
+
   if (!student || !student.email) {
     throw new Error('E-mail do aluno não encontrado')
   }
@@ -82,6 +95,7 @@ export async function enviarResumoAI(aulaId: number, summaries: { pt: string, en
     if (updateError) throw updateError
 
     // 5. Add new vocabulary to student's flashcards
+    console.log('Vocabulary received for flashcards:', vocabulary)
     if (vocabulary && Array.isArray(vocabulary) && vocabulary.length > 0) {
       const flashcardsToInsert = vocabulary.map((v: any) => ({
         aluno_id: student.id,
@@ -91,7 +105,15 @@ export async function enviarResumoAI(aulaId: number, summaries: { pt: string, en
         next_review: new Date().toISOString()
       }))
 
-      await supabase.from('flashcards').insert(flashcardsToInsert)
+      console.log('Inserting flashcards:', flashcardsToInsert.length)
+      const { error: flashError } = await supabase.from('flashcards').insert(flashcardsToInsert)
+      if (flashError) {
+        console.error('Error inserting flashcards:', flashError)
+      } else {
+        console.log('Flashcards inserted successfully')
+      }
+    } else {
+      console.log('No vocabulary found to insert into flashcards')
     }
 
     revalidatePath('/professor')

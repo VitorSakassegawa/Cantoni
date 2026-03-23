@@ -1,7 +1,7 @@
 'use client'
 
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts'
-import { Trophy, Target, Sparkles, TrendingUp } from 'lucide-react'
+import { Trophy, Target, Sparkles, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { useState } from 'react'
 
 interface SkillData {
@@ -114,11 +114,11 @@ export default function SkillsRadar({ data }: { data: SkillData[] }) {
               <Radar
                 name={`Nível ${selectedCefr}`}
                 dataKey="B"
-                stroke="#64748b"
+                stroke="#8b5cf6"
                 strokeWidth={2}
                 strokeDasharray="4 4"
-                fill="#94a3b8"
-                fillOpacity={0.1}
+                fill="#8b5cf6"
+                fillOpacity={0.05}
               />
             )}
             
@@ -145,19 +145,46 @@ export default function SkillsRadar({ data }: { data: SkillData[] }) {
         
         <div className="space-y-4">
           {selectedCefr ? (
-            <div className="p-4 bg-white/60 rounded-2xl border border-white shadow-sm space-y-2">
-              <p className="text-[10px] font-black uppercase text-blue-600 tracking-wider">Meta: {selectedCefr}</p>
-              <div className="text-[11px] font-bold text-slate-600 leading-relaxed">
-                Para atingir o nível {selectedCefr}, você precisa focar principalmente em:
-                <ul className="list-disc pl-4 mt-2 space-y-1">
-                  {currentData.speaking < CEFR_BENCHMARKS[selectedCefr].speaking && <li>Praticar conversação fluida</li>}
-                  {currentData.listening < CEFR_BENCHMARKS[selectedCefr].listening && <li>Exposição a diferentes sotaques</li>}
-                  {currentData.reading < CEFR_BENCHMARKS[selectedCefr].reading && <li>Leitura de artigos complexos</li>}
-                  {currentData.writing < CEFR_BENCHMARKS[selectedCefr].writing && <li>Escrita acadêmica/executiva</li>}
-                </ul>
-                {selectedCefr && checkBenchmarkReached(selectedCefr) && (
-                  <span className="text-emerald-600 font-black block mt-2 pt-2 border-t border-emerald-100">Parabéns! Suas skills atuais já superam este nível. 🚀</span>
+            <div className="p-4 bg-white/60 rounded-2xl border border-white shadow-sm space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                <p className="text-[10px] font-black uppercase text-blue-600 tracking-wider">
+                  {checkBenchmarkReached(selectedCefr) ? 'Marco Alcançado:' : 'Rumo ao Nível:'} {selectedCefr}
+                </p>
+                {checkBenchmarkReached(selectedCefr) && (
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
                 )}
+              </div>
+              <div className="text-[11px] font-bold text-slate-600 leading-relaxed">
+                <p className="mb-2">
+                  {checkBenchmarkReached(selectedCefr) 
+                    ? `Parabéns! Suas competências atuais já consolidaram os requisitos técnicos do nível ${selectedCefr} (CEFR Global Scale). 🚀` 
+                    : `Para atingir a proficiência plena do nível ${selectedCefr}, foque no desenvolvimento das seguintes competências:`}
+                </p>
+                <ul className="space-y-2 mt-2">
+                  {[
+                    { key: 'speaking', label: 'Produção Oral & Fluência' },
+                    { key: 'listening', label: 'Compreensão Auditiva' },
+                    { key: 'reading', label: 'Competência Pragmática (Leitura)' },
+                    { key: 'writing', label: 'Expressão Escrita Estruturada' }
+                  ].map((skill) => {
+                    const reached = (currentData as any)[skill.key] >= (CEFR_BENCHMARKS[selectedCefr] as any)[skill.key]
+                    return (
+                      <li key={skill.key} className="flex items-center gap-2">
+                        {reached ? (
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                        ) : (
+                          <div className="w-3 h-3 rounded-full border border-slate-300 shrink-0" />
+                        )}
+                        <span className={reached ? 'text-slate-900' : 'text-slate-500 font-medium'}>
+                          {skill.label}
+                        </span>
+                      </li>
+                    )
+                  })}
+                </ul>
+                <p className="mt-3 text-[9px] text-slate-400 italic font-medium pt-3 border-t border-slate-50">
+                  * Benchmarks baseados no Quadro Comum Europeu de Referência para Línguas.
+                </p>
               </div>
             </div>
           ) : (

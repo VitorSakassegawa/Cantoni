@@ -42,6 +42,8 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     class_notes: aula.class_notes || '',
   })
   const [aiResult, setAiResult] = useState<any>(null)
+  const [editedSummaryPt, setEditedSummaryPt] = useState('')
+  const [editedSummaryEn, setEditedSummaryEn] = useState('')
 
   async function handleSave() {
     setLoading(true)
@@ -97,6 +99,9 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
         setFormData(prev => ({ ...prev, homework_due_date: result.due_date }))
       }
 
+      setEditedSummaryPt(result.summary_pt)
+      setEditedSummaryEn(result.summary_en)
+
       toast.success('Análise concluída! Homework extraído e resumo pronto para envio.')
     } catch (err: any) {
       console.error(err)
@@ -112,7 +117,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     try {
       const { success, error } = await enviarResumoAI(
         aula.id, 
-        { pt: aiResult.summary_pt, en: aiResult.summary_en },
+        { pt: editedSummaryPt, en: editedSummaryEn },
         aiResult.vocabulary
       )
       
@@ -198,14 +203,43 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
               />
               <div className="flex justify-end pt-2 gap-2">
                 {aiResult ? (
-                  <Button 
-                    onClick={handleSendSummary}
-                    disabled={summarizing || loading}
-                    className="bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-emerald-600/10 hover:bg-emerald-700 transition-all animate-in zoom-in-95 duration-300"
-                  >
-                    {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <MailCheck className="w-3 h-3" />}
-                    {summarizing ? 'Enviando...' : 'Enviar Resumo ao Aluno'}
-                  </Button>
+                  <div className="w-full space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Resumo em Português</Label>
+                        <Textarea 
+                          className="min-h-[200px] text-xs font-medium leading-relaxed rounded-xl border-indigo-100"
+                          value={editedSummaryPt}
+                          onChange={(e) => setEditedSummaryPt(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-indigo-400">English Summary</Label>
+                        <Textarea 
+                          className="min-h-[200px] text-xs font-medium leading-relaxed rounded-xl border-indigo-100"
+                          value={editedSummaryEn}
+                          onChange={(e) => setEditedSummaryEn(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button 
+                        variant="outline"
+                        onClick={() => setAiResult(null)}
+                        className="text-[9px] font-black uppercase tracking-widest h-9 rounded-lg"
+                      >
+                        Descartar
+                      </Button>
+                      <Button 
+                        onClick={handleSendSummary}
+                        disabled={summarizing || loading}
+                        className="bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-emerald-600/10 hover:bg-emerald-700 transition-all"
+                      >
+                        {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
+                        {summarizing ? 'Enviando...' : 'Revisado: Enviar Resumo'}
+                      </Button>
+                    </div>
+                  </div>
                 ) : (
                   <Button 
                     onClick={handleAI}
@@ -213,7 +247,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                     className="bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-indigo-600/10 hover:bg-indigo-700 transition-all"
                   >
                     {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
-                    {summarizing ? 'Analisando...' : 'Analisar Aula com IA'}
+                    {summarizing ? 'Analisar Aula com IA' : 'Analisar Aula com IA'}
                   </Button>
                 )}
               </div>
