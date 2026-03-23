@@ -4,6 +4,10 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { validateMPSignature } from '@/lib/mercadopago-auth'
 import { ContractService } from '@/lib/services/contract-service'
 
+export async function GET() {
+  return NextResponse.json({ status: 'ok', message: 'Webhook endpoint is active. Use POST for notifications.' })
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
