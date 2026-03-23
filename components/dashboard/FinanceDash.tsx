@@ -20,7 +20,7 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* MRR Card */}
-        <Card className="border-none bg-[#4338ca] text-white shadow-xl shadow-indigo-600/20 overflow-hidden relative group rounded-[2rem]">
+        <Card className="border-none bg-[#312e81] text-white shadow-2xl shadow-indigo-900/20 overflow-hidden relative group rounded-[2rem]">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <TrendingUp className="w-16 h-16" />
           </div>
@@ -38,7 +38,7 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
         </Card>
 
         {/* Realized Revenue */}
-        <Card className="border-none bg-[#059669] text-white shadow-xl shadow-emerald-500/10 overflow-hidden relative group rounded-[2rem]">
+        <Card className="border-none bg-[#065f46] text-white shadow-2xl shadow-emerald-900/20 overflow-hidden relative group rounded-[2rem]">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <DollarSign className="w-16 h-16 text-white" />
           </div>
@@ -64,7 +64,7 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
         </Card>
 
         {/* Pending Revenue */}
-        <Card className="border-none bg-[#9a3412] text-white shadow-xl shadow-orange-900/10 overflow-hidden relative group rounded-[2rem]">
+        <Card className="border-none bg-[#9a3412] text-white shadow-2xl shadow-orange-900/20 overflow-hidden relative group rounded-[2rem]">
           <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
             <AlertCircle className="w-16 h-16 text-white" />
           </div>
@@ -81,7 +81,7 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
       </div>
 
       {/* Projection Chart */}
-      <Card className="border-none shadow-xl shadow-slate-200/60 bg-white rounded-[2rem] overflow-hidden">
+      <Card className="glass-card overflow-hidden">
         <CardHeader className="pb-4 border-b border-slate-100 flex flex-row items-center justify-between">
           <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
              Projeção de Ganhos (6 Meses)

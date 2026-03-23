@@ -20,14 +20,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const basePath = isProfessor ? '/professor' : '/aluno'
 
   return (
-    <div className="min-h-screen flex bg-slate-50 relative overflow-hidden">
-      {/* Background blobs for glassmorphism effect */}
-      <div className="absolute top-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-400/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="min-h-screen flex bg-[var(--background)] relative overflow-hidden transition-colors duration-500">
+      {/* Background blobs for glassmorphism effect - INCREASED OPACITY & VIBRANCY */}
+      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/20 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
+      <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '12s' }} />
+      <div className="absolute top-[20%] left-[20%] w-[30%] h-[30%] bg-sky-400/10 rounded-full blur-[120px] pointer-events-none" />
 
       {/* Sidebar */}
-      <aside className="w-72 flex flex-col m-4 mr-0 z-10">
-        <div className="flex-1 glass-panel rounded-[2rem] border-white/20 flex flex-col overflow-hidden shadow-2xl shadow-blue-900/5">
+      <aside className="w-72 flex flex-col m-6 mr-0 z-10">
+        <div className="flex-1 glass-panel rounded-[2.5rem] border-white/30 flex flex-col overflow-hidden shadow-2xl shadow-blue-900/10">
           <div className="p-8 pb-4">
             <div className="flex flex-col items-center text-center space-y-4">
               <div className="w-full px-4 flex items-center justify-center">

@@ -1,22 +1,22 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
+  --background: #f1f5f9; /* Slate 100 for better depth */
   --foreground: #0f172a;
   --primary: #1e3a8a;
-  --accent: #3b82f6;
-  --glass-bg: rgba(255, 255, 255, 0.9);
-  --glass-border: rgba(255, 255, 255, 0.8);
+  --accent: #2563eb;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(30, 58, 138, 0.15); /* Blue-ish subtle border */
   --sidebar-bg: #1e3a8a;
 }
 
 .dark {
   --background: #020617;
-  --foreground: #f8fafc;
+  --foreground: #f1f5f9;
   --primary: #3b82f6;
   --accent: #60a5fa;
-  --glass-bg: rgba(15, 23, 42, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-bg: rgba(15, 23, 42, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.15);
   --sidebar-bg: #0f172a;
 }
 
@@ -34,19 +34,23 @@ body {
 
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(24px) saturate(180%);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 10px 30px -5px rgba(30, 58, 138, 0.1);
 }
 
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--glass-border);
-  box-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.05);
-  @apply rounded-3xl transition-all duration-500 hover:shadow-2xl hover:translate-y-[-4px];
+  box-shadow: 
+    0 10px 15px -3px rgba(0, 0, 0, 0.05),
+    0 20px 50px -10px rgba(30, 58, 138, 0.15);
+  @apply rounded-3xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.01] hover:translate-y-[-4px];
 }
 
 .glass-input {

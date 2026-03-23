@@ -236,7 +236,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-10">
         {/* Cronograma Semanal */}
         <div className="xl:col-span-8 space-y-6">
-          <div className="flex items-center justify-between bg-white p-6 rounded-[2rem] border border-slate-100 shadow-xl shadow-slate-200/40 transition-all">
+          <div className="flex items-center justify-between glass-card p-6 border-slate-200/50">
             <div className="flex items-center gap-4">
               <div className="p-3 rounded-2xl bg-blue-600 text-white shadow-lg shadow-blue-500/30">
                 <CalendarIcon className="w-5 h-5" />
@@ -317,8 +317,8 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
         <div className="xl:col-span-4 space-y-6">
           {/* Alertas Financeiros */}
           {alunosAtivos?.some((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => p.status === 'atrasado')) && (
-            <Card className="border-none overflow-hidden bg-rose-50 border-rose-100 ring-4 ring-rose-500/5 scale-100 hover:scale-[1.01] transition-all rounded-[2rem] shadow-xl shadow-rose-900/5">
-              <CardHeader className="pb-4 bg-rose-100/30 border-b border-rose-100">
+            <Card className="glass-card bg-rose-50/80 border-rose-200/50 ring-4 ring-rose-500/5 hover:scale-[1.01]">
+              <CardHeader className="pb-4 bg-rose-100/50 border-b border-rose-200/50">
                 <CardTitle className="text-xs font-black text-red-600 flex items-center gap-2 uppercase tracking-[0.2em]">
                   <AlertCircle className="w-4 h-4" /> Pendências Financeiras
                 </CardTitle>
@@ -358,7 +358,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           )}
 
           {/* Próximas Pausas / Recessos */}
-          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+          <Card className="glass-card overflow-hidden">
             <CardHeader className="pb-4 border-b border-slate-100">
               <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
                 <Umbrella className="w-4 h-4 text-orange-500" /> Próximas Pausas
@@ -374,7 +374,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+          <Card className="glass-card overflow-hidden">
 
             <CardHeader className="flex flex-row items-center justify-between pb-4 bg-slate-50/80 border-b border-slate-100">
               <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
