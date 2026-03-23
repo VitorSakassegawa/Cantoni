@@ -250,13 +250,13 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             </div>
 
             <div className="flex items-center gap-2">
-              <Link href={`/professor?week=${prevWeek}`} className="p-2.5 rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-transparent hover:border-slate-100">
+              <Link href={`/professor?week=${prevWeek}`} className="p-2.5 rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-slate-200 hover:border-blue-200 shadow-sm">
                 <ChevronLeft className="w-4 h-4" />
               </Link>
-              <Link href="/professor" className="px-5 py-2 rounded-xl bg-white text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-blue-600 border border-slate-100 shadow-sm transition-all hover:shadow-md">
+              <Link href="/professor" className="px-5 py-2 rounded-xl bg-white text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-blue-600 border border-slate-200 shadow-sm transition-all hover:shadow-md">
                 Hoje
               </Link>
-              <Link href={`/professor?week=${nextWeek}`} className="p-2.5 rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-transparent hover:border-slate-100">
+              <Link href={`/professor?week=${nextWeek}`} className="p-2.5 rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-slate-200 hover:border-blue-200 shadow-sm">
                 <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
@@ -266,22 +266,22 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             {aulasPorDia.map(({ day, aulas }) => {
               const isActive = isToday(day)
               return (
-                <div key={day.toISOString()} className={`flex flex-col gap-3 p-4 rounded-3xl transition-all duration-300 ${isActive ? 'bg-blue-50/50 ring-2 ring-blue-100' : 'bg-slate-50/30 hover:bg-white/50 border border-slate-100'}`}>
+                <div key={day.toISOString()} className={`flex flex-col gap-3 p-4 rounded-3xl transition-all duration-300 ${isActive ? 'bg-blue-50/80 ring-2 ring-blue-200 border-blue-200 shadow-lg shadow-blue-500/5' : 'bg-white hover:bg-slate-50 border border-slate-200 shadow-sm'}`}>
                   <div className="text-center pb-2 border-b border-slate-100">
-                    <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${isActive ? 'text-blue-600' : 'text-slate-400'}`}>
+                    <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${isActive ? 'text-blue-600' : 'text-slate-500'}`}>
                       {format(day, 'eee', { locale: ptBR })}
                     </p>
-                    <p className={`text-xl font-black mt-1 ${isActive ? 'text-blue-900' : 'text-slate-600'}`}>
+                    <p className={`text-xl font-black mt-1 ${isActive ? 'text-blue-900' : 'text-slate-700'}`}>
                       {format(day, 'dd')}
                     </p>
                   </div>
 
-                  <div className="flex-1 space-y-3 min-h-[100px]">
+                  <div className="flex-1 space-y-3 min-h-[100px] flex flex-col">
                     {aulas.length > 0 ? (
                       aulas.map((aula: any) => {
                         const isDada = aula.status === 'dada'
                         return (
-                          <div key={aula.id} className={`p-4 rounded-2xl border transition-all relative overflow-hidden group ${isDada ? 'bg-slate-100/50 border-slate-100 opacity-60' : 'bg-white border-blue-50 shadow-sm hover:shadow-md hover:border-blue-100'}`}>
+                          <div key={aula.id} className={`p-4 rounded-2xl border transition-all relative overflow-hidden group ${isDada ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300'}`}>
                             {isDada && (
                               <div className="absolute top-1 right-1">
                                 <CheckCircle2 className="w-3 h-3 text-emerald-500" />
@@ -302,7 +302,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                         )
                       })
                     ) : (
-                      <div className="flex items-center justify-center h-full text-[8px] font-bold text-slate-300 uppercase tracking-widest">
+                      <div className="flex-1 flex items-center justify-center text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-40">
                         Livre
                       </div>
                     )}

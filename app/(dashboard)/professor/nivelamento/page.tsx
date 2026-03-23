@@ -89,7 +89,7 @@ export default function ProfessorNivelamentoPage() {
   return (
     <div className="max-w-7xl mx-auto space-y-8 animate-in fade-in duration-700">
       {/* Header Area */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/40 p-10 rounded-[3rem] border border-white/60 shadow-xl backdrop-blur-md relative overflow-hidden">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white/80 p-10 rounded-[3rem] border border-slate-200 shadow-xl backdrop-blur-md relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-400/5 rounded-full blur-3xl -mr-32 -mt-32" />
         <div className="relative z-10 space-y-2">
           <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-blue-100">
@@ -154,9 +154,10 @@ export default function ProfessorNivelamentoPage() {
         {/* Details Area */}
         <div className="lg:col-span-8">
           {!selectedStudent ? (
-            <div className="h-[600px] bg-white rounded-[3.5rem] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-slate-400 gap-4 opacity-70">
-              <Target className="w-16 h-16 stroke-[1.5]" />
-              <p className="font-bold tracking-tight text-lg">Selecione um aluno para ver detalhes</p>
+            <div className="h-[600px] bg-slate-50 rounded-[3.5rem] border-2 border-dashed border-slate-200 flex flex-col items-center justify-center text-slate-500 gap-4">
+              <Target className="w-16 h-16 stroke-[1.5] text-blue-500/50" />
+              <p className="font-black tracking-tighter text-xl uppercase tracking-widest opacity-50">Selecione um aluno</p>
+              <p className="text-sm font-medium text-slate-400">para visualizar o histórico completo</p>
             </div>
           ) : (
             <div className="bg-white rounded-[3.5rem] shadow-2xl border border-slate-100 overflow-hidden animate-in zoom-in-95 duration-500">

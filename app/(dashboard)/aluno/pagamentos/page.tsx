@@ -45,9 +45,9 @@ export default async function AlunoPagamentosPage() {
       </div>
 
       <Card className="glass-card border-none overflow-hidden">
-        <CardHeader className="p-8 bg-slate-50/50 border-b border-slate-100/50">
-          <CardTitle className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center"><CreditCard className="w-4 h-4" /></div>
+        <CardHeader className="p-8 bg-slate-100/50 border-b border-slate-200">
+          <CardTitle className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20"><CreditCard className="w-4 h-4" /></div>
             Extrato Financeiro
           </CardTitle>
         </CardHeader>
@@ -55,7 +55,7 @@ export default async function AlunoPagamentosPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-100/50 text-slate-400">
+                <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/50">
                   <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Parcela</th>
                   <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">Valor</th>
                   <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">Vencimento</th>
@@ -73,8 +73,8 @@ export default async function AlunoPagamentosPage() {
                     </td>
                     <td className="py-6 px-4 font-black text-slate-900 text-sm tracking-tighter">{formatCurrency(p.valor)}</td>
                     <td className="py-6 px-4 text-xs font-bold text-slate-500">{formatDate(p.data_vencimento)}</td>
-                    <td className="py-6 px-4 text-xs font-bold text-slate-500">
-                      {p.data_pagamento ? formatDate(p.data_pagamento) : <span className="text-slate-200">Aguardando</span>}
+                    <td className="py-6 px-4 text-xs font-bold text-slate-600">
+                      {p.data_pagamento ? formatDate(p.data_pagamento) : <span className="text-slate-400 opacity-60 italic font-medium">Aguardando</span>}
                     </td>
                     <td className="py-6 px-8 text-right flex justify-end">
                       {p.status !== 'pago' ? (

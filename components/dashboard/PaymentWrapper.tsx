@@ -33,9 +33,9 @@ export default function PaymentWrapper({ paymentId, amount, email, nome }: Payme
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="sm:max-w-[600px] p-0 border-none overflow-hidden rounded-[2.5rem] bg-white">
-          <div className="bg-blue-600 h-2 w-full" />
-          <div className="p-8">
+        <DialogContent className="sm:max-w-[600px] p-0 border-none overflow-hidden rounded-[2.5rem] bg-white max-h-[95vh] flex flex-col">
+          <div className="bg-blue-600 h-2 w-full flex-shrink-0" />
+          <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
             <DialogHeader className="mb-6">
               <DialogTitle className="text-2xl font-black text-slate-900 tracking-tighter text-center">
                 Finalizar Pagamento
