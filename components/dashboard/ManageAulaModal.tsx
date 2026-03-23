@@ -79,7 +79,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     if (!formData.class_notes) return
     setSummarizing(true)
     try {
-      const { success, error } = await enviarResumoAI(aula.id)
+      const { success, error } = await enviarResumoAI(aula.id, formData.class_notes)
       if (success) {
         toast.success('Resumo gerado e enviado para o aluno!')
       } else {

@@ -5,7 +5,7 @@ import { generateLessonSummary } from '@/lib/ai'
 import { enviarResumoAulaAI } from '@/lib/resend'
 import { revalidatePath } from 'next/cache'
 
-export async function enviarResumoAI(aulaId: number) {
+export async function enviarResumoAI(aulaId: number, content?: string) {
   const supabase = await createClient()
 
   // 1. Fetch lesson and student details
@@ -24,13 +24,14 @@ export async function enviarResumoAI(aulaId: number) {
     throw new Error('E-mail do aluno não encontrado')
   }
 
-  if (!aula.class_notes) {
+  const currentNotes = content || aula.class_notes
+  if (!currentNotes) {
     throw new Error('Nenhuma nota de aula encontrada para gerar o resumo')
   }
 
   try {
     // 2. Generate summary via Gemini
-    const summaryMarkdown = await generateLessonSummary(aula.class_notes)
+    const summaryMarkdown = await generateLessonSummary(currentNotes)
 
     // 3. Send email via Resend
     const dataFmt = new Date(aula.data_hora).toLocaleString('pt-BR', {
