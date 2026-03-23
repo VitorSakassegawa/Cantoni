@@ -107,9 +107,9 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: { nam
     For tables inside the summaries, ensure they are perfectly valid Markdown with header separators (e.g., | :--- | :--- |).
     Do NOT add empty columns at the end. Use exactly the columns specified.
 
-    TEMPLATE (translated as needed):
-    ### 📘 **Resumo da Aula – APRO**
-    
+    TEMPLATE:
+    ### 📘 Resumo da Aula – APRO
+
     **Data:** [DD/MM/YYYY]  
     **Nível:** [Level]  
     **Tipo de Aula:** [Type]  
@@ -117,44 +117,47 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: { nam
 
     ---
     
-    ### 🎯 **Objetivo da Aula**
+    ### 🎯 Objetivo da Aula
     [One or two sentences describing the main goals]
 
     ---
 
-    ### 🧠 **O Que Cobrimos**
-    [Detailed bullet points. Use bolding for key concepts like **Gramática:** or **Discussão:**]
+    ### 🧠 O Que Cobrimos
+    * **[Topic Name]:** [Description].
+    * **[Topic Name]:** [Description].
 
     ---
 
-    ### 🗣️ **Vocabulário & Expressões**
-    *(Veja a seção interativa abaixo para praticar estas palavras)*
+    ### 🗣️ Vocabulário & Expressões
+    * **[Word]:** [Translation]. *Exemplo: [Example sentence]*
+    * **[Word]:** [Translation]. *Exemplo: [Example sentence]*
 
     ---
 
-    ### ❗ **Correções & Melhorias**
-    | Erro | Correção | Explicação |
-    | :--- | :--- | :--- |
-    | [Mistake] | [Corrected] | [Why] |
+    ### ❗ Correções & Melhorias
+    * **Erro:** "[Error]"
+      **Correção:** "[Correction]"
+      **Explicação:** [Explanation]
 
     ---
 
-    ### 🧩 **Padrão de Erros Comuns**
-    [Summary of recurring patterns]
+    ### 🧩 Padrão de Erros Comuns
+    * **[Pattern Name]:** [Description].
 
     ---
 
-    ### 📝 **Lição de Casa / Prática**
-    [Specific tasks]
+    ### 📝 Lição de Casa / Prática
+    1. [Task 1]
+    2. [Task 2]
 
     ---
 
-    ### 🔁 **Revisão da Aula Anterior**
-    [Points from previous lessons]
+    ### 🔁 Revisão da Aula Anterior
+    [Not observed | Description]
 
     ---
 
-    ### 🚀 **Plano para a Próxima Aula**
+    ### 🚀 Plano para a Próxima Aula
     [Goals for next time]
   `
   const response = await generateAIContent(prompt, PRIMARY_MODEL, 'application/json')
