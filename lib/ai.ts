@@ -108,39 +108,55 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: { nam
     Do NOT add empty columns at the end. Use exactly the columns specified.
 
     TEMPLATE (to be used for both summary_en and summary_pt, translated accordingly):
-    📘 Resumo da Aula – APRO
-    Data: [DD/MM/YYYY]  
-    Nível: [A1–C2]  
-    Tipo de Aula: [TYPE]  
-    Duração: [XX min]
+    📘 **Resumo da Aula – APRO**
+    
+    **Data:** [DD/MM/YYYY]  
+    **Nível:** [A1–C2]  
+    **Tipo de Aula:** [TYPE]  
+    **Duração:** [XX min]
 
     ---
-    🎯 Objetivo da Aula
+    
+    ### 🎯 Objetivo da Aula
     [One or two sentences describing the main goals]
 
-    🧠 O Que Cobrimos
+    ---
+
+    ### 🧠 O Que Cobrimos
     [Detailed bullet points of topics, grammar, and activities]
 
-    🗣️ Vocabulário & Expressões
+    ---
+
+    ### 🗣️ Vocabulário & Expressões
     | Palavra | Tradução | Exemplo |
     | :--- | :--- | :--- |
     | [Word] | [Translation] | [Example sentence] |
 
-    ❗ Correções & Melhorias
+    ---
+
+    ### ❗ Correções & Melhorias
     | Erro | Correção | Explicação |
     | :--- | :--- | :--- |
     | [Mistake] | [Corrected] | [Why/Context] |
 
-    🧩 Padrão de Erros Comuns
+    ---
+
+    ### 🧩 Padrão de Erros Comuns
     [Summary of recurring linguistic patterns or difficulties observed]
 
-    📝 Lição de Casa / Prática
+    ---
+
+    ### 📝 Lição de Casa / Prática
     [Description of specific tasks and due dates if mentioned]
 
-    🔁 Revisão da Aula Anterior
+    ---
+
+    ### 🔁 Revisão da Aula Anterior
     [Briefly mention points from previous lessons that were reviewed]
 
-    🚀 Plano para a Próxima Aula
+    ---
+
+    ### 🚀 Plano para a Próxima Aula
     [Topics or goals for the next session]
   `
   const response = await generateAIContent(prompt, PRIMARY_MODEL, 'application/json')

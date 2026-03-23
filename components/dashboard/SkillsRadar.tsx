@@ -12,13 +12,52 @@ interface SkillData {
   mes_referencia: string
 }
 
-const CEFR_BENCHMARKS: Record<string, Record<string, number>> = {
-  'A1': { speaking: 2, listening: 2, reading: 2, writing: 2 },
-  'A2': { speaking: 4, listening: 4, reading: 4, writing: 4 },
-  'B1': { speaking: 6, listening: 6, reading: 6, writing: 6 },
-  'B2': { speaking: 8, listening: 8, reading: 8, writing: 8 },
-  'C1': { speaking: 9, listening: 9, reading: 9, writing: 9 },
-  'C2': { speaking: 10, listening: 10, reading: 10, writing: 10 },
+const CEFR_BENCHMARKS: Record<string, any> = {
+  'A1': { speaking: 2, listening: 2, reading: 2, writing: 2, desc: "Compreende e usa expressões cotidianas para necessidades básicas." },
+  'A2': { speaking: 4, listening: 4, reading: 4, writing: 4, desc: "Comunica tarefas simples e troca informações sobre temas familiares." },
+  'B1': { speaking: 6, listening: 6, reading: 6, writing: 6, desc: "Lida com situações de viagem e produz textos simples sobre interesses." },
+  'B2': { speaking: 8, listening: 8, reading: 8, writing: 8, desc: "Compreende ideias complexas e interage com naturalidade e espontaneidade." },
+  'C1': { speaking: 9, listening: 9, reading: 9, writing: 9, desc: "Expressa-se de forma fluente e flexível em contextos sociais e profissionais." },
+  'C2': { speaking: 10, listening: 10, reading: 10, writing: 10, desc: "Compreende com facilidade e reconstrói argumentos de forma coerente." },
+}
+
+const SKILL_DESCRIPTIONS: Record<string, Record<string, string>> = {
+  A1: {
+    speaking: "Produção Oral: Interação básica e frases memorizadas.",
+    listening: "Compreensão Auditiva: Identifica palavras comuns em fala lenta.",
+    reading: "Leitura: Entende nomes e frases simples em avisos.",
+    writing: "Escrita: Preenche formulários e escreve cartões curtos.",
+  },
+  A2: {
+    speaking: "Produção Oral: Descreve família e ambiente imediato.",
+    listening: "Compreensão Auditiva: Entende anúncios e mensagens claras.",
+    reading: "Leitura: Localiza informações em anúncios e faturas.",
+    writing: "Escrita: Escreve notas e cartas pessoais curtas.",
+  },
+  B1: {
+    speaking: "Produção Oral: Relata experiências e justifica opiniões.",
+    listening: "Compreensão Auditiva: Entende pontos principais sobre trabalho/escola.",
+    reading: "Leitura: Compreende textos de interesse pessoal e profissional.",
+    writing: "Escrita: Textos articulados sobre temas familiares.",
+  },
+  B2: {
+    speaking: "Produção Oral: Argumenta e defende pontos de vista.",
+    listening: "Compreensão Auditiva: Entende palestras e discussões técnicas.",
+    reading: "Leitura: Lê artigos contemporâneos e prosa moderna.",
+    writing: "Escrita: Ensaios claros e detalhados sobre diversos temas.",
+  },
+  C1: {
+    speaking: "Produção Oral: Discurso estruturado e sem esforço aparente.",
+    listening: "Compreensão Auditiva: Entende fala implícita e humor/gírias.",
+    reading: "Leitura: Entende textos literários e técnicos complexos.",
+    writing: "Escrita: Textos complexos em estilo apropriado.",
+  },
+  C2: {
+    speaking: "Produção Oral: Expressa nuances sutis de significado.",
+    listening: "Compreensão Auditiva: Entende qualquer tipo de fala, mesmo rápida.",
+    reading: "Leitura: Interpreta criticamente textos de qualquer tipo.",
+    writing: "Escrita: Relatórios e resenhas críticas sofisticadas.",
+  }
 }
 
 export default function SkillsRadar({ data }: { data: SkillData[] }) {
@@ -169,15 +208,20 @@ export default function SkillsRadar({ data }: { data: SkillData[] }) {
                   ].map((skill) => {
                     const reached = (currentData as any)[skill.key] >= (CEFR_BENCHMARKS[selectedCefr] as any)[skill.key]
                     return (
-                      <li key={skill.key} className="flex items-center gap-2">
-                        {reached ? (
-                          <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
-                        ) : (
-                          <div className="w-3 h-3 rounded-full border border-slate-300 shrink-0" />
-                        )}
-                        <span className={reached ? 'text-slate-900' : 'text-slate-500 font-medium'}>
-                          {skill.label}
-                        </span>
+                      <li key={skill.key} className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2">
+                          {reached ? (
+                            <CheckCircle2 className="w-3 h-3 text-emerald-500 shrink-0" />
+                          ) : (
+                            <div className="w-3 h-3 rounded-full border border-slate-300 shrink-0" />
+                          )}
+                          <span className={reached ? 'text-slate-900' : 'text-slate-500 font-medium'}>
+                            {skill.label}
+                          </span>
+                        </div>
+                        <p className="text-[9px] text-slate-400 pl-5 font-medium leading-tight">
+                          {SKILL_DESCRIPTIONS[selectedCefr][skill.key]}
+                        </p>
                       </li>
                     )
                   })}

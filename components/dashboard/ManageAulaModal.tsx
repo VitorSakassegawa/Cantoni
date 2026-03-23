@@ -222,6 +222,20 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                         />
                       </div>
                     </div>
+
+                    {aiResult.vocabulary && aiResult.vocabulary.length > 0 && (
+                      <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-slate-400 mb-2 block font-black">Vocabulário Extraído (Banco de Palavras)</Label>
+                        <div className="flex flex-wrap gap-2">
+                          {aiResult.vocabulary.map((v: any, i: number) => (
+                            <Badge key={i} variant="outline" className="bg-white text-slate-600 border-slate-200 font-bold text-[10px] py-1">
+                              {v.word} <span className="mx-1 opacity-40">→</span> {v.translation}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     <div className="flex justify-end gap-2">
                       <Button 
                         variant="outline"
