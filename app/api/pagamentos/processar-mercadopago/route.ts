@@ -41,7 +41,9 @@ export async function POST(req: NextRequest) {
         status: mpResponse.status === 'approved' ? 'pago' : 'pendente',
         data_pagamento: mpResponse.status === 'approved' ? new Date().toISOString().split('T')[0] : null,
         // If it's PIX, store the QR code/copy-paste info
-        pix_qrcode_base64: mpResponse.point_of_interaction?.transaction_data?.qr_code_base64 || null,
+        pix_qrcode_base64: mpResponse.point_of_interaction?.transaction_data?.qr_code_base64 
+          ? `data:image/png;base64,${mpResponse.point_of_interaction.transaction_data.qr_code_base64}` 
+          : null,
         pix_copia_cola: mpResponse.point_of_interaction?.transaction_data?.qr_code || null
       })
       .eq('id', paymentId)

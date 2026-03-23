@@ -40,6 +40,9 @@ export function validateMPSignature(xSignature: string, resourceId: string, secr
     
     if (!isValid) {
       console.error('MP Auth: Signature mismatch!');
+      console.error(`MP Auth: Generated Digest: ${digest}`);
+      console.error(`MP Auth: Received v1: ${v1}`);
+      console.error(`MP Auth: Manifest used: ${manifest}`);
     }
     
     return isValid;

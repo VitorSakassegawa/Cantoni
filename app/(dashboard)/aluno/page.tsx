@@ -316,7 +316,9 @@ export default async function AlunoDashboard() {
                     <div className="relative group/qr">
                       <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover/qr:opacity-40 transition" />
                       <img
-                        src={pagamentoPendente.pix_qrcode_base64}
+                        src={pagamentoPendente.pix_qrcode_base64.startsWith('data:') 
+                          ? pagamentoPendente.pix_qrcode_base64 
+                          : `data:image/png;base64,${pagamentoPendente.pix_qrcode_base64}`}
                         alt="QR Code PIX"
                         className="relative w-36 h-36 border-4 border-white rounded-2xl bg-white shadow-xl"
                       />
