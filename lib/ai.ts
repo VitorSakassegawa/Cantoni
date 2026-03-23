@@ -11,11 +11,11 @@ function getGenAI() {
 }
 
 // Mode discovery confirmed: gemini-2.5-flash and gemini-2.0-flash are available
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-flash'
-const STABLE_FALLBACK = 'gemini-1.5-pro'
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-pro'
+const STABLE_FALLBACK = 'gemini-1.5-flash-latest'
 
-const AUDIO_MODEL = 'gemini-1.5-flash'
+const AUDIO_MODEL = 'gemini-2.5-flash'
 const AUDIO_FALLBACK = 'gemini-1.5-pro'
 
 export async function generateAIContent(
