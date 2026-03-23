@@ -195,7 +195,7 @@ function pcmToBase64Wav(pcmBase64: string): string {
   return wavBuffer.toString('base64')
 }
 
-export async function generateAIAudio(text: string, modelName: string = "gemini-2.5-flash-preview-tts"): Promise<string | null> {
+export async function generateAIAudio(text: string, modelName: string = PRIMARY_MODEL): Promise<string | null> {
   console.log(`--- Starting generateAIAudio with ${modelName} ---`)
   try {
     const genAI = getGenAI()
@@ -225,6 +225,17 @@ export async function generateAIAudio(text: string, modelName: string = "gemini-
     throw new Error('No audio data in response')
   } catch (error: any) {
     console.error(`Error with ${modelName}:`, error.message || error)
+
+    // Fallback logic
+    if (modelName === PRIMARY_MODEL) {
+      console.log(`Retrying audio with fallback: ${FALLBACK_MODEL}`)
+      return generateAIAudio(text, FALLBACK_MODEL)
+    }
+    if (modelName === FALLBACK_MODEL) {
+      console.log(`Retrying audio with stable fallback: ${STABLE_FALLBACK}`)
+      return generateAIAudio(text, STABLE_FALLBACK)
+    }
+
     return null
   } finally {
     console.log(`--- Finished generateAIAudio (${modelName}) ---`)

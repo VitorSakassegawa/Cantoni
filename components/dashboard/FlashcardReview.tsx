@@ -6,7 +6,9 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { BrainCircuit, CheckCircle2, ChevronRight, Volume2, RotateCcw } from 'lucide-react'
 import { updateFlashcardReview } from '@/lib/actions/flashcards'
+import { getAIVocabularyAudio } from '@/lib/actions/audio'
 import { toast } from 'sonner'
+import { Loader2 } from 'lucide-react'
 
 interface Flashcard {
   id: string
@@ -20,6 +22,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
   const [isFlipped, setIsFlipped] = useState(false)
   const [completed, setCompleted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [audioLoading, setAudioLoading] = useState(false)
 
   if (cards.length === 0 || completed) {
     return (
@@ -60,10 +63,24 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
     }
   }
 
-  const speak = (text: string) => {
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
-    window.speechSynthesis.speak(utterance)
+  const speak = async (text: string) => {
+    setAudioLoading(true)
+    try {
+      const res = await getAIVocabularyAudio(text)
+      if (res.success && res.audio) {
+        const audio = new Audio(`data:audio/wav;base64,${res.audio}`)
+        await audio.play()
+      } else {
+        throw new Error('AI TTS failed')
+      }
+    } catch (err) {
+      console.warn('Falling back to browser TTS:', err)
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'en-US'
+      window.speechSynthesis.speak(utterance)
+    } finally {
+      setAudioLoading(false)
+    }
   }
 
   return (
@@ -97,9 +114,10 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
               <Badge className="absolute top-6 left-6 bg-slate-100 text-slate-400 border-none font-black text-[9px] uppercase tracking-widest">FRENTE</Badge>
               <button 
                 onClick={(e) => { e.stopPropagation(); speak(currentCard.word); }}
-                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center border border-slate-100"
+                disabled={audioLoading}
+                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center border border-slate-100 disabled:opacity-50"
               >
-                <Volume2 className="w-4 h-4" />
+                {audioLoading ? <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> : <Volume2 className="w-4 h-4" />}
               </button>
               <p className="text-4xl font-black text-blue-900 tracking-tighter leading-tight">{currentCard.word}</p>
               <div className="mt-8 flex items-center justify-center gap-2 text-indigo-400 group-hover:text-indigo-600 transition-colors animate-bounce">
@@ -115,9 +133,10 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
               <Badge className="absolute top-6 left-6 bg-indigo-600 text-white border-none font-black text-[9px] uppercase tracking-widest shadow-lg shadow-indigo-600/20">VERSO</Badge>
               <button 
                 onClick={(e) => { e.stopPropagation(); speak(currentCard.word); }}
-                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white text-indigo-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center border border-indigo-100 shadow-sm shadow-indigo-200/20"
+                disabled={audioLoading}
+                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white text-indigo-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center border border-indigo-100 shadow-sm shadow-indigo-200/20 disabled:opacity-50"
               >
-                <Volume2 className="w-4 h-4" />
+                {audioLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Volume2 className="w-4 h-4" />}
               </button>
               <div className="space-y-6">
                 <div>
