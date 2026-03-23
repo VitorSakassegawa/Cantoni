@@ -44,9 +44,20 @@ export async function updateLessonHomework(aulaId: number, data: {
 }) {
   const supabase = await createClient()
   
+  const updateData = { ...data }
+  if (updateData.homework_due_date === '') {
+    updateData.homework_due_date = undefined // Use undefined so it's not and stays as is, or null to clear it
+  }
+
+  // To be safe and actually clear it if the user deleted the date:
+  const sanitizedData = {
+    ...data,
+    homework_due_date: data.homework_due_date === '' ? null : data.homework_due_date
+  }
+
   const { error } = await supabase
     .from('aulas')
-    .update(data)
+    .update(sanitizedData)
     .eq('id', aulaId)
 
   if (error) throw error
