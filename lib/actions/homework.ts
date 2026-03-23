@@ -1,9 +1,9 @@
-'use client'
+'use server'
 
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 
 export async function uploadHomeworkImage(aulaId: number, file: File) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const fileExt = file.name.split('.').pop()
   const fileName = `${aulaId}-${Math.random()}.${fileExt}`
@@ -42,7 +42,7 @@ export async function updateLessonHomework(aulaId: number, data: {
   class_notes?: string,
   ai_summary_sent?: boolean
 }) {
-  const supabase = createClient()
+  const supabase = await createClient()
   
   const { error } = await supabase
     .from('aulas')

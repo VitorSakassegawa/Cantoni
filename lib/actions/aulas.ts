@@ -1,3 +1,4 @@
+'use server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { requireAuth, requireProfessor } from '@/lib/auth'
 import { ContractService } from '@/lib/services/contract-service'
