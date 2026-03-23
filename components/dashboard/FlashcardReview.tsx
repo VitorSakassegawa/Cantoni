@@ -60,6 +60,12 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
     }
   }
 
+  const speak = (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-US'
+    window.speechSynthesis.speak(utterance)
+  }
+
   return (
     <div className="max-w-xl mx-auto space-y-8">
       {/* Session Progress */}
@@ -87,8 +93,14 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
           
           {/* Front */}
           <div className="absolute inset-0 backface-hidden">
-            <Card className="w-full h-full glass-card border-none flex flex-col items-center justify-center p-10 text-center shadow-2xl">
+            <Card className="w-full h-full glass-card border-none flex flex-col items-center justify-center p-10 text-center shadow-2xl relative overflow-hidden">
               <Badge className="absolute top-6 left-6 bg-slate-100 text-slate-400 border-none font-black text-[9px] uppercase tracking-widest">FRENTE</Badge>
+              <button 
+                onClick={(e) => { e.stopPropagation(); speak(currentCard.word); }}
+                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-slate-50 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 transition-all flex items-center justify-center border border-slate-100"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
               <p className="text-4xl font-black text-blue-900 tracking-tighter leading-tight">{currentCard.word}</p>
               <div className="mt-8 flex items-center justify-center gap-2 text-indigo-400 group-hover:text-indigo-600 transition-colors animate-bounce">
                 <RotateCcw className="w-4 h-4" />
@@ -99,8 +111,14 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
 
           {/* Back */}
           <div className="absolute inset-0 backface-hidden rotate-y-180">
-            <Card className="w-full h-full bg-indigo-50 border-none flex flex-col items-center justify-center p-10 text-center shadow-2xl">
+            <Card className="w-full h-full bg-indigo-50 border-none flex flex-col items-center justify-center p-10 text-center shadow-2xl relative overflow-hidden">
               <Badge className="absolute top-6 left-6 bg-indigo-600 text-white border-none font-black text-[9px] uppercase tracking-widest shadow-lg shadow-indigo-600/20">VERSO</Badge>
+              <button 
+                onClick={(e) => { e.stopPropagation(); speak(currentCard.word); }}
+                className="absolute top-6 right-6 w-10 h-10 rounded-xl bg-white text-indigo-400 hover:text-indigo-600 hover:bg-white transition-all flex items-center justify-center border border-indigo-100 shadow-sm shadow-indigo-200/20"
+              >
+                <Volume2 className="w-4 h-4" />
+              </button>
               <div className="space-y-6">
                 <div>
                   <p className="text-[10px] font-black text-indigo-400 uppercase tracking-widest mb-1">Tradução</p>
@@ -142,7 +160,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
             </button>
           ))}
         </div>
-        <div className="flex justify-between text-[8px] font-black text-slate-300 uppercase tracking-widest mt-4 px-2">
+        <div className="flex justify-between text-[9px] font-black text-slate-500 uppercase tracking-widest mt-4 px-2">
           <span>ERREI COMPLETAMENTE</span>
           <span>DOMINADO</span>
         </div>
