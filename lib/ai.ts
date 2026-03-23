@@ -11,9 +11,12 @@ function getGenAI() {
 }
 
 // Mode discovery confirmed: gemini-2.5-flash and gemini-2.0-flash are available
-const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite-preview'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
-const STABLE_FALLBACK = 'gemini-2.0-flash'
+const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-2.0-flash'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-flash'
+const STABLE_FALLBACK = 'gemini-1.5-pro'
+
+const AUDIO_MODEL = 'gemini-1.5-flash'
+const AUDIO_FALLBACK = 'gemini-1.5-pro'
 
 export async function generateAIContent(
   prompt: string, 
@@ -198,10 +201,11 @@ function pcmToBase64Wav(pcmBase64: string): string {
   return wavBuffer.toString('base64')
 }
 
-export async function generateAIAudio(text: string, modelName: string = PRIMARY_MODEL): Promise<string | null> {
+export async function generateAIAudio(text: string, modelName: string = AUDIO_MODEL): Promise<string | null> {
   console.log(`--- Starting generateAIAudio with ${modelName} ---`)
   try {
     const genAI = getGenAI()
+    // Using v1beta for AUDIO modality support
     const model = genAI.getGenerativeModel({ model: modelName })
 
     const audioPromise = model.generateContent({
@@ -229,14 +233,10 @@ export async function generateAIAudio(text: string, modelName: string = PRIMARY_
   } catch (error: any) {
     console.error(`Error with ${modelName}:`, error.message || error)
 
-    // Fallback logic
-    if (modelName === PRIMARY_MODEL) {
-      console.log(`Retrying audio with fallback: ${FALLBACK_MODEL}`)
-      return generateAIAudio(text, FALLBACK_MODEL)
-    }
-    if (modelName === FALLBACK_MODEL) {
-      console.log(`Retrying audio with stable fallback: ${STABLE_FALLBACK}`)
-      return generateAIAudio(text, STABLE_FALLBACK)
+    // Fallback logic for audio
+    if (modelName === AUDIO_MODEL) {
+      console.log(`Retrying audio with fallback: ${AUDIO_FALLBACK}`)
+      return generateAIAudio(text, AUDIO_FALLBACK)
     }
 
     return null
