@@ -9,6 +9,7 @@ import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
 import { Video, BookOpen, Calendar, User, CreditCard, Umbrella, Flame, Trophy, Layers, BrainCircuit, ExternalLink, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
+import SkillsRadar from '@/components/dashboard/SkillsRadar'
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
@@ -80,6 +81,13 @@ export default async function AlunoDashboard() {
     .select('id')
     .eq('aluno_id', user.id)
     .lte('next_review', now)
+
+  const { data: avaliacoes } = await supabase
+    .from('avaliacoes_habilidades')
+    .select('*')
+    .eq('aluno_id', user.id)
+    .order('mes_referencia', { ascending: false })
+    .limit(2)
 
   return (
     <div className="space-y-10 pb-16 animate-fade-in">
@@ -358,42 +366,29 @@ export default async function AlunoDashboard() {
           <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
           <CardHeader className="pb-4">
             <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              <Trophy className="w-4 h-4" /> Evolução CEFR
+              <Trophy className="w-4 h-4" /> Mapeamento de Skills
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-8">
-            <div className="flex justify-between items-center px-2">
+            <SkillsRadar data={avaliacoes || []} />
+            
+            <div className="flex justify-between items-center px-2 pt-6 border-t border-slate-100">
               {cefrLevels.map((level, idx) => {
                 const isCompleted = idx < currentCefrIdx
                 const isCurrent = idx === currentCefrIdx
                 return (
                   <div key={level} className="flex flex-col items-center gap-3 relative">
                     <div className={`
-                      w-10 h-10 rounded-xl flex items-center justify-center text-[10px] font-black transition-all duration-500
-                      ${isCompleted ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 scale-110' : 
+                      w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-black transition-all duration-500
+                      ${isCompleted ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/10 scale-100' : 
                         isCurrent ? 'bg-white border-2 border-blue-600 text-blue-600 shadow-xl scale-125 z-10' : 
                         'bg-slate-100 text-slate-400'}
                     `}>
                       {level}
                     </div>
-                    {idx < cefrLevels.length - 1 && (
-                      <div className={`absolute left-10 top-5 w-[calc(100%-10px)] h-[2px] ${idx < currentCefrIdx ? 'bg-blue-600' : 'bg-slate-100'}`} style={{ width: '4rem' }} />
-                    )}
                   </div>
                 )
               })}
-            </div>
-            <div className="bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Layers className="w-5 h-5 text-blue-500" />
-                <div>
-                  <p className="text-[10px] font-black text-blue-900 uppercase tracking-widest">Nível Atual</p>
-                  <p className="text-sm font-bold text-blue-600">{profile?.cefr_level || 'A1'} - {profile?.nivel || 'Basics'}</p>
-                </div>
-              </div>
-              <Badge className="bg-blue-600 text-white border-none text-[8px] font-black uppercase tracking-widest">
-                Próximo Nível: {cefrLevels[currentCefrIdx + 1] || 'Expert'}
-              </Badge>
             </div>
           </CardContent>
         </Card>
