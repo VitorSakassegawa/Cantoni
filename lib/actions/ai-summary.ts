@@ -88,7 +88,8 @@ export async function enviarResumoAI(aulaId: number, summaries: { pt: string, en
       .update({ 
         ai_summary_sent: true,
         ai_summary_pt: summaryPt,
-        ai_summary_en: summaryEn
+        ai_summary_en: summaryEn,
+        vocabulary_json: vocabulary
       })
       .eq('id', aulaId)
 

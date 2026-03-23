@@ -29,6 +29,55 @@ import {
 import { Label } from '@/components/ui/label'
 import { Select } from "@/components/ui/select"
 import { format } from 'date-fns'
+import { Eye, HelpCircle } from 'lucide-react'
+
+function VocabularyCard({ word, translation, example }: { word: string, translation: string, example?: string }) {
+  const [revealed, setRevealed] = useState(false)
+
+  return (
+    <div 
+      onClick={() => setRevealed(true)}
+      className={`p-4 rounded-2xl border transition-all cursor-pointer relative overflow-hidden group ${
+        revealed 
+          ? 'bg-white border-slate-200 shadow-sm' 
+          : 'bg-slate-50 border-slate-100 hover:border-amber-200 hover:bg-amber-50/30'
+      }`}
+    >
+      <div className="flex flex-col gap-1">
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Palavra/Expressão</span>
+        <span className="text-sm font-bold text-slate-900">{word}</span>
+      </div>
+
+      <div className="mt-4 flex flex-col gap-1">
+        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Significado</span>
+        {revealed ? (
+          <div className="animate-in fade-in slide-in-from-top-1 duration-300">
+            <span className="text-sm font-medium text-emerald-600 italic">"{translation}"</span>
+            {example && (
+              <p className="text-[10px] text-slate-500 mt-2 leading-relaxed bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
+                {example}
+              </p>
+            )}
+            <Badge variant="outline" className="mt-3 bg-red-50 text-red-600 border-red-100 text-[8px] font-black uppercase px-1.5 py-0">
+              Não sabia esta
+            </Badge>
+          </div>
+        ) : (
+          <div className="h-10 flex items-center gap-2 text-slate-300 group-hover:text-amber-400 transition-colors">
+            <Eye className="w-4 h-4" />
+            <span className="text-[10px] font-black uppercase tracking-widest">Clique para revelar</span>
+          </div>
+        )}
+      </div>
+      
+      {!revealed && (
+        <div className="absolute top-2 right-2 opacity-20">
+          <HelpCircle className="w-4 h-4 text-slate-400" />
+        </div>
+      )}
+    </div>
+  )
+}
 
 interface Props {
   aula: Aula
@@ -492,11 +541,35 @@ export default function AulaRow({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4 prose-table:border-collapse prose-th:bg-slate-50 prose-th:text-[10px] prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-td:text-xs prose-td:font-medium">
+            <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4 prose-table:border-collapse prose-th:bg-slate-50 prose-th:text-[10px] prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-td:text-xs prose-td:font-medium mb-10">
               <ReactMarkdown>
                 {summaryLang === 'pt' ? (aula as any).ai_summary_pt : (aula as any).ai_summary_en}
               </ReactMarkdown>
             </div>
+
+            {(aula as any).vocabulary_json && (aula as any).vocabulary_json.length > 0 && (
+              <div className="space-y-6 pt-6 border-t border-slate-100 pb-8">
+                <div>
+                  <h4 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1">
+                    <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                      <HelpCircle className="w-3.5 h-3.5" />
+                    </div>
+                    Vocabulário da Aula
+                  </h4>
+                  <p className="text-[10px] text-slate-500 font-medium">
+                    {summaryLang === 'pt' 
+                      ? 'Tente lembrar o significado antes de clicar. Ao revelar, você assume que não sabia a palavra.' 
+                      : 'Try to remember the meaning before clicking. By revealing, you assume you didn\'t know the word.'}
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {(aula as any).vocabulary_json.map((v: any, i: number) => (
+                    <VocabularyCard key={i} {...v} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100">
             <Button 
