@@ -1,17 +1,14 @@
-'use server'
-
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { requireAuth, requireProfessor } from '@/lib/auth'
+import { ContractService } from '@/lib/services/contract-service'
 import { deletarEventoCalendar, criarEventoMeet } from '@/lib/google-calendar'
-import { enviarAulaContabilizadaComoDada, enviarConfirmacaoRemarcacao } from '@/lib/resend'
+import { enviarConfirmacaoRemarcacao } from '@/lib/resend'
 import { horasAteAula, formatDateTime } from '@/lib/utils'
 import { startOfMonth } from 'date-fns'
 import { revalidatePath } from 'next/cache'
 
 export async function cancelarAula(aulaId: number) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Não autenticado')
-
+  const user = await requireAuth()
   const serviceSupabase = await createServiceClient()
 
   const { data: aula, error: fetchError } = await serviceSupabase
@@ -24,10 +21,10 @@ export async function cancelarAula(aulaId: number) {
 
   const contrato = aula.contratos as any
   
-  // Segurança: Professor ou o dono da aula
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  const isProfessor = profile?.role === 'professor'
-  if (!isProfessor && contrato.aluno_id !== user.id) {
+  // Use shared profile check if needed, or rely on RLS if possible (but we're in service mode)
+  const isProfessor = (await createClient()).from('profiles').select('role').eq('id', user.id).single().then((r: any) => r.data?.role === 'professor')
+  
+  if (!(await isProfessor) && contrato.aluno_id !== user.id) {
     throw new Error('Sem permissão para cancelar esta aula')
   }
 
@@ -41,22 +38,16 @@ export async function cancelarAula(aulaId: number) {
   if (avisoSuficiente) {
     novoStatus = 'cancelada'
     if (aula.google_event_id) {
-      try { await deletarEventoCalendar(aula.google_event_id) } catch (e) {
-        console.error('Error deleting calendar event:', e)
+      const res = await deletarEventoCalendar(aula.google_event_id)
+      if (!res.success) {
+        console.warn('cancelarAula: Google Calendar sync failed, but proceeding with DB update.')
       }
     }
   } else {
+    const result = await ContractService.cancelarAulaComPenalidade(aulaId, contrato, aula)
     novoStatus = 'dada'
-    aulasDadas++
-    aulasRestantes--
-
-    await enviarAulaContabilizadaComoDada({
-      to: contrato.profiles.email,
-      nomeAluno: contrato.profiles.full_name,
-      dataHora: formatDateTime(aula.data_hora),
-      aulasDadas,
-      aulasRestantes,
-    })
+    aulasDadas = result.aulasDadas
+    aulasRestantes = result.aulasRestantes
   }
 
   const { error: updateError } = await serviceSupabase
@@ -122,7 +113,7 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
   let novoMeetLink = ''
 
   try {
-    const { eventId, meetLink } = await criarEventoMeet({
+    const resMeet = await criarEventoMeet({
       titulo: `🇺🇸 Aula de Inglês — ${aluno.full_name} (REMARCADA)`,
       dataHora: new Date(novaDataHora),
       emailAluno: aluno.email,
@@ -139,11 +130,16 @@ Instruções:
 - Clique no link do Google Meet abaixo para entrar na aula.
       `.trim()
     })
-    novoEventId = eventId
-    novoMeetLink = meetLink
+    
+    if (resMeet.success) {
+      novoEventId = resMeet.eventId
+      novoMeetLink = resMeet.meetLink
 
-    if (aula.google_event_id) {
-      await deletarEventoCalendar(aula.google_event_id)
+      if (aula.google_event_id) {
+        await deletarEventoCalendar(aula.google_event_id)
+      }
+    } else {
+      console.warn('remarcarAula: Google Meet creation failed. Proceeding without link.')
     }
   } catch (e) {
     console.error('Google Calendar error:', e)
@@ -265,93 +261,18 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
 }
 
 export async function concluirAula(aulaId: number) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Não autenticado')
+  await requireProfessor()
+  const result = await ContractService.concluirAula(aulaId, '')
+  
+  if (result.alreadyConcluded) return { success: true }
 
-  const serviceSupabase = await createServiceClient()
-
-  // Get aula and contract info
-  const { data: aula, error: fetchError } = await serviceSupabase
-    .from('aulas')
-    .select('*, contratos(*, profiles(*))')
-    .eq('id', aulaId)
-    .single()
-
-  if (fetchError || !aula) throw new Error('Aula não encontrada')
-  if (aula.status === 'dada') throw new Error('Aula já consta como concluída')
-
-  const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (prof?.role !== 'professor') throw new Error('Apenas o professor pode concluir aulas manualmente')
-
-  const contrato = aula.contratos as any
-  const aulasDadas = (contrato.aulas_dadas || 0) + 1
-  const aulasRestantes = Math.max(0, (contrato.aulas_restantes || 0) - 1)
-
-  // Financial Dependency check
-  let statusFinanceiro = contrato.status_financeiro || 'em_dia'
-  const freqSemana = contrato.planos?.freq_semana || 1
-  const lessonsPerCycle = freqSemana * 4 // 4 or 8
-
-  // Ad Hoc vs Weekly check
-  const isAdHoc = !contrato.planos?.freq_semana 
-  const thresholdReached = isAdHoc 
-    ? aulasDadas >= contrato.aulas_totais
-    : aulasDadas % lessonsPerCycle === 0
-
-  if (thresholdReached) {
-    // Check payments
-    const { data: payments } = await serviceSupabase
-      .from('pagamentos')
-      .select('*')
-      .eq('contrato_id', contrato.id)
-      .order('parcela_num', { ascending: true })
-
-    const currentCycle = isAdHoc ? 1 : Math.ceil(aulasDadas / lessonsPerCycle)
-    const currentPayment = payments?.find((p: any) => p.parcela_num === currentCycle)
-
-    if (!currentPayment || currentPayment.status !== 'pago') {
-      statusFinanceiro = 'pendente'
-      
-      // Notify Student
-      try {
-        const { enviarAlertaPendenciaFinanceira } = await import('@/lib/resend')
-        await enviarAlertaPendenciaFinanceira({
-          to: contrato.profiles.email,
-          nomeAluno: contrato.profiles.full_name,
-          aulasConcluidas: aulasDadas,
-          proximosPassos: `Identificamos que a aula de número ${aulasDadas} foi concluída, atingindo o limite do seu ciclo atual. Para continuar com as próximas aulas sem interrupção, por favor realize o pagamento da parcela correspondente no painel financeiro.`
-        })
-      } catch (err) {
-        console.error('Error sending financial alert email:', err)
-      }
-    }
-  }
-
-  // Update aula and contract
-  const { error: updateAulaErr } = await serviceSupabase
-    .from('aulas')
-    .update({ status: 'dada' })
-    .eq('id', aulaId)
-
-  if (updateAulaErr) throw new Error('Erro ao atualizar aula')
-
-  const { error: updateContratoErr } = await serviceSupabase
-    .from('contratos')
-    .update({ 
-      aulas_dadas: aulasDadas,
-      aulas_restantes: aulasRestantes,
-      status_financeiro: statusFinanceiro
-    })
-    .eq('id', contrato.id)
-
-  if (updateContratoErr) throw new Error('Erro ao atualizar contrato')
+  const contrato = (await (await createServiceClient()).from('aulas').select('contratos(aluno_id)').eq('id', aulaId).single()).data?.contratos as any
 
   revalidatePath('/professor')
-  revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
+  if (contrato?.aluno_id) revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
   revalidatePath('/aluno')
 
-  return { success: true, aulasDadas, aulasRestantes, statusFinanceiro }
+  return { success: true, ...result }
 }
 
 

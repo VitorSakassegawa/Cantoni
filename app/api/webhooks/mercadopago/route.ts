@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { payment } from '@/lib/mercadopago'
 import { createServiceClient } from '@/lib/supabase/server'
 import { validateMPSignature } from '@/lib/mercadopago-auth'
+import { ContractService } from '@/lib/services/contract-service'
 
 export async function POST(req: NextRequest) {
   try {
@@ -57,6 +58,19 @@ export async function POST(req: NextRequest) {
           console.error('Webhook: Update local payment error:', updateErr)
         } else {
           console.log(`Webhook: Payment ${externalReference} updated to ${status}`)
+          
+          // Sync contract status if payment was approved
+          if (localStatus === 'pago') {
+            const { data: paymentRecord } = await supabase
+              .from('pagamentos')
+              .select('contrato_id')
+              .eq('id', externalReference)
+              .single()
+            
+            if (paymentRecord?.contrato_id) {
+              await ContractService.syncFinancialStatus(paymentRecord.contrato_id)
+            }
+          }
         }
       }
     }

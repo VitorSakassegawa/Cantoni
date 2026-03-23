@@ -50,6 +50,7 @@ export async function createServiceClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !key) {
+    console.error('❌ Supabase Service Role Key missing!')
     throw new Error('Supabase URL or Service Role Key missing. Check environment variables.')
   }
 

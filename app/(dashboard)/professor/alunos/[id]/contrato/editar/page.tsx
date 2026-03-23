@@ -1,63 +1,42 @@
-'use client'
-export const dynamic = 'force-dynamic'
-
-import { useState, useEffect, use } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/server'
 import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import ContratoForm from '@/components/dashboard/ContratoForm'
+import { notFound } from 'next/navigation'
 
-export default function ProfessorEditContratoPage({ 
+export default async function ProfessorEditContratoPage({ 
   params,
   searchParams
 }: { 
   params: Promise<{ id: string }>,
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
 }) {
-  const { id: aluno_id } = use(params)
-  const resolvedSearchParams = use(searchParams)
-  const contratoId = resolvedSearchParams.id
+  const { id: aluno_id } = await params
+  const { id: contratoId } = await searchParams
   
-  const router = useRouter()
-  const supabase = createClient()
-  const [loading, setLoading] = useState(true)
-  const [contrato, setContrato] = useState<any>(null)
-
-  useEffect(() => {
-    async function loadContrato() {
-      let query = supabase
-        .from('contratos')
-        .select('*')
-        .eq('aluno_id', aluno_id)
-      
-      if (contratoId) {
-        query = query.eq('id', contratoId)
-      } else {
-        query = query.eq('status', 'ativo')
-      }
-
-      const { data } = await query.maybeSingle()
-      
-      if (data) {
-        setContrato(data)
-      }
-      setLoading(false)
-    }
-    loadContrato()
-  }, [aluno_id, contratoId, supabase])
-
-  if (loading) return (
-    <div className="max-w-4xl mx-auto p-20 text-center animate-pulse">
-      <div className="text-slate-400 font-black uppercase tracking-widest text-xs">Carregando Detalhes do Contrato...</div>
-    </div>
-  )
+  const supabase = await createClient()
   
-  if (!contrato) return (
-    <div className="max-w-4xl mx-auto p-20 text-center">
-      <div className="text-slate-400 font-bold italic">Nenhum contrato ativo encontrado para este aluno.</div>
-    </div>
-  )
+  let query = supabase
+    .from('contratos')
+    .select('*')
+    .eq('aluno_id', aluno_id)
+  
+  if (contratoId) {
+    query = query.eq('id', contratoId)
+  } else {
+    query = query.eq('status', 'ativo')
+  }
+
+  const { data: contrato, error } = await query.maybeSingle()
+  
+  if (error || !contrato) {
+    return (
+      <div className="max-w-4xl mx-auto p-20 text-center">
+        <div className="text-slate-400 font-bold italic">Nenhum contrato ativo encontrado para este aluno.</div>
+        <Link href={`/professor/alunos/${aluno_id}`} className="mt-4 inline-block text-blue-500 hover:underline">Voltar</Link>
+      </div>
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -75,7 +54,6 @@ export default function ProfessorEditContratoPage({
       <ContratoForm 
         alunoId={aluno_id}
         initialData={contrato}
-        onSuccess={() => router.push(`/professor/alunos/${aluno_id}`)}
       />
     </div>
   )
