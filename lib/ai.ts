@@ -68,6 +68,29 @@ export async function generateLessonSummary(notes: string) {
   return generateAIContent(prompt)
 }
 
+export async function generateLessonAnalysis(notes: string) {
+  const prompt = `
+    Analise as seguintes notas de aula de inglês e gere um objeto JSON contendo:
+    1. "summary": Um resumo formatado em Markdown extremamente motivador e profissional para o aluno (o mesmo formato do summary tradicional).
+    2. "vocabulary": Uma lista de objetos { "word": string, "translation": string, "example": string } contendo as novas palavras ou expressões chave identificadas na aula.
+    
+    Notas da Aula:
+    "${notes}"
+    
+    IMPORTANTE: Responda APENAS com o objeto JSON puro, sem blocos de código ou texto adicional.
+    
+    Exemplo de formato esperado:
+    {
+      "summary": "# Resumo...\\n\\n**Principais Tópicos**...",
+      "vocabulary": [
+        { "word": "Break the ice", "translation": "Quebrar o gelo", "example": "It's hard to break the ice in a new job." }
+      ]
+    }
+  `
+  const response = await generateAIContent(prompt, PRIMARY_MODEL, 'application/json')
+  return extractAndParseJSON(response)
+}
+
 function pcmToBase64Wav(pcmBase64: string): string {
   const pcmBuffer = Buffer.from(pcmBase64, 'base64')
   

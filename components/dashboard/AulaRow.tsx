@@ -13,6 +13,8 @@ import ManageAulaModal from './ManageAulaModal'
 import RescheduleCalendar from './RescheduleCalendar'
 import ReviewRescheduleModal from './ReviewRescheduleModal'
 import { uploadHomeworkImage } from '@/lib/actions/homework'
+import ReactMarkdown from 'react-markdown'
+import { Sparkles } from 'lucide-react'
 
 import { toast } from 'sonner'
 import { cancelarAula, remarcarAula, solicitarRemarcacao, rejeitarRemarcacao } from '@/lib/actions/aulas'
@@ -73,6 +75,7 @@ export default function AulaRow({
   const [uploading, setUploading] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
+  const [showAIModal, setShowAIModal] = useState(false)
 
   useEffect(() => {
     const aulaIdParam = searchParams.get('aulaId')
@@ -277,6 +280,15 @@ export default function AulaRow({
                 </Badge>
               )}
               
+              {(aula as any).ai_summary && (
+                <button 
+                  onClick={() => setShowAIModal(true)}
+                  className="flex items-center gap-1.5 text-[9px] text-amber-600 hover:text-amber-700 font-black uppercase tracking-widest bg-amber-50/50 px-2 py-1 rounded-md transition-all border border-amber-100/50"
+                >
+                  <Sparkles className="w-3 h-3" /> Resumo da IA
+                </button>
+              )}
+
               {(aula as any).homework_image_url ? (
                 <a href={(aula as any).homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/50 px-2 py-1 rounded-md transition-all">
                   <Paperclip className="w-3 h-3" /> Ver Anexo
@@ -443,6 +455,37 @@ export default function AulaRow({
         onOpenChange={setShowManageModal}
         onSuccess={() => window.location.reload()}
       />
+
+      <Dialog open={showAIModal} onOpenChange={setShowAIModal}>
+        <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          <div className="bg-amber-500 h-2 w-full flex-shrink-0" />
+          <div className="p-8 overflow-y-auto flex-1 custom-scrollbar">
+            <DialogHeader className="mb-6">
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center">
+                  <Sparkles className="w-5 h-5" />
+                </div>
+                Resumo da Aula (IA)
+              </DialogTitle>
+              <DialogDescription className="text-slate-500 font-medium">
+                Conteúdo sumarizado automaticamente pela inteligência artificial.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4">
+              <ReactMarkdown>{(aula as any).ai_summary}</ReactMarkdown>
+            </div>
+          </div>
+          <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100">
+            <Button 
+              className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest"
+              onClick={() => setShowAIModal(false)}
+            >
+              Fechar Resumo
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

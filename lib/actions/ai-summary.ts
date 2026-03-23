@@ -1,7 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { generateLessonSummary } from '@/lib/ai'
+import { generateLessonAnalysis } from '@/lib/ai'
 import { enviarResumoAulaAI } from '@/lib/resend'
 import { revalidatePath } from 'next/cache'
 
@@ -30,8 +30,8 @@ export async function enviarResumoAI(aulaId: number, content?: string) {
   }
 
   try {
-    // 2. Generate summary via Gemini
-    const summaryMarkdown = await generateLessonSummary(currentNotes)
+    // 2. Generate summary and vocabulary via Gemini
+    const { summary, vocabulary } = await generateLessonAnalysis(currentNotes)
 
     // 3. Send email via Resend
     const dataFmt = new Date(aula.data_hora).toLocaleString('pt-BR', {
@@ -46,16 +46,32 @@ export async function enviarResumoAI(aulaId: number, content?: string) {
       to: student.email,
       nomeAluno: student.full_name,
       dataHora: dataFmt,
-      resumoMarkdown: summaryMarkdown
+      resumoMarkdown: summary
     })
 
-    // 4. Update lesson status
+    // 4. Update lesson with summary and status
     const { error: updateError } = await supabase
       .from('aulas')
-      .update({ ai_summary_sent: true })
+      .update({ 
+        ai_summary_sent: true,
+        ai_summary: summary
+      })
       .eq('id', aulaId)
 
     if (updateError) throw updateError
+
+    // 5. Add new vocabulary to student's flashcards
+    if (vocabulary && Array.isArray(vocabulary) && vocabulary.length > 0) {
+      const flashcardsToInsert = vocabulary.map((v: any) => ({
+        aluno_id: student.id,
+        word: v.word,
+        translation: v.translation,
+        example: v.example || '',
+        next_review: new Date().toISOString()
+      }))
+
+      await supabase.from('flashcards').insert(flashcardsToInsert)
+    }
 
     revalidatePath('/professor')
     return { success: true }
