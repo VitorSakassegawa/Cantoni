@@ -2,6 +2,8 @@
 
 import { requireLessonAccess } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+import { registerStudentActivity } from '@/lib/streak'
 
 export async function uploadHomeworkImage(aulaId: number, file: File) {
   await requireLessonAccess(aulaId, {
@@ -38,6 +40,19 @@ export async function uploadHomeworkImage(aulaId: number, file: File) {
     throw updateError
   }
 
+  const { data: aula } = await supabase
+    .from('aulas')
+    .select('contratos(aluno_id)')
+    .eq('id', aulaId)
+    .single()
+
+  const alunoId = (aula as any)?.contratos?.aluno_id
+  if (alunoId) {
+    await registerStudentActivity(alunoId)
+  }
+
+  revalidatePath('/aluno')
+  revalidatePath('/aluno/aulas')
   return { success: true, url: publicUrl }
 }
 

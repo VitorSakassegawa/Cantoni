@@ -2,6 +2,7 @@
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { registerStudentActivity } from '@/lib/streak'
 
 /**
  * SuperMemo-2 (SM-2) Algorithm simplified
@@ -51,6 +52,7 @@ export async function addFlashcard(word: string, translation: string, example?: 
   })
 
   if (error) throw error
+  await registerStudentActivity(user.id)
   revalidatePath('/aluno')
   revalidatePath('/aluno/flashcards')
   return { success: true }
@@ -91,6 +93,7 @@ export async function updateFlashcardReview(id: string, quality: number) {
 
   if (updateError) throw updateError
 
+  await registerStudentActivity(user.id)
   revalidatePath('/aluno')
   revalidatePath('/aluno/flashcards')
   return { success: true }

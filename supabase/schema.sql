@@ -370,3 +370,44 @@ begin
   where id = p_contrato_id;
 end;
 $$;
+
+create or replace function register_student_activity_streak(
+  p_student_id uuid,
+  p_activity_date date default current_date
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_last_activity date;
+  v_streak integer;
+begin
+  select last_activity_date, coalesce(streak_count, 0)
+  into v_last_activity, v_streak
+  from profiles
+  where id = p_student_id
+  for update;
+
+  if not found then
+    return;
+  end if;
+
+  if v_last_activity = p_activity_date then
+    return;
+  end if;
+
+  if v_last_activity is not null and v_last_activity > p_activity_date then
+    return;
+  end if;
+
+  update profiles
+  set streak_count = case
+      when v_last_activity = p_activity_date - interval '1 day' then greatest(v_streak, 1) + 1
+      else 1
+    end,
+    last_activity_date = p_activity_date
+  where id = p_student_id;
+end;
+$$;

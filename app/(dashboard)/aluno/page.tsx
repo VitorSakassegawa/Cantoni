@@ -11,6 +11,7 @@ import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import { buildStudentNotifications, getDaysRemaining } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
+import { STUDENT_STREAK_RULES } from '@/lib/streak-utils'
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
@@ -262,6 +263,23 @@ export default async function AlunoDashboard() {
           />
         )}
       </div>
+
+      <Card className="glass-card overflow-hidden">
+        <CardHeader className="pb-4 border-b border-slate-100">
+          <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
+            <Flame className="w-4 h-4 text-amber-500" /> Como Funciona Seu Streak
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <div className="grid gap-3 md:grid-cols-2">
+            {STUDENT_STREAK_RULES.map((rule) => (
+              <div key={rule} className="rounded-2xl bg-amber-50/70 border border-amber-100 px-4 py-3 text-sm font-medium text-amber-900/80">
+                {rule}
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <Card className="glass-card group relative overflow-hidden">
