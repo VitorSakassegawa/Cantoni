@@ -46,3 +46,15 @@ export async function registerStudentActivity(studentId: string, activityDate?: 
 
   return { success: true }
 }
+
+export async function registerStudentActivityBestEffort(studentId?: string | null, activityDate?: string) {
+  if (!studentId) {
+    return
+  }
+
+  try {
+    await registerStudentActivity(studentId, activityDate)
+  } catch (error) {
+    console.error('Student streak update failed:', error)
+  }
+}

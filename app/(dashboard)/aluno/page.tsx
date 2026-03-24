@@ -30,12 +30,12 @@ export default async function AlunoDashboard() {
     .from('contratos')
     .select('*, planos(*)')
     .eq('aluno_id', user.id)
-    .eq('status', 'ativo')
+    .neq('status', 'cancelado')
     .order('data_inicio', { ascending: false })
 
-  const contratosAtivos = contratos || []
-  const contrato = contratosAtivos[0] || null
-  const contratoIds = contratosAtivos.map((item: any) => item.id)
+  const contratosVigentes = contratos || []
+  const contrato = contratosVigentes.find((item: any) => item.status === 'ativo') || contratosVigentes[0] || null
+  const contratoIds = contratosVigentes.map((item: any) => item.id)
   const now = new Date().toISOString()
 
   const { data: proximaAula } = await supabase

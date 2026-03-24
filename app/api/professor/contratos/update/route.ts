@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
     dias_da_semana,
     descontoValor,
     descontoPercentual,
+    numParcelas,
   } = await request.json()
 
   if (!id) {
@@ -83,18 +84,19 @@ export async function POST(request: NextRequest) {
 
   const { data: allPagamentos } = await supabase
     .from('pagamentos')
-    .select('id')
+    .select('id, status, parcela_num, valor')
     .eq('contrato_id', id)
 
-  const totalParcels = allPagamentos?.length || 6
-  const valorParcela = Number((vFloat / totalParcels).toFixed(2))
-  const { data: pendentes } = await supabase
-    .from('pagamentos')
-    .select('id, parcela_num')
-    .eq('contrato_id', id)
-    .eq('status', 'pendente')
+  const unpaidPayments = (allPagamentos || []).filter((pagamento: any) => pagamento.status !== 'pago')
+  const paidAmount = (allPagamentos || [])
+    .filter((pagamento: any) => pagamento.status === 'pago')
+    .reduce((acc: number, pagamento: any) => acc + Number(pagamento.valor || 0), 0)
+  const remainingAmount = Math.max(0, vFloat - paidAmount)
+  const valorParcela = unpaidPayments.length > 0
+    ? Number((remainingAmount / unpaidPayments.length).toFixed(2))
+    : 0
 
-  await mapWithConcurrency(pendentes || [], 5, async (pagamento: any) => {
+  await mapWithConcurrency(unpaidPayments, 5, async (pagamento: any) => {
     const parcelaNumero = Number(pagamento.parcela_num)
     if (!Number.isFinite(parcelaNumero) || parcelaNumero <= 0) {
       return
@@ -137,6 +139,7 @@ export async function POST(request: NextRequest) {
       semester: semestre,
       year: ano,
       paymentMethod: forma_pagamento,
+      requestedInstallments: numParcelas ?? null,
     },
   })
 

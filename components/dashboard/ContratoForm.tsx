@@ -549,11 +549,21 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             </div>
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nº de Parcelas</Label>
-              <Select value={numParcelas} onChange={e => setNumParcelas(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
+              <Select
+                value={numParcelas}
+                onChange={e => setNumParcelas(e.target.value)}
+                disabled={isEdit}
+                className={`h-14 rounded-2xl border-slate-100 font-bold ${isEdit ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50 text-slate-900'}`}
+              >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
                   <option key={n} value={n.toString()}>{n === 1 ? '1x (À vista)' : `${n}x parcelado`}</option>
                 ))}
               </Select>
+              {isEdit && (
+                <p className="text-[9px] text-slate-400 font-bold pl-1 uppercase tracking-tight italic">
+                  O parcelamento atual é mantido em edições para evitar inconsistência com parcelas já emitidas.
+                </p>
+              )}
             </div>
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Pagamento</Label>

@@ -3,7 +3,7 @@
 import { requireLessonAccess } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
-import { registerStudentActivity } from '@/lib/streak'
+import { registerStudentActivityBestEffort } from '@/lib/streak'
 
 export async function uploadHomeworkImage(aulaId: number, file: File) {
   await requireLessonAccess(aulaId, {
@@ -48,7 +48,7 @@ export async function uploadHomeworkImage(aulaId: number, file: File) {
 
   const alunoId = (aula as any)?.contratos?.aluno_id
   if (alunoId) {
-    await registerStudentActivity(alunoId)
+    await registerStudentActivityBestEffort(alunoId)
   }
 
   revalidatePath('/aluno')

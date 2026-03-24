@@ -2,6 +2,10 @@ import { createServiceClient } from '../supabase/server'
 import { formatDateTime } from '../utils'
 import { enviarAulaContabilizadaComoDada } from '../resend'
 
+function hasOpenExpectedPayments(payments: any[], currentCycle: number) {
+  return payments.some((payment: any) => payment.parcela_num <= currentCycle && payment.status !== 'pago')
+}
+
 export class ContractService {
   /**
    * Concludes a lesson, updating contract counts and checking financial state.
@@ -41,9 +45,7 @@ export class ContractService {
         .order('parcela_num', { ascending: true })
 
       const currentCycle = isAdHoc ? 1 : Math.ceil(aulasDadas / lessonsPerCycle)
-      const currentPayment = payments?.find((p: any) => p.parcela_num === currentCycle)
-
-      if (!currentPayment || currentPayment.status !== 'pago') {
+      if (hasOpenExpectedPayments(payments || [], currentCycle)) {
         statusFinanceiro = 'pendente'
         
         try {
@@ -132,10 +134,9 @@ export class ContractService {
       .from('pagamentos')
       .select('*')
       .eq('contrato_id', contratoId)
-      .eq('parcela_num', currentCycle)
-      .single()
+      .order('parcela_num', { ascending: true })
 
-    const newStatus = (payments?.status === 'pago') ? 'em_dia' : 'pendente'
+    const newStatus = hasOpenExpectedPayments(payments || [], currentCycle) ? 'pendente' : 'em_dia'
 
     if (newStatus !== contrato.status_financeiro) {
       await supabase

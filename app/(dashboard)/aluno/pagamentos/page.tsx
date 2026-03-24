@@ -24,7 +24,7 @@ export default async function AlunoPagamentosPage() {
     .from('contratos')
     .select('id, data_inicio, data_fim, status')
     .eq('aluno_id', user.id)
-    .eq('status', 'ativo')
+    .neq('status', 'cancelado')
     .order('data_inicio', { ascending: false })
 
   const contratoIds = (contratos || []).map((contrato: any) => contrato.id)

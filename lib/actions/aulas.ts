@@ -9,7 +9,7 @@ import { deletarEventoCalendar, criarEventoMeet } from '@/lib/google-calendar'
 import { enviarConfirmacaoRemarcacao } from '@/lib/resend'
 import { horasAteAula, formatDateTime } from '@/lib/utils'
 import { logActivityBestEffort } from '@/lib/activity-log'
-import { registerStudentActivity } from '@/lib/streak'
+import { registerStudentActivityBestEffort } from '@/lib/streak'
 
 export async function cancelarAula(aulaId: number) {
   const { user, aula, contrato, isProfessor, serviceSupabase } = await requireLessonAccess(aulaId, {
@@ -297,7 +297,7 @@ export async function concluirAula(aulaId: number) {
   })
 
   if (contrato?.contratos?.aluno_id) {
-    await registerStudentActivity(contrato.contratos.aluno_id)
+    await registerStudentActivityBestEffort(contrato.contratos.aluno_id)
   }
 
   return { success: true, ...result }
