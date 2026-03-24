@@ -1,7 +1,10 @@
-import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { requireProfessor } from '@/lib/auth'
+import { createClient } from '@/lib/supabase/server'
 
 export async function GET(request: Request) {
+  await requireProfessor()
+
   const { searchParams } = new URL(request.url)
   const alunoId = searchParams.get('alunoId')
 
@@ -10,7 +13,6 @@ export async function GET(request: Request) {
   }
 
   const supabase = await createClient()
-
   const { data, error } = await supabase
     .from('placement_results')
     .select('*')

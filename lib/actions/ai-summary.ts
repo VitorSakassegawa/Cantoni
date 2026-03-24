@@ -1,59 +1,57 @@
 'use server'
 
+import { revalidatePath } from 'next/cache'
+import { requireLessonAccess } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { generateLessonAnalysisV2 } from '@/lib/ai'
 import { enviarResumoAulaAI } from '@/lib/resend'
-import { revalidatePath } from 'next/cache'
 
 export async function getAIAnalysisV2(aulaId: number, content?: string) {
-  const supabase = await createClient()
+  const { aula, contrato, isProfessor } = await requireLessonAccess(aulaId, {
+    allowProfessor: true,
+    allowStudentOwner: false,
+  })
 
-  const { data: aula, error: aulaError } = await supabase
-    .from('aulas')
-    .select('*, contratos(*, profiles(*))')
-    .eq('id', aulaId)
-    .single()
-
-  if (aulaError || !aula) throw new Error('Aula não encontrada')
-
-  let student = (aula.contratos as any)?.profiles
-  if (Array.isArray(aula.contratos)) {
-    student = (aula.contratos[0] as any)?.profiles
+  if (!isProfessor) {
+    throw new Error('Apenas professores podem gerar resumos por IA')
   }
+
+  let student = contrato?.profiles
   if (Array.isArray(student)) {
     student = student[0]
   }
+
   const currentNotes = content || aula.class_notes
-  if (!currentNotes) throw new Error('Nenhuma nota encontrada')
+  if (!currentNotes) {
+    throw new Error('Nenhuma nota encontrada')
+  }
 
   const studentInfo = {
     name: student?.full_name || 'Student',
     level: student?.cefr_level || student?.nivel || 'A1',
     lessonType: student?.tipo_aula || 'General English',
-    date: new Date(aula.data_hora).toLocaleDateString('pt-BR')
+    date: new Date(aula.data_hora).toLocaleDateString('pt-BR'),
   }
 
-  return await generateLessonAnalysisV2(currentNotes, studentInfo)
+  return generateLessonAnalysisV2(currentNotes, studentInfo)
 }
 
-export async function enviarResumoAI(aulaId: number, summaries: { pt: string, en: string }, vocabulary?: any[]) {
+export async function enviarResumoAI(
+  aulaId: number,
+  summaries: { pt: string; en: string },
+  vocabulary?: any[]
+) {
+  const { aula, contrato, isProfessor } = await requireLessonAccess(aulaId, {
+    allowProfessor: true,
+    allowStudentOwner: false,
+  })
+
+  if (!isProfessor) {
+    throw new Error('Apenas professores podem enviar resumos por IA')
+  }
+
   const supabase = await createClient()
-
-  // 1. Fetch lesson and student details
-  const { data: aula, error: aulaError } = await supabase
-    .from('aulas')
-    .select('*, contratos(*, profiles(id, full_name, email))')
-    .eq('id', aulaId)
-    .single()
-
-  if (aulaError || !aula) {
-    throw new Error('Aula não encontrada')
-  }
-
-  let student = (aula.contratos as any)?.profiles
-  if (Array.isArray(aula.contratos)) {
-    student = (aula.contratos[0] as any)?.profiles
-  }
+  let student = contrato?.profiles
   if (Array.isArray(student)) {
     student = student[0]
   }
@@ -63,58 +61,49 @@ export async function enviarResumoAI(aulaId: number, summaries: { pt: string, en
   }
 
   try {
-    // 2. Use provided summaries
     const { pt: summaryPt, en: summaryEn } = summaries
-
-    // 3. Send email via Resend
     const dataFmt = new Date(aula.data_hora).toLocaleString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
     })
 
     await enviarResumoAulaAI({
       to: student.email,
       nomeAluno: student.full_name,
       dataHora: dataFmt,
-      resumoMarkdown: summaryPt
+      resumoMarkdown: summaryPt,
     })
 
-    // 4. Update lesson with summaries and status
     const { error: updateError } = await supabase
       .from('aulas')
-      .update({ 
+      .update({
         ai_summary_sent: true,
         ai_summary_pt: summaryPt,
         ai_summary_en: summaryEn,
-        vocabulary_json: vocabulary
+        vocabulary_json: vocabulary,
       })
       .eq('id', aulaId)
 
-    if (updateError) throw updateError
+    if (updateError) {
+      throw updateError
+    }
 
-    // 5. Add new vocabulary to student's flashcards
-    console.log('Vocabulary received for flashcards:', vocabulary)
     if (vocabulary && Array.isArray(vocabulary) && vocabulary.length > 0) {
-      const flashcardsToInsert = vocabulary.map((v: any) => ({
+      const flashcardsToInsert = vocabulary.map((item: any) => ({
         aluno_id: student.id,
-        word: v.word,
-        translation: v.translation,
-        example: v.example || '',
-        next_review: new Date().toISOString()
+        word: item.word,
+        translation: item.translation,
+        example: item.example || '',
+        next_review: new Date().toISOString(),
       }))
 
-      console.log('Inserting flashcards:', flashcardsToInsert.length)
       const { error: flashError } = await supabase.from('flashcards').insert(flashcardsToInsert)
       if (flashError) {
         console.error('Error inserting flashcards:', flashError)
-      } else {
-        console.log('Flashcards inserted successfully')
       }
-    } else {
-      console.log('No vocabulary found to insert into flashcards')
     }
 
     revalidatePath('/professor')

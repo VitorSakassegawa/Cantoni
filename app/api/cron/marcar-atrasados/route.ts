@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
+import { getCronSecret } from '@/lib/env'
 
 export async function GET(request: NextRequest) {
   const token = request.headers.get('x-cron-secret')
-  if (token !== process.env.INFINITEPAY_WEBHOOK_SECRET) {
+  if (token !== getCronSecret()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -13,7 +14,6 @@ export async function GET(request: NextRequest) {
   )
 
   const hoje = new Date().toISOString().split('T')[0]
-
   const { data, error } = await supabase
     .from('pagamentos')
     .update({ status: 'atrasado' })

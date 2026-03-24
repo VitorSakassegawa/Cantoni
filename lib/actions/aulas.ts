@@ -1,33 +1,19 @@
 'use server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { requireAuth, requireProfessor } from '@/lib/auth'
+
+import { startOfMonth } from 'date-fns'
+import { revalidatePath } from 'next/cache'
+import { requireLessonAccess, requireProfessor } from '@/lib/auth'
+import { createServiceClient } from '@/lib/supabase/server'
 import { ContractService } from '@/lib/services/contract-service'
 import { deletarEventoCalendar, criarEventoMeet } from '@/lib/google-calendar'
 import { enviarConfirmacaoRemarcacao } from '@/lib/resend'
 import { horasAteAula, formatDateTime } from '@/lib/utils'
-import { startOfMonth } from 'date-fns'
-import { revalidatePath } from 'next/cache'
 
 export async function cancelarAula(aulaId: number) {
-  const user = await requireAuth()
-  const serviceSupabase = await createServiceClient()
-
-  const { data: aula, error: fetchError } = await serviceSupabase
-    .from('aulas')
-    .select('*, contratos(aluno_id, aulas_dadas, aulas_restantes, profiles(full_name, email))')
-    .eq('id', aulaId)
-    .single()
-
-  if (fetchError || !aula) throw new Error('Aula não encontrada')
-
-  const contrato = aula.contratos as any
-  
-  // Use shared profile check if needed, or rely on RLS if possible (but we're in service mode)
-  const isProfessor = (await createClient()).from('profiles').select('role').eq('id', user.id).single().then((r: any) => r.data?.role === 'professor')
-  
-  if (!(await isProfessor) && contrato.aluno_id !== user.id) {
-    throw new Error('Sem permissão para cancelar esta aula')
-  }
+  const { aula, contrato, serviceSupabase } = await requireLessonAccess(aulaId, {
+    allowProfessor: true,
+    allowStudentOwner: true,
+  })
 
   const horas = horasAteAula(aula.data_hora)
   const avisoSuficiente = horas >= 2
@@ -59,7 +45,9 @@ export async function cancelarAula(aulaId: number) {
     })
     .eq('id', aulaId)
 
-  if (updateError) throw new Error('Erro ao atualizar status da aula')
+  if (updateError) {
+    throw new Error('Erro ao atualizar status da aula')
+  }
 
   revalidatePath('/professor')
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
@@ -69,29 +57,13 @@ export async function cancelarAula(aulaId: number) {
 }
 
 export async function remarcarAula(aulaId: number, novaDataHora: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Não autenticado')
+  const { aula, contrato, isProfessor, serviceSupabase } = await requireLessonAccess(aulaId, {
+    allowProfessor: true,
+    allowStudentOwner: true,
+  })
 
-  const serviceSupabase = await createServiceClient()
-
-  const { data: aula, error: fetchError } = await serviceSupabase
-    .from('aulas')
-    .select('*, contratos(*, planos(*), profiles(*))')
-    .eq('id', aulaId)
-    .single()
-
-  if (fetchError || !aula) throw new Error('Aula não encontrada')
-
-  const contrato = aula.contratos as any
   const plano = contrato.planos
   const aluno = contrato.profiles
-
-  const isProfessor = aluno.id !== user.id
-  if (!isProfessor && contrato.aluno_id !== user.id) {
-    throw new Error('Sem permissão')
-  }
-
   const mes = startOfMonth(new Date(aula.data_hora))
   const mesStr = mes.toISOString().split('T')[0]
 
@@ -103,8 +75,8 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
     .single()
 
   const qtdAtual = remarcacao?.quantidade || 0
-  // Se for uma aula que já estava pendente (recesso ou aguardando decisão), não conta como nova remarcação do aluno
-  const isResolvingConflict = aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
+  const isResolvingConflict =
+    aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
   if (!isProfessor && !isResolvingConflict && qtdAtual >= plano.remarca_max_mes) {
     throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
@@ -115,23 +87,23 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
 
   try {
     const resMeet = await criarEventoMeet({
-      titulo: `🇺🇸 Aula de Inglês — ${aluno.full_name} (REMARCADA)`,
+      titulo: `Aula de Ingles - ${aluno.full_name} (REMARCADA)`,
       dataHora: new Date(novaDataHora),
       emailAluno: aluno.email,
       emailProfessor: process.env.RESEND_FROM_EMAIL!,
       descricao: `
-📌 DETALHES DA AULA (REMARCADA)
-👤 Aluno: ${aluno.full_name}
-📚 Nível: ${aluno.nivel || 'N/A'}
+DETALHES DA AULA (REMARCADA)
+Aluno: ${aluno.full_name}
+Nivel: ${aluno.nivel || 'N/A'}
 
-🔗 [Ver no Sistema](${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${contrato.aluno_id})
+[Ver no Sistema](${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${contrato.aluno_id})
 
 ---
-Instruções:
+Instrucoes:
 - Clique no link do Google Meet abaixo para entrar na aula.
-      `.trim()
+      `.trim(),
     })
-    
+
     if (resMeet.success) {
       novoEventId = resMeet.eventId
       novoMeetLink = resMeet.meetLink
@@ -142,14 +114,11 @@ Instruções:
     } else {
       console.warn('remarcarAula: Google Meet creation failed. Proceeding without link.')
     }
-  } catch (e) {
-    console.error('Google Calendar error:', e)
+  } catch (error) {
+    console.error('Google Calendar error:', error)
   }
 
-  await serviceSupabase
-    .from('aulas')
-    .update({ status: 'remarcada' })
-    .eq('id', aulaId)
+  await serviceSupabase.from('aulas').update({ status: 'remarcada' }).eq('id', aulaId)
 
   const { data: novaAula, error: insertError } = await serviceSupabase
     .from('aulas')
@@ -161,23 +130,26 @@ Instruções:
       status: 'agendada',
       remarcada_de: aulaId,
       meet_link: novoMeetLink,
-      motivo_remarcacao: aula.motivo_remarcacao 
+      motivo_remarcacao: aula.motivo_remarcacao
         ? `${aula.motivo_remarcacao} (Original: ${formatDateTime(aula.data_hora)})`
-        : `Solicitado pelo aluno (Original: ${formatDateTime(aula.data_hora)})`
+        : `Solicitado pelo aluno (Original: ${formatDateTime(aula.data_hora)})`,
     })
     .select()
     .single()
 
-  if (insertError) throw new Error('Erro ao criar nova aula')
+  if (insertError) {
+    throw new Error('Erro ao criar nova aula')
+  }
 
   if (!isResolvingConflict) {
-    await serviceSupabase
-      .from('remarcacoes_mes')
-      .upsert({
+    await serviceSupabase.from('remarcacoes_mes').upsert(
+      {
         aluno_id: contrato.aluno_id,
         mes: mesStr,
         quantidade: qtdAtual + 1,
-      }, { onConflict: 'aluno_id,mes' })
+      },
+      { onConflict: 'aluno_id,mes' }
+    )
   }
 
   await enviarConfirmacaoRemarcacao({
@@ -196,28 +168,17 @@ Instruções:
 }
 
 export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Não autenticado')
+  const { user, aula, contrato, serviceSupabase } = await requireLessonAccess(aulaId, {
+    allowProfessor: false,
+    allowStudentOwner: true,
+  })
 
-  const serviceSupabase = await createServiceClient()
-
-  const { data: aula, error: fetchError } = await serviceSupabase
-    .from('aulas')
-    .select('*, contratos(*, planos(*), profiles(*))')
-    .eq('id', aulaId)
-    .single()
-
-  if (fetchError || !aula) throw new Error('Aula não encontrada')
-
-  const contrato = aula.contratos as any
   const plano = contrato.planos
 
   if (contrato.aluno_id !== user.id) {
     throw new Error('Apenas o aluno pode solicitar remarcação')
   }
 
-  // Verificar limite de remarcações
   const mes = startOfMonth(new Date(aula.data_hora))
   const mesStr = mes.toISOString().split('T')[0]
 
@@ -229,7 +190,8 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
     .single()
 
   const qtdAtual = remarcacao?.quantidade || 0
-  const isResolvingConflict = aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
+  const isResolvingConflict =
+    aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
   if (!isResolvingConflict && qtdAtual >= plano.remarca_max_mes) {
     throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
@@ -237,11 +199,11 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
 
   const isoData = new Date(novaDataHora).toISOString()
 
-  const { data: verify, error: updateError } = await serviceSupabase
+  const { error: updateError } = await serviceSupabase
     .from('aulas')
-    .update({ 
+    .update({
       status: 'pendente_remarcacao',
-      data_hora_solicitada: isoData 
+      data_hora_solicitada: isoData,
     })
     .eq('id', aulaId)
     .select()
@@ -251,8 +213,6 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
     console.error('[solicitarRemarcacao] Erro no update:', updateError)
     throw new Error(`Erro ao solicitar remarcação: ${updateError.message}`)
   }
-
-
 
   revalidatePath('/professor')
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
@@ -264,48 +224,54 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
 export async function concluirAula(aulaId: number) {
   await requireProfessor()
   const result = await ContractService.concluirAula(aulaId, '')
-  
-  if (result.alreadyConcluded) return { success: true }
 
-  const contrato = (await (await createServiceClient()).from('aulas').select('contratos(aluno_id)').eq('id', aulaId).single()).data?.contratos as any
+  if (result.alreadyConcluded) {
+    return { success: true }
+  }
+
+  const contrato = (
+    await (await createServiceClient())
+      .from('aulas')
+      .select('contratos(aluno_id)')
+      .eq('id', aulaId)
+      .single()
+  ).data?.contratos as any
 
   revalidatePath('/professor')
-  if (contrato?.aluno_id) revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
+  if (contrato?.aluno_id) {
+    revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
+  }
   revalidatePath('/aluno')
 
   return { success: true, ...result }
 }
 
-
 export async function rejeitarRemarcacao(aulaId: number, justificativa: string) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Não autenticado')
-
-  const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (prof?.role !== 'professor') throw new Error('Apenas o professor pode rejeitar remarcações')
-
+  await requireProfessor()
   const serviceSupabase = await createServiceClient()
 
-  // Get aula to find aluno_id for revalidation
   const { data: aula } = await serviceSupabase
     .from('aulas')
     .select('*, contratos(aluno_id)')
     .eq('id', aulaId)
     .single()
 
-  if (!aula) throw new Error('Aula não encontrada')
+  if (!aula) {
+    throw new Error('Aula não encontrada')
+  }
 
   const { error } = await serviceSupabase
     .from('aulas')
     .update({
       status: 'pendente_remarcacao_rejeitada',
       justificativa_professor: justificativa,
-      data_hora_solicitada: null
+      data_hora_solicitada: null,
     })
     .eq('id', aulaId)
 
-  if (error) throw new Error('Erro ao rejeitar remarcação')
+  if (error) {
+    throw new Error('Erro ao rejeitar remarcação')
+  }
 
   revalidatePath('/professor')
   if (aula.contratos?.aluno_id) {

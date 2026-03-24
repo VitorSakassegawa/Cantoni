@@ -1,37 +1,67 @@
 import { z } from 'zod'
 
 const envSchema = z.object({
-  // Supabase
-  NEXT_PUBLIC_SUPABASE_URL: z.string().url(),
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1),
-  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(), // Only on server
-
-  // Google Calendar
-  GOOGLE_CLIENT_ID: z.string().min(1),
-  GOOGLE_CLIENT_SECRET: z.string().min(1),
-  GOOGLE_REDIRECT_URI: z.string().url(),
-  GOOGLE_REFRESH_TOKEN: z.string().min(1),
+  NEXT_PUBLIC_SUPABASE_URL: z.string().url().optional(),
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(1).optional(),
+  SUPABASE_SERVICE_ROLE_KEY: z.string().min(1).optional(),
+  GOOGLE_CLIENT_ID: z.string().min(1).optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
+  GOOGLE_REDIRECT_URI: z.string().url().optional(),
+  GOOGLE_REFRESH_TOKEN: z.string().min(1).optional(),
   GOOGLE_CALENDAR_ID: z.string().min(1).optional().default('primary'),
-
-  // Resend
-  RESEND_API_KEY: z.string().min(1),
-  RESEND_FROM_EMAIL: z.string().email(),
-
-  // Mercado Pago
-  MERCADOPAGO_ACCESS_TOKEN: z.string().min(1),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  RESEND_FROM_EMAIL: z.string().email().optional(),
+  MERCADOPAGO_ACCESS_TOKEN: z.string().min(1).optional(),
   MERCADOPAGO_WEBHOOK_SECRET: z.string().min(1).optional(),
-
-  // App
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),
+  CRON_SECRET: z.string().min(1).optional(),
 })
 
-// Validate at runtime
-const parsed = envSchema.safeParse(process.env)
+type Env = z.infer<typeof envSchema>
 
-if (!parsed.success) {
-  console.error('❌ Invalid environment variables:', parsed.error.flatten().fieldErrors)
-  // During build we might not have all envs, so we don't throw yet
-  // but in production/runtime we should be aware
+function buildRawEnv() {
+  return {
+    ...process.env,
+    CRON_SECRET:
+      process.env.CRON_SECRET ??
+      process.env.INFINITEPAY_WEBHOOK_SECRET ??
+      process.env.MERCADOPAGO_WEBHOOK_SECRET,
+  }
 }
 
-export const env = parsed.success ? parsed.data : process.env as any as z.infer<typeof envSchema>
+let cachedEnv: Env | null = null
+
+function shouldAllowPartialEnv() {
+  return process.env.NODE_ENV !== 'production'
+}
+
+export function getEnv(options?: { allowPartial?: boolean }) {
+  if (cachedEnv) {
+    return cachedEnv
+  }
+
+  const parsed = envSchema.safeParse(buildRawEnv())
+
+  if (!parsed.success) {
+    console.error('Invalid environment variables:', parsed.error.flatten().fieldErrors)
+
+    if (!(options?.allowPartial ?? shouldAllowPartialEnv())) {
+      throw new Error('Invalid environment variables for runtime execution')
+    }
+
+    return buildRawEnv() as unknown as Env
+  }
+
+  cachedEnv = parsed.data
+  return cachedEnv
+}
+
+export function getCronSecret() {
+  const secret = getEnv().CRON_SECRET
+  if (!secret) {
+    throw new Error('CRON_SECRET is required for cron routes')
+  }
+  return secret
+}
+
+export const env = getEnv({ allowPartial: true })

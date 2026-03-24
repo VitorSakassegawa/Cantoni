@@ -1,196 +1,302 @@
 -- ============================================================
--- Teacher Gabriel Cantoni — Schema Supabase
--- Run this in the Supabase SQL Editor
+-- Teacher Gabriel Cantoni - Supabase schema snapshot
 -- ============================================================
 
+create extension if not exists pgcrypto;
+
 -- PROFILES
-CREATE TABLE IF NOT EXISTS profiles (
-  id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  role TEXT CHECK (role IN ('professor','aluno')) DEFAULT 'aluno',
-  full_name TEXT NOT NULL,
-  email TEXT UNIQUE NOT NULL,
-  phone TEXT,
-  nivel TEXT CHECK (nivel IN ('iniciante','basico','intermediario','avancado','conversacao','certificado')),
-  tipo_aula TEXT CHECK (tipo_aula IN ('regular','conversacao','certificado')),
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists profiles (
+  id uuid primary key references auth.users(id) on delete cascade,
+  role text not null default 'aluno' check (role in ('professor', 'aluno')),
+  full_name text not null,
+  email text unique not null,
+  phone text,
+  cpf text,
+  birth_date date,
+  data_inscricao date,
+  nivel text check (nivel in ('iniciante', 'basico', 'intermediario', 'avancado', 'conversacao', 'certificado')),
+  tipo_aula text check (tipo_aula in ('regular', 'conversacao', 'certificado')),
+  cefr_level text check (cefr_level in ('A1', 'A2', 'B1', 'B2', 'C1')),
+  placement_test_completed boolean not null default false,
+  created_at timestamptz not null default now()
 );
 
 -- PLANOS
-CREATE TABLE IF NOT EXISTS planos (
-  id SERIAL PRIMARY KEY,
-  freq_semana INTEGER CHECK (freq_semana IN (1,2)),
-  aulas_totais INTEGER NOT NULL,
-  remarca_max_mes INTEGER NOT NULL,
-  descricao TEXT
+create table if not exists planos (
+  id serial primary key,
+  freq_semana integer check (freq_semana in (1, 2)),
+  aulas_totais integer not null,
+  remarca_max_mes integer not null,
+  descricao text
 );
 
--- Seed planos
-INSERT INTO planos (freq_semana, aulas_totais, remarca_max_mes, descricao)
-VALUES
-  (1, 20, 1, 'Plano 1x por semana — 20 aulas/semestre, 1 remarcação gratuita/mês'),
-  (2, 40, 2, 'Plano 2x por semana — 40 aulas/semestre, 2 remarcações gratuitas/mês')
-ON CONFLICT DO NOTHING;
+insert into planos (freq_semana, aulas_totais, remarca_max_mes, descricao)
+values
+  (1, 20, 1, 'Plano 1x por semana - 20 aulas/semestre, 1 remarcacao gratuita/mes'),
+  (2, 40, 2, 'Plano 2x por semana - 40 aulas/semestre, 2 remarcacoes gratuitas/mes')
+on conflict do nothing;
 
 -- CONTRATOS
-CREATE TABLE IF NOT EXISTS contratos (
-  id SERIAL PRIMARY KEY,
-  aluno_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  plano_id INTEGER REFERENCES planos(id),
-  data_inicio DATE NOT NULL,
-  data_fim DATE NOT NULL,
-  semestre TEXT CHECK (semestre IN ('jan-jun','jul-dez')),
-  ano INTEGER NOT NULL,
-  aulas_totais INTEGER NOT NULL,
-  aulas_dadas INTEGER DEFAULT 0,
-  aulas_restantes INTEGER NOT NULL,
-  status TEXT CHECK (status IN ('ativo','vencido','cancelado')) DEFAULT 'ativo',
-  livro_atual TEXT,
-  nivel_atual TEXT,
-  infinitepay_customer_id TEXT,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists contratos (
+  id serial primary key,
+  aluno_id uuid not null references profiles(id) on delete cascade,
+  plano_id integer references planos(id),
+  data_inicio date not null,
+  data_fim date not null,
+  semestre text check (semestre in ('jan-jun', 'jul-dez')),
+  ano integer not null,
+  aulas_totais integer not null,
+  aulas_dadas integer not null default 0,
+  aulas_restantes integer not null,
+  status text not null default 'ativo' check (status in ('ativo', 'vencido', 'cancelado')),
+  status_financeiro text not null default 'em_dia' check (status_financeiro in ('em_dia', 'pendente')),
+  livro_atual text,
+  nivel_atual text,
+  horario text,
+  valor numeric(10, 2),
+  dia_vencimento integer,
+  forma_pagamento text,
+  tipo_contrato text not null default 'semestral' check (tipo_contrato in ('semestral', 'ad-hoc')),
+  desconto_valor numeric(10, 2) not null default 0,
+  desconto_percentual numeric(5, 2) not null default 0,
+  dias_da_semana integer[],
+  mercadopago_customer_id text,
+  created_at timestamptz not null default now()
 );
 
 -- AULAS
-CREATE TABLE IF NOT EXISTS aulas (
-  id SERIAL PRIMARY KEY,
-  contrato_id INTEGER REFERENCES contratos(id) ON DELETE CASCADE,
-  google_event_id TEXT UNIQUE,
-  data_hora TIMESTAMPTZ NOT NULL,
-  duracao_minutos INTEGER DEFAULT 45,
-  status TEXT CHECK (status IN ('agendada','confirmada','dada','cancelada','remarcada')) DEFAULT 'agendada',
-  aviso_horas_antecedencia DECIMAL,
-  remarcada_de INTEGER REFERENCES aulas(id),
-  meet_link TEXT,
-  homework TEXT,
-  homework_completed BOOLEAN DEFAULT FALSE,
-  homework_notificado BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+create table if not exists aulas (
+  id serial primary key,
+  contrato_id integer not null references contratos(id) on delete cascade,
+  google_event_id text unique,
+  data_hora timestamptz not null,
+  duracao_minutos integer not null default 45,
+  status text not null default 'agendada' check (
+    status in (
+      'agendada',
+      'confirmada',
+      'dada',
+      'cancelada',
+      'remarcada',
+      'pendente_remarcacao',
+      'pendente_remarcacao_rejeitada'
+    )
+  ),
+  aviso_horas_antecedencia numeric,
+  remarcada_de integer references aulas(id),
+  meet_link text,
+  homework text,
+  has_homework boolean not null default true,
+  homework_completed boolean not null default false,
+  homework_notificado boolean not null default false,
+  homework_type text check (homework_type in ('regular', 'esl_brains', 'evolve')),
+  homework_link text,
+  homework_due_date date,
+  homework_image_url text,
+  class_notes text,
+  ai_summary_sent boolean not null default false,
+  ai_summary_pt text,
+  ai_summary_en text,
+  vocabulary_json jsonb,
+  data_hora_solicitada timestamptz,
+  justificativa_professor text,
+  motivo_remarcacao text,
+  is_bonus boolean not null default false,
+  created_at timestamptz not null default now()
 );
-
--- REMARCACOES POR MÊS
-CREATE TABLE IF NOT EXISTS remarcacoes_mes (
-  id SERIAL PRIMARY KEY,
-  aluno_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-  mes DATE NOT NULL,
-  quantidade INTEGER DEFAULT 0,
-  UNIQUE(aluno_id, mes)
-);
-
--- PAGAMENTOS
-CREATE TABLE IF NOT EXISTS pagamentos (
-  id SERIAL PRIMARY KEY,
-  contrato_id INTEGER REFERENCES contratos(id) ON DELETE CASCADE,
-  parcela_num INTEGER CHECK (parcela_num BETWEEN 1 AND 6),
-  valor DECIMAL(10,2) NOT NULL,
-  data_vencimento DATE NOT NULL,
-  data_pagamento DATE,
-  forma TEXT CHECK (forma IN ('pix','cartao')),
-  infinitepay_invoice_id TEXT UNIQUE,
-  pix_qrcode_base64 TEXT,
-  pix_copia_cola TEXT,
-  status TEXT CHECK (status IN ('pendente','pago','atrasado','vencido')) DEFAULT 'pendente',
-  email_enviado BOOLEAN DEFAULT FALSE,
-  lembrete_enviado BOOLEAN DEFAULT FALSE,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
--- ============================================================
--- ROW LEVEL SECURITY
--- ============================================================
-
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE contratos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE aulas ENABLE ROW LEVEL SECURITY;
-ALTER TABLE remarcacoes_mes ENABLE ROW LEVEL SECURITY;
-ALTER TABLE pagamentos ENABLE ROW LEVEL SECURITY;
-ALTER TABLE planos ENABLE ROW LEVEL SECURITY;
-
--- Helper: is professor
-CREATE OR REPLACE FUNCTION is_professor()
-RETURNS BOOLEAN AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM profiles WHERE id = auth.uid() AND role = 'professor'
-  );
-$$ LANGUAGE sql SECURITY DEFINER;
-
--- PLANOS: todos podem ler
-CREATE POLICY "planos_read_all" ON planos FOR SELECT USING (true);
-
--- PROFILES
-CREATE POLICY "professor_all_profiles" ON profiles
-  FOR ALL USING (is_professor());
-
-CREATE POLICY "aluno_own_profile" ON profiles
-  FOR SELECT USING (auth.uid() = id);
-
-CREATE POLICY "aluno_update_own_profile" ON profiles
-  FOR UPDATE USING (auth.uid() = id);
-
--- CONTRATOS
-CREATE POLICY "professor_all_contratos" ON contratos
-  FOR ALL USING (is_professor());
-
-CREATE POLICY "aluno_own_contratos" ON contratos
-  FOR SELECT USING (aluno_id = auth.uid());
-
--- AULAS
-CREATE POLICY "professor_all_aulas" ON aulas
-  FOR ALL USING (is_professor());
-
-CREATE POLICY "aluno_own_aulas" ON aulas
-  FOR SELECT USING (
-    contrato_id IN (SELECT id FROM contratos WHERE aluno_id = auth.uid())
-  );
 
 -- REMARCACOES
-CREATE POLICY "professor_all_remarcacoes" ON remarcacoes_mes
-  FOR ALL USING (is_professor());
-
-CREATE POLICY "aluno_own_remarcacoes" ON remarcacoes_mes
-  FOR SELECT USING (aluno_id = auth.uid());
+create table if not exists remarcacoes_mes (
+  id serial primary key,
+  aluno_id uuid not null references profiles(id) on delete cascade,
+  mes date not null,
+  quantidade integer not null default 0,
+  unique (aluno_id, mes)
+);
 
 -- PAGAMENTOS
-CREATE POLICY "professor_all_pagamentos" ON pagamentos
-  FOR ALL USING (is_professor());
+create table if not exists pagamentos (
+  id serial primary key,
+  contrato_id integer not null references contratos(id) on delete cascade,
+  parcela_num integer check (parcela_num between 1 and 12),
+  valor numeric(10, 2) not null,
+  data_vencimento date not null,
+  data_pagamento date,
+  forma text check (forma in ('pix', 'cartao', 'dinheiro', 'boleto', 'credit_card', 'debit_card')),
+  mercadopago_id text unique,
+  mercadopago_status text,
+  mercadopago_payment_method text,
+  pix_qrcode_base64 text,
+  pix_copia_cola text,
+  status text not null default 'pendente' check (status in ('pendente', 'pago', 'atrasado', 'vencido')),
+  email_enviado boolean not null default false,
+  lembrete_enviado boolean not null default false,
+  created_at timestamptz not null default now()
+);
 
-CREATE POLICY "aluno_own_pagamentos" ON pagamentos
-  FOR SELECT USING (
-    contrato_id IN (SELECT id FROM contratos WHERE aluno_id = auth.uid())
+-- RECESSOS
+create table if not exists recessos (
+  id serial primary key,
+  titulo text not null,
+  data_inicio date not null,
+  data_fim date not null,
+  tipo text not null check (tipo in ('recesso', 'feriado', 'ferias')),
+  criado_por uuid references profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
+-- FLASHCARDS
+create table if not exists flashcards (
+  id uuid primary key default gen_random_uuid(),
+  aluno_id uuid not null references profiles(id) on delete cascade,
+  word text not null,
+  translation text not null,
+  example text,
+  interval integer not null default 1,
+  repetitions integer not null default 0,
+  ease_factor numeric(4, 2) not null default 2.5,
+  next_review timestamptz not null,
+  created_at timestamptz not null default now()
+);
+
+-- AVALIACOES
+create table if not exists avaliacoes_habilidades (
+  id serial primary key,
+  aluno_id uuid not null references profiles(id) on delete cascade,
+  mes_referencia date not null,
+  speaking integer not null check (speaking between 0 and 100),
+  listening integer not null check (listening between 0 and 100),
+  reading integer not null check (reading between 0 and 100),
+  writing integer not null check (writing between 0 and 100),
+  created_at timestamptz not null default now(),
+  unique (aluno_id, mes_referencia)
+);
+
+-- PLACEMENT RESULTS
+create table if not exists placement_results (
+  id serial primary key,
+  student_id uuid not null references profiles(id) on delete cascade,
+  cefr_level text not null check (cefr_level in ('A1', 'A2', 'B1', 'B2', 'C1')),
+  score integer not null,
+  total_questions integer not null,
+  answers jsonb not null,
+  insights text,
+  created_at timestamptz not null default now()
+);
+
+-- ============================================================
+-- RLS
+-- ============================================================
+
+alter table profiles enable row level security;
+alter table planos enable row level security;
+alter table contratos enable row level security;
+alter table aulas enable row level security;
+alter table remarcacoes_mes enable row level security;
+alter table pagamentos enable row level security;
+alter table recessos enable row level security;
+alter table flashcards enable row level security;
+alter table avaliacoes_habilidades enable row level security;
+alter table placement_results enable row level security;
+
+create or replace function is_professor()
+returns boolean
+language sql
+security definer
+as $$
+  select exists (
+    select 1
+    from profiles
+    where id = auth.uid() and role = 'professor'
   );
+$$;
+
+create policy "planos_read_all" on planos for select using (true);
+
+create policy "professor_all_profiles" on profiles for all using (is_professor()) with check (is_professor());
+create policy "aluno_own_profile_select" on profiles for select using (auth.uid() = id);
+create policy "aluno_own_profile_update" on profiles for update using (auth.uid() = id) with check (auth.uid() = id);
+
+create policy "professor_all_contratos" on contratos for all using (is_professor()) with check (is_professor());
+create policy "aluno_own_contratos" on contratos for select using (aluno_id = auth.uid());
+
+create policy "professor_all_aulas" on aulas for all using (is_professor()) with check (is_professor());
+create policy "aluno_own_aulas_select" on aulas for select using (
+  contrato_id in (select id from contratos where aluno_id = auth.uid())
+);
+
+create policy "professor_all_remarcacoes" on remarcacoes_mes for all using (is_professor()) with check (is_professor());
+create policy "aluno_own_remarcacoes_select" on remarcacoes_mes for select using (aluno_id = auth.uid());
+
+create policy "professor_all_pagamentos" on pagamentos for all using (is_professor()) with check (is_professor());
+create policy "aluno_own_pagamentos_select" on pagamentos for select using (
+  contrato_id in (select id from contratos where aluno_id = auth.uid())
+);
+
+create policy "recessos_read_all" on recessos for select using (true);
+create policy "professor_manage_recessos" on recessos for all using (is_professor()) with check (is_professor());
+
+create policy "professor_all_flashcards" on flashcards for all using (is_professor()) with check (is_professor());
+create policy "aluno_own_flashcards" on flashcards for all using (aluno_id = auth.uid()) with check (aluno_id = auth.uid());
+
+create policy "professor_all_avaliacoes" on avaliacoes_habilidades for all using (is_professor()) with check (is_professor());
+create policy "aluno_own_avaliacoes_select" on avaliacoes_habilidades for select using (aluno_id = auth.uid());
+
+create policy "professor_all_placement_results" on placement_results for all using (is_professor()) with check (is_professor());
+create policy "aluno_own_placement_results" on placement_results for select using (student_id = auth.uid());
+create policy "aluno_insert_own_placement_results" on placement_results for insert with check (student_id = auth.uid());
 
 -- ============================================================
--- FUNCTION: atualizar aulas_dadas e aulas_restantes
+-- CONTRACT HELPERS
 -- ============================================================
-CREATE OR REPLACE FUNCTION atualizar_contagem_aulas()
-RETURNS TRIGGER AS $$
-BEGIN
-  UPDATE contratos SET
-    aulas_dadas = (
-      SELECT COUNT(*) FROM aulas
-      WHERE contrato_id = NEW.contrato_id AND status = 'dada'
-    ),
-    aulas_restantes = aulas_totais - (
-      SELECT COUNT(*) FROM aulas
-      WHERE contrato_id = NEW.contrato_id AND status = 'dada'
-    )
-  WHERE id = NEW.contrato_id;
-  RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER trigger_atualizar_contagem
-AFTER INSERT OR UPDATE ON aulas
-FOR EACH ROW EXECUTE FUNCTION atualizar_contagem_aulas();
+create or replace function atualizar_contagem_aulas()
+returns trigger
+language plpgsql
+as $$
+begin
+  update contratos
+  set aulas_dadas = (
+        select count(*) from aulas where contrato_id = new.contrato_id and status = 'dada'
+      ),
+      aulas_restantes = aulas_totais - (
+        select count(*) from aulas where contrato_id = new.contrato_id and status = 'dada'
+      )
+  where id = new.contrato_id;
+  return new;
+end;
+$$;
 
--- ============================================================
--- pg_cron jobs (run after enabling pg_cron extension)
--- ============================================================
--- Enable: CREATE EXTENSION IF NOT EXISTS pg_cron;
+drop trigger if exists trigger_atualizar_contagem on aulas;
+create trigger trigger_atualizar_contagem
+after insert or update on aulas
+for each row execute function atualizar_contagem_aulas();
 
--- Marcar pagamentos atrasados todo dia às 8h
--- SELECT cron.schedule('marcar-atrasados', '0 8 * * *', $$
---   UPDATE pagamentos
---   SET status = 'atrasado'
---   WHERE status = 'pendente'
---   AND data_vencimento < CURRENT_DATE;
--- $$);
+create or replace function concluir_aula_v2(
+  p_aula_id integer,
+  p_contrato_id integer,
+  p_aulas_dadas integer,
+  p_aulas_restantes integer,
+  p_status_financeiro text
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  update aulas
+  set status = 'dada'
+  where id = p_aula_id
+    and status <> 'dada';
+
+  if not found then
+    return;
+  end if;
+
+  update contratos
+  set aulas_dadas = p_aulas_dadas,
+      aulas_restantes = p_aulas_restantes,
+      status_financeiro = p_status_financeiro
+  where id = p_contrato_id;
+end;
+$$;

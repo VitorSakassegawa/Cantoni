@@ -1,11 +1,18 @@
 import 'server-only'
-import { createClient } from './supabase/server'
 import { redirect } from 'next/navigation'
+import { createClient, createServiceClient } from './supabase/server'
 
 export async function getSession() {
   const supabase = await createClient()
-  const { data: { user }, error } = await supabase.auth.getUser()
-  if (error || !user) return null
+  const {
+    data: { user },
+    error,
+  } = await supabase.auth.getUser()
+
+  if (error || !user) {
+    return null
+  }
+
   return user
 }
 
@@ -17,37 +24,91 @@ export async function requireAuth() {
   return user
 }
 
-export async function requireProfessor() {
+export async function getCurrentProfile() {
   const user = await requireAuth()
   const supabase = await createClient()
-  
-  const { data: profile } = await supabase
+
+  const { data: profile, error } = await supabase
     .from('profiles')
-    .select('role')
+    .select('*')
     .eq('id', user.id)
     .single()
 
-  if (profile?.role !== 'professor') {
+  if (error || !profile) {
+    throw new Error('Perfil do usuário não encontrado')
+  }
+
+  return { user, profile }
+}
+
+export async function requireProfessor() {
+  const { user, profile } = await getCurrentProfile()
+
+  if (profile.role !== 'professor') {
     throw new Error('Acesso negado: apenas professores podem realizar esta ação')
   }
 
   return { user, profile }
 }
 
-export async function ensureOwnership(resourceId: string, table: string, ownerField: string = 'aluno_id') {
+export async function requireLessonAccess(
+  aulaId: number,
+  options?: {
+    allowProfessor?: boolean
+    allowStudentOwner?: boolean
+  }
+) {
+  const { allowProfessor = true, allowStudentOwner = true } = options ?? {}
+  const { user, profile } = await getCurrentProfile()
+  const serviceSupabase = await createServiceClient()
+
+  const { data: aula, error } = await serviceSupabase
+    .from('aulas')
+    .select('*, contratos(*, planos(*), profiles(*))')
+    .eq('id', aulaId)
+    .single()
+
+  if (error || !aula) {
+    throw new Error('Aula não encontrada')
+  }
+
+  const contrato = aula.contratos as any
+  const isProfessor = profile.role === 'professor'
+  const isOwner = contrato?.aluno_id === user.id
+
+  if ((isProfessor && allowProfessor) || (isOwner && allowStudentOwner)) {
+    return {
+      user,
+      profile,
+      aula,
+      contrato,
+      isProfessor,
+      isOwner,
+      serviceSupabase,
+    }
+  }
+
+  throw new Error('Sem permissão para acessar esta aula')
+}
+
+export async function ensureOwnership(
+  resourceId: string,
+  table: string,
+  ownerField: string = 'aluno_id'
+) {
   const user = await requireAuth()
   const supabase = await createClient()
-  
-  // First check if user is professor (they have bypass)
+
   const { data: profile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
-    
-  if (profile?.role === 'professor') return user
 
-  // Check ownership
+  if (profile?.role === 'professor') {
+    return user
+  }
+
   const { data, error } = await supabase
     .from(table)
     .select(ownerField)

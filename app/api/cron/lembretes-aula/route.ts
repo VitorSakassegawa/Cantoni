@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
+import { addHours } from 'date-fns'
 import { enviarLembreteAula } from '@/lib/resend'
 import { formatDateTime } from '@/lib/utils'
-import { addHours } from 'date-fns'
+import { getCronSecret } from '@/lib/env'
 
-// This endpoint is called by Supabase pg_cron or an external cron service
-// Protect it with a secret token
 export async function GET(request: NextRequest) {
   const token = request.headers.get('x-cron-secret')
-  if (token !== process.env.INFINITEPAY_WEBHOOK_SECRET) {
+  if (token !== getCronSecret()) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -21,7 +20,6 @@ export async function GET(request: NextRequest) {
   const in24h = addHours(now, 24)
   const in25h = addHours(now, 25)
 
-  // Aulas nas próximas 24-25h ainda não notificadas
   const { data: aulas } = await supabase
     .from('aulas')
     .select('*, contratos(profiles(full_name, email))')
@@ -33,7 +31,9 @@ export async function GET(request: NextRequest) {
   let sent = 0
   for (const aula of aulas || []) {
     const contrato = aula.contratos as any
-    if (!contrato?.profiles) continue
+    if (!contrato?.profiles) {
+      continue
+    }
 
     try {
       await enviarLembreteAula({
@@ -45,18 +45,15 @@ export async function GET(request: NextRequest) {
         has_homework: aula.has_homework,
         homeworkType: aula.homework_type,
         homeworkLink: aula.homework_link,
-        homeworkDueDate: aula.homework_due_date ? formatDateTime(aula.homework_due_date) : undefined,
+        homeworkDueDate: aula.homework_due_date
+          ? formatDateTime(aula.homework_due_date)
+          : undefined,
       })
 
-
-      await supabase
-        .from('aulas')
-        .update({ homework_notificado: true })
-        .eq('id', aula.id)
-
-      sent++
-    } catch (e) {
-      console.error('Error sending reminder for aula', aula.id, e)
+      await supabase.from('aulas').update({ homework_notificado: true }).eq('id', aula.id)
+      sent += 1
+    } catch (error) {
+      console.error('Error sending reminder for aula', aula.id, error)
     }
   }
 
