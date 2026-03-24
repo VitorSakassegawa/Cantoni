@@ -38,6 +38,17 @@ export default async function ProfessorEditContratoPage({
     )
   }
 
+  const { count: paidPaymentsCount } = await supabase
+    .from('pagamentos')
+    .select('id', { count: 'exact', head: true })
+    .eq('contrato_id', contrato.id)
+    .eq('status', 'pago')
+
+  const contractWithFlags = {
+    ...contrato,
+    has_paid_payments: (paidPaymentsCount || 0) > 0,
+  }
+
   return (
     <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-fade-in">
       <div className="flex flex-col gap-6">
@@ -53,7 +64,7 @@ export default async function ProfessorEditContratoPage({
 
       <ContratoForm 
         alunoId={aluno_id}
-        initialData={contrato}
+        initialData={contractWithFlags}
       />
     </div>
   )

@@ -48,6 +48,7 @@ interface ContratoFormProps {
 
 export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuccess }: ContratoFormProps) {
   const isEdit = !!initialData
+  const hasPaidPayments = Boolean(initialData?.has_paid_payments)
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -279,6 +280,18 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         </div>
       )}
 
+      {isEdit && hasPaidPayments && (
+        <div className="bg-amber-50 border-2 border-amber-100 rounded-[2rem] p-6 flex items-start gap-4">
+          <AlertTriangle className="w-6 h-6 text-amber-500 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h4 className="font-black text-amber-900 uppercase text-xs tracking-widest">Contrato com parcela paga</h4>
+            <p className="text-amber-800/80 text-sm font-medium leading-relaxed">
+              Campos financeiros e datas-base ficam bloqueados para preservar o histórico. Se precisar mudar valor, vencimento, período ou parcelamento, o caminho correto é uma renegociação/aditivo.
+            </p>
+          </div>
+        </div>
+      )}
+
       <Card className="glass-card border-none overflow-hidden hover:shadow-2xl transition-all">
         <div className="lms-gradient h-2" />
         <CardHeader className="p-8 pb-4">
@@ -327,9 +340,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Início</Label>
               <Input 
                 type="date" 
-                className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
+                className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
                 value={dataInicio} 
                 onChange={e => setDataInicio(e.target.value)} 
+                disabled={hasPaidPayments}
                 required
               />
             </div>
@@ -337,10 +351,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Término</Label>
               <Input 
                 type="date" 
-                className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
+                className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
                 value={dataFim} 
                 onChange={e => setDataFim(e.target.value)} 
-                disabled={tipoContrato === 'semestral'}
+                disabled={tipoContrato === 'semestral' || hasPaidPayments}
                 required
               />
             </div>
@@ -430,8 +444,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
-                  className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold pl-11" 
+                  className={`h-14 rounded-2xl border-slate-100 font-bold pl-11 ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
                   value={descontoValor} 
+                  disabled={hasPaidPayments}
                   onChange={e => handleDescontoValorChange(maskCurrency(e.target.value))} 
                   placeholder="R$ 0,00"
                 />
@@ -443,8 +458,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                 <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
                   type="number"
-                  className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold pl-11" 
+                  className={`h-14 rounded-2xl border-slate-100 font-bold pl-11 ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
                   value={descontoPercentual} 
+                  disabled={hasPaidPayments}
                   onChange={e => handleDescontoPercentualChange(e.target.value)} 
                   placeholder="0"
                 />
@@ -542,8 +558,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Vencimento (Dia)</Label>
               <Input 
                 type="number" 
-                className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
+                className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
                 value={diaVencimento} 
+                disabled={hasPaidPayments}
                 onChange={e => setDiaVencimento(e.target.value)} 
               />
             </div>
@@ -552,14 +569,14 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               <Select
                 value={numParcelas}
                 onChange={e => setNumParcelas(e.target.value)}
-                disabled={isEdit}
-                className={`h-14 rounded-2xl border-slate-100 font-bold ${isEdit ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50 text-slate-900'}`}
+                disabled={isEdit || hasPaidPayments}
+                className={`h-14 rounded-2xl border-slate-100 font-bold ${(isEdit || hasPaidPayments) ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50 text-slate-900'}`}
               >
                 {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
                   <option key={n} value={n.toString()}>{n === 1 ? '1x (À vista)' : `${n}x parcelado`}</option>
                 ))}
               </Select>
-              {isEdit && (
+              {(isEdit || hasPaidPayments) && (
                 <p className="text-[9px] text-slate-400 font-bold pl-1 uppercase tracking-tight italic">
                   O parcelamento atual é mantido em edições para evitar inconsistência com parcelas já emitidas.
                 </p>
@@ -567,7 +584,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             </div>
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Pagamento</Label>
-              <Select value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
+              <Select value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} disabled={hasPaidPayments} className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`}>
                 <option value="pix">PIX</option>
                 <option value="cartao">Cartão</option>
                 <option value="dinheiro">Dinheiro</option>

@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
   if (!user) {
-    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    return NextResponse.json({ error: 'NÃ£o autenticado' }, { status: 401 })
   }
 
   const { data: profile } = await supabase
@@ -47,13 +47,46 @@ export async function POST(request: NextRequest) {
   } = await request.json()
 
   if (!id) {
-    return NextResponse.json({ error: 'ID do contrato é obrigatório' }, { status: 400 })
+    return NextResponse.json({ error: 'ID do contrato Ã© obrigatÃ³rio' }, { status: 400 })
   }
 
   const vFloat = Number.parseFloat(valor)
   const dvInt = Number.parseInt(dia_vencimento, 10)
   if (Number.isNaN(vFloat) || Number.isNaN(dvInt)) {
-    return NextResponse.json({ error: 'Dados numéricos inválidos' }, { status: 400 })
+    return NextResponse.json({ error: 'Dados numÃ©ricos invÃ¡lidos' }, { status: 400 })
+  }
+
+  const { data: existingContract, error: existingContractError } = await supabase
+    .from('contratos')
+    .select('valor, dia_vencimento, forma_pagamento, data_inicio, data_fim')
+    .eq('id', id)
+    .single()
+
+  if (existingContractError || !existingContract) {
+    return NextResponse.json({ error: 'Contrato nÃ£o encontrado' }, { status: 404 })
+  }
+
+  const { count: paidPaymentsCount } = await supabase
+    .from('pagamentos')
+    .select('id', { count: 'exact', head: true })
+    .eq('contrato_id', id)
+    .eq('status', 'pago')
+
+  const hasPaidPayments = (paidPaymentsCount || 0) > 0
+  const isFinancialChange =
+    Number(existingContract.valor) !== vFloat ||
+    Number(existingContract.dia_vencimento) !== dvInt ||
+    existingContract.forma_pagamento !== forma_pagamento ||
+    existingContract.data_inicio !== dataInicio ||
+    existingContract.data_fim !== dataFim
+
+  if (hasPaidPayments && isFinancialChange) {
+    return NextResponse.json(
+      {
+        error: 'Este contrato jÃ¡ possui parcelas pagas. AlteraÃ§Ãµes financeiras exigem fluxo de renegociaÃ§Ã£o/aditivo.',
+      },
+      { status: 409 }
+    )
   }
 
   const { error: updateError } = await supabase
@@ -87,39 +120,41 @@ export async function POST(request: NextRequest) {
     .select('id, status, parcela_num, valor')
     .eq('contrato_id', id)
 
-  const unpaidPayments = (allPagamentos || []).filter((pagamento: any) => pagamento.status !== 'pago')
-  const paidAmount = (allPagamentos || [])
-    .filter((pagamento: any) => pagamento.status === 'pago')
-    .reduce((acc: number, pagamento: any) => acc + Number(pagamento.valor || 0), 0)
-  const remainingAmount = Math.max(0, vFloat - paidAmount)
-  const valorParcela = unpaidPayments.length > 0
-    ? Number((remainingAmount / unpaidPayments.length).toFixed(2))
-    : 0
+  if (!hasPaidPayments) {
+    const unpaidPayments = (allPagamentos || []).filter((pagamento: any) => pagamento.status !== 'pago')
+    const paidAmount = (allPagamentos || [])
+      .filter((pagamento: any) => pagamento.status === 'pago')
+      .reduce((acc: number, pagamento: any) => acc + Number(pagamento.valor || 0), 0)
+    const remainingAmount = Math.max(0, vFloat - paidAmount)
+    const valorParcela = unpaidPayments.length > 0
+      ? Number((remainingAmount / unpaidPayments.length).toFixed(2))
+      : 0
 
-  await mapWithConcurrency(unpaidPayments, 5, async (pagamento: any) => {
-    const parcelaNumero = Number(pagamento.parcela_num)
-    if (!Number.isFinite(parcelaNumero) || parcelaNumero <= 0) {
-      return
-    }
+    await mapWithConcurrency(unpaidPayments, 5, async (pagamento: any) => {
+      const parcelaNumero = Number(pagamento.parcela_num)
+      if (!Number.isFinite(parcelaNumero) || parcelaNumero <= 0) {
+        return
+      }
 
-    const dueBase = new Date(`${dataInicio}T12:00:00`)
-    dueBase.setMonth(dueBase.getMonth() + parcelaNumero)
-    const ultimoDiaMes = new Date(dueBase.getFullYear(), dueBase.getMonth() + 1, 0).getDate()
-    const diaEfetivo = Math.min(dvInt, ultimoDiaMes)
-    const newDate = new Date(dueBase.getFullYear(), dueBase.getMonth(), diaEfetivo, 12, 0, 0)
-    if (Number.isNaN(newDate.getTime())) {
-      return
-    }
+      const dueBase = new Date(`${dataInicio}T12:00:00`)
+      dueBase.setMonth(dueBase.getMonth() + parcelaNumero)
+      const ultimoDiaMes = new Date(dueBase.getFullYear(), dueBase.getMonth() + 1, 0).getDate()
+      const diaEfetivo = Math.min(dvInt, ultimoDiaMes)
+      const newDate = new Date(dueBase.getFullYear(), dueBase.getMonth(), diaEfetivo, 12, 0, 0)
+      if (Number.isNaN(newDate.getTime())) {
+        return
+      }
 
-    await supabase
-      .from('pagamentos')
-      .update({
-        valor: valorParcela,
-        forma: forma_pagamento,
-        data_vencimento: newDate.toISOString().split('T')[0],
-      })
-      .eq('id', pagamento.id)
-  })
+      await supabase
+        .from('pagamentos')
+        .update({
+          valor: valorParcela,
+          forma: forma_pagamento,
+          data_vencimento: newDate.toISOString().split('T')[0],
+        })
+        .eq('id', pagamento.id)
+    })
+  }
 
   const { data: contrato } = await supabase
     .from('contratos')
@@ -140,6 +175,7 @@ export async function POST(request: NextRequest) {
       year: ano,
       paymentMethod: forma_pagamento,
       requestedInstallments: numParcelas ?? null,
+      hasPaidPayments,
     },
   })
 
