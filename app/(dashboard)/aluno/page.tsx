@@ -11,7 +11,7 @@ import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import { buildStudentNotifications, getDaysRemaining } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
-import { STUDENT_STREAK_RULES } from '@/lib/streak-utils'
+import { STUDENT_STREAK_RULES, getStreakSummary } from '@/lib/streak-utils'
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
@@ -117,6 +117,12 @@ export default async function AlunoDashboard() {
     severity: entry.severity || 'info',
     meta: formatDateTime(entry.created_at),
   }))
+
+  const streakSummary = getStreakSummary({
+    streakCount: profile?.streak_count || 0,
+    bestStreak: profile?.best_streak || 0,
+    lastActivityDate: profile?.last_activity_date,
+  })
 
   return (
     <div className="space-y-10 pb-16 animate-fade-in">
@@ -271,6 +277,20 @@ export default async function AlunoDashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-6">
+          <div className="grid gap-4 md:grid-cols-3 mb-5">
+            <div className="rounded-2xl bg-amber-500 text-white px-4 py-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-100">Sequência Atual</p>
+              <p className="text-3xl font-black tracking-tight">{profile?.streak_count || 0} dias</p>
+            </div>
+            <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Melhor Recorde</p>
+              <p className="text-3xl font-black tracking-tight text-slate-900">{streakSummary.bestStreak} dias</p>
+            </div>
+            <div className="rounded-2xl bg-blue-50 border border-blue-100 px-4 py-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Status de Hoje</p>
+              <p className="text-sm font-black tracking-tight text-blue-900">{streakSummary.headline}</p>
+            </div>
+          </div>
           <div className="grid gap-3 md:grid-cols-2">
             {STUDENT_STREAK_RULES.map((rule) => (
               <div key={rule} className="rounded-2xl bg-amber-50/70 border border-amber-100 px-4 py-3 text-sm font-medium text-amber-900/80">

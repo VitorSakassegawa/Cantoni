@@ -18,7 +18,7 @@ export async function registerStudentActivity(studentId: string, activityDate?: 
 
   const { data: profile, error: profileError } = await supabase
     .from('profiles')
-    .select('streak_count, last_activity_date')
+    .select('streak_count, best_streak, last_activity_date')
     .eq('id', studentId)
     .single()
 
@@ -35,6 +35,7 @@ export async function registerStudentActivity(studentId: string, activityDate?: 
     .from('profiles')
     .update({
       streak_count: next.streakCount,
+      best_streak: Math.max(profile.best_streak || 0, next.streakCount),
       last_activity_date: next.lastActivityDate,
     })
     .eq('id', studentId)

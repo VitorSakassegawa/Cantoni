@@ -40,3 +40,38 @@ export function calculateNextStreak(
     changed: true,
   }
 }
+
+export function getStreakSummary(input: {
+  streakCount: number
+  bestStreak: number
+  lastActivityDate?: string | null
+  today?: string
+}) {
+  const today = input.today || new Date().toISOString().split('T')[0]
+  const countedToday = input.lastActivityDate === today
+  const bestStreak = Math.max(input.bestStreak || 0, input.streakCount || 0)
+  const remainingToBest = Math.max(0, bestStreak - (input.streakCount || 0))
+
+  let headline = countedToday
+    ? 'Hoje já contou para seu streak.'
+    : 'Faça uma atividade hoje para manter sua sequência.'
+
+  if ((input.streakCount || 0) === 0) {
+    headline = 'Comece hoje sua primeira sequência.'
+  } else if (remainingToBest === 0 && (input.streakCount || 0) > 0) {
+    headline = countedToday
+      ? 'Você está no seu melhor ritmo atual.'
+      : 'Uma atividade hoje mantém seu melhor ritmo.'
+  } else if (remainingToBest === 1) {
+    headline = countedToday
+      ? 'Falta 1 dia para bater seu recorde.'
+      : 'Faça uma atividade hoje; depois faltará 1 dia para bater seu recorde.'
+  }
+
+  return {
+    countedToday,
+    bestStreak,
+    remainingToBest,
+    headline,
+  }
+}

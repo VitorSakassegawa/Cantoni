@@ -18,6 +18,7 @@ create table if not exists profiles (
   tipo_aula text check (tipo_aula in ('regular', 'conversacao', 'certificado')),
   cefr_level text default 'A1' check (cefr_level in ('A1', 'A2', 'B1', 'B2', 'C1')),
   streak_count integer default 0,
+  best_streak integer default 0,
   last_activity_date date,
   placement_test_completed boolean default false,
   created_at timestamptz not null default now()
@@ -407,6 +408,10 @@ begin
       when v_last_activity = p_activity_date - interval '1 day' then greatest(v_streak, 1) + 1
       else 1
     end,
+    best_streak = greatest(coalesce(best_streak, 0), case
+      when v_last_activity = p_activity_date - interval '1 day' then greatest(v_streak, 1) + 1
+      else 1
+    end),
     last_activity_date = p_activity_date
   where id = p_student_id;
 end;
