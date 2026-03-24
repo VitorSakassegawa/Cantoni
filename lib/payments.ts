@@ -1,4 +1,4 @@
-export type LocalPaymentStatus = 'pendente' | 'pago'
+export type LocalPaymentStatus = 'pendente' | 'pago' | 'atrasado' | 'vencido'
 
 const APPROVED_STATUSES = new Set(['approved', 'authorized'])
 const PENDING_STATUSES = new Set([
@@ -57,5 +57,41 @@ export function splitFullName(fullName: string) {
   return {
     firstName,
     lastName: rest.join(' '),
+  }
+}
+
+export function getEffectivePaymentStatus(payment: {
+  status?: string | null
+  data_vencimento?: string | null
+  data_pagamento?: string | null
+}): LocalPaymentStatus {
+  if (payment.status === 'pago' || payment.data_pagamento) {
+    return 'pago'
+  }
+
+  if (payment.status === 'vencido') {
+    return 'vencido'
+  }
+
+  if (!payment.data_vencimento) {
+    return payment.status === 'atrasado' ? 'atrasado' : 'pendente'
+  }
+
+  const dueDate = new Date(`${payment.data_vencimento}T23:59:59`)
+  if (!Number.isNaN(dueDate.getTime()) && dueDate.getTime() < Date.now()) {
+    return 'atrasado'
+  }
+
+  return payment.status === 'atrasado' ? 'atrasado' : 'pendente'
+}
+
+export function withEffectivePaymentStatus<T extends {
+  status?: string | null
+  data_vencimento?: string | null
+  data_pagamento?: string | null
+}>(payment: T): T & { effectiveStatus: LocalPaymentStatus } {
+  return {
+    ...payment,
+    effectiveStatus: getEffectivePaymentStatus(payment),
   }
 }

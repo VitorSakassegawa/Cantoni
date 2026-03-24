@@ -232,6 +232,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       if (isEdit) {
         payload.id = initialData.id
         payload.status = initialData.status
+        payload.tipoContrato = tipoContrato
       }
 
       const endpoint = isEdit ? '/api/professor/contratos/update' : '/api/contratos/criar'

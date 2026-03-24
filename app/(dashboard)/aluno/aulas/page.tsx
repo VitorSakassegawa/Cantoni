@@ -7,8 +7,7 @@ import { Button } from '@/components/ui/button'
 import { BookOpen, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import AulasTimeline from '@/components/dashboard/AulasTimeline'
-
-import AulaRow from '@/components/dashboard/AulaRow'
+import { getStudentRemarkBlockReason } from '@/lib/insights'
 
 export default async function AlunoAulasPage() {
   const supabase = await createClient()
@@ -17,11 +16,19 @@ export default async function AlunoAulasPage() {
 
   const { data: contratos } = await supabase
     .from('contratos')
-    .select('id')
+    .select('id, planos(remarca_max_mes)')
     .eq('aluno_id', user.id)
     .eq('status', 'ativo')
 
   const contratoIds = (contratos as any[])?.map((c: any) => c.id) || []
+  const contratoAtivo = (contratos as any[])?.[0]
+
+  const { data: remarcacaoMesAtual } = await supabase
+    .from('remarcacoes_mes')
+    .select('quantidade')
+    .eq('aluno_id', user.id)
+    .eq('mes', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+    .maybeSingle()
 
   // Pegamos apenas as aulas de hoje em diante para o "Próximas 5"
   // mas o 'Ver Tudo' do frontend vai mostrar o que entregarmos aqui.
@@ -34,6 +41,16 @@ export default async function AlunoAulasPage() {
     .in('contrato_id', contratoIds)
     .gte('data_hora', new Date().toISOString())
     .order('data_hora', { ascending: true })
+
+  const aulasComRegras = (aulas || []).map((lesson: any) => ({
+    ...lesson,
+    remarkBlockReason: getStudentRemarkBlockReason({
+      status: lesson.status,
+      hasRequestedDate: Boolean(lesson.data_hora_solicitada),
+      monthlyRescheduleCount: remarcacaoMesAtual?.quantidade || 0,
+      monthlyRescheduleLimit: contratoAtivo?.planos?.remarca_max_mes ?? null,
+    }),
+  }))
 
 
 
@@ -57,10 +74,9 @@ export default async function AlunoAulasPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <AulasTimeline aulas={aulas || []} isProfessor={false} />
+          <AulasTimeline aulas={aulasComRegras || []} isProfessor={false} />
         </CardContent>
       </Card>
     </div>
   )
 }
-

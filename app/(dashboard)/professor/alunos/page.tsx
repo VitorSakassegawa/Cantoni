@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatCurrency, formatDateOnly } from '@/lib/utils'
 import { UserPlus, Search, Filter, MoreHorizontal, GraduationCap, Calendar, Mail, Phone, ExternalLink, BookOpen } from 'lucide-react'
+import { withEffectivePaymentStatus } from '@/lib/payments'
 
 export default async function AlunosPage() {
   const supabase = await createClient()
@@ -61,7 +62,7 @@ export default async function AlunosPage() {
         {alunos?.map((aluno: any) => {
           const contrato = contratos?.find((c: any) => c.aluno_id === aluno.id)
           const pagAtrasado = contrato?.pagamentos?.find(
-            (p: any) => p.status === 'atrasado'
+            (p: any) => withEffectivePaymentStatus(p).effectiveStatus === 'atrasado'
           )
           
           return (

@@ -141,6 +141,7 @@ export default function AulaRow({
 
   const canCancel = ['agendada', 'confirmada'].includes(status)
   const canRemark = ['agendada', 'confirmada', 'cancelada', 'pendente_remarcacao', 'pendente_remarcacao_rejeitada'].includes(status)
+  const remarkBlockReason = !isProfessor ? (aula as any).remarkBlockReason : null
 
   async function handleCancel() {
     setLoading(true)
@@ -227,6 +228,14 @@ export default function AulaRow({
                   </span>
                 )}
               </span>
+            )}
+            {!isProfessor && remarkBlockReason && (
+              <div className="mt-1">
+                <span className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
+                  Remarcação bloqueada
+                </span>
+                <p className="text-[10px] text-slate-500 leading-snug mt-0.5">{remarkBlockReason}</p>
+              </div>
             )}
             {status === 'pendente_remarcacao_rejeitada' && (
               <div className="mt-1 flex flex-col">
@@ -398,7 +407,18 @@ export default function AulaRow({
               </Button>
             )}
             {canRemark && (status !== 'pendente_remarcacao' || !aula.data_hora_solicitada) && (
-              <Button size="icon" variant="ghost" className="h-9 w-9 rounded-xl text-blue-600 hover:bg-blue-50 transition-all" onClick={() => setShowRemarkModal(true)} title="Remarcar">
+              <Button
+                size="icon"
+                variant="ghost"
+                className={`h-9 w-9 rounded-xl transition-all ${remarkBlockReason ? 'text-slate-300 cursor-not-allowed hover:bg-transparent' : 'text-blue-600 hover:bg-blue-50'}`}
+                onClick={() => {
+                  if (!remarkBlockReason) {
+                    setShowRemarkModal(true)
+                  }
+                }}
+                title={remarkBlockReason || 'Remarcar'}
+                disabled={Boolean(remarkBlockReason)}
+              >
                 <RotateCcw className="w-4 h-4" />
               </Button>
             )}
@@ -446,11 +466,16 @@ export default function AulaRow({
                    Sua solicitação entrará como <span className="font-bold">pendente</span> até que o professor confirme a disponibilidade.
                 </div>
               )}
+              {!isProfessor && remarkBlockReason && (
+                <div className="p-4 rounded-2xl bg-slate-100 border border-slate-200 text-[11px] leading-snug font-medium text-slate-600">
+                  {remarkBlockReason}
+                </div>
+              )}
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-3">
               <Button variant="ghost" className="h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50" onClick={() => setShowRemarkModal(false)}>Voltar</Button>
-              <Button className="h-12 px-8 rounded-2xl lms-gradient text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20" onClick={handleRemark} disabled={loading || !selectedDate}>
+              <Button className="h-12 px-8 rounded-2xl lms-gradient text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20" onClick={handleRemark} disabled={loading || !selectedDate || Boolean(remarkBlockReason)}>
                 {loading ? 'Processando...' : isProfessor ? 'Confirmar Remarcação' : 'Enviar Solicitação'}
               </Button>
             </DialogFooter>
@@ -547,29 +572,6 @@ export default function AulaRow({
               </ReactMarkdown>
             </div>
 
-            {(aula as any).vocabulary_json && (aula as any).vocabulary_json.length > 0 && (
-              <div className="space-y-6 pt-6 border-t border-slate-100 pb-8">
-                <div>
-                  <h4 className="text-sm font-black text-slate-900 flex items-center gap-2 mb-1">
-                    <div className="w-6 h-6 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                      <HelpCircle className="w-3.5 h-3.5" />
-                    </div>
-                    Vocabulário da Aula
-                  </h4>
-                  <p className="text-[10px] text-slate-500 font-medium">
-                    {summaryLang === 'pt' 
-                      ? 'Tente lembrar o significado antes de clicar. Ao revelar, você assume que não sabia a palavra.' 
-                      : 'Try to remember the meaning before clicking. By revealing, you assume you didn\'t know the word.'}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {(aula as any).vocabulary_json.map((v: any, i: number) => (
-                    <VocabularyCard key={i} {...v} />
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
           <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100">
             <Button 

@@ -1,4 +1,5 @@
 import { differenceInCalendarDays, isBefore, parseISO } from 'date-fns'
+import { getEffectivePaymentStatus } from '@/lib/payments'
 
 export type InsightSeverity = 'info' | 'warning' | 'success'
 
@@ -27,6 +28,33 @@ export interface AttentionCandidate {
   studentName: string
   score: number
   reasons: string[]
+}
+
+export function getStudentRemarkBlockReason(input: {
+  isProfessor?: boolean
+  status?: string | null
+  hasRequestedDate?: boolean
+  monthlyRescheduleCount?: number
+  monthlyRescheduleLimit?: number | null
+}) {
+  if (input.isProfessor) {
+    return null
+  }
+
+  if (input.status === 'pendente_remarcacao' && input.hasRequestedDate) {
+    return 'Você já tem uma solicitação de remarcação aguardando análise do professor.'
+  }
+
+  if (
+    typeof input.monthlyRescheduleLimit === 'number' &&
+    (input.monthlyRescheduleCount || 0) >= input.monthlyRescheduleLimit &&
+    input.status !== 'pendente_remarcacao' &&
+    input.status !== 'pendente_remarcacao_rejeitada'
+  ) {
+    return `Limite mensal de ${input.monthlyRescheduleLimit} remarcação(ões) já utilizado.`
+  }
+
+  return null
 }
 
 export function getDaysRemaining(dateValue?: string | null, now: Date = new Date()) {
@@ -73,7 +101,7 @@ export function buildAttentionCandidate(
   const reasons: string[] = []
   let score = 0
 
-  const overduePayments = contract.pagamentos?.filter((payment: any) => payment.status === 'atrasado').length || 0
+  const overduePayments = contract.pagamentos?.filter((payment: any) => getEffectivePaymentStatus(payment) === 'atrasado').length || 0
   if (overduePayments > 0) {
     reasons.push(`${overduePayments} pagamento(s) em atraso`)
     score += 3

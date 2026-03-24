@@ -17,6 +17,7 @@ import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
 import { BrainCircuit, Sparkles, Trash2 } from 'lucide-react'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import { buildAttentionCandidate, buildRenewalCandidate } from '@/lib/insights'
+import { withEffectivePaymentStatus } from '@/lib/payments'
 
 export default async function AlunoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -55,6 +56,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
     .select('*')
     .eq('contrato_id', contrato?.id || 0)
     .order('parcela_num')
+  const pagamentosComStatus = (pagamentos || []).map((payment: any) => withEffectivePaymentStatus(payment))
 
   const { data: remarcacoes } = await supabase
     .from('remarcacoes_mes')
@@ -77,7 +79,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
         {
           ...contrato,
           profiles: aluno,
-          pagamentos,
+          pagamentos: pagamentosComStatus,
         },
         {
           remarcacoesNoMes: remarcacoes?.[0]?.quantidade || 0,
@@ -377,7 +379,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                     </tr>
                   </thead>
                   <tbody>
-                    {pagamentos?.map((p: any) => (
+                    {pagamentosComStatus.map((p: any) => (
                       <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                         <td className="px-8 py-5">
                           <span className="text-sm font-black text-slate-900">{p.parcela_num}</span>
@@ -394,11 +396,11 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                         </td>
                         <td className="px-8 py-5">
                           <Badge variant={
-                            p.status === 'pago' ? 'success' :
-                            p.status === 'atrasado' ? 'destructive' :
-                            p.status === 'pendente' ? 'warning' : 'outline'
+                            p.effectiveStatus === 'pago' ? 'success' :
+                            p.effectiveStatus === 'atrasado' ? 'destructive' :
+                            p.effectiveStatus === 'pendente' ? 'warning' : 'outline'
                           } className="px-3 py-1 text-[9px] font-black uppercase tracking-widest">
-                            {p.status}
+                            {p.effectiveStatus}
                           </Badge>
                         </td>
                         <td className="px-8 py-5 text-right">

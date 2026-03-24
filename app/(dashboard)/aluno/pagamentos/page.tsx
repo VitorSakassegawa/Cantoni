@@ -7,6 +7,7 @@ import { formatCurrency, formatDate, formatDateOnly } from '@/lib/utils'
 import { CreditCard, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import PaymentWrapper from '@/components/dashboard/PaymentWrapper'
+import { withEffectivePaymentStatus } from '@/lib/payments'
 
 export default async function AlunoPagamentosPage() {
   const supabase = await createClient()
@@ -31,6 +32,8 @@ export default async function AlunoPagamentosPage() {
     .select('*')
     .eq('contrato_id', contrato?.id || 0)
     .order('parcela_num')
+
+  const pagamentosComStatus = (pagamentos || []).map((payment: any) => withEffectivePaymentStatus(payment))
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -64,7 +67,7 @@ export default async function AlunoPagamentosPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {pagamentos?.map((p: any) => (
+                {pagamentosComStatus.map((p: any) => (
                   <tr key={p.id} className="group hover:bg-slate-50/50 transition-all duration-300">
 
                     <td className="py-6 px-8">
@@ -77,7 +80,7 @@ export default async function AlunoPagamentosPage() {
                       {p.data_pagamento ? formatDate(p.data_pagamento) : <span className="text-slate-400 opacity-60 italic font-medium">Aguardando</span>}
                     </td>
                     <td className="py-6 px-8 text-right flex justify-end">
-                      {p.status !== 'pago' ? (
+                      {p.effectiveStatus !== 'pago' ? (
                         <PaymentWrapper 
                           paymentId={p.id} 
                           amount={Number(p.valor)} 
@@ -86,11 +89,11 @@ export default async function AlunoPagamentosPage() {
                         />
                       ) : (
                         <Badge variant={
-                          p.status === 'pago' ? 'success' :
-                          p.status === 'atrasado' ? 'destructive' :
+                          p.effectiveStatus === 'pago' ? 'success' :
+                          p.effectiveStatus === 'atrasado' ? 'destructive' :
                           'warning'
                         } className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg">
-                          {p.status}
+                          {p.effectiveStatus}
                         </Badge>
                       )}
                     </td>

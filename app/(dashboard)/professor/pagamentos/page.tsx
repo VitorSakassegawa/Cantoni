@@ -7,6 +7,7 @@ import { formatCurrency, formatDate } from '@/lib/utils'
 import Link from 'next/link'
 import { DollarSign, AlertCircle, Calendar, CheckCircle2 } from 'lucide-react'
 import PaymentListDisplay from '@/components/dashboard/PaymentListDisplay'
+import { withEffectivePaymentStatus } from '@/lib/payments'
 
 export default async function PagamentosPage() {
   const supabase = await createClient()
@@ -21,13 +22,15 @@ export default async function PagamentosPage() {
     .select('*, contratos(id, aluno_id, profiles(full_name, email))')
     .order('data_vencimento')
 
-  const atrasados = pagamentos?.filter((p: any) => p.status === 'atrasado') || []
-  const pendentes = pagamentos?.filter((p: any) => p.status === 'pendente') || []
-  const pagos = pagamentos?.filter((p: any) => p.status === 'pago') || []
+  const pagamentosComStatus = (pagamentos || []).map((payment: any) => withEffectivePaymentStatus(payment))
+
+  const atrasados = pagamentosComStatus.filter((p: any) => p.effectiveStatus === 'atrasado')
+  const pendentes = pagamentosComStatus.filter((p: any) => p.effectiveStatus === 'pendente')
+  const pagos = pagamentosComStatus.filter((p: any) => p.effectiveStatus === 'pago')
 
   const totalRecebido = pagos.reduce((acc: number, p: any) => acc + p.valor, 0)
 
-  const grouped = (pagamentos || []).reduce((acc: any, p: any) => {
+  const grouped = pagamentosComStatus.reduce((acc: any, p: any) => {
     const cid = p.contrato_id
     if (!acc[cid]) {
       acc[cid] = {
@@ -45,15 +48,11 @@ export default async function PagamentosPage() {
     acc[cid].totalCount++
     acc[cid].totalValue += p.valor
     
-    if (p.status === 'pago') {
+    if (p.effectiveStatus === 'pago') {
       acc[cid].paidCount++
     } else {
-      // User said: Valor em aberto = soma das parcelas com status "pendente"
-      // But typically we should include "atrasado" in the open balance.
-      // The prompt says in 3.3: Valor em aberto = soma das parcelas com status "pendente"
-      // I'll include both because "atrasado" is also unpaid.
       acc[cid].openValue += p.valor
-      if (p.status === 'atrasado') {
+      if (p.effectiveStatus === 'atrasado') {
         acc[cid].status = 'Atrasado' as const
       }
     }
@@ -63,7 +62,7 @@ export default async function PagamentosPage() {
       parcela_num: p.parcela_num,
       valor: p.valor,
       data_vencimento: p.data_vencimento,
-      status: p.status
+      status: p.effectiveStatus
     })
     return acc
   }, {} as Record<string, any>)

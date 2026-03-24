@@ -21,6 +21,7 @@ import {
   buildProfessorNotifications,
   buildRenewalCandidate,
 } from '@/lib/insights'
+import { withEffectivePaymentStatus } from '@/lib/payments'
 
 
 interface PageProps {
@@ -93,10 +94,11 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .select('*, contratos(profiles(full_name, email))')
     .in('status', ['pago', 'pendente', 'atrasado'])
     .order('data_vencimento', { ascending: false })
+  const allPaymentsWithStatus = (allPayments || []).map((payment: any) => withEffectivePaymentStatus(payment))
 
-  const pagamentosPagos = allPayments?.filter((p: any) => p.status === 'pago') || []
-  const pagamentosPendentes = allPayments?.filter((p: any) => p.status === 'pendente') || []
-  const pagamentosAtrasados = allPayments?.filter((p: any) => p.status === 'atrasado') || []
+  const pagamentosPagos = allPaymentsWithStatus.filter((p: any) => p.effectiveStatus === 'pago')
+  const pagamentosPendentes = allPaymentsWithStatus.filter((p: any) => p.effectiveStatus === 'pendente')
+  const pagamentosAtrasados = allPaymentsWithStatus.filter((p: any) => p.effectiveStatus === 'atrasado')
 
   // Calculate monthly total (collected)
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
@@ -137,8 +139,8 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     return acc + (activePayment?.valor || 0)
   }, 0) || 0
 
-  const pendenteTotal = allPayments
-    ?.filter((p: any) => p.status === 'pendente' || p.status === 'atrasado')
+  const pendenteTotal = allPaymentsWithStatus
+    ?.filter((p: any) => p.effectiveStatus === 'pendente' || p.effectiveStatus === 'atrasado')
     .reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0) || 0
 
   const projectionData = Array.from({ length: 6 }, (_, i) => {
@@ -146,7 +148,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     const targetMonthStr = format(targetMonth, 'yyyy-MM')
     
     // Sum all payments (paid or pending) scheduled for this month
-    const monthValue = allPayments?.filter((p: any) => {
+    const monthValue = allPaymentsWithStatus?.filter((p: any) => {
       if (!p.data_vencimento) return false
       return p.data_vencimento.startsWith(targetMonthStr)
     }).reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0) || 0
@@ -440,7 +442,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           )}
 
           {/* Alertas Financeiros */}
-          {alunosAtivos?.some((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => p.status === 'atrasado')) && (
+          {alunosAtivos?.some((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => withEffectivePaymentStatus(p).effectiveStatus === 'atrasado')) && (
             <Card className="glass-card bg-rose-50/80 border-rose-200/50 ring-4 ring-rose-500/5 hover:scale-[1.01]">
               <CardHeader className="pb-4 bg-rose-100/50 border-b border-rose-200/50">
                 <CardTitle className="text-xs font-black text-red-600 flex items-center gap-2 uppercase tracking-[0.2em]">
@@ -449,8 +451,8 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-red-100/50">
-                  {alunosAtivos?.filter((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => p.status === 'atrasado')).map((contrato: any) => {
-                    const isAtrasado = contrato.pagamentos?.some((p: any) => p.status === 'atrasado')
+                  {alunosAtivos?.filter((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => withEffectivePaymentStatus(p).effectiveStatus === 'atrasado')).map((contrato: any) => {
+                    const isAtrasado = contrato.pagamentos?.some((p: any) => withEffectivePaymentStatus(p).effectiveStatus === 'atrasado')
                     return (
                       <div key={contrato.id} className="p-5 flex items-center justify-between group">
                         <div className="flex items-center gap-3">

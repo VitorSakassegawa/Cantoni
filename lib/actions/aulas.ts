@@ -93,7 +93,7 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
     aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
   if (!isProfessor && !isResolvingConflict && qtdAtual >= plano.remarca_max_mes) {
-    throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
+    throw new Error(`Você já usou o limite de ${plano.remarca_max_mes} remarcação(ões) deste mês.`)
   }
 
   let novoEventId = ''
@@ -225,7 +225,7 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
     aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
   if (!isResolvingConflict && qtdAtual >= plano.remarca_max_mes) {
-    throw new Error(`Limite de ${plano.remarca_max_mes} remarcação(ões)/mês atingido`)
+    throw new Error(`Você já usou o limite de ${plano.remarca_max_mes} remarcação(ões) deste mês.`)
   }
 
   const isoData = new Date(novaDataHora).toISOString()

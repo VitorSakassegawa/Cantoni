@@ -11,7 +11,8 @@ import { Video, BookOpen, Calendar, User, CreditCard, Umbrella, Flame, Trophy, L
 import Link from 'next/link'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
-import { buildStudentNotifications, getDaysRemaining } from '@/lib/insights'
+import { buildStudentNotifications, getDaysRemaining, getStudentRemarkBlockReason } from '@/lib/insights'
+import { withEffectivePaymentStatus } from '@/lib/payments'
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
@@ -53,6 +54,7 @@ export default async function AlunoDashboard() {
     .order('parcela_num')
     .limit(1)
     .maybeSingle()
+  const pagamentoPendenteComStatus = pagamentoPendente ? withEffectivePaymentStatus(pagamentoPendente as any) : null
 
   const { data: ultimasAulas } = await supabase
     .from('aulas')
@@ -70,6 +72,25 @@ export default async function AlunoDashboard() {
     .select('*')
     .eq('contrato_id', contrato?.id || 0)
     .order('parcela_num')
+  const pagamentosComStatus = (pagamentos || []).map((payment: any) => withEffectivePaymentStatus(payment))
+
+  const { data: remarcacaoMesAtual } = await supabase
+    .from('remarcacoes_mes')
+    .select('quantidade')
+    .eq('aluno_id', user.id)
+    .eq('mes', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
+    .maybeSingle()
+
+  const remarkCount = remarcacaoMesAtual?.quantidade || 0
+  const ultimasAulasComRegras = (ultimasAulas || []).map((lesson: any) => ({
+    ...lesson,
+    remarkBlockReason: getStudentRemarkBlockReason({
+      status: lesson.status,
+      hasRequestedDate: Boolean(lesson.data_hora_solicitada),
+      monthlyRescheduleCount: remarkCount,
+      monthlyRescheduleLimit: contrato?.planos?.remarca_max_mes ?? null,
+    }),
+  }))
 
   const progressPct = contrato
     ? Math.round((contrato.aulas_dadas / contrato.aulas_totais) * 100)
@@ -101,8 +122,8 @@ export default async function AlunoDashboard() {
   const daysRemaining = getDaysRemaining(contrato?.data_fim)
   const studentNotifications = buildStudentNotifications({
     daysRemaining,
-    hasPendingPayment: Boolean(pagamentoPendente),
-    hasOverduePayment: pagamentoPendente?.status === 'atrasado',
+    hasPendingPayment: Boolean(pagamentoPendenteComStatus),
+    hasOverduePayment: pagamentoPendenteComStatus?.effectiveStatus === 'atrasado',
     hasPendingReschedule: temRemarcacaoPendente,
     flashcardsDue: flashcardsDue?.length || 0,
     recentActivityCount: activityLogs?.length || 0,
@@ -166,7 +187,7 @@ export default async function AlunoDashboard() {
       </div>
       
       {/* Alerta de Pagamento em Atraso */}
-      {pagamentoPendente?.status === 'atrasado' && (
+      {pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' && (
         <div className="bg-rose-50 border border-rose-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-rose-500/5">
           <div className="flex items-center gap-4 text-rose-600">
             <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center shrink-0">
@@ -174,7 +195,7 @@ export default async function AlunoDashboard() {
             </div>
             <div>
               <p className="font-black text-rose-900 text-sm uppercase tracking-tight">Pagamento em Atraso</p>
-              <p className="text-xs text-rose-700/70 font-medium">A parcela {pagamentoPendente.parcela_num} de {formatCurrency(pagamentoPendente.valor)} venceu em {formatDateOnly(pagamentoPendente.data_vencimento)}.</p>
+              <p className="text-xs text-rose-700/70 font-medium">A parcela {pagamentoPendenteComStatus.parcela_num} de {formatCurrency(pagamentoPendenteComStatus.valor)} venceu em {formatDateOnly(pagamentoPendenteComStatus.data_vencimento)}.</p>
             </div>
           </div>
           <button className="h-10 px-8 rounded-xl bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20">
@@ -365,51 +386,51 @@ export default async function AlunoDashboard() {
         </Card>
 
         {/* Pagamento atual */}
-        <Card className={`glass-card group transition-all duration-500 ${pagamentoPendente?.status === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
+        <Card className={`glass-card group transition-all duration-500 ${pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
           <CardHeader className="pb-4">
             <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
               Financeiro
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {pagamentoPendente ? (
+            {pagamentoPendenteComStatus ? (
               <div className="space-y-6">
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-4xl font-black text-slate-900 tracking-tighter">
-                      {formatCurrency(pagamentoPendente.valor)}
+                      {formatCurrency(pagamentoPendenteComStatus.valor)}
                     </p>
                     <p className="text-[11px] font-bold text-gray-400 uppercase mt-2 tracking-widest">
-                      Parcela {pagamentoPendente.parcela_num}/6 • Vence em {formatDate(pagamentoPendente.data_vencimento)}
+                      Parcela {pagamentoPendenteComStatus.parcela_num}/6 • Vence em {formatDate(pagamentoPendenteComStatus.data_vencimento)}
                     </p>
                   </div>
-                  <Badge variant={pagamentoPendente.status === 'atrasado' ? 'destructive' : 'warning'} className="text-[10px] font-black uppercase px-3 py-1 rounded-lg">
-                    {pagamentoPendente.status === 'atrasado' ? 'Em Atraso' : 'Pendente'}
+                  <Badge variant={pagamentoPendenteComStatus.effectiveStatus === 'atrasado' ? 'destructive' : 'warning'} className="text-[10px] font-black uppercase px-3 py-1 rounded-lg">
+                    {pagamentoPendenteComStatus.effectiveStatus === 'atrasado' ? 'Em Atraso' : 'Pendente'}
                   </Badge>
                 </div>
 
-                {pagamentoPendente.pix_qrcode_base64 && (
+                {pagamentoPendenteComStatus.pix_qrcode_base64 && (
                   <div className="flex flex-col sm:flex-row items-center gap-8 bg-slate-50/50 p-6 rounded-3xl border border-slate-100 shadow-inner">
                     <div className="relative group/qr">
                       <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover/qr:opacity-40 transition" />
                       <img
-                        src={pagamentoPendente.pix_qrcode_base64.startsWith('data:') 
-                          ? pagamentoPendente.pix_qrcode_base64 
-                          : `data:image/png;base64,${pagamentoPendente.pix_qrcode_base64}`}
+                        src={pagamentoPendenteComStatus.pix_qrcode_base64.startsWith('data:') 
+                          ? pagamentoPendenteComStatus.pix_qrcode_base64 
+                          : `data:image/png;base64,${pagamentoPendenteComStatus.pix_qrcode_base64}`}
                         alt="QR Code PIX"
                         className="relative w-36 h-36 border-4 border-white rounded-2xl bg-white shadow-xl"
                       />
                     </div>
                     <div className="flex-1 space-y-4 w-full">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center sm:text-left">Scan para pagar PIX</p>
-                      {pagamentoPendente.pix_copia_cola && (
-                        <CopiarPixBtn codigo={pagamentoPendente.pix_copia_cola} />
+                      {pagamentoPendenteComStatus.pix_copia_cola && (
+                        <CopiarPixBtn codigo={pagamentoPendenteComStatus.pix_copia_cola} />
                       )}
                     </div>
                   </div>
                 )}
 
-                {!pagamentoPendente.pix_qrcode_base64 && (
+                {!pagamentoPendenteComStatus.pix_qrcode_base64 && (
                   <div className="p-5 bg-amber-50/50 rounded-2xl border border-amber-100 flex items-center gap-4">
                     <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shadow-sm">
                       <CreditCard className="w-5 h-5" />
@@ -509,7 +530,7 @@ export default async function AlunoDashboard() {
           </CardHeader>
           <CardContent className="p-0">
             <AulasTimeline 
-              aulas={ultimasAulas || []} 
+              aulas={ultimasAulasComRegras || []} 
               showStudentName={false} 
               showContractType={false} 
               isProfessor={false}
@@ -536,7 +557,7 @@ export default async function AlunoDashboard() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {pagamentos?.map((p: any) => (
+                  {pagamentosComStatus.map((p: any) => (
                     <tr key={p.id} className="group hover:bg-slate-50/50 transition-all duration-300">
                       <td className="py-6 px-8">
                         <span className="font-black text-slate-900 tracking-tighter">{p.parcela_num}</span>
@@ -549,11 +570,11 @@ export default async function AlunoDashboard() {
                       </td>
                       <td className="py-6 px-8 text-right">
                         <Badge variant={
-                          p.status === 'pago' ? 'success' :
-                          p.status === 'atrasado' ? 'destructive' :
+                          p.effectiveStatus === 'pago' ? 'success' :
+                          p.effectiveStatus === 'atrasado' ? 'destructive' :
                           'warning'
                         } className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg">
-                          {p.status}
+                          {p.effectiveStatus}
                         </Badge>
                       </td>
                     </tr>
