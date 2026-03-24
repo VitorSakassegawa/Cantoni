@@ -7,6 +7,7 @@ import {
   normalizePaymentAmount,
   splitFullName,
 } from '@/lib/payments'
+import { logActivityBestEffort } from '@/lib/activity-log'
 
 function getAlunoProfile(localPayment: any) {
   const contrato = localPayment?.contrato
@@ -26,7 +27,7 @@ export async function POST(req: NextRequest) {
 
     const { data: localPayment, error: fetchErr } = await supabase
       .from('pagamentos')
-      .select('*, contrato:contratos(aluno:profiles(email, full_name))')
+      .select('*, contrato:contratos(aluno:profiles(id, email, full_name))')
       .eq('id', paymentId)
       .single()
 
@@ -82,6 +83,20 @@ export async function POST(req: NextRequest) {
         { status: 502 }
       )
     }
+
+    await logActivityBestEffort({
+      targetUserId: aluno?.id,
+      contractId: localPayment.contrato_id,
+      paymentId,
+      eventType: 'payment.processed',
+      title: 'Pagamento processado via Mercado Pago',
+      description: `Pagamento ${paymentId} processado com status ${mpResponse.status}.`,
+      severity: localStatus === 'pago' ? 'success' : 'info',
+      metadata: {
+        mercadopagoId: mpResponse.id,
+        paymentMethod: mpResponse.payment_method_id,
+      },
+    })
 
     return NextResponse.json({
       id: mpResponse.id,

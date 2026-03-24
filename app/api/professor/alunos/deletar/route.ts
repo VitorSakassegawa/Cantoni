@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { deletarEventoCalendar } from '@/lib/google-calendar'
 import { mapWithConcurrency } from '@/lib/async'
+import { logActivityBestEffort } from '@/lib/activity-log'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -34,6 +35,12 @@ export async function POST(request: NextRequest) {
   const serviceSupabase = await createServiceClient()
 
   try {
+    const { data: aluno } = await serviceSupabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', alunoId)
+      .single()
+
     const { data: contratos } = await serviceSupabase
       .from('contratos')
       .select('id')
@@ -70,6 +77,15 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       )
     }
+
+    await logActivityBestEffort({
+      actorUserId: currentUser.id,
+      targetUserId: alunoId,
+      eventType: 'student.deleted',
+      title: 'Aluno removido',
+      description: `O cadastro de ${aluno?.full_name || 'um aluno'} foi removido do sistema.`,
+      severity: 'warning',
+    })
 
     return NextResponse.json({
       success: true,

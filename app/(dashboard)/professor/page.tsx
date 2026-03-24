@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,6 +15,12 @@ import ReschedulingRequestsList from '@/components/dashboard/ReschedulingRequest
 import FinanceDash from '@/components/dashboard/FinanceDash'
 import { addMonths, startOfMonth as startOfMonthDate, endOfMonth as endOfMonthDate } from 'date-fns'
 import { BrainCircuit, Sparkles } from 'lucide-react'
+import NotificationFeed from '@/components/dashboard/NotificationFeed'
+import {
+  buildAttentionCandidate,
+  buildProfessorNotifications,
+  buildRenewalCandidate,
+} from '@/lib/insights'
 
 
 interface PageProps {
@@ -29,6 +35,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'professor') redirect('/aluno')
+  const serviceSupabase = await createServiceClient()
 
   // Week navigation logic
   const weekParam = typeof resolvedParams.week === 'string' ? resolvedParams.week : null
@@ -104,7 +111,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
   const { data: alunosAtivos } = await supabase
     .from('contratos')
-    .select('*, profiles(full_name, email, birth_date, nivel), planos(freq_semana, remarca_max_mes), pagamentos(status, parcela_num, valor, data_vencimento)')
+    .select('*, profiles(full_name, email, birth_date, nivel, streak_count, last_activity_date), planos(freq_semana, remarca_max_mes), pagamentos(status, parcela_num, valor, data_vencimento)')
     .eq('status', 'ativo')
     .order('created_at', { ascending: false })
 
@@ -149,6 +156,61 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
       value: monthValue
     }
   })
+
+  const currentMonthStart = startOfMonthDate(today).toISOString().split('T')[0]
+  const currentMonthEnd = endOfMonthDate(today).toISOString().split('T')[0]
+  const activeStudentIds = (alunosAtivos || []).map((contrato: any) => contrato.aluno_id)
+
+  const { data: remarcacoesMes } = activeStudentIds.length
+    ? await serviceSupabase
+        .from('remarcacoes_mes')
+        .select('aluno_id, quantidade')
+        .in('aluno_id', activeStudentIds)
+        .gte('mes', currentMonthStart)
+        .lte('mes', currentMonthEnd)
+    : { data: [] as any[] }
+
+  const { data: recentActivity } = await serviceSupabase
+    .from('activity_logs')
+    .select('id, title, description, severity, target_user_id, created_at')
+    .order('created_at', { ascending: false })
+    .limit(8)
+
+  const remarcacoesByAluno = new Map(
+    (remarcacoesMes || []).map((item: any) => [item.aluno_id, item.quantidade])
+  )
+
+  const renewalCandidates = (alunosAtivos || [])
+    .map((contrato: any) => buildRenewalCandidate(contrato))
+    .filter(Boolean)
+    .sort((a: any, b: any) => a.daysRemaining - b.daysRemaining)
+
+  const attentionCandidates = (alunosAtivos || [])
+    .map((contrato: any) =>
+      buildAttentionCandidate(contrato, {
+        remarcacoesNoMes: remarcacoesByAluno.get(contrato.aluno_id) || 0,
+      })
+    )
+    .filter(Boolean)
+    .sort((a: any, b: any) => b.score - a.score)
+
+  const professorNotifications = buildProfessorNotifications({
+    pendingReschedules: solicitacoesRemarcacao.length,
+    overduePayments: pagamentosAtrasados.length,
+    renewalsSoon: renewalCandidates as any,
+    attentionStudents: attentionCandidates as any,
+    recentActivityCount: recentActivity?.length || 0,
+  })
+
+  const activityItems = (recentActivity || []).map((entry: any) => ({
+    id: `activity-${entry.id}`,
+    title: entry.title,
+    description: entry.description,
+    severity: entry.severity || 'info',
+    meta: formatDateTime(entry.created_at),
+    href: entry.target_user_id ? `/professor/alunos/${entry.target_user_id}` : '/professor',
+    actionLabel: 'Abrir',
+  }))
 
 
   return (
@@ -212,21 +274,38 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             </div>
             
             <div className="space-y-3">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-400">Sugestões de IA</h4>
+              <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-400">Sugestões Prioritárias</h4>
               <div className="space-y-2">
-                <div className="p-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between group hover:bg-white/10 transition-all cursor-pointer">
-                  <div className="flex items-center gap-3">
-                    <Clock className="w-4 h-4 text-blue-400" />
-                    <span className="text-[10px] font-bold">Otimizar Gaps matinais</span>
+                {attentionCandidates.slice(0, 3).map((candidate: any) => (
+                  <Link
+                    key={candidate.studentId}
+                    href={`/professor/alunos/${candidate.studentId}`}
+                    className="p-3 bg-white/5 rounded-xl border border-white/5 flex items-center justify-between group hover:bg-white/10 transition-all"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <Clock className="w-4 h-4 text-blue-400 shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-[10px] font-bold truncate">{candidate.studentName}</p>
+                        <p className="text-[9px] text-blue-200/70 truncate">{candidate.reasons[0]}</p>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-3 h-3 text-white/40 group-hover:translate-x-1 transition-all" />
+                  </Link>
+                ))}
+                {attentionCandidates.length === 0 && (
+                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] font-bold text-blue-200/70">
+                    Nenhum aluno com risco alto identificado hoje.
                   </div>
-                  <ChevronRight className="w-3 h-3 text-white/40 group-hover:translate-x-1 transition-all" />
-                </div>
+                )}
               </div>
             </div>
 
-            <Button className="w-full bg-white text-blue-900 hover:bg-blue-50 font-black text-[10px] uppercase tracking-widest h-12 rounded-2xl">
-              ABRIR OTIMIZADOR
-            </Button>
+            <Link
+              href={attentionCandidates[0] ? `/professor/alunos/${attentionCandidates[0].studentId}` : '/professor/alunos'}
+              className="w-full bg-white text-blue-900 hover:bg-blue-50 font-black text-[10px] uppercase tracking-widest h-12 rounded-2xl flex items-center justify-center"
+            >
+              Abrir Prioridades
+            </Link>
           </CardContent>
         </Card>
       </div>
@@ -315,6 +394,51 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
         {/* Sidebar Rights: Alunos Recentes & Solicitações & Alertas */}
         <div className="xl:col-span-4 space-y-6">
+          <NotificationFeed
+            title="Central Operacional"
+            items={professorNotifications}
+            emptyMessage="Nenhum alerta prioritário por enquanto."
+          />
+
+          {renewalCandidates.length > 0 && (
+            <Card className="glass-card overflow-hidden">
+              <CardHeader className="pb-4 border-b border-slate-100">
+                <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
+                  <CalendarIcon className="w-4 h-4 text-blue-500" /> Renovações Prioritárias
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0">
+                <div className="divide-y divide-slate-100">
+                  {renewalCandidates.slice(0, 4).map((candidate: any) => (
+                    <Link
+                      key={candidate.contractId}
+                      href={`/professor/alunos/${candidate.studentId}`}
+                      className="p-5 flex items-center justify-between hover:bg-slate-50/80 transition-all"
+                    >
+                      <div className="space-y-1">
+                        <p className="text-[11px] font-black text-slate-900 tracking-tight">{candidate.studentName}</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                          {candidate.daysRemaining} dia(s) restantes • {candidate.progressPct}% concluído
+                        </p>
+                      </div>
+                      <Badge variant={candidate.severity === 'warning' ? 'warning' : 'secondary'} className="text-[8px] font-black uppercase tracking-widest">
+                        {candidate.daysRemaining <= 14 ? 'Renovar agora' : 'Acompanhar'}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {activityItems.length > 0 && (
+            <NotificationFeed
+              title="Feed de Atividade"
+              items={activityItems}
+              emptyMessage="Sem movimentações recentes."
+            />
+          )}
+
           {/* Alertas Financeiros */}
           {alunosAtivos?.some((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => p.status === 'atrasado')) && (
             <Card className="glass-card bg-rose-50/80 border-rose-200/50 ring-4 ring-rose-500/5 hover:scale-[1.01]">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { mapWithConcurrency } from '@/lib/async'
+import { logActivityBestEffort } from '@/lib/activity-log'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -108,6 +109,27 @@ export async function POST(request: NextRequest) {
         data_vencimento: newDate.toISOString().split('T')[0],
       })
       .eq('id', pagamento.id)
+  })
+
+  const { data: contrato } = await supabase
+    .from('contratos')
+    .select('id, aluno_id')
+    .eq('id', id)
+    .single()
+
+  await logActivityBestEffort({
+    actorUserId: user.id,
+    targetUserId: contrato?.aluno_id,
+    contractId: Number(id),
+    eventType: 'contract.updated',
+    title: 'Contrato atualizado',
+    description: `O contrato foi atualizado com status ${status} e valor ${vFloat.toFixed(2)}.`,
+    severity: 'info',
+    metadata: {
+      semester: semestre,
+      year: ano,
+      paymentMethod: forma_pagamento,
+    },
   })
 
   return NextResponse.json({ success: true })

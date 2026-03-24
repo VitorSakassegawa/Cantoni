@@ -7,6 +7,7 @@ import { enviarEmailBoasVindas } from '@/lib/resend'
 import { mapWithConcurrency } from '@/lib/async'
 import { gerarGradeAulas, formatDateTime } from '@/lib/utils'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
+import { logActivityBestEffort } from '@/lib/activity-log'
 
 const CALENDAR_CONCURRENCY = 4
 
@@ -31,7 +32,7 @@ function normalizeLessonTotal(rawValue: unknown, fallback: number) {
 
 export async function POST(request: NextRequest) {
   try {
-    await requireProfessor()
+    const { user: professor } = await requireProfessor()
 
     const {
       alunoId,
@@ -251,6 +252,22 @@ Instrucoes:
         setupPasswordLink,
       }).catch((error) => {
         console.error('Welcome email error:', error)
+      })
+
+      await logActivityBestEffort({
+        actorUserId: professor.id,
+        targetUserId: alunoId,
+        contractId: contrato.id,
+        eventType: 'contract.created',
+        title: 'Novo contrato criado',
+        description: `Contrato ${semestre} ${ano} criado para ${aluno.full_name} com ${totalLessons} aula(s).`,
+        severity: 'success',
+        metadata: {
+          planoId,
+          tipoContrato: tipoContrato || 'semestral',
+          totalLessons,
+          value: valor,
+        },
       })
 
       return NextResponse.json({ success: true, contrato })

@@ -5,6 +5,7 @@ import { validateMPSignature } from '@/lib/mercadopago-auth'
 import { ContractService } from '@/lib/services/contract-service'
 import { assertPaymentAmountMatches, mapMercadoPagoStatus } from '@/lib/payments'
 import { getEnv } from '@/lib/env'
+import { logActivityBestEffort } from '@/lib/activity-log'
 
 export async function GET() {
   return NextResponse.json({
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
       const supabase = await createServiceClient()
       const { data: localPayment, error: paymentError } = await supabase
         .from('pagamentos')
-        .select('id, contrato_id, valor')
+        .select('id, contrato_id, valor, contrato:contratos(aluno_id)')
         .eq('id', externalReference)
         .single()
 
@@ -71,6 +72,16 @@ export async function POST(req: NextRequest) {
       if (localStatus === 'pago' && localPayment.contrato_id) {
         await ContractService.syncFinancialStatus(localPayment.contrato_id)
       }
+
+      await logActivityBestEffort({
+        targetUserId: (localPayment as any).contrato?.aluno_id,
+        contractId: localPayment.contrato_id,
+        paymentId: localPayment.id,
+        eventType: 'payment.webhook_synced',
+        title: 'Pagamento conciliado pelo webhook',
+        description: `O webhook confirmou o pagamento ${localPayment.id} com status ${mpPayment.status}.`,
+        severity: localStatus === 'pago' ? 'success' : 'info',
+      })
     }
 
     return NextResponse.json({ received: true })

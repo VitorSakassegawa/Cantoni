@@ -189,9 +189,30 @@ create table if not exists placement_results (
   created_at timestamptz not null default now()
 );
 
+create table if not exists activity_logs (
+  id bigserial primary key,
+  actor_user_id uuid references profiles(id) on delete set null,
+  target_user_id uuid references profiles(id) on delete set null,
+  contract_id integer references contratos(id) on delete set null,
+  lesson_id integer references aulas(id) on delete set null,
+  payment_id integer references pagamentos(id) on delete set null,
+  event_type text not null,
+  title text not null,
+  description text not null,
+  severity text not null default 'info' check (severity in ('info', 'warning', 'success')),
+  metadata jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists idx_aulas_contrato_id on aulas (contrato_id);
 create index if not exists idx_aulas_remarcada_de on aulas (remarcada_de);
 create index if not exists idx_avaliacoes_habilidades_contrato_id on avaliacoes_habilidades (contrato_id);
+create index if not exists idx_activity_logs_actor_user_id on activity_logs (actor_user_id);
+create index if not exists idx_activity_logs_target_user_id on activity_logs (target_user_id);
+create index if not exists idx_activity_logs_contract_id on activity_logs (contract_id);
+create index if not exists idx_activity_logs_lesson_id on activity_logs (lesson_id);
+create index if not exists idx_activity_logs_payment_id on activity_logs (payment_id);
+create index if not exists idx_activity_logs_created_at on activity_logs (created_at desc);
 create index if not exists idx_contratos_aluno_id on contratos (aluno_id);
 create index if not exists idx_contratos_plano_id on contratos (plano_id);
 create index if not exists idx_flashcards_aluno_id on flashcards (aluno_id);
@@ -213,6 +234,7 @@ alter table recessos enable row level security;
 alter table flashcards enable row level security;
 alter table avaliacoes_habilidades enable row level security;
 alter table placement_results enable row level security;
+alter table activity_logs enable row level security;
 
 create or replace function is_professor()
 returns boolean
@@ -285,6 +307,12 @@ create policy "placement_results_select_policy" on placement_results for select 
 create policy "placement_results_insert_policy" on placement_results for insert with check (is_professor() or student_id = (select auth.uid()));
 create policy "placement_results_update_professor_policy" on placement_results for update using (is_professor()) with check (is_professor());
 create policy "placement_results_delete_professor_policy" on placement_results for delete using (is_professor());
+
+create policy "activity_logs_select_policy" on activity_logs for select using (
+  is_professor()
+  or target_user_id = (select auth.uid())
+  or actor_user_id = (select auth.uid())
+);
 
 -- ============================================================
 -- CONTRACT HELPERS

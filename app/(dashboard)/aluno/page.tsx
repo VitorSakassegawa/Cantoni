@@ -10,6 +10,8 @@ import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
 import { Video, BookOpen, Calendar, User, CreditCard, Umbrella, Flame, Trophy, Layers, BrainCircuit, ExternalLink, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
+import NotificationFeed from '@/components/dashboard/NotificationFeed'
+import { buildStudentNotifications, getDaysRemaining } from '@/lib/insights'
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
@@ -88,6 +90,31 @@ export default async function AlunoDashboard() {
     .eq('aluno_id', user.id)
     .order('mes_referencia', { ascending: false })
     .limit(2)
+
+  const { data: activityLogs } = await supabase
+    .from('activity_logs')
+    .select('id, title, description, severity, created_at')
+    .or(`target_user_id.eq.${user.id},actor_user_id.eq.${user.id}`)
+    .order('created_at', { ascending: false })
+    .limit(5)
+
+  const daysRemaining = getDaysRemaining(contrato?.data_fim)
+  const studentNotifications = buildStudentNotifications({
+    daysRemaining,
+    hasPendingPayment: Boolean(pagamentoPendente),
+    hasOverduePayment: pagamentoPendente?.status === 'atrasado',
+    hasPendingReschedule: temRemarcacaoPendente,
+    flashcardsDue: flashcardsDue?.length || 0,
+    recentActivityCount: activityLogs?.length || 0,
+  })
+
+  const activityItems = (activityLogs || []).map((entry: any) => ({
+    id: `student-activity-${entry.id}`,
+    title: entry.title,
+    description: entry.description,
+    severity: entry.severity || 'info',
+    meta: formatDateTime(entry.created_at),
+  }))
 
   return (
     <div className="space-y-10 pb-16 animate-fade-in">
@@ -196,6 +223,48 @@ export default async function AlunoDashboard() {
           </Link>
         </div>
       )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <NotificationFeed
+          title="Central do Aluno"
+          items={studentNotifications}
+          emptyMessage="Tudo certo por aqui. Nenhuma ação urgente no momento."
+        />
+
+        {daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 30 ? (
+          <Card className="glass-card overflow-hidden">
+            <CardHeader className="pb-4 border-b border-slate-100">
+              <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
+                <Layers className="w-4 h-4 text-blue-500" /> Renovação do Contrato
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-5 pt-6">
+              <div>
+                <p className="text-3xl font-black text-slate-900 tracking-tighter">{daysRemaining} dia(s)</p>
+                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+                  restantes até o fim do contrato atual
+                </p>
+              </div>
+              <p className="text-sm text-slate-500 font-medium leading-relaxed">
+                Seu contrato entra agora na janela ideal de renovação. Isso ajuda a manter a agenda organizada e evita interrupções no plano de aulas.
+              </p>
+              <Link
+                href="/aluno/pagamentos"
+                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+              >
+                Ver financeiro e contrato
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </CardContent>
+          </Card>
+        ) : (
+          <NotificationFeed
+            title="Seu Histórico Recente"
+            items={activityItems}
+            emptyMessage="Sem movimentações recentes no seu portal."
+          />
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Próxima aula */}
@@ -421,6 +490,14 @@ export default async function AlunoDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {daysRemaining === null || daysRemaining > 30 ? (
+        <NotificationFeed
+          title="Seu Histórico Recente"
+          items={activityItems}
+          emptyMessage="Sem movimentações recentes no seu portal."
+        />
+      ) : null}
 
       <div id="aulas-timeline" className="grid grid-cols-1 gap-10">
         <Card className="glass-card overflow-hidden">

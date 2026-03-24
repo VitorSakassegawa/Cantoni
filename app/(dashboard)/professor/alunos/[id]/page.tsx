@@ -15,6 +15,8 @@ import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
 import { BrainCircuit, Sparkles, Trash2 } from 'lucide-react'
+import NotificationFeed from '@/components/dashboard/NotificationFeed'
+import { buildAttentionCandidate, buildRenewalCandidate } from '@/lib/insights'
 
 export default async function AlunoDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -69,6 +71,34 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
     .limit(1)
 
   const currentAvaliacao = avaliacoes?.[0]
+  const renewalCandidate = contrato ? buildRenewalCandidate({ ...contrato, profiles: aluno }) : null
+  const attentionCandidate = contrato
+    ? buildAttentionCandidate(
+        {
+          ...contrato,
+          profiles: aluno,
+          pagamentos,
+        },
+        {
+          remarcacoesNoMes: remarcacoes?.[0]?.quantidade || 0,
+        }
+      )
+    : null
+
+  const { data: activityLogs } = await supabase
+    .from('activity_logs')
+    .select('id, title, description, severity, created_at')
+    .eq('target_user_id', id)
+    .order('created_at', { ascending: false })
+    .limit(6)
+
+  const activityItems = (activityLogs || []).map((entry: any) => ({
+    id: `prof-student-activity-${entry.id}`,
+    title: entry.title,
+    description: entry.description,
+    severity: entry.severity || 'info',
+    meta: formatDateTime(entry.created_at),
+  }))
 
   const progresso = contrato ? (contrato.aulas_dadas / contrato.aulas_totais) * 100 : 0
 
@@ -178,6 +208,26 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
               </div>
             </CardContent>
           </Card>
+
+          {attentionCandidate && (
+            <Card className="border-none overflow-hidden bg-amber-50 shadow-xl shadow-amber-100/40 rounded-[2rem]">
+              <CardHeader className="pb-4 bg-amber-100/60 border-b border-amber-200">
+                <CardTitle className="text-[10px] font-black text-amber-700 uppercase tracking-widest">
+                  Radar de Atenção
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-3">
+                <p className="text-3xl font-black text-amber-900 tracking-tight">Score {attentionCandidate.score}</p>
+                <div className="space-y-2">
+                  {attentionCandidate.reasons.map((reason) => (
+                    <div key={reason} className="text-[10px] font-bold text-amber-700 bg-white/70 rounded-xl px-3 py-2">
+                      {reason}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* Main Content */}
@@ -275,6 +325,36 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
             </div>
           )}
 
+
+          {renewalCandidate && (
+            <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+              <CardHeader className="p-8 bg-slate-50/80 border-b border-slate-100">
+                <CardTitle className="text-xs font-black text-blue-500 uppercase tracking-[0.2em]">
+                  Janela de Renovação
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-8 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                <div className="space-y-2">
+                  <p className="text-3xl font-black text-slate-900 tracking-tight">{renewalCandidate.daysRemaining} dia(s)</p>
+                  <p className="text-sm font-medium text-slate-500">
+                    Contrato perto do término com {renewalCandidate.progressPct}% já concluído.
+                  </p>
+                </div>
+                <Link
+                  href={`/professor/alunos/${id}/contrato/novo`}
+                  className="inline-flex items-center justify-center px-6 py-3 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+                >
+                  Preparar renovação
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
+          <NotificationFeed
+            title="Histórico Operacional"
+            items={activityItems}
+            emptyMessage="Sem movimentações registradas para este aluno ainda."
+          />
 
           {/* Pagamentos View */}
           <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">

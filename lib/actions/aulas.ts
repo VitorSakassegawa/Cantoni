@@ -8,9 +8,10 @@ import { ContractService } from '@/lib/services/contract-service'
 import { deletarEventoCalendar, criarEventoMeet } from '@/lib/google-calendar'
 import { enviarConfirmacaoRemarcacao } from '@/lib/resend'
 import { horasAteAula, formatDateTime } from '@/lib/utils'
+import { logActivityBestEffort } from '@/lib/activity-log'
 
 export async function cancelarAula(aulaId: number) {
-  const { aula, contrato, serviceSupabase } = await requireLessonAccess(aulaId, {
+  const { user, aula, contrato, isProfessor, serviceSupabase } = await requireLessonAccess(aulaId, {
     allowProfessor: true,
     allowStudentOwner: true,
   })
@@ -53,11 +54,24 @@ export async function cancelarAula(aulaId: number) {
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
   revalidatePath('/aluno')
 
+  await logActivityBestEffort({
+    actorUserId: user.id,
+    targetUserId: contrato.aluno_id,
+    contractId: contrato.id,
+    lessonId: aulaId,
+    eventType: 'lesson.cancelled',
+    title: novoStatus === 'cancelada' ? 'Aula cancelada' : 'Aula encerrada com penalidade',
+    description: isProfessor
+      ? `O professor cancelou a aula marcada para ${formatDateTime(aula.data_hora)}.`
+      : `O aluno cancelou a aula marcada para ${formatDateTime(aula.data_hora)}.`,
+    severity: novoStatus === 'cancelada' ? 'info' : 'warning',
+  })
+
   return { success: true, status: novoStatus, aulasDadas, aulasRestantes }
 }
 
 export async function remarcarAula(aulaId: number, novaDataHora: string) {
-  const { aula, contrato, isProfessor, serviceSupabase } = await requireLessonAccess(aulaId, {
+  const { user, aula, contrato, isProfessor, serviceSupabase } = await requireLessonAccess(aulaId, {
     allowProfessor: true,
     allowStudentOwner: true,
   })
@@ -164,6 +178,23 @@ Instrucoes:
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
   revalidatePath('/aluno')
 
+  await logActivityBestEffort({
+    actorUserId: user.id,
+    targetUserId: contrato.aluno_id,
+    contractId: contrato.id,
+    lessonId: novaAula.id,
+    eventType: 'lesson.rescheduled',
+    title: 'Aula remarcada com sucesso',
+    description: `A aula de ${formatDateTime(aula.data_hora)} foi remarcada para ${formatDateTime(novaDataHora)}.`,
+    severity: 'success',
+    metadata: {
+      originalLessonId: aulaId,
+      originalDateTime: aula.data_hora,
+      newDateTime: novaDataHora,
+      requestedBy: isProfessor ? 'professor' : 'student',
+    },
+  })
+
   return { success: true, novaAula }
 }
 
@@ -218,6 +249,17 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
   revalidatePath('/aluno')
 
+  await logActivityBestEffort({
+    actorUserId: user.id,
+    targetUserId: contrato.aluno_id,
+    contractId: contrato.id,
+    lessonId: aulaId,
+    eventType: 'lesson.reschedule_requested',
+    title: 'Solicitação de remarcação enviada',
+    description: `O aluno solicitou trocar ${formatDateTime(aula.data_hora)} por ${formatDateTime(isoData)}.`,
+    severity: 'warning',
+  })
+
   return { success: true }
 }
 
@@ -232,10 +274,10 @@ export async function concluirAula(aulaId: number) {
   const contrato = (
     await (await createServiceClient())
       .from('aulas')
-      .select('contratos(aluno_id)')
+      .select('contrato_id, contratos(aluno_id)')
       .eq('id', aulaId)
       .single()
-  ).data?.contratos as any
+  ).data as any
 
   revalidatePath('/professor')
   if (contrato?.aluno_id) {
@@ -243,11 +285,21 @@ export async function concluirAula(aulaId: number) {
   }
   revalidatePath('/aluno')
 
+  await logActivityBestEffort({
+    targetUserId: contrato?.contratos?.aluno_id,
+    contractId: contrato?.contrato_id,
+    lessonId: aulaId,
+    eventType: 'lesson.completed',
+    title: 'Aula concluída',
+    description: 'A aula foi marcada como dada e o progresso do contrato foi atualizado.',
+    severity: 'success',
+  })
+
   return { success: true, ...result }
 }
 
 export async function rejeitarRemarcacao(aulaId: number, justificativa: string) {
-  await requireProfessor()
+  const { user } = await requireProfessor()
   const serviceSupabase = await createServiceClient()
 
   const { data: aula } = await serviceSupabase
@@ -278,6 +330,19 @@ export async function rejeitarRemarcacao(aulaId: number, justificativa: string) 
     revalidatePath(`/professor/alunos/${aula.contratos.aluno_id}`)
   }
   revalidatePath('/aluno')
+
+  await logActivityBestEffort({
+    actorUserId: user.id,
+    targetUserId: aula.contratos?.aluno_id,
+    contractId: aula.contrato_id,
+    lessonId: aulaId,
+    eventType: 'lesson.reschedule_rejected',
+    title: 'Solicitação de remarcação rejeitada',
+    description: justificativa
+      ? `A remarcação foi rejeitada com a justificativa: ${justificativa}`
+      : 'A solicitação de remarcação foi rejeitada pelo professor.',
+    severity: 'warning',
+  })
 
   return { success: true }
 }
