@@ -2,29 +2,49 @@ import { formatCurrency, formatDateOnly } from '@/lib/utils'
 
 export const LEGAL_REFERENCE_LINKS = [
   {
-    label: 'CDC - Lei nº 8.078/1990',
+    label: 'CDC - Lei no 8.078/1990',
     href: 'https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm',
   },
   {
-    label: 'Código Civil - Lei nº 10.406/2002',
+    label: 'Codigo Civil - Lei no 10.406/2002',
     href: 'https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm',
   },
 ]
 
 export const CONTRACT_ACCEPTANCE_TERMS = [
-  'confirmo que li integralmente esta versão emitida do contrato',
-  'confirmo que os dados visíveis neste documento correspondem ao acordo apresentado no portal',
-  'reconheço que este aceite fica registrado com data, versão e evidências técnicas de auditoria',
+  'confirmo que li integralmente esta versao emitida do contrato',
+  'confirmo que os dados visiveis neste documento correspondem ao acordo apresentado no portal',
+  'reconheco que este aceite fica registrado com data, versao e evidencias tecnicas de auditoria',
 ]
 
 const WEEKDAY_LABELS: Record<number, string> = {
   0: 'domingo',
   1: 'segunda-feira',
-  2: 'terça-feira',
+  2: 'terca-feira',
   3: 'quarta-feira',
   4: 'quinta-feira',
   5: 'sexta-feira',
-  6: 'sábado',
+  6: 'sabado',
+}
+
+function getPersonName(person: any, fallback: string) {
+  return person?.full_name || fallback
+}
+
+function getPersonCpf(person: any) {
+  return person?.cpf || 'nao informado'
+}
+
+function getPersonEmail(person: any) {
+  return person?.email || 'nao informado'
+}
+
+function getPersonPhone(person: any) {
+  return person?.phone || 'nao informado'
+}
+
+function getTeacherCity(teacher: any) {
+  return teacher?.city || 'Guarulhos/SP'
 }
 
 export function formatContractDays(days?: number[] | null) {
@@ -37,11 +57,14 @@ export function formatContractDays(days?: number[] | null) {
 
 export function buildPaymentSummary(payments: any[]) {
   if (!payments || payments.length === 0) {
-    return 'Pagamento ainda não detalhado no portal.'
+    return 'Pagamento ainda nao detalhado no portal.'
   }
 
   return payments
-    .map((payment: any) => `${payment.parcela_num}. ${formatCurrency(Number(payment.valor || 0))} com vencimento em ${formatDateOnly(payment.data_vencimento)}`)
+    .map(
+      (payment: any) =>
+        `${payment.parcela_num}. ${formatCurrency(Number(payment.valor || 0))} com vencimento em ${formatDateOnly(payment.data_vencimento)}`
+    )
     .join('; ')
 }
 
@@ -62,41 +85,41 @@ export function buildContractSections(input: {
   return [
     {
       title: '1. Partes e finalidade',
-      body: `Este instrumento regula a prestação de serviços educacionais personalizados de ensino de língua estrangeira entre ${teacher.full_name || 'o professor'} e ${student.full_name || 'o aluno'}, com foco em transparência, boa-fé objetiva e clareza das informações essenciais do serviço.`,
+      body: `Este instrumento regula a prestacao de servicos educacionais personalizados de ensino de lingua estrangeira entre ${getPersonName(teacher, 'o professor')} e ${getPersonName(student, 'o aluno')}, com foco em transparencia, boa-fe objetiva e clareza das informacoes essenciais do servico.`,
     },
     {
       title: '2. Objeto e formato das aulas',
-      body: `O objeto do contrato é a ministração de ${contract.aulas_totais} aula(s), no período de ${startDate} a ${endDate}, em regime ${contract.tipo_contrato === 'ad-hoc' ? 'personalizado' : 'regular'}, preferencialmente às ${contract.horario || 'horário a combinar'}, nos dias ${daysLabel}.`,
+      body: `O objeto do contrato e a ministracao de ${contract.aulas_totais} aula(s), no periodo de ${startDate} a ${endDate}, em regime ${contract.tipo_contrato === 'ad-hoc' ? 'personalizado' : 'regular'}, preferencialmente as ${contract.horario || 'horario a combinar'}, nos dias ${daysLabel}.`,
     },
     {
       title: '3. Valor e forma de pagamento',
-      body: `O valor global contratado é de ${formatCurrency(Number(contract.valor || 0))}, com pagamento em ${paymentCount} parcela(s), pela forma ${contract.forma_pagamento || 'definida no portal'}, observando o fluxo financeiro registrado no sistema. Resumo atual das parcelas: ${buildPaymentSummary(payments)}.`,
+      body: `O valor global contratado e de ${formatCurrency(Number(contract.valor || 0))}, com pagamento em ${paymentCount} parcela(s), pela forma ${contract.forma_pagamento || 'definida no portal'}, observando o fluxo financeiro registrado no sistema. Resumo atual das parcelas: ${buildPaymentSummary(payments)}.`,
     },
     {
-      title: '4. Regras de agenda, cancelamento e remarcação',
-      body: 'Cancelamentos informados com antecedência mínima de 2 horas não geram contabilização da aula como dada. Após esse prazo, a aula pode ser considerada realizada para fins de carga contratada. As remarcações seguem o limite mensal do plano contratado e dependem de disponibilidade operacional das partes.',
+      title: '4. Regras de agenda, cancelamento e remarcacao',
+      body: 'Cancelamentos informados com antecedencia minima de 2 horas nao geram contabilizacao da aula como dada. Apos esse prazo, a aula pode ser considerada realizada para fins de carga contratada. As remarcacoes seguem o limite mensal do plano contratado e dependem de disponibilidade operacional das partes.',
     },
     {
-      title: '5. Materiais, participação e deveres do aluno',
-      body: 'O aluno se compromete a participar das aulas, manter seus dados atualizados no portal, acompanhar tarefas e comunicações, e adquirir ou acessar o material didático indicado quando aplicável. O aproveitamento pedagógico depende também de dedicação extraclasse e frequência adequada.',
+      title: '5. Materiais, participacao e deveres do aluno',
+      body: 'O aluno se compromete a participar das aulas, manter seus dados atualizados no portal, acompanhar tarefas e comunicacoes, e adquirir ou acessar o material didatico indicado quando aplicavel. O aproveitamento pedagogico depende tambem de dedicacao extraclasse e frequencia adequada.',
     },
     {
-      title: '6. Alterações contratuais e aditivos',
+      title: '6. Alteracoes contratuais e aditivos',
       body: hasAddenda
-        ? `Alterações financeiras posteriores à emissão do contrato, especialmente após parcelas pagas, devem ocorrer por aditivo expresso. O portal já registra ${addenda.length} aditivo(s), preservando o histórico de pagamentos realizados e reorganizando apenas o saldo em aberto.`
-        : 'Alterações de valor, parcelamento, vencimento ou condições financeiras posteriores à emissão do contrato devem ser formalizadas por aditivo expresso, preservando o histórico já consolidado no portal.',
+        ? `Alteracoes financeiras posteriores a emissao do contrato, especialmente apos parcelas pagas, devem ocorrer por aditivo expresso. O portal ja registra ${addenda.length} aditivo(s), preservando o historico de pagamentos realizados e reorganizando apenas o saldo em aberto.`
+        : 'Alteracoes de valor, parcelamento, vencimento ou condicoes financeiras posteriores a emissao do contrato devem ser formalizadas por aditivo expresso, preservando o historico ja consolidado no portal.',
     },
     {
-      title: '7. Vigência, renovação e encerramento',
-      body: `A vigência contratual encerra-se em ${endDate}, podendo haver renovação mediante nova formalização. Situações de inadimplemento, mudanças de carga horária ou renegociação financeira devem ser tratadas no portal com antecedência razoável para evitar desencontro entre agenda, financeiro e histórico acadêmico.`,
+      title: '7. Vigencia, renovacao e encerramento',
+      body: `A vigencia contratual encerra-se em ${endDate}, podendo haver renovacao mediante nova formalizacao. Situacoes de inadimplemento, mudancas de carga horaria ou renegociacao financeira devem ser tratadas no portal com antecedencia razoavel para evitar desencontro entre agenda, financeiro e historico academico.`,
     },
     {
-      title: '8. Base de transparência contratual',
-      body: 'Este modelo foi estruturado para privilegiar informação prévia, redação legível, coerência com a operação do portal e interpretação favorável ao aderente em caso de ambiguidade, em linha geral com deveres de transparência e boa-fé previstos na legislação civil e consumerista brasileira.',
+      title: '8. Base de transparencia contratual',
+      body: 'Este modelo foi estruturado para privilegiar informacao previa, redacao legivel, coerencia com a operacao do portal e interpretacao favoravel ao aderente em caso de ambiguidade, em linha geral com deveres de transparencia e boa-fe previstos na legislacao civil e consumerista brasileira.',
     },
     {
-      title: '9. Foro e observações finais',
-      body: `Fica indicado o foro de ${teacher.city || 'Guarulhos/SP'} para dirimir controvérsias contratuais, sem prejuízo dos direitos do consumidor previstos em lei. Recomenda-se revisão jurídica personalizada antes do uso definitivo deste modelo em larga escala.`,
+      title: '9. Foro e observacoes finais',
+      body: `Fica indicado o foro de ${getTeacherCity(teacher)} para dirimir controversias contratuais, sem prejuizo dos direitos do consumidor previstos em lei. Recomenda-se revisao juridica personalizada antes do uso definitivo deste modelo em larga escala.`,
     },
   ]
 }
@@ -115,9 +138,9 @@ export function buildEnrollmentDeclaration(input: {
   }).format(new Date())
 
   return {
-    title: 'Declaração de Matrícula',
-    body: `Declaro, para os devidos fins, que ${student.full_name || 'o aluno'}, CPF ${student.cpf || 'não informado'}, encontra-se matriculado(a) no programa de aulas de língua estrangeira conduzido por ${teacher.full_name || 'o professor'}, no período de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
-    complementary: `O contrato atualmente vinculado ao portal é o de nº ${contract.id}, em status ${contract.status}, com organização pedagógica registrada no ambiente digital da escola.`,
+    title: 'Declaracao de Matricula',
+    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de lingua estrangeira conduzido por ${getPersonName(teacher, 'o professor')}, no periodo de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
+    complementary: `O contrato atualmente vinculado ao portal e o de no ${contract.id}, em status ${contract.status}, com organizacao pedagogica registrada no ambiente digital da escola.`,
     issueDate,
   }
 }
@@ -135,17 +158,17 @@ export function buildContractSnapshot(input: {
     generatedAt: new Date().toISOString(),
     acceptanceTerms: CONTRACT_ACCEPTANCE_TERMS,
     student: {
-      fullName: input.student?.full_name || 'Aluno',
-      cpf: input.student?.cpf || 'não informado',
-      email: input.student?.email || 'não informado',
-      phone: input.student?.phone || 'não informado',
+      fullName: getPersonName(input.student, 'Aluno'),
+      cpf: getPersonCpf(input.student),
+      email: getPersonEmail(input.student),
+      phone: getPersonPhone(input.student),
     },
     teacher: {
-      fullName: input.teacher?.full_name || 'Professor responsável',
-      cpf: input.teacher?.cpf || 'não informado',
-      email: input.teacher?.email || 'não informado',
-      phone: input.teacher?.phone || 'não informado',
-      city: input.teacher?.city || 'Guarulhos/SP',
+      fullName: getPersonName(input.teacher, 'Professor responsavel'),
+      cpf: getPersonCpf(input.teacher),
+      email: getPersonEmail(input.teacher),
+      phone: getPersonPhone(input.teacher),
+      city: getTeacherCity(input.teacher),
     },
     summary: {
       contractId: input.contract.id,
@@ -180,10 +203,10 @@ export function buildDeclarationSnapshot(input: {
     title: declaration.title,
     generatedAt: new Date().toISOString(),
     teacher: {
-      fullName: input.teacher?.full_name || 'Professor responsável',
-      cpf: input.teacher?.cpf || 'não informado',
-      email: input.teacher?.email || 'não informado',
-      city: input.teacher?.city || 'Guarulhos/SP',
+      fullName: getPersonName(input.teacher, 'Professor responsavel'),
+      cpf: getPersonCpf(input.teacher),
+      email: getPersonEmail(input.teacher),
+      city: getTeacherCity(input.teacher),
     },
     contract: {
       id: input.contract.id,

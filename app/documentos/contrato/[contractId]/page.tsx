@@ -107,7 +107,24 @@ export default async function ContractDocumentPage({
           </section>
         )}
 
-        <footer className="space-y-4 border-t border-slate-200 pt-8">
+        <footer className="space-y-6 border-t border-slate-200 pt-8">
+          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante institucional</p>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Documento</p>
+                <p className="mt-2 text-sm font-bold">Contrato administrativo</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato vinculado</p>
+                <p className="mt-2 text-sm font-bold">#{context.contract.id}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodo</p>
+                <p className="mt-2 text-sm font-bold">{formatDateOnly(context.contract.data_inicio)} - {formatDateOnly(context.contract.data_fim)}</p>
+              </div>
+            </div>
+          </div>
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Base juridica informativa</p>
           <ul className="space-y-2 text-sm text-slate-600">
             <li>Transparencia e informacao adequada ao consumidor, incluindo dever de clareza da oferta e das clausulas contratuais.</li>
@@ -119,6 +136,14 @@ export default async function ContractDocumentPage({
                 {reference.label}
               </a>
             ))}
+          </div>
+          <div className="pt-8">
+            <p className="mx-auto w-full max-w-sm border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+              {context.teacher?.full_name || 'Professor responsavel'}
+            </p>
+            <p className="mt-2 text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+              Cantoni English School
+            </p>
           </div>
         </footer>
       </div>

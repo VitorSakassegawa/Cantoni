@@ -15,13 +15,20 @@ export default async function EnrollmentDeclarationPage({
 
   return (
     <DocumentShell
-      title="Declaração de Matrícula"
-      subtitle="Documento pronto para impressão e salvamento em PDF."
+      title="Declaracao de Matricula"
+      subtitle="Documento pronto para impressao e salvamento em PDF."
       backHref="/aluno/documentos"
     >
       <div className="space-y-12 text-slate-900">
         <header className="space-y-4 border-b border-slate-200 pb-8 text-center">
-          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Portal Acadêmico</p>
+          <div className="flex justify-center">
+            <img
+              src="/logo-cantoni.svg"
+              alt="Cantoni English School"
+              className="h-16 w-auto object-contain"
+            />
+          </div>
+          <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Cantoni English School</p>
           <h2 className="text-3xl font-black tracking-tight">{declaration.title}</h2>
         </header>
 
@@ -32,18 +39,38 @@ export default async function EnrollmentDeclarationPage({
 
         <section className="rounded-[1.5rem] bg-slate-50 p-6">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emitente</p>
-          <p className="mt-2 text-lg font-black">{context.teacher?.full_name || 'Professor responsável'}</p>
-          <p className="text-sm text-slate-600">CPF: {context.teacher?.cpf || 'não informado'}</p>
-          <p className="text-sm text-slate-600">E-mail: {context.teacher?.email || 'não informado'}</p>
+          <p className="mt-2 text-lg font-black">{context.teacher?.full_name || 'Professor responsavel'}</p>
+          <p className="text-sm text-slate-600">CPF: {context.teacher?.cpf || 'nao informado'}</p>
+          <p className="text-sm text-slate-600">E-mail: {context.teacher?.email || 'nao informado'}</p>
         </section>
 
-        <footer className="pt-10 text-right">
-          <p className="text-sm text-slate-600">
+        <footer className="space-y-6 border-t border-slate-200 pt-10">
+          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante institucional</p>
+            <div className="mt-4 grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Documento</p>
+                <p className="mt-2 text-sm font-bold">Declaracao de Matricula</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato vinculado</p>
+                <p className="mt-2 text-sm font-bold">#{context.contract.id}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emissao</p>
+                <p className="mt-2 text-sm font-bold">{declaration.issueDate}</p>
+              </div>
+            </div>
+          </div>
+          <p className="text-right text-sm text-slate-600">
             {context.teacher?.city || 'Guarulhos/SP'}, {declaration.issueDate}
           </p>
           <div className="mt-16">
             <p className="mx-auto w-full max-w-sm border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
-              {context.teacher?.full_name || 'Professor responsável'}
+              {context.teacher?.full_name || 'Professor responsavel'}
+            </p>
+            <p className="mt-2 text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+              Cantoni English School
             </p>
           </div>
         </footer>

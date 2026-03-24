@@ -54,6 +54,18 @@ export async function getDocumentContext(
     .eq('contract_id', contractId)
     .order('created_at', { ascending: false })
 
+  let student = contract.profiles
+
+  if (!student && contract.aluno_id) {
+    const { data: fallbackStudent } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', contract.aluno_id)
+      .maybeSingle()
+
+    student = fallbackStudent || null
+  }
+
   const { data: teacher } = await supabase
     .from('profiles')
     .select('*')
@@ -64,7 +76,7 @@ export async function getDocumentContext(
 
   return {
     viewer: profile,
-    student: contract.profiles,
+    student,
     teacher,
     contract,
     payments: payments || [],
