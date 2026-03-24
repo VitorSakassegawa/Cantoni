@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getDocumentContext } from '@/lib/document-access'
 import { buildContractSnapshot, buildDeclarationSnapshot } from '@/lib/documents'
+import { generateDocumentHash } from '@/lib/document-audit'
 import { logActivityBestEffort } from '@/lib/activity-log'
 
 export async function POST(request: NextRequest) {
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
     kind === 'contract'
       ? buildContractSnapshot(context)
       : buildDeclarationSnapshot(context)
+  const contentHash = generateDocumentHash(payload)
 
   const { data: previousIssuances } = await supabase
     .from('document_issuances')
@@ -72,6 +74,7 @@ export async function POST(request: NextRequest) {
       version: nextVersion,
       title: payload.title,
       payload,
+      content_hash: contentHash,
       status: 'issued',
       requires_acceptance: kind === 'contract',
       issued_by: user.id,
@@ -95,6 +98,7 @@ export async function POST(request: NextRequest) {
       issuanceId: issuance.id,
       kind,
       version: nextVersion,
+      contentHash,
     },
   })
 

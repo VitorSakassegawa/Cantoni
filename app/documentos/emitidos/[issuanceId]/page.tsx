@@ -21,11 +21,7 @@ export default async function IssuedDocumentPage({
   if (!user) redirect('/login')
 
   const { data: viewer } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  const { data: issuance } = await supabase
-    .from('document_issuances')
-    .select('*')
-    .eq('id', parsedIssuanceId)
-    .single()
+  const { data: issuance } = await supabase.from('document_issuances').select('*').eq('id', parsedIssuanceId).single()
 
   if (!issuance) {
     redirect('/aluno/documentos')
@@ -58,6 +54,23 @@ export default async function IssuedDocumentPage({
               Documento emitido em {formatDateTime(issuance.created_at)}. Esta versão permanece congelada mesmo que o cadastro seja alterado depois.
             </p>
           </header>
+
+          <section className="rounded-[1.5rem] bg-slate-50 p-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versão</p>
+                <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                <p className="mt-2 text-sm font-bold capitalize">{issuance.status}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash de integridade</p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'não disponível'}</p>
+              </div>
+            </div>
+          </section>
 
           <section className="grid gap-6 md:grid-cols-2">
             <div className="rounded-[1.5rem] border border-slate-200 p-6">
@@ -125,7 +138,11 @@ export default async function IssuedDocumentPage({
           )}
 
           {issuance.requires_acceptance && issuance.status !== 'accepted' && !isProfessor && (
-            <DocumentAcceptanceForm issuanceId={issuance.id} defaultName={viewer?.full_name || ''} />
+            <DocumentAcceptanceForm
+              issuanceId={issuance.id}
+              defaultName={viewer?.full_name || ''}
+              terms={payload.acceptanceTerms || []}
+            />
           )}
 
           {issuance.status === 'accepted' && (
@@ -134,6 +151,20 @@ export default async function IssuedDocumentPage({
               <p className="mt-2 text-sm font-medium text-emerald-900/80">
                 Aceito por {issuance.accepted_name || 'aluno'} em {formatDateTime(issuance.accepted_at)}.
               </p>
+              <div className="mt-4 grid gap-3 md:grid-cols-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Versão aceita</p>
+                  <p className="mt-1 text-sm font-bold text-emerald-900">v{issuance.accepted_version || issuance.version}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">IP</p>
+                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_ip || 'não informado'}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">User-Agent</p>
+                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_user_agent || 'não informado'}</p>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -143,6 +174,24 @@ export default async function IssuedDocumentPage({
             <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Documento Emitido</p>
             <h2 className="text-3xl font-black tracking-tight">{payload.title || issuance.title}</h2>
           </header>
+
+          <section className="rounded-[1.5rem] bg-slate-50 p-6">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versão</p>
+                <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                <p className="mt-2 text-sm font-bold capitalize">{issuance.status}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash de integridade</p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'não disponível'}</p>
+              </div>
+            </div>
+          </section>
+
           <section className="space-y-8">
             <p className="text-lg leading-9 text-slate-700">{payload.body}</p>
             <p className="text-base leading-8 text-slate-600">{payload.complementary}</p>

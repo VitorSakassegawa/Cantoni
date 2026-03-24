@@ -1,6 +1,7 @@
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getRequestIp } from '@/lib/document-audit'
 import { logActivityBestEffort } from '@/lib/activity-log'
 
 export async function POST(request: NextRequest) {
@@ -44,6 +45,8 @@ export async function POST(request: NextRequest) {
     p_issuance_id: parsedIssuanceId,
     p_student_id: user.id,
     p_acceptance_name: String(acceptanceName || profile?.full_name || '').trim(),
+    p_acceptance_ip: getRequestIp(request.headers),
+    p_acceptance_user_agent: request.headers.get('user-agent'),
   })
 
   if (error) {
@@ -61,6 +64,8 @@ export async function POST(request: NextRequest) {
     metadata: {
       issuanceId: parsedIssuanceId,
       kind: issuance.kind,
+      acceptanceIp: getRequestIp(request.headers),
+      acceptanceUserAgent: request.headers.get('user-agent'),
     },
   })
 

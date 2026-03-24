@@ -232,11 +232,15 @@ create table if not exists document_issuances (
   version integer not null,
   title text not null,
   payload jsonb not null default '{}'::jsonb,
+  content_hash text not null default '',
   status text not null default 'issued' check (status in ('issued', 'accepted', 'superseded')),
   requires_acceptance boolean not null default false,
   issued_by uuid references profiles(id) on delete set null,
   accepted_by uuid references profiles(id) on delete set null,
   accepted_name text,
+  accepted_version integer,
+  acceptance_ip text,
+  acceptance_user_agent text,
   accepted_at timestamptz,
   created_at timestamptz not null default now(),
   unique (contract_id, kind, version)
@@ -641,7 +645,9 @@ $$;
 create or replace function accept_document_issuance(
   p_issuance_id bigint,
   p_student_id uuid,
-  p_acceptance_name text
+  p_acceptance_name text,
+  p_acceptance_ip text default null,
+  p_acceptance_user_agent text default null
 )
 returns void
 language plpgsql
@@ -677,6 +683,9 @@ begin
   set status = 'accepted',
       accepted_by = p_student_id,
       accepted_name = coalesce(nullif(trim(p_acceptance_name), ''), accepted_name),
+      accepted_version = version,
+      acceptance_ip = coalesce(nullif(trim(p_acceptance_ip), ''), acceptance_ip),
+      acceptance_user_agent = coalesce(nullif(trim(p_acceptance_user_agent), ''), acceptance_user_agent),
       accepted_at = now()
   where id = p_issuance_id;
 end;

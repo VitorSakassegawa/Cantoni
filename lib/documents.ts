@@ -11,6 +11,12 @@ export const LEGAL_REFERENCE_LINKS = [
   },
 ]
 
+export const CONTRACT_ACCEPTANCE_TERMS = [
+  'confirmo que li integralmente esta versão emitida do contrato',
+  'confirmo que os dados visíveis neste documento correspondem ao acordo apresentado no portal',
+  'reconheço que este aceite fica registrado com data, versão e evidências técnicas de auditoria',
+]
+
 const WEEKDAY_LABELS: Record<number, string> = {
   0: 'domingo',
   1: 'segunda-feira',
@@ -127,6 +133,7 @@ export function buildContractSnapshot(input: {
     kind: 'contract',
     title: `Contrato #${input.contract.id}`,
     generatedAt: new Date().toISOString(),
+    acceptanceTerms: CONTRACT_ACCEPTANCE_TERMS,
     student: {
       fullName: input.student?.full_name || 'Aluno',
       cpf: input.student?.cpf || 'não informado',

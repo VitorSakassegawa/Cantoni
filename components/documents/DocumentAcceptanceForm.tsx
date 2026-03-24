@@ -7,9 +7,11 @@ import { toast } from 'sonner'
 export default function DocumentAcceptanceForm({
   issuanceId,
   defaultName,
+  terms,
 }: {
   issuanceId: number
   defaultName: string
+  terms: string[]
 }) {
   const router = useRouter()
   const [acceptanceName, setAcceptanceName] = useState(defaultName)
@@ -50,9 +52,19 @@ export default function DocumentAcceptanceForm({
       <div className="space-y-2">
         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Aceite digital</p>
         <p className="text-sm font-medium text-emerald-900/80">
-          Ao registrar o aceite, você confirma que leu o documento emitido e concorda com o conteúdo apresentado nesta versão.
+          Ao registrar o aceite, você confirma a leitura desta versão emitida e autoriza o registro de evidências técnicas de auditoria do ato de aceite.
         </p>
       </div>
+
+      <div className="rounded-2xl border border-emerald-100 bg-white/80 p-4">
+        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Condições do aceite</p>
+        <ul className="mt-3 space-y-2 text-sm text-slate-700">
+          {terms.map((term) => (
+            <li key={term}>• {term}</li>
+          ))}
+        </ul>
+      </div>
+
       <input
         value={acceptanceName}
         onChange={(e) => setAcceptanceName(e.target.value)}
@@ -60,10 +72,12 @@ export default function DocumentAcceptanceForm({
         placeholder="Seu nome completo"
         required
       />
+
       <label className="flex items-start gap-3 text-sm text-slate-700">
         <input type="checkbox" checked={confirmed} onChange={(e) => setConfirmed(e.target.checked)} className="mt-1" />
-        Confirmo que li este contrato e desejo registrar meu aceite digital no portal.
+        Confirmo meu aceite digital desta versão específica do documento e reconheço o registro de data, versão e evidências técnicas.
       </label>
+
       <button
         type="submit"
         disabled={loading}
