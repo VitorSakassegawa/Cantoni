@@ -204,7 +204,7 @@ Instrucoes:
 
       for (let i = 1; i <= nParcelas; i += 1) {
         const mesVenc = new Date(`${dataInicio}T12:00:00`)
-        mesVenc.setMonth(mesVenc.getMonth() + i - 1)
+        mesVenc.setMonth(mesVenc.getMonth() + i)
 
         const ultimoDiaMes = new Date(mesVenc.getFullYear(), mesVenc.getMonth() + 1, 0).getDate()
         const diaEfetivo = Math.min(dia_vencimento || 5, ultimoDiaMes)

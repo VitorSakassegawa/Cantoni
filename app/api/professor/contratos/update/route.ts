@@ -90,21 +90,21 @@ export async function POST(request: NextRequest) {
   const valorParcela = Number((vFloat / totalParcels).toFixed(2))
   const { data: pendentes } = await supabase
     .from('pagamentos')
-    .select('id, data_vencimento')
+    .select('id, parcela_num')
     .eq('contrato_id', id)
     .eq('status', 'pendente')
 
   await mapWithConcurrency(pendentes || [], 5, async (pagamento: any) => {
-    if (!pagamento.data_vencimento) {
+    const parcelaNumero = Number(pagamento.parcela_num)
+    if (!Number.isFinite(parcelaNumero) || parcelaNumero <= 0) {
       return
     }
 
-    const currentLoc = new Date(`${pagamento.data_vencimento}T12:00:00`)
-    if (Number.isNaN(currentLoc.getTime())) {
-      return
-    }
-
-    const newDate = new Date(currentLoc.getFullYear(), currentLoc.getMonth(), dvInt, 12, 0, 0)
+    const dueBase = new Date(`${dataInicio}T12:00:00`)
+    dueBase.setMonth(dueBase.getMonth() + parcelaNumero)
+    const ultimoDiaMes = new Date(dueBase.getFullYear(), dueBase.getMonth() + 1, 0).getDate()
+    const diaEfetivo = Math.min(dvInt, ultimoDiaMes)
+    const newDate = new Date(dueBase.getFullYear(), dueBase.getMonth(), diaEfetivo, 12, 0, 0)
     if (Number.isNaN(newDate.getTime())) {
       return
     }
