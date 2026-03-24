@@ -3,8 +3,8 @@ import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Teacher Gabriel Cantoni — Aulas de Inglês",
-  description: "Sistema de gestão de aulas de inglês particulares",
+  title: "Cantoni English School",
+  description: "Portal academico e administrativo da Cantoni English School",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

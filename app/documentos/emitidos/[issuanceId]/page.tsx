@@ -6,6 +6,28 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { formatCurrency, formatDateOnly, formatDateTime } from '@/lib/utils'
 
+function getStatusLabel(status: string) {
+  switch (status) {
+    case 'accepted':
+      return 'Aceito digitalmente'
+    case 'superseded':
+      return 'Versao superada'
+    default:
+      return 'Emitido'
+  }
+}
+
+function getStatusTone(status: string) {
+  switch (status) {
+    case 'accepted':
+      return 'border-emerald-200 bg-emerald-50 text-emerald-700'
+    case 'superseded':
+      return 'border-slate-200 bg-slate-100 text-slate-600'
+    default:
+      return 'border-blue-200 bg-blue-50 text-blue-700'
+  }
+}
+
 export default async function IssuedDocumentPage({
   params,
 }: {
@@ -34,40 +56,66 @@ export default async function IssuedDocumentPage({
 
   const payload = issuance.payload || {}
   const backHref = isProfessor ? '/professor' : '/aluno/documentos'
+  const issuanceCode = `CES-${String(issuance.id).padStart(6, '0')}-V${issuance.version}`
+  const statusLabel = getStatusLabel(issuance.status)
+  const statusTone = getStatusTone(issuance.status)
 
   return (
     <DocumentShell
       title={issuance.title}
-      subtitle={`Versão ${issuance.version} • status ${issuance.status}`}
+      subtitle={`Versao ${issuance.version} - status ${issuance.status}`}
       backHref={backHref}
     >
       {issuance.kind === 'contract' ? (
         <div className="space-y-10 text-slate-900">
           <header className="space-y-4 border-b border-slate-200 pb-8">
+            <div className="flex flex-col items-center gap-4">
+              <img
+                src="/logo-cantoni.svg"
+                alt="Cantoni English School"
+                className="h-16 w-auto object-contain"
+              />
+              <div className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}>
+                {statusLabel}
+              </div>
+            </div>
             <p className="text-center text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
-              Contrato Emitido
+              Cantoni English School
             </p>
             <h2 className="text-center text-3xl font-black tracking-tight">
               {payload.title || issuance.title}
             </h2>
             <p className="text-sm leading-7 text-slate-600">
-              Documento emitido em {formatDateTime(issuance.created_at)}. Esta versão permanece congelada mesmo que o cadastro seja alterado depois.
+              Documento emitido em {formatDateTime(issuance.created_at)}. Esta versao permanece congelada mesmo que o cadastro seja alterado depois.
             </p>
           </header>
 
-          <section className="rounded-[1.5rem] bg-slate-50 p-6">
-            <div className="grid gap-4 md:grid-cols-3">
+          <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+            <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versão</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissao</p>
+                <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
+              </div>
+              <div className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}>
+                {statusLabel}
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versao</p>
                 <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
-                <p className="mt-2 text-sm font-bold capitalize">{issuance.status}</p>
+                <p className="mt-2 text-sm font-bold">{statusLabel}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Numero de emissao</p>
+                <p className="mt-2 text-sm font-bold">{issuanceCode}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash de integridade</p>
-                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'não disponível'}</p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'nao disponivel'}</p>
               </div>
             </div>
           </section>
@@ -92,8 +140,10 @@ export default async function IssuedDocumentPage({
           <section className="rounded-[1.5rem] bg-slate-50 p-6">
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Período</p>
-                <p className="mt-2 text-sm font-bold">{formatDateOnly(payload.summary?.startDate)} - {formatDateOnly(payload.summary?.endDate)}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodo</p>
+                <p className="mt-2 text-sm font-bold">
+                  {formatDateOnly(payload.summary?.startDate)} - {formatDateOnly(payload.summary?.endDate)}
+                </p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aulas</p>
@@ -121,15 +171,15 @@ export default async function IssuedDocumentPage({
 
           {payload.addenda?.length > 0 && (
             <section className="space-y-4 border-t border-slate-200 pt-8">
-              <h3 className="text-lg font-black tracking-tight">Histórico de aditivos considerados</h3>
+              <h3 className="text-lg font-black tracking-tight">Historico de aditivos considerados</h3>
               <div className="space-y-3">
                 {payload.addenda.map((entry: any) => (
                   <div key={entry.id} className="rounded-[1.25rem] border border-slate-200 p-4">
                     <p className="text-sm font-black text-slate-900">
-                      Aditivo #{entry.id} • novo saldo {formatCurrency(Number(entry.newOpenValue || 0))}
+                      Aditivo #{entry.id} - novo saldo {formatCurrency(Number(entry.newOpenValue || 0))}
                     </p>
                     <p className="mt-2 text-sm text-slate-600">
-                      Reorganização de {entry.previousOpenInstallments}x para {entry.newOpenInstallments}x, com primeira parcela em {formatDateOnly(entry.firstDueDate)}.
+                      Reorganizacao de {entry.previousOpenInstallments}x para {entry.newOpenInstallments}x, com primeira parcela em {formatDateOnly(entry.firstDueDate)}.
                     </p>
                   </div>
                 ))}
@@ -153,16 +203,16 @@ export default async function IssuedDocumentPage({
               </p>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Versão aceita</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Versao aceita</p>
                   <p className="mt-1 text-sm font-bold text-emerald-900">v{issuance.accepted_version || issuance.version}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">IP</p>
-                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_ip || 'não informado'}</p>
+                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_ip || 'nao informado'}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">User-Agent</p>
-                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_user_agent || 'não informado'}</p>
+                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_user_agent || 'nao informado'}</p>
                 </div>
               </div>
             </div>
@@ -171,23 +221,43 @@ export default async function IssuedDocumentPage({
       ) : (
         <div className="space-y-12 text-slate-900">
           <header className="space-y-4 border-b border-slate-200 pb-8 text-center">
-            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Documento Emitido</p>
+            <div className="flex justify-center">
+              <img
+                src="/logo-cantoni.svg"
+                alt="Cantoni English School"
+                className="h-16 w-auto object-contain"
+              />
+            </div>
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Cantoni English School</p>
             <h2 className="text-3xl font-black tracking-tight">{payload.title || issuance.title}</h2>
           </header>
 
-          <section className="rounded-[1.5rem] bg-slate-50 p-6">
-            <div className="grid gap-4 md:grid-cols-3">
+          <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+            <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versão</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissao</p>
+                <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
+              </div>
+              <div className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}>
+                {statusLabel}
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versao</p>
                 <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
-                <p className="mt-2 text-sm font-bold capitalize">{issuance.status}</p>
+                <p className="mt-2 text-sm font-bold">{statusLabel}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Numero de emissao</p>
+                <p className="mt-2 text-sm font-bold">{issuanceCode}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash de integridade</p>
-                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'não disponível'}</p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'nao disponivel'}</p>
               </div>
             </div>
           </section>
