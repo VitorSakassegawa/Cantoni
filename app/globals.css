@@ -140,3 +140,46 @@ body {
 .custom-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
 }
+
+@page {
+  size: A4;
+  margin: 12mm;
+}
+
+@media print {
+  html, body {
+    background: white !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  body {
+    font-size: 11pt;
+    line-height: 1.45;
+    background-image: none !important;
+  }
+
+  .print-document {
+    width: 100%;
+    max-width: 190mm;
+    margin: 0 auto;
+  }
+
+  .document-section,
+  .document-card,
+  .document-signature,
+  .document-header {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .document-section + .document-section {
+    margin-top: 8mm !important;
+  }
+
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+}

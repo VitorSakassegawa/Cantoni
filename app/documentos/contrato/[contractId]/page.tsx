@@ -21,7 +21,7 @@ export default async function ContractDocumentPage({
       backHref="/aluno/documentos"
     >
       <div className="space-y-10 text-slate-900">
-        <header className="space-y-4 border-b border-slate-200 pb-8">
+        <header className="document-header space-y-4 border-b border-slate-200 pb-8">
           <div className="flex justify-center">
             <img
               src="/logo-cantoni.svg"
@@ -40,15 +40,15 @@ export default async function ContractDocumentPage({
           </p>
         </header>
 
-        <section className="grid gap-6 md:grid-cols-2">
-          <div className="rounded-[1.5rem] border border-slate-200 p-6">
+        <section className="document-section grid gap-6 md:grid-cols-2">
+          <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
             <p className="mt-3 text-lg font-black">{context.student?.full_name || 'Aluno'}</p>
             <p className="mt-2 text-sm text-slate-600">CPF: {context.student?.cpf || 'nao informado'}</p>
             <p className="text-sm text-slate-600">E-mail: {context.student?.email || 'nao informado'}</p>
             <p className="text-sm text-slate-600">Telefone: {context.student?.phone || 'nao informado'}</p>
           </div>
-          <div className="rounded-[1.5rem] border border-slate-200 p-6">
+          <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
             <p className="mt-3 text-lg font-black">{context.teacher?.full_name || 'Professor responsavel'}</p>
             <p className="mt-2 text-sm text-slate-600">CPF: {context.teacher?.cpf || 'nao informado'}</p>
@@ -57,7 +57,13 @@ export default async function ContractDocumentPage({
           </div>
         </section>
 
-        <section className="rounded-[1.5rem] bg-slate-50 p-6">
+        <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+          <div className="mb-5">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quadro-resumo do contrato</p>
+            <p className="mt-2 text-sm text-slate-600">
+              Consolidado contratual para conferencia antes da impressao e salvamento em PDF.
+            </p>
+          </div>
           <div className="grid gap-4 md:grid-cols-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodo</p>
@@ -80,9 +86,9 @@ export default async function ContractDocumentPage({
           </div>
         </section>
 
-        <section className="space-y-8">
+        <section className="document-section space-y-8">
           {sections.map((section) => (
-            <div key={section.title} className="space-y-3">
+            <div key={section.title} className="document-card space-y-3">
               <h3 className="text-lg font-black tracking-tight">{section.title}</h3>
               <p className="text-sm leading-7 text-slate-700">{section.body}</p>
             </div>
@@ -90,11 +96,11 @@ export default async function ContractDocumentPage({
         </section>
 
         {context.addenda.length > 0 && (
-          <section className="space-y-4 border-t border-slate-200 pt-8">
+          <section className="document-section space-y-4 border-t border-slate-200 pt-8">
             <h3 className="text-lg font-black tracking-tight">Historico de aditivos</h3>
             <div className="space-y-3">
               {context.addenda.map((entry: any) => (
-                <div key={entry.id} className="rounded-[1.25rem] border border-slate-200 p-4">
+                <div key={entry.id} className="document-card rounded-[1.25rem] border border-slate-200 p-4">
                   <p className="text-sm font-black text-slate-900">
                     Aditivo #{entry.id} - novo saldo {formatCurrency(Number(entry.new_open_value || 0))}
                   </p>
@@ -107,8 +113,8 @@ export default async function ContractDocumentPage({
           </section>
         )}
 
-        <footer className="space-y-6 border-t border-slate-200 pt-8">
-          <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+        <footer className="document-section space-y-6 border-t border-slate-200 pt-8">
+          <div className="document-card rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante institucional</p>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div>
@@ -137,13 +143,25 @@ export default async function ContractDocumentPage({
               </a>
             ))}
           </div>
-          <div className="pt-8">
-            <p className="mx-auto w-full max-w-sm border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
-              {context.teacher?.full_name || 'Professor responsavel'}
-            </p>
-            <p className="mt-2 text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
-              Cantoni English School
-            </p>
+          <div className="document-signature grid gap-8 border-t border-dashed border-slate-300 pt-8 md:grid-cols-2">
+            <div className="space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assinatura do contratado</p>
+              <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+                {context.teacher?.full_name || 'Professor responsavel'}
+              </p>
+              <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                Cantoni English School
+              </p>
+            </div>
+            <div className="space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assinatura do contratante</p>
+              <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+                {context.student?.full_name || 'Aluno'}
+              </p>
+              <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                Assinatura ou aceite digital no portal
+              </p>
+            </div>
           </div>
         </footer>
       </div>

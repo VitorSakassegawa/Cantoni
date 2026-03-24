@@ -68,7 +68,7 @@ export default async function IssuedDocumentPage({
     >
       {issuance.kind === 'contract' ? (
         <div className="space-y-10 text-slate-900">
-          <header className="space-y-4 border-b border-slate-200 pb-8">
+          <header className="document-header space-y-4 border-b border-slate-200 pb-8">
             <div className="flex flex-col items-center gap-4">
               <img
                 src="/logo-cantoni.svg"
@@ -90,7 +90,7 @@ export default async function IssuedDocumentPage({
             </p>
           </header>
 
-          <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+          <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissao</p>
@@ -120,15 +120,15 @@ export default async function IssuedDocumentPage({
             </div>
           </section>
 
-          <section className="grid gap-6 md:grid-cols-2">
-            <div className="rounded-[1.5rem] border border-slate-200 p-6">
+          <section className="document-section grid gap-6 md:grid-cols-2">
+            <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
               <p className="mt-3 text-lg font-black">{payload.student?.fullName}</p>
               <p className="mt-2 text-sm text-slate-600">CPF: {payload.student?.cpf}</p>
               <p className="text-sm text-slate-600">E-mail: {payload.student?.email}</p>
               <p className="text-sm text-slate-600">Telefone: {payload.student?.phone}</p>
             </div>
-            <div className="rounded-[1.5rem] border border-slate-200 p-6">
+            <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
               <p className="mt-3 text-lg font-black">{payload.teacher?.fullName}</p>
               <p className="mt-2 text-sm text-slate-600">CPF: {payload.teacher?.cpf}</p>
@@ -137,7 +137,13 @@ export default async function IssuedDocumentPage({
             </div>
           </section>
 
-          <section className="rounded-[1.5rem] bg-slate-50 p-6">
+          <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+            <div className="mb-5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quadro-resumo do contrato</p>
+              <p className="mt-2 text-sm text-slate-600">
+                Esta versao emitida consolida os dados financeiros e academicos que estavam vigentes no momento da emissao.
+              </p>
+            </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodo</p>
@@ -160,9 +166,9 @@ export default async function IssuedDocumentPage({
             </div>
           </section>
 
-          <section className="space-y-8">
+          <section className="document-section space-y-8">
             {(payload.sections || []).map((section: any) => (
-              <div key={section.title} className="space-y-3">
+              <div key={section.title} className="document-card space-y-3">
                 <h3 className="text-lg font-black tracking-tight">{section.title}</h3>
                 <p className="text-sm leading-7 text-slate-700">{section.body}</p>
               </div>
@@ -170,11 +176,11 @@ export default async function IssuedDocumentPage({
           </section>
 
           {payload.addenda?.length > 0 && (
-            <section className="space-y-4 border-t border-slate-200 pt-8">
+            <section className="document-section space-y-4 border-t border-slate-200 pt-8">
               <h3 className="text-lg font-black tracking-tight">Historico de aditivos considerados</h3>
               <div className="space-y-3">
                 {payload.addenda.map((entry: any) => (
-                  <div key={entry.id} className="rounded-[1.25rem] border border-slate-200 p-4">
+                  <div key={entry.id} className="document-card rounded-[1.25rem] border border-slate-200 p-4">
                     <p className="text-sm font-black text-slate-900">
                       Aditivo #{entry.id} - novo saldo {formatCurrency(Number(entry.newOpenValue || 0))}
                     </p>
@@ -196,7 +202,7 @@ export default async function IssuedDocumentPage({
           )}
 
           {issuance.status === 'accepted' && (
-            <div className="rounded-[1.5rem] border border-emerald-100 bg-emerald-50 p-6 print:hidden">
+            <div className="document-card rounded-[1.5rem] border border-emerald-100 bg-emerald-50 p-6 print:hidden">
               <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Aceite registrado</p>
               <p className="mt-2 text-sm font-medium text-emerald-900/80">
                 Aceito por {issuance.accepted_name || 'aluno'} em {formatDateTime(issuance.accepted_at)}.
@@ -217,6 +223,29 @@ export default async function IssuedDocumentPage({
               </div>
             </div>
           )}
+
+          <footer className="document-section space-y-6 border-t border-slate-200 pt-8">
+            <div className="document-signature grid gap-8 md:grid-cols-2">
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+                <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+                  {payload.teacher?.fullName || 'Professor responsavel'}
+                </p>
+                <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                  Cantoni English School
+                </p>
+              </div>
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
+                <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+                  {payload.student?.fullName || 'Aluno'}
+                </p>
+                <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
+                  {issuance.status === 'accepted' ? 'Aceite digital registrado no portal' : 'Pendente de aceite digital'}
+                </p>
+              </div>
+            </div>
+          </footer>
         </div>
       ) : (
         <div className="space-y-12 text-slate-900">

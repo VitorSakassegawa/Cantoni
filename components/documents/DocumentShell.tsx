@@ -25,7 +25,7 @@ export default function DocumentShell({
           </div>
           <DocumentPrintButton />
         </div>
-        <article className="rounded-[2rem] border border-slate-200 bg-white p-10 shadow-2xl shadow-slate-200/60 print:rounded-none print:border-0 print:p-0 print:shadow-none">
+        <article className="print-document rounded-[2rem] border border-slate-200 bg-white p-10 shadow-2xl shadow-slate-200/60 print:rounded-none print:border-0 print:p-0 print:shadow-none">
           {children}
         </article>
       </div>

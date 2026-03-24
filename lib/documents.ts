@@ -118,7 +118,11 @@ export function buildContractSections(input: {
       body: 'Este modelo foi estruturado para privilegiar informacao previa, redacao legivel, coerencia com a operacao do portal e interpretacao favoravel ao aderente em caso de ambiguidade, em linha geral com deveres de transparencia e boa-fe previstos na legislacao civil e consumerista brasileira.',
     },
     {
-      title: '9. Foro e observacoes finais',
+      title: '9. Privacidade, evidencias digitais e comunicacoes',
+      body: 'As partes reconhecem que dados cadastrais, historico contratual, logs operacionais, comprovantes e evidencias de aceite digital podem ser mantidos no portal para execucao do servico, seguranca operacional, auditoria e cumprimento das obrigacoes contratuais. Comunicacoes academicas e administrativas realizadas pelos canais cadastrados no sistema integram a rotina regular do contrato.',
+    },
+    {
+      title: '10. Foro e observacoes finais',
       body: `Fica indicado o foro de ${getTeacherCity(teacher)} para dirimir controversias contratuais, sem prejuizo dos direitos do consumidor previstos em lei. Recomenda-se revisao juridica personalizada antes do uso definitivo deste modelo em larga escala.`,
     },
   ]
