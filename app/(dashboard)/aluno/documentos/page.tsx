@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase/server'
 import { FileCheck2, FileText, GraduationCap, ChevronLeft } from 'lucide-react'
 import { formatDateOnly } from '@/lib/utils'
@@ -26,6 +27,23 @@ export default async function AlunoDocumentosPage() {
     .eq('aluno_id', user.id)
     .neq('status', 'cancelado')
     .order('data_inicio', { ascending: false })
+
+  const contractIds = (contratos || []).map((contrato: any) => contrato.id)
+  const { data: issuances } = contractIds.length > 0
+    ? await supabase
+        .from('document_issuances')
+        .select('id, contract_id, kind, version, status, created_at')
+        .in('contract_id', contractIds)
+        .order('version', { ascending: false })
+    : { data: [] as any[] }
+
+  const latestIssuanceMap = new Map<string, any>()
+  for (const issuance of issuances || []) {
+    const key = `${issuance.contract_id}:${issuance.kind}`
+    if (!latestIssuanceMap.has(key)) {
+      latestIssuanceMap.set(key, issuance)
+    }
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -61,22 +79,52 @@ export default async function AlunoDocumentosPage() {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">
                     {contrato.tipo_contrato} • status {contrato.status}
                   </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {(() => {
+                      const contractIssuance = latestIssuanceMap.get(`${contrato.id}:contract`)
+                      const declarationIssuance = latestIssuanceMap.get(`${contrato.id}:enrollment_declaration`)
+
+                      return (
+                        <>
+                          <Badge variant="outline" className="border-slate-200 text-slate-500 text-[9px] font-black uppercase">
+                            {contractIssuance
+                              ? `Contrato emitido v${contractIssuance.version} • ${contractIssuance.status}`
+                              : 'Contrato em prévia'}
+                          </Badge>
+                          <Badge variant="outline" className="border-slate-200 text-slate-500 text-[9px] font-black uppercase">
+                            {declarationIssuance
+                              ? `Declaração emitida v${declarationIssuance.version}`
+                              : 'Declaração em prévia'}
+                          </Badge>
+                        </>
+                      )
+                    })()}
+                  </div>
                 </div>
                 <div className="flex flex-wrap gap-3">
-                  <Link
-                    href={`/documentos/contrato/${contrato.id}`}
-                    className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
-                  >
-                    <FileCheck2 className="w-4 h-4" />
-                    Ver contrato
-                  </Link>
-                  <Link
-                    href={`/documentos/declaracao/${contrato.id}`}
-                    className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
-                  >
-                    <GraduationCap className="w-4 h-4" />
-                    Declaração
-                  </Link>
+                  {(() => {
+                    const contractIssuance = latestIssuanceMap.get(`${contrato.id}:contract`)
+                    const declarationIssuance = latestIssuanceMap.get(`${contrato.id}:enrollment_declaration`)
+
+                    return (
+                      <>
+                        <Link
+                          href={contractIssuance ? `/documentos/emitidos/${contractIssuance.id}` : `/documentos/contrato/${contrato.id}`}
+                          className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+                        >
+                          <FileCheck2 className="w-4 h-4" />
+                          {contractIssuance ? 'Contrato emitido' : 'Ver prévia'}
+                        </Link>
+                        <Link
+                          href={declarationIssuance ? `/documentos/emitidos/${declarationIssuance.id}` : `/documentos/declaracao/${contrato.id}`}
+                          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                        >
+                          <GraduationCap className="w-4 h-4" />
+                          {declarationIssuance ? 'Declaração emitida' : 'Ver prévia'}
+                        </Link>
+                      </>
+                    )
+                  })()}
                 </div>
               </CardContent>
             </Card>

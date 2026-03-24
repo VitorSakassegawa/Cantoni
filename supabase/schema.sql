@@ -224,6 +224,24 @@ create table if not exists contract_addenda (
   created_at timestamptz not null default now()
 );
 
+create table if not exists document_issuances (
+  id bigserial primary key,
+  contract_id integer not null references contratos(id) on delete cascade,
+  student_id uuid not null references profiles(id) on delete cascade,
+  kind text not null check (kind in ('contract', 'enrollment_declaration')),
+  version integer not null,
+  title text not null,
+  payload jsonb not null default '{}'::jsonb,
+  status text not null default 'issued' check (status in ('issued', 'accepted', 'superseded')),
+  requires_acceptance boolean not null default false,
+  issued_by uuid references profiles(id) on delete set null,
+  accepted_by uuid references profiles(id) on delete set null,
+  accepted_name text,
+  accepted_at timestamptz,
+  created_at timestamptz not null default now(),
+  unique (contract_id, kind, version)
+);
+
 create index if not exists idx_aulas_contrato_id on aulas (contrato_id);
 create index if not exists idx_aulas_remarcada_de on aulas (remarcada_de);
 create index if not exists idx_avaliacoes_habilidades_contrato_id on avaliacoes_habilidades (contrato_id);
@@ -236,6 +254,8 @@ create index if not exists idx_activity_logs_created_at on activity_logs (create
 create index if not exists idx_contract_addenda_contract_id on contract_addenda (contract_id, created_at desc);
 create index if not exists idx_contratos_aluno_id on contratos (aluno_id);
 create index if not exists idx_contratos_plano_id on contratos (plano_id);
+create index if not exists idx_document_issuances_contract_kind on document_issuances (contract_id, kind, version desc);
+create index if not exists idx_document_issuances_student_id on document_issuances (student_id, created_at desc);
 create index if not exists idx_flashcards_aluno_id on flashcards (aluno_id);
 create index if not exists idx_pagamentos_contrato_id on pagamentos (contrato_id);
 create index if not exists idx_placement_results_student_id on placement_results (student_id);
@@ -257,6 +277,7 @@ alter table avaliacoes_habilidades enable row level security;
 alter table placement_results enable row level security;
 alter table activity_logs enable row level security;
 alter table contract_addenda enable row level security;
+alter table document_issuances enable row level security;
 
 create or replace function is_professor()
 returns boolean
@@ -347,6 +368,14 @@ create policy "contract_addenda_select_policy" on contract_addenda for select us
 create policy "contract_addenda_insert_professor_policy" on contract_addenda for insert with check (is_professor());
 create policy "contract_addenda_update_professor_policy" on contract_addenda for update using (is_professor()) with check (is_professor());
 create policy "contract_addenda_delete_professor_policy" on contract_addenda for delete using (is_professor());
+
+create policy "document_issuances_select_policy" on document_issuances for select using (
+  is_professor()
+  or student_id = (select auth.uid())
+);
+create policy "document_issuances_insert_professor_policy" on document_issuances for insert with check (is_professor());
+create policy "document_issuances_update_professor_policy" on document_issuances for update using (is_professor()) with check (is_professor());
+create policy "document_issuances_delete_professor_policy" on document_issuances for delete using (is_professor());
 
 -- ============================================================
 -- CONTRACT HELPERS
@@ -606,5 +635,49 @@ begin
     v_paid_value,
     v_previous_open_value,
     round(v_paid_value + p_new_open_value, 2);
+end;
+$$;
+
+create or replace function accept_document_issuance(
+  p_issuance_id bigint,
+  p_student_id uuid,
+  p_acceptance_name text
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_issuance document_issuances%rowtype;
+begin
+  select *
+  into v_issuance
+  from document_issuances
+  where id = p_issuance_id
+  for update;
+
+  if not found then
+    raise exception 'Documento não encontrado';
+  end if;
+
+  if v_issuance.student_id <> p_student_id then
+    raise exception 'Sem permissão para aceitar este documento';
+  end if;
+
+  if not v_issuance.requires_acceptance then
+    raise exception 'Este documento não exige aceite';
+  end if;
+
+  if v_issuance.status = 'accepted' then
+    return;
+  end if;
+
+  update document_issuances
+  set status = 'accepted',
+      accepted_by = p_student_id,
+      accepted_name = coalesce(nullif(trim(p_acceptance_name), ''), accepted_name),
+      accepted_at = now()
+  where id = p_issuance_id;
 end;
 $$;

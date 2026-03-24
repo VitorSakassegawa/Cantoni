@@ -115,3 +115,78 @@ export function buildEnrollmentDeclaration(input: {
     issueDate,
   }
 }
+
+export function buildContractSnapshot(input: {
+  student: any
+  teacher: any
+  contract: any
+  payments: any[]
+  addenda: any[]
+}) {
+  return {
+    kind: 'contract',
+    title: `Contrato #${input.contract.id}`,
+    generatedAt: new Date().toISOString(),
+    student: {
+      fullName: input.student?.full_name || 'Aluno',
+      cpf: input.student?.cpf || 'não informado',
+      email: input.student?.email || 'não informado',
+      phone: input.student?.phone || 'não informado',
+    },
+    teacher: {
+      fullName: input.teacher?.full_name || 'Professor responsável',
+      cpf: input.teacher?.cpf || 'não informado',
+      email: input.teacher?.email || 'não informado',
+      phone: input.teacher?.phone || 'não informado',
+      city: input.teacher?.city || 'Guarulhos/SP',
+    },
+    summary: {
+      contractId: input.contract.id,
+      startDate: input.contract.data_inicio,
+      endDate: input.contract.data_fim,
+      lessons: input.contract.aulas_totais,
+      totalValue: Number(input.contract.valor || 0),
+      paymentMethod: input.contract.forma_pagamento || 'a combinar',
+    },
+    sections: buildContractSections(input),
+    addenda: (input.addenda || []).map((entry: any) => ({
+      id: entry.id,
+      previousOpenValue: Number(entry.previous_open_value || 0),
+      newOpenValue: Number(entry.new_open_value || 0),
+      previousOpenInstallments: entry.previous_open_installments,
+      newOpenInstallments: entry.new_open_installments,
+      firstDueDate: entry.first_due_date,
+    })),
+    legalReferences: LEGAL_REFERENCE_LINKS,
+  }
+}
+
+export function buildDeclarationSnapshot(input: {
+  student: any
+  teacher: any
+  contract: any
+}) {
+  const declaration = buildEnrollmentDeclaration(input)
+
+  return {
+    kind: 'enrollment_declaration',
+    title: declaration.title,
+    generatedAt: new Date().toISOString(),
+    teacher: {
+      fullName: input.teacher?.full_name || 'Professor responsável',
+      cpf: input.teacher?.cpf || 'não informado',
+      email: input.teacher?.email || 'não informado',
+      city: input.teacher?.city || 'Guarulhos/SP',
+    },
+    contract: {
+      id: input.contract.id,
+      startDate: input.contract.data_inicio,
+      endDate: input.contract.data_fim,
+      status: input.contract.status,
+      lessons: input.contract.aulas_totais,
+    },
+    body: declaration.body,
+    complementary: declaration.complementary,
+    issueDate: declaration.issueDate,
+  }
+}

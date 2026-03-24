@@ -2,14 +2,21 @@ import 'server-only'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-export async function getDocumentContext(contractId: number) {
+export async function getDocumentContext(
+  contractId: number,
+  options?: { redirectOnFail?: boolean }
+) {
+  const redirectOnFail = options?.redirectOnFail ?? true
   const supabase = await createClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
 
   if (!user) {
-    redirect('/login')
+    if (redirectOnFail) {
+      redirect('/login')
+    }
+    throw new Error('Não autenticado')
   }
 
   const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
@@ -21,12 +28,18 @@ export async function getDocumentContext(contractId: number) {
     .single()
 
   if (!contract) {
-    redirect(profile?.role === 'professor' ? '/professor' : '/aluno')
+    if (redirectOnFail) {
+      redirect(profile?.role === 'professor' ? '/professor' : '/aluno')
+    }
+    throw new Error('Contrato não encontrado')
   }
 
   const isProfessor = profile?.role === 'professor'
   if (!isProfessor && contract.aluno_id !== user.id) {
-    redirect('/aluno')
+    if (redirectOnFail) {
+      redirect('/aluno')
+    }
+    throw new Error('Sem permissão para acessar este documento')
   }
 
   const { data: payments } = await supabase

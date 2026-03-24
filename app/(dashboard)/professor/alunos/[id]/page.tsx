@@ -16,6 +16,7 @@ import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
 import { BrainCircuit, Sparkles, Trash2 } from 'lucide-react'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
+import IssueDocumentButton from '@/components/documents/IssueDocumentButton'
 import { buildAttentionCandidate, buildRenewalCandidate } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 
@@ -162,6 +163,22 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
             <Link href={`/professor/alunos/${id}/perfil`}>
               <Button variant="outline" className="h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50">Editar Perfil</Button>
             </Link>
+            {contrato && (
+              <>
+                <IssueDocumentButton
+                  contractId={contrato.id}
+                  kind="contract"
+                  label="Emitir contrato"
+                  className="h-12 rounded-2xl border-2 border-slate-100 bg-white px-4 font-black text-[10px] uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                />
+                <IssueDocumentButton
+                  contractId={contrato.id}
+                  kind="enrollment_declaration"
+                  label="Emitir declaração"
+                  className="h-12 rounded-2xl border-2 border-slate-100 bg-white px-4 font-black text-[10px] uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                />
+              </>
+            )}
             {contrato && paidPaymentsCount > 0 && openPaymentsCount > 0 && (
               <Link href={`/professor/alunos/${id}/contrato/renegociar?id=${contrato.id}`}>
                 <Button variant="outline" className="h-12 rounded-2xl border-2 border-amber-200 bg-amber-50 font-black text-[10px] uppercase tracking-widest text-amber-700 hover:bg-amber-100">
