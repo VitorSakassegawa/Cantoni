@@ -20,20 +20,32 @@ export default async function AlunoPagamentosPage() {
     .eq('id', user.id)
     .single()
 
-  const { data: contrato } = await supabase
+  const { data: contratos } = await supabase
     .from('contratos')
-    .select('id')
+    .select('id, data_inicio, data_fim, status')
     .eq('aluno_id', user.id)
     .eq('status', 'ativo')
-    .single()
+    .order('data_inicio', { ascending: false })
+
+  const contratoIds = (contratos || []).map((contrato: any) => contrato.id)
 
   const { data: pagamentos } = await supabase
     .from('pagamentos')
     .select('*')
-    .eq('contrato_id', contrato?.id || 0)
-    .order('parcela_num')
+    .in('contrato_id', contratoIds.length > 0 ? contratoIds : [-1])
+    .order('data_vencimento', { ascending: true })
+    .order('parcela_num', { ascending: true })
 
   const pagamentosComStatus = (pagamentos || []).map((payment: any) => withEffectivePaymentStatus(payment))
+  const totalPorContrato = pagamentosComStatus.reduce((acc: Record<number, number>, payment: any) => {
+    acc[payment.contrato_id] = (acc[payment.contrato_id] || 0) + 1
+    return acc
+  }, {})
+
+  const pagamentosAgrupados: Array<{ contrato: any; pagamentos: any[] }> = (contratos || []).map((contrato: any) => ({
+    contrato,
+    pagamentos: pagamentosComStatus.filter((payment: any) => payment.contrato_id === contrato.id),
+  })).filter((grupo: { contrato: any; pagamentos: any[] }) => grupo.pagamentos.length > 0)
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -47,63 +59,72 @@ export default async function AlunoPagamentosPage() {
         <p className="text-slate-500 font-medium">Controle suas parcelas, datas de vencimento e pagamentos realizados.</p>
       </div>
 
-      <Card className="glass-card border-none overflow-hidden">
-        <CardHeader className="p-8 bg-slate-100/50 border-b border-slate-200">
-          <CardTitle className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20"><CreditCard className="w-4 h-4" /></div>
-            Extrato Financeiro
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/50">
-                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Parcela</th>
-                  <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">Valor</th>
-                  <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">Vencimento</th>
-                  <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">Data de Pago</th>
-                  <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Ação / Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {pagamentosComStatus.map((p: any) => (
-                  <tr key={p.id} className="group hover:bg-slate-50/50 transition-all duration-300">
-
-                    <td className="py-6 px-8">
-                      <span className="text-sm font-black text-slate-900">{p.parcela_num}</span>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter"> / 06</span>
-                    </td>
-                    <td className="py-6 px-4 font-black text-slate-900 text-sm tracking-tighter">{formatCurrency(p.valor)}</td>
-                    <td className="py-6 px-4 text-xs font-bold text-slate-500">{formatDate(p.data_vencimento)}</td>
-                    <td className="py-6 px-4 text-xs font-bold text-slate-600">
-                      {p.data_pagamento ? formatDate(p.data_pagamento) : <span className="text-slate-400 opacity-60 italic font-medium">Aguardando</span>}
-                    </td>
-                    <td className="py-6 px-8 text-right flex justify-end">
-                      {p.effectiveStatus !== 'pago' ? (
-                        <PaymentWrapper 
-                          paymentId={p.id} 
-                          amount={Number(p.valor)} 
-                          email={profile?.email || ''} 
-                          nome={profile?.full_name || ''} 
-                        />
-                      ) : (
-                        <Badge variant={
-                          p.effectiveStatus === 'pago' ? 'success' :
-                          p.effectiveStatus === 'atrasado' ? 'destructive' :
-                          'warning'
-                        } className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg">
-                          {p.effectiveStatus}
-                        </Badge>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="space-y-8">
+        {pagamentosAgrupados.map(({ contrato, pagamentos }: { contrato: any; pagamentos: any[] }) => (
+          <Card key={contrato.id} className="glass-card border-none overflow-hidden">
+            <CardHeader className="p-8 bg-slate-100/50 border-b border-slate-200">
+              <CardTitle className="text-xs font-black text-blue-600 uppercase tracking-[0.2em] flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-lg shadow-blue-500/20"><CreditCard className="w-4 h-4" /></div>
+                Contrato #{contrato.id}
+                <span className="text-[10px] text-slate-400 normal-case tracking-normal">
+                  {formatDateOnly(contrato.data_inicio)} - {formatDateOnly(contrato.data_fim)}
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-200 text-slate-500 bg-slate-50/50">
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">Parcela</th>
+                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">Valor</th>
+                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">Vencimento</th>
+                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">Data de Pago</th>
+                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest text-right">Ação / Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {pagamentos.map((p: any) => (
+                      <tr key={p.id} className="group hover:bg-slate-50/50 transition-all duration-300">
+                        <td className="py-6 px-8">
+                          <span className="text-sm font-black text-slate-900">{p.parcela_num}</span>
+                          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter"> / {String(totalPorContrato[p.contrato_id] || pagamentos.length).padStart(2, '0')}</span>
+                        </td>
+                        <td className="py-6 px-4 font-black text-slate-900 text-sm tracking-tighter">{formatCurrency(p.valor)}</td>
+                        <td className="py-6 px-4 text-xs font-bold text-slate-500">{formatDate(p.data_vencimento)}</td>
+                        <td className="py-6 px-4 text-xs font-bold text-slate-600">
+                          {p.data_pagamento ? formatDate(p.data_pagamento) : <span className="text-slate-400 opacity-60 italic font-medium">Aguardando</span>}
+                        </td>
+                        <td className="py-6 px-8 text-right flex justify-end">
+                          {p.effectiveStatus !== 'pago' ? (
+                            <PaymentWrapper
+                              paymentId={p.id}
+                              amount={Number(p.valor)}
+                              email={profile?.email || ''}
+                              nome={profile?.full_name || ''}
+                            />
+                          ) : (
+                            <Badge
+                              variant={
+                                p.effectiveStatus === 'pago' ? 'success' :
+                                p.effectiveStatus === 'atrasado' ? 'destructive' :
+                                'warning'
+                              }
+                              className="text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-lg"
+                            >
+                              {p.effectiveStatus}
+                            </Badge>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

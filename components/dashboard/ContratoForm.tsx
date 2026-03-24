@@ -78,7 +78,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [nivel, setNivel] = useState(initialData?.nivel_atual || defaultNivel || 'a1_beginner')
   const [diaVencimento, setDiaVencimento] = useState(initialData?.dia_vencimento?.toString() || initialData?.diaVencimento?.toString() || '5')
   const [formaPagamento, setFormaPagamento] = useState(initialData?.forma_pagamento || 'pix')
-  const [numParcelas, setNumParcelas] = useState('6')
+  const [numParcelas, setNumParcelas] = useState(initialData?.num_parcelas?.toString() || (initialData?.tipo_contrato === 'ad-hoc' ? '1' : '6'))
 
   const [placementData, setPlacementData] = useState<any>(null)
   const [loadingPlacement, setLoadingPlacement] = useState(false)
@@ -113,6 +113,12 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       }
     }
   }, [initialData])
+
+  useEffect(() => {
+    if (tipoContrato === 'ad-hoc') {
+      setNumParcelas('1')
+    }
+  }, [tipoContrato])
 
   // Auto-calculation on any relevant field change
   useEffect(() => {
