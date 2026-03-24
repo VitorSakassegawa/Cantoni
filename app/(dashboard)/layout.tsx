@@ -1,12 +1,24 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { LogOut, BookOpen, Users, LayoutDashboard, CreditCard, User, Calendar, Sparkles } from 'lucide-react'
+import {
+  LogOut,
+  BookOpen,
+  Users,
+  LayoutDashboard,
+  CreditCard,
+  User,
+  Calendar,
+  Sparkles,
+  FileText,
+} from 'lucide-react'
 import { Logo } from '@/components/dashboard/Logo'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
 
@@ -21,12 +33,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen flex bg-[var(--background)] relative overflow-hidden transition-colors duration-500">
-      {/* Background blobs for glassmorphism effect - INCREASED OPACITY & VIBRANCY */}
       <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/20 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
       <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '12s' }} />
       <div className="absolute top-[20%] left-[20%] w-[30%] h-[30%] bg-sky-400/10 rounded-full blur-[120px] pointer-events-none" />
 
-      {/* Sidebar */}
       <aside className="w-72 flex flex-col m-6 mr-0 z-10">
         <div className="flex-1 glass-panel rounded-[2.5rem] border-white/30 flex flex-col overflow-hidden shadow-2xl shadow-blue-900/10">
           <div className="p-8 pb-4">
@@ -53,55 +63,37 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
             {isProfessor && (
               <>
-                <Link
-                  href="/professor/pagamentos"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/professor/pagamentos" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <CreditCard className="w-4 h-4" />
                   </div>
                   Financeiro
                 </Link>
-                <Link
-                  href="/professor/alunos"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/professor/alunos" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <Users className="w-4 h-4" />
                   </div>
                   Alunos
                 </Link>
-                <Link
-                  href="/professor/aulas"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/professor/aulas" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <BookOpen className="w-4 h-4" />
                   </div>
                   Aulas
                 </Link>
-                <Link
-                  href="/professor/nivelamento"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/professor/nivelamento" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <Sparkles className="w-4 h-4" />
                   </div>
                   Nivelamento
                 </Link>
-                <Link
-                  href="/professor/calendario"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/professor/calendario" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <Calendar className="w-4 h-4" />
                   </div>
                   Calendário
                 </Link>
-                <Link
-                  href="/professor/perfil"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/professor/perfil" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <User className="w-4 h-4" />
                   </div>
@@ -112,37 +104,31 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
             {!isProfessor && (
               <>
-                <Link
-                  href="/aluno/pagamentos"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/aluno/pagamentos" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <CreditCard className="w-4 h-4" />
                   </div>
                   Financeiro
                 </Link>
-                <Link
-                  href="/aluno/aulas"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/aluno/aulas" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <BookOpen className="w-4 h-4" />
                   </div>
                   Aulas
                 </Link>
-                <Link
-                  href="/aluno/calendario"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/aluno/calendario" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <Calendar className="w-4 h-4" />
                   </div>
                   Calendário
                 </Link>
-                <Link
-                  href="/aluno/perfil"
-                  className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-                >
+                <Link href="/aluno/documentos" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <FileText className="w-4 h-4" />
+                  </div>
+                  Documentos
+                </Link>
+                <Link href="/aluno/perfil" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
                     <User className="w-4 h-4" />
                   </div>
@@ -162,7 +148,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{isProfessor ? 'Professor' : 'Aluno'}</p>
               </div>
             </div>
-            
+
             <form action="/api/auth/signout" method="POST">
               <button
                 type="submit"
@@ -176,7 +162,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 overflow-auto">
         <div className="p-8">{children}</div>
       </main>

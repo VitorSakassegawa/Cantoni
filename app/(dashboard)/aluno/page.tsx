@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/lib/utils'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
-import { Video, BookOpen, Calendar, User, CreditCard, Umbrella, Flame, Trophy, Layers, BrainCircuit, ArrowRight } from 'lucide-react'
+import { Video, BookOpen, Calendar, User, CreditCard, Umbrella, Flame, Trophy, Layers, BrainCircuit, ArrowRight, FileText } from 'lucide-react'
 import Link from 'next/link'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
@@ -269,6 +269,29 @@ export default async function AlunoDashboard() {
           />
         )}
       </div>
+
+      <Card className="glass-card overflow-hidden">
+        <CardHeader className="pb-4 border-b border-slate-100">
+          <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
+            <FileText className="w-4 h-4 text-blue-500" /> Seus Documentos
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-2">
+            <p className="text-lg font-black tracking-tight text-slate-900">Contrato e declaração prontos para PDF</p>
+            <p className="text-sm text-slate-500 font-medium">
+              Abra seus documentos acadêmicos, confira as informações vigentes no portal e salve uma versão em PDF quando precisar.
+            </p>
+          </div>
+          <Link
+            href="/aluno/documentos"
+            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+          >
+            Abrir documentos
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </CardContent>
+      </Card>
 
       <Card className="glass-card overflow-hidden">
         <CardHeader className="pb-4 border-b border-slate-100">
