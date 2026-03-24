@@ -57,6 +57,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
     .eq('contrato_id', contrato?.id || 0)
     .order('parcela_num')
   const pagamentosComStatus = (pagamentos || []).map((payment: any) => withEffectivePaymentStatus(payment))
+  const paidPaymentsCount = pagamentosComStatus.filter((payment: any) => payment.status === 'pago').length
+  const openPaymentsCount = pagamentosComStatus.filter((payment: any) => payment.status !== 'pago').length
+  const totalPaymentsCount = pagamentosComStatus.length
 
   const { data: remarcacoes } = await supabase
     .from('remarcacoes_mes')
@@ -101,6 +104,16 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
     severity: entry.severity || 'info',
     meta: formatDateTime(entry.created_at),
   }))
+
+  const contractIds = (contratos || []).map((entry: any) => entry.id)
+  const { data: addenda } = contractIds.length > 0
+    ? await supabase
+        .from('contract_addenda')
+        .select('*')
+        .in('contract_id', contractIds)
+        .order('created_at', { ascending: false })
+        .limit(10)
+    : { data: [] as any[] }
 
   const progresso = contrato ? (contrato.aulas_dadas / contrato.aulas_totais) * 100 : 0
 
@@ -149,6 +162,13 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
             <Link href={`/professor/alunos/${id}/perfil`}>
               <Button variant="outline" className="h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50">Editar Perfil</Button>
             </Link>
+            {contrato && paidPaymentsCount > 0 && openPaymentsCount > 0 && (
+              <Link href={`/professor/alunos/${id}/contrato/renegociar?id=${contrato.id}`}>
+                <Button variant="outline" className="h-12 rounded-2xl border-2 border-amber-200 bg-amber-50 font-black text-[10px] uppercase tracking-widest text-amber-700 hover:bg-amber-100">
+                  Renegociar Saldo
+                </Button>
+              </Link>
+            )}
             <Link href={`/professor/alunos/${id}/contrato/novo`}>
               <Button className="h-12 px-6 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">Novo Contrato</Button>
             </Link>
@@ -358,6 +378,62 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
             emptyMessage="Sem movimentações registradas para este aluno ainda."
           />
 
+          <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
+            <CardHeader className="p-8 bg-slate-50/80 border-b border-slate-100">
+              <CardTitle className="text-xs font-black text-blue-500 uppercase tracking-[0.2em]">
+                HistÃ³rico de Aditivos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-100/50">
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Contrato</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo anterior</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Novo saldo</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parcelamento</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">1Âº vencimento</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Criado em</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(addenda || []).map((entry: any) => (
+                      <tr key={entry.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
+                        <td className="px-8 py-5">
+                          <p className="text-sm font-black text-slate-900">#{entry.contract_id}</p>
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">Aditivo #{entry.id}</p>
+                        </td>
+                        <td className="px-8 py-5 text-sm font-black text-slate-700">
+                          {formatCurrency(Number(entry.previous_open_value || 0))}
+                        </td>
+                        <td className="px-8 py-5 text-sm font-black text-blue-700">
+                          {formatCurrency(Number(entry.new_open_value || 0))}
+                        </td>
+                        <td className="px-8 py-5 text-xs font-bold text-slate-500">
+                          {entry.previous_open_installments}x {'->'} {entry.new_open_installments}x
+                        </td>
+                        <td className="px-8 py-5 text-xs font-bold text-slate-500">
+                          {formatDateOnly(entry.first_due_date)}
+                        </td>
+                        <td className="px-8 py-5 text-xs font-bold text-slate-500">
+                          {formatDateTime(entry.created_at)}
+                        </td>
+                      </tr>
+                    ))}
+                    {(!addenda || addenda.length === 0) && (
+                      <tr>
+                        <td colSpan={6} className="px-8 py-10 text-center">
+                          <p className="text-xs font-medium text-slate-400">Nenhum aditivo registrado para este aluno.</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Pagamentos View */}
           <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
             <CardHeader className="p-8 bg-slate-50/80 border-b border-slate-100 flex flex-row items-center justify-between">
@@ -383,7 +459,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                       <tr key={p.id} className="border-b border-slate-50 hover:bg-slate-50/50 transition-colors">
                         <td className="px-8 py-5">
                           <span className="text-sm font-black text-slate-900">{p.parcela_num}</span>
-                          <span className="text-[10px] font-bold text-slate-300"> / 6</span>
+                          <span className="text-[10px] font-bold text-slate-300"> / {totalPaymentsCount}</span>
                         </td>
                         <td className="px-8 py-5 font-black text-slate-700 text-sm">
                           {formatCurrency(p.valor)}

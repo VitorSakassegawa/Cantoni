@@ -121,7 +121,7 @@ create table if not exists remarcacoes_mes (
 create table if not exists pagamentos (
   id serial primary key,
   contrato_id integer not null references contratos(id) on delete cascade,
-  parcela_num integer check (parcela_num between 1 and 6),
+  parcela_num integer check (parcela_num >= 1),
   valor numeric(10, 2) not null,
   data_vencimento date not null,
   data_pagamento date,
@@ -205,6 +205,25 @@ create table if not exists activity_logs (
   created_at timestamptz not null default now()
 );
 
+create table if not exists contract_addenda (
+  id bigserial primary key,
+  contract_id integer not null references contratos(id) on delete cascade,
+  created_by uuid references profiles(id) on delete set null,
+  previous_total_value numeric(10, 2) not null,
+  paid_value numeric(10, 2) not null default 0,
+  previous_open_value numeric(10, 2) not null default 0,
+  new_open_value numeric(10, 2) not null,
+  previous_open_installments integer not null default 0,
+  new_open_installments integer not null,
+  previous_payment_method text,
+  new_payment_method text,
+  previous_due_day integer,
+  new_due_day integer,
+  first_due_date date not null,
+  notes text,
+  created_at timestamptz not null default now()
+);
+
 create index if not exists idx_aulas_contrato_id on aulas (contrato_id);
 create index if not exists idx_aulas_remarcada_de on aulas (remarcada_de);
 create index if not exists idx_avaliacoes_habilidades_contrato_id on avaliacoes_habilidades (contrato_id);
@@ -214,6 +233,7 @@ create index if not exists idx_activity_logs_contract_id on activity_logs (contr
 create index if not exists idx_activity_logs_lesson_id on activity_logs (lesson_id);
 create index if not exists idx_activity_logs_payment_id on activity_logs (payment_id);
 create index if not exists idx_activity_logs_created_at on activity_logs (created_at desc);
+create index if not exists idx_contract_addenda_contract_id on contract_addenda (contract_id, created_at desc);
 create index if not exists idx_contratos_aluno_id on contratos (aluno_id);
 create index if not exists idx_contratos_plano_id on contratos (plano_id);
 create index if not exists idx_flashcards_aluno_id on flashcards (aluno_id);
@@ -236,6 +256,7 @@ alter table flashcards enable row level security;
 alter table avaliacoes_habilidades enable row level security;
 alter table placement_results enable row level security;
 alter table activity_logs enable row level security;
+alter table contract_addenda enable row level security;
 
 create or replace function is_professor()
 returns boolean
@@ -314,6 +335,18 @@ create policy "activity_logs_select_policy" on activity_logs for select using (
   or target_user_id = (select auth.uid())
   or actor_user_id = (select auth.uid())
 );
+
+create policy "contract_addenda_select_policy" on contract_addenda for select using (
+  is_professor()
+  or contract_id in (
+    select c.id
+    from contratos c
+    where c.aluno_id = (select auth.uid())
+  )
+);
+create policy "contract_addenda_insert_professor_policy" on contract_addenda for insert with check (is_professor());
+create policy "contract_addenda_update_professor_policy" on contract_addenda for update using (is_professor()) with check (is_professor());
+create policy "contract_addenda_delete_professor_policy" on contract_addenda for delete using (is_professor());
 
 -- ============================================================
 -- CONTRACT HELPERS
@@ -414,5 +447,164 @@ begin
     end),
     last_activity_date = p_activity_date
   where id = p_student_id;
+end;
+$$;
+
+create or replace function renegotiate_contract_balance(
+  p_contract_id integer,
+  p_actor_user_id uuid,
+  p_new_open_value numeric,
+  p_new_installments integer,
+  p_first_due_date date,
+  p_payment_method text,
+  p_notes text default null
+)
+returns table (
+  paid_value numeric,
+  previous_open_value numeric,
+  new_total_value numeric
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_contract contratos%rowtype;
+  v_paid_value numeric(10, 2) := 0;
+  v_previous_open_value numeric(10, 2) := 0;
+  v_paid_installments integer := 0;
+  v_open_installments integer := 0;
+  v_due_day integer;
+  v_installment_value numeric(10, 2);
+  v_remainder numeric(10, 2);
+  v_due_date date;
+  v_index integer;
+begin
+  if p_new_open_value is null or p_new_open_value < 0 then
+    raise exception 'Novo saldo em aberto inválido';
+  end if;
+
+  if p_new_installments is null or p_new_installments < 1 then
+    raise exception 'Nova quantidade de parcelas inválida';
+  end if;
+
+  if p_first_due_date is null then
+    raise exception 'Data da primeira parcela é obrigatória';
+  end if;
+
+  select *
+  into v_contract
+  from contratos
+  where id = p_contract_id
+  for update;
+
+  if not found then
+    raise exception 'Contrato não encontrado';
+  end if;
+
+  select
+    coalesce(sum(case when status = 'pago' then valor else 0 end), 0),
+    coalesce(sum(case when status <> 'pago' then valor else 0 end), 0),
+    count(*) filter (where status = 'pago'),
+    count(*) filter (where status <> 'pago')
+  into
+    v_paid_value,
+    v_previous_open_value,
+    v_paid_installments,
+    v_open_installments
+  from pagamentos
+  where contrato_id = p_contract_id;
+
+  if v_paid_installments = 0 then
+    raise exception 'Renegociação exige ao menos uma parcela paga';
+  end if;
+
+  if v_open_installments = 0 then
+    raise exception 'Não há parcelas em aberto para renegociar';
+  end if;
+
+  v_due_day := extract(day from p_first_due_date);
+  v_installment_value := trunc((p_new_open_value / p_new_installments) * 100) / 100;
+  v_remainder := round(p_new_open_value - (v_installment_value * p_new_installments), 2);
+
+  insert into contract_addenda (
+    contract_id,
+    created_by,
+    previous_total_value,
+    paid_value,
+    previous_open_value,
+    new_open_value,
+    previous_open_installments,
+    new_open_installments,
+    previous_payment_method,
+    new_payment_method,
+    previous_due_day,
+    new_due_day,
+    first_due_date,
+    notes
+  ) values (
+    p_contract_id,
+    p_actor_user_id,
+    coalesce(v_contract.valor, 0),
+    v_paid_value,
+    v_previous_open_value,
+    p_new_open_value,
+    v_open_installments,
+    p_new_installments,
+    v_contract.forma_pagamento,
+    p_payment_method,
+    v_contract.dia_vencimento,
+    v_due_day,
+    p_first_due_date,
+    p_notes
+  );
+
+  delete from pagamentos
+  where contrato_id = p_contract_id
+    and status <> 'pago';
+
+  for v_index in 0..(p_new_installments - 1) loop
+    v_due_date := (
+      date_trunc('month', p_first_due_date::timestamp)
+      + make_interval(months => v_index)
+    )::date;
+    v_due_date := make_date(
+      extract(year from v_due_date)::integer,
+      extract(month from v_due_date)::integer,
+      least(v_due_day, extract(day from (date_trunc('month', v_due_date::timestamp) + interval '1 month - 1 day'))::integer)
+    );
+
+    insert into pagamentos (
+      contrato_id,
+      parcela_num,
+      valor,
+      data_vencimento,
+      forma,
+      status
+    ) values (
+      p_contract_id,
+      v_paid_installments + v_index + 1,
+      case
+        when v_index = p_new_installments - 1 then round(v_installment_value + v_remainder, 2)
+        else v_installment_value
+      end,
+      v_due_date,
+      p_payment_method,
+      'pendente'
+    );
+  end loop;
+
+  update contratos
+  set valor = round(v_paid_value + p_new_open_value, 2),
+      dia_vencimento = v_due_day,
+      forma_pagamento = p_payment_method,
+      status_financeiro = 'pendente'
+  where id = p_contract_id;
+
+  return query
+  select
+    v_paid_value,
+    v_previous_open_value,
+    round(v_paid_value + p_new_open_value, 2);
 end;
 $$;
