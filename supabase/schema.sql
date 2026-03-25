@@ -296,6 +296,62 @@ as $$
   );
 $$;
 
+create or replace function accept_document_issuance(
+  p_issuance_id bigint,
+  p_student_id uuid,
+  p_acceptance_name text,
+  p_acceptance_ip text default null,
+  p_acceptance_user_agent text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_issuance document_issuances%rowtype;
+begin
+  select *
+  into v_issuance
+  from document_issuances
+  where id = p_issuance_id
+  for update;
+
+  if not found then
+    raise exception 'Documento não encontrado';
+  end if;
+
+  if v_issuance.student_id <> p_student_id then
+    raise exception 'Sem permissão para aceitar este documento';
+  end if;
+
+  if not v_issuance.requires_acceptance then
+    raise exception 'Este documento não exige aceite';
+  end if;
+
+  if v_issuance.status = 'accepted' then
+    return;
+  end if;
+
+  update document_issuances
+  set status = 'accepted',
+      accepted_by = p_student_id,
+      accepted_name = coalesce(nullif(trim(p_acceptance_name), ''), accepted_name),
+      accepted_version = version,
+      acceptance_ip = coalesce(nullif(trim(p_acceptance_ip), ''), acceptance_ip),
+      acceptance_user_agent = coalesce(nullif(trim(p_acceptance_user_agent), ''), acceptance_user_agent),
+      accepted_at = now()
+  where id = p_issuance_id;
+
+  update document_issuances
+  set status = 'superseded'
+  where contract_id = v_issuance.contract_id
+    and kind = v_issuance.kind
+    and id <> p_issuance_id
+    and status = 'accepted';
+end;
+$$;
+
 create policy "planos_read_all" on planos for select using (true);
 
 create policy "profiles_select_policy" on profiles for select using (is_professor() or id = (select auth.uid()));
@@ -688,5 +744,61 @@ begin
       acceptance_user_agent = coalesce(nullif(trim(p_acceptance_user_agent), ''), acceptance_user_agent),
       accepted_at = now()
   where id = p_issuance_id;
+end;
+$$;
+
+create or replace function accept_document_issuance(
+  p_issuance_id bigint,
+  p_student_id uuid,
+  p_acceptance_name text,
+  p_acceptance_ip text default null,
+  p_acceptance_user_agent text default null
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_issuance document_issuances%rowtype;
+begin
+  select *
+  into v_issuance
+  from document_issuances
+  where id = p_issuance_id
+  for update;
+
+  if not found then
+    raise exception 'Documento não encontrado';
+  end if;
+
+  if v_issuance.student_id <> p_student_id then
+    raise exception 'Sem permissão para aceitar este documento';
+  end if;
+
+  if not v_issuance.requires_acceptance then
+    raise exception 'Este documento não exige aceite';
+  end if;
+
+  if v_issuance.status = 'accepted' then
+    return;
+  end if;
+
+  update document_issuances
+  set status = 'accepted',
+      accepted_by = p_student_id,
+      accepted_name = coalesce(nullif(trim(p_acceptance_name), ''), accepted_name),
+      accepted_version = version,
+      acceptance_ip = coalesce(nullif(trim(p_acceptance_ip), ''), acceptance_ip),
+      acceptance_user_agent = coalesce(nullif(trim(p_acceptance_user_agent), ''), acceptance_user_agent),
+      accepted_at = now()
+  where id = p_issuance_id;
+
+  update document_issuances
+  set status = 'superseded'
+  where contract_id = v_issuance.contract_id
+    and kind = v_issuance.kind
+    and id <> p_issuance_id
+    and status = 'accepted';
 end;
 $$;

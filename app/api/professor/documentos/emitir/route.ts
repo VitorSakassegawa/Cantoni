@@ -16,14 +16,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
 
   if (profile?.role !== 'professor') {
-    return NextResponse.json({ error: 'Apenas professores podem emitir documentos' }, { status: 403 })
+    return NextResponse.json(
+      { error: 'Apenas professores podem emitir documentos' },
+      { status: 403 }
+    )
   }
 
   const { contractId, kind } = await request.json()
@@ -43,10 +42,9 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'Contrato não encontrado' }, { status: 404 })
   }
+
   const payload =
-    kind === 'contract'
-      ? buildContractSnapshot(context)
-      : buildDeclarationSnapshot(context)
+    kind === 'contract' ? buildContractSnapshot(context) : buildDeclarationSnapshot(context)
   const contentHash = generateDocumentHash(payload)
 
   const { data: previousIssuances } = await supabase
@@ -83,7 +81,10 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (issuanceError || !issuance) {
-    return NextResponse.json({ error: issuanceError?.message || 'Falha ao emitir documento' }, { status: 500 })
+    return NextResponse.json(
+      { error: issuanceError?.message || 'Falha ao emitir documento' },
+      { status: 500 }
+    )
   }
 
   await logActivityBestEffort({

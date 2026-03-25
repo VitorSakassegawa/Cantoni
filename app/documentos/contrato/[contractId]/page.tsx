@@ -19,7 +19,7 @@ export default async function ContractDocumentPage({
   return (
     <DocumentShell
       title={`Contrato #${context.contract.id}`}
-      subtitle="Versao administrativa para impressao e salvamento em PDF."
+      subtitle="Versão administrativa para impressão e salvamento em PDF."
       backHref="/aluno/documentos"
     >
       <div className="space-y-10 text-slate-900">
@@ -35,10 +35,10 @@ export default async function ContractDocumentPage({
             Cantoni English School
           </p>
           <h2 className="text-center text-3xl font-black tracking-tight">
-            Instrumento Particular de Prestacao de Servicos Educacionais
+            Instrumento Particular de Prestação de Serviços Educacionais
           </h2>
           <p className="text-sm leading-7 text-slate-600">
-            Documento gerado a partir das informacoes vigentes no portal do aluno. Para uso institucional mais amplo, recomenda-se revisao juridica especifica antes da adocao definitiva do texto.
+            Documento gerado a partir das informações vigentes no portal do aluno. Para uso institucional mais amplo, recomenda-se revisão jurídica específica antes da adoção definitiva do texto.
           </p>
         </header>
 
@@ -47,14 +47,14 @@ export default async function ContractDocumentPage({
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
             <p className="mt-3 text-lg font-black">{context.student?.full_name || 'Aluno'}</p>
             <p className="mt-2 text-sm text-slate-600">
-              CPF: {context.student?.cpf || 'nao informado'} | E-mail: {context.student?.email || 'nao informado'} | Tel.: {context.student?.phone || 'nao informado'}
+              CPF: {context.student?.cpf || 'não informado'} | E-mail: {context.student?.email || 'não informado'} | Tel.: {context.student?.phone || 'não informado'}
             </p>
           </div>
           <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
             <p className="mt-3 text-lg font-black">{LEGAL_TEACHER_NAME}</p>
             <p className="mt-2 text-sm text-slate-600">
-              CPF: {context.teacher?.cpf || 'nao informado'} | E-mail: {context.teacher?.email || 'nao informado'} | Tel.: {context.teacher?.phone || 'nao informado'} | Pessoa Fisica
+              CPF: {context.teacher?.cpf || 'não informado'} | E-mail: {context.teacher?.email || 'não informado'} | Tel.: {context.teacher?.phone || 'não informado'} | Pessoa Física
             </p>
           </div>
         </section>
@@ -63,14 +63,14 @@ export default async function ContractDocumentPage({
           <div className="mb-5">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quadro-resumo do contrato</p>
             <p className="mt-2 text-sm text-slate-600">
-              Consolidado contratual para conferencia antes da impressao e salvamento em PDF.
+              Consolidado contratual para conferência antes da impressão e salvamento em PDF.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-4">
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodo</p>
               <p className="mt-2 text-sm font-bold">
-                {formatDateOnly(context.contract.data_inicio)} - {formatDateOnly(context.contract.data_fim)}
+                {formatDateOnly(context.contract.data_inicio)} – {formatDateOnly(context.contract.data_fim)}
               </p>
             </div>
             <div>
@@ -94,7 +94,20 @@ export default async function ContractDocumentPage({
           {sections.map((section) => (
             <div key={section.title} className="document-card space-y-3">
               <h3 className="text-lg font-black tracking-tight">{section.title}</h3>
-              <p className="text-sm leading-7 text-slate-700">{section.body}</p>
+              {section.body?.split('\n').map((paragraph, index) => (
+                <p key={`${section.title}-body-${index}`} className="text-sm leading-7 text-slate-700">
+                  {paragraph}
+                </p>
+              ))}
+              {section.items?.length ? (
+                <div className="space-y-3 pt-1">
+                  {section.items.map((item) => (
+                    <p key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
+                      {item}
+                    </p>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ))}
         </section>
@@ -106,10 +119,10 @@ export default async function ContractDocumentPage({
               {context.addenda.map((entry: any) => (
                 <div key={entry.id} className="document-card rounded-[1.25rem] border border-slate-200 p-4">
                   <p className="text-sm font-black text-slate-900">
-                    Aditivo #{entry.id} - novo saldo {formatCurrency(Number(entry.new_open_value || 0))}
+                    Aditivo #{entry.id} – novo saldo {formatCurrency(Number(entry.new_open_value || 0))}
                   </p>
                   <p className="mt-2 text-sm text-slate-600">
-                    Reorganizacao de {entry.previous_open_installments}x para {entry.new_open_installments}x, com primeira parcela em {formatDateOnly(entry.first_due_date)}.
+                    Reorganização de {entry.previous_open_installments}x para {entry.new_open_installments}x, com primeira parcela em {formatDateOnly(entry.first_due_date)}.
                   </p>
                 </div>
               ))}
@@ -135,10 +148,10 @@ export default async function ContractDocumentPage({
               </div>
             </div>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Base juridica informativa</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Base jurídica informativa</p>
           <ul className="space-y-2 text-sm text-slate-600">
-            <li>Transparencia e informacao adequada ao consumidor, incluindo dever de clareza da oferta e das clausulas contratuais.</li>
-            <li>Boa-fe objetiva, probidade e interpretacao favoravel ao aderente em clausulas ambiguas.</li>
+            <li>Transparência e informação adequada ao consumidor, incluindo dever de clareza da oferta e das cláusulas contratuais.</li>
+            <li>Boa-fé objetiva, probidade e interpretação favorável ao aderente em cláusulas ambíguas.</li>
           </ul>
           <div className="flex flex-wrap gap-3">
             {LEGAL_REFERENCE_LINKS.map((reference) => (
@@ -159,16 +172,16 @@ export default async function ContractDocumentPage({
                 {context.student?.full_name || 'Aluno'}
               </p>
               <p className="text-center text-xs font-medium text-slate-500">
-                CPF: {context.student?.cpf || 'nao informado'}
+                CPF: {context.student?.cpf || 'não informado'}
               </p>
             </div>
             <div className="space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
-                <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
-                  {LEGAL_TEACHER_NAME}
-                </p>
-                <p className="text-center text-xs font-medium text-slate-500">
-                  CPF: {context.teacher?.cpf || 'nao informado'}
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+              <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+                {LEGAL_TEACHER_NAME}
+              </p>
+              <p className="text-center text-xs font-medium text-slate-500">
+                CPF: {context.teacher?.cpf || 'não informado'}
               </p>
             </div>
           </div>

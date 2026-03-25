@@ -1,30 +1,36 @@
 import { formatCurrency, formatDateOnly } from '@/lib/utils'
 
+export type ContractSection = {
+  title: string
+  body?: string
+  items?: string[]
+}
+
 export const LEGAL_REFERENCE_LINKS = [
   {
-    label: 'CDC - Lei no 8.078/1990',
+    label: 'CDC - Lei nº 8.078/1990',
     href: 'https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm',
   },
   {
-    label: 'Codigo Civil - Lei no 10.406/2002',
+    label: 'Código Civil - Lei nº 10.406/2002',
     href: 'https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm',
   },
 ]
 
 export const CONTRACT_ACCEPTANCE_TERMS = [
-  'confirmo que li integralmente esta versao emitida do contrato',
-  'confirmo que os dados visiveis neste documento correspondem ao acordo apresentado no portal',
-  'reconheco que este aceite fica registrado com data, versao e evidencias tecnicas de auditoria',
+  'Confirmo que li integralmente esta versão emitida do contrato.',
+  'Confirmo que os dados visíveis neste documento correspondem ao acordo apresentado no portal.',
+  'Reconheço que este aceite fica registrado com data, versão e evidências técnicas de auditoria.',
 ]
 
 const WEEKDAY_LABELS: Record<number, string> = {
   0: 'domingo',
   1: 'segunda-feira',
-  2: 'terca-feira',
+  2: 'terça-feira',
   3: 'quarta-feira',
   4: 'quinta-feira',
   5: 'sexta-feira',
-  6: 'sabado',
+  6: 'sábado',
 }
 
 const LEGAL_TEACHER_NAME = 'Gabriel de Oliveira Cantoni'
@@ -34,15 +40,15 @@ function getPersonName(person: any, fallback: string) {
 }
 
 function getPersonCpf(person: any) {
-  return person?.cpf || 'nao informado'
+  return person?.cpf || 'não informado'
 }
 
 function getPersonEmail(person: any) {
-  return person?.email || 'nao informado'
+  return person?.email || 'não informado'
 }
 
 function getPersonPhone(person: any) {
-  return person?.phone || 'nao informado'
+  return person?.phone || 'não informado'
 }
 
 function getTeacherCity(teacher: any) {
@@ -68,7 +74,7 @@ function getFirstDueDate(payments: any[]) {
 function getPaymentMethodLabel(method?: string | null) {
   const normalized = (method || 'a combinar').toLowerCase()
   if (normalized === 'pix') return 'Pix'
-  if (normalized === 'cartao') return 'Cartao'
+  if (normalized === 'cartao') return 'Cartão'
   if (normalized === 'boleto') return 'Boleto'
   return method || 'a combinar'
 }
@@ -83,7 +89,7 @@ export function formatContractDays(days?: number[] | null) {
 
 export function buildPaymentSummary(payments: any[]) {
   if (!payments || payments.length === 0) {
-    return 'Pagamento ainda nao detalhado no portal.'
+    return 'Pagamento ainda não detalhado no portal.'
   }
 
   return payments
@@ -100,7 +106,7 @@ export function buildContractSections(input: {
   contract: any
   payments: any[]
   addenda: any[]
-}) {
+}): ContractSection[] {
   const { student, teacher, contract, payments, addenda } = input
   const paymentCount = payments.length || 1
   const startDate = formatDateOnly(contract.data_inicio)
@@ -114,53 +120,57 @@ export function buildContractSections(input: {
   return [
     {
       title: '1. Partes e finalidade',
-      body: `O presente instrumento regula a prestacao de servicos educacionais personalizados de ensino de lingua inglesa entre ${getTeacherLegalName(teacher)} (Contratado, Pessoa Fisica, CPF ${getPersonCpf(teacher)}, e-mail ${getPersonEmail(teacher)}, tel. ${getPersonPhone(teacher)}) e ${getPersonName(student, 'o aluno')} (Contratante, CPF ${getPersonCpf(student)}), com foco em transparencia, boa-fe objetiva e clareza das informacoes essenciais do servico.`,
+      body: `O presente instrumento regula a prestação de serviços educacionais personalizados de ensino de língua inglesa entre ${getTeacherLegalName(teacher)} (Contratado, Pessoa Física, CPF ${getPersonCpf(teacher)}, e-mail ${getPersonEmail(teacher)}, tel. ${getPersonPhone(teacher)}) e ${getPersonName(student, 'o aluno')} (Contratante, CPF ${getPersonCpf(student)}), com foco em transparência, boa-fé objetiva e clareza das informações essenciais do serviço.`,
     },
     {
       title: '2. Objeto e formato das aulas',
-      body: `O objeto do contrato e a ministracao de ${contract.aulas_totais} (${String(contract.aulas_totais)}) aulas de ingles na modalidade on-line, no periodo de ${startDate} a ${endDate}, preferencialmente as ${contract.horario || 'horario a combinar'}, nos dias ${daysLabel}, em regime ${contract.tipo_contrato === 'ad-hoc' ? 'personalizado' : `personalizado (${weeklyFrequency} aula(s) por semana)`}. A plataforma de videoconferencia sera acordada entre as partes antes do inicio das atividades.`,
+      body: `O objeto do contrato é a ministração de ${contract.aulas_totais} (${String(contract.aulas_totais)}) aulas de inglês na modalidade on-line, no período de ${startDate} a ${endDate}, preferencialmente às ${contract.horario || '18h00'}, nos dias ${daysLabel}, em regime ${contract.tipo_contrato === 'ad-hoc' ? 'personalizado' : `personalizado (${weeklyFrequency} aula(s) por semana)`}. A plataforma de videoconferência será acordada entre as partes antes do início das atividades.`,
     },
     {
       title: '3. Valor e forma de pagamento',
-      body: `O valor global contratado e de ${formatCurrency(Number(contract.valor || 0))}, a ser pago em ${paymentCount} parcela(s) via ${getPaymentMethodLabel(contract.forma_pagamento)}, com vencimento inicial em ${firstDueDate}. O nao pagamento na data acordada podera ensejar suspensao das aulas ate regularizacao, sem prejuizo dos demais direitos do Contratado. Resumo atual das parcelas: ${buildPaymentSummary(payments)}.`,
+      body: `O valor global contratado é de ${formatCurrency(Number(contract.valor || 0))}, a ser pago em ${paymentCount} parcela(s) via ${getPaymentMethodLabel(contract.forma_pagamento)}, com vencimento inicial em ${firstDueDate}. O não pagamento na data acordada poderá ensejar suspensão das aulas até regularização, sem prejuízo dos demais direitos do Contratado.\n\nResumo atual das parcelas: ${buildPaymentSummary(payments)}.`,
     },
     {
-      title: '4. Cancelamento, remarcacao e reposicao',
-      body: `4.1 Cancelamento pelo Contratante: cancelamentos comunicados com antecedencia minima de 2 horas antes do horario de inicio da aula nao serao contabilizados como aula dada. Apos esse prazo, a aula sera considerada realizada para todos os fins contratuais, sem direito a reembolso ou reposicao. 4.2 Limite mensal: para este contrato, o Contratante tera direito a ate ${rescheduleLimit} cancelamento(s) mensal(is) sem prejuizo. Cancelamentos alem do limite serao contabilizados como aulas dadas. 4.3 Cancelamento pelo Contratado: se a iniciativa for do Contratado, a aula sera reposta em data e horario acordados entre as partes, conforme disponibilidade mutua, sem qualquer onus adicional ao Contratante.`,
+      title: '4. Cancelamento, remarcação e reposição',
+      items: [
+        '4.1 Cancelamento pelo Contratante: cancelamentos comunicados com antecedência mínima de 2 (duas) horas antes do horário de início da aula não serão contabilizados como aula dada. Após esse prazo, a aula será considerada realizada para todos os fins contratuais, sem direito a reembolso ou reposição.',
+        `4.2 Limite mensal: para este contrato, o Contratante terá direito a até ${rescheduleLimit} cancelamento(s) mensal(is) sem prejuízo. Cancelamentos além do limite serão contabilizados como aulas dadas.`,
+        '4.3 Cancelamento pelo Contratado: se a iniciativa for do Contratado, a aula será reposta em data e horário acordados entre as partes, conforme disponibilidade mútua, sem qualquer ônus adicional ao Contratante.',
+      ],
     },
     {
       title: '5. Direito de arrependimento',
-      body: 'Em conformidade com o art. 49 do Codigo de Defesa do Consumidor, o Contratante podera exercer o direito de arrependimento em ate 7 dias corridos contados da assinatura deste instrumento ou do pagamento, o que ocorrer primeiro, desde que nenhuma aula tenha sido ministrada. Caso ao menos uma aula ja tenha sido realizada, o direito de arrependimento nao se aplica, sendo devida a cobranca proporcional as aulas efetivamente prestadas.',
+      body: 'Em conformidade com o art. 49 do Código de Defesa do Consumidor, o Contratante poderá exercer o direito de arrependimento em até 7 (sete) dias corridos contados da assinatura deste instrumento ou do pagamento, o que ocorrer primeiro, desde que nenhuma aula tenha sido ministrada. Caso ao menos uma aula já tenha sido realizada, o direito de arrependimento não se aplica, sendo devida a cobrança proporcional às aulas efetivamente prestadas.',
     },
     {
-      title: '6. Rescisao e multa',
-      body: 'A rescisao antecipada por iniciativa do Contratante, apos o inicio das aulas, implicara o pagamento proporcional as aulas ja realizadas, acrescido de multa compensatoria equivalente a 10% do valor das aulas restantes. A rescisao por iniciativa do Contratado sem justa causa obrigara a devolucao proporcional dos valores recebidos pelas aulas nao ministradas.',
+      title: '6. Rescisão e multa',
+      body: 'A rescisão antecipada por iniciativa do Contratante, após o início das aulas, implicará o pagamento proporcional às aulas já realizadas, acrescido de multa compensatória equivalente a 10% do valor das aulas restantes. A rescisão por iniciativa do Contratado sem justa causa obrigará à devolução proporcional dos valores recebidos pelas aulas não ministradas.',
     },
     {
-      title: '7. Materiais, participacao e deveres do aluno',
-      body: 'O aluno se compromete a participar das aulas, manter seus dados atualizados no portal, acompanhar tarefas e comunicacoes, e adquirir ou acessar o material didatico indicado quando aplicavel. O aproveitamento pedagogico depende tambem de dedicacao extraclasse e frequencia adequada.',
+      title: '7. Materiais, participação e deveres do aluno',
+      body: 'O aluno se compromete a participar das aulas, manter seus dados atualizados no portal, acompanhar tarefas e comunicações, e adquirir ou acessar o material didático indicado quando aplicável. O aproveitamento pedagógico depende também de dedicação extraclasse e frequência adequada.',
     },
     {
-      title: '8. Alteracoes contratuais e aditivos',
+      title: '8. Alterações contratuais e aditivos',
       body: hasAddenda
-        ? `Alteracoes financeiras posteriores a emissao do contrato, especialmente apos parcelas pagas, devem ocorrer por aditivo expresso. O portal ja registra ${addenda.length} aditivo(s), preservando o historico de pagamentos realizados e reorganizando apenas o saldo em aberto.`
-        : 'Alteracoes de valor, parcelamento, vencimento ou condicoes financeiras posteriores a emissao do contrato devem ser formalizadas por aditivo expresso, preservando o historico ja consolidado no portal.',
+        ? `Alterações financeiras posteriores à emissão do contrato, especialmente após parcelas pagas, devem ocorrer por aditivo expresso. O portal já registra ${addenda.length} aditivo(s), preservando o histórico de pagamentos realizados e reorganizando apenas o saldo em aberto.`
+        : 'Alterações de valor, parcelamento, vencimento ou condições financeiras posteriores à emissão do contrato devem ser formalizadas por aditivo expresso, preservando o histórico já consolidado no portal.',
     },
     {
-      title: '9. Vigencia, renovacao e encerramento',
-      body: `A vigencia contratual encerra-se em ${endDate}, podendo haver renovacao mediante nova formalizacao. Situacoes de inadimplemento, mudancas de carga horaria ou renegociacao financeira devem ser tratadas no portal com antecedencia razoavel para evitar desencontro entre agenda, financeiro e historico academico.`,
+      title: '9. Vigência, renovação e encerramento',
+      body: `A vigência contratual encerra-se em ${endDate}, podendo haver renovação mediante nova formalização. Situações de inadimplemento, mudanças de carga horária ou renegociação financeira devem ser tratadas no portal com antecedência razoável para evitar desencontro entre agenda, financeiro e histórico acadêmico.`,
     },
     {
-      title: '10. Protecao de dados pessoais (LGPD)',
-      body: 'Os dados pessoais coletados neste contrato, como nome, CPF, e-mail e telefone, serao utilizados exclusivamente para identificacao das partes, gestao da relacao contratual e comunicacoes inerentes ao servico, em conformidade com a Lei no 13.709/2018. Os dados nao serao compartilhados com terceiros sem consentimento expresso do titular, salvo obrigacao legal.',
+      title: '10. Proteção de dados pessoais (LGPD)',
+      body: 'Os dados pessoais coletados neste contrato, como nome, CPF, e-mail e telefone, serão utilizados exclusivamente para identificação das partes, gestão da relação contratual e comunicações inerentes ao serviço, em conformidade com a Lei nº 13.709/2018. Os dados não serão compartilhados com terceiros sem consentimento expresso do titular, salvo obrigação legal.',
     },
     {
-      title: '11. Base de transparencia contratual',
-      body: 'Este modelo foi estruturado para privilegiar informacao previa, redacao legivel, coerencia com a operacao do portal e interpretacao favoravel ao aderente em caso de ambiguidade, em linha com deveres de transparencia e boa-fe previstos no CDC e no Codigo Civil.',
+      title: '11. Base de transparência contratual',
+      body: 'Este modelo foi estruturado para privilegiar informação prévia, redação legível, coerência com a operação do portal e interpretação favorável ao aderente em caso de ambiguidade, em linha com deveres de transparência e boa-fé previstos no CDC e no Código Civil.',
     },
     {
       title: '12. Foro',
-      body: `Fica eleito o foro da Comarca de ${getTeacherCity(teacher)}, domicilio do Contratado, para dirimir quaisquer controversias oriundas deste instrumento, sem prejuizo dos direitos do consumidor previstos em lei, incluindo a faculdade de ajuizamento no domicilio do Contratante conforme art. 101, I, do CDC.`,
+      body: `Fica eleito o foro da Comarca de ${getTeacherCity(teacher)}, domicílio do Contratado, para dirimir quaisquer controvérsias oriundas deste instrumento, sem prejuízo dos direitos do consumidor previstos em lei, incluindo a faculdade de ajuizamento no domicílio do Contratante conforme art. 101, I, do CDC.`,
     },
   ]
 }
@@ -179,9 +189,9 @@ export function buildEnrollmentDeclaration(input: {
   }).format(new Date())
 
   return {
-    title: 'Declaracao de Matricula',
-    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de lingua estrangeira conduzido por ${getTeacherLegalName(teacher)}, no periodo de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
-    complementary: `O contrato atualmente vinculado ao portal e o de no ${contract.id}, em status ${contract.status}, com organizacao pedagogica registrada no ambiente digital da escola.`,
+    title: 'Declaração de Matrícula',
+    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de língua estrangeira conduzido por ${getTeacherLegalName(teacher)}, no período de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
+    complementary: `O contrato atualmente vinculado ao portal é o de nº ${contract.id}, em status ${contract.status}, com organização pedagógica registrada no ambiente digital da escola.`,
     issueDate,
   }
 }

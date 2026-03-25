@@ -184,15 +184,15 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                   kind="contract"
                   label={hasIssuedContract ? 'Reemitir contrato' : 'Emitir contrato'}
                   loadingLabel={hasIssuedContract ? 'Reemitindo...' : 'Emitindo...'}
-                  successMessage={hasIssuedContract ? 'Nova versao do contrato emitida com os dados atuais.' : 'Contrato emitido com sucesso.'}
+                  successMessage={hasIssuedContract ? 'Nova versão do contrato emitida com os dados atuais.' : 'Contrato emitido com sucesso.'}
                   className="h-12 rounded-2xl border-2 border-slate-100 bg-white px-4 font-black text-[10px] uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                 />
                 <IssueDocumentButton
                   contractId={contrato.id}
                   kind="enrollment_declaration"
-                  label={hasIssuedDeclaration ? 'Reemitir declaracao' : 'Emitir declaracao'}
+                  label={hasIssuedDeclaration ? 'Reemitir declaração' : 'Emitir declaração'}
                   loadingLabel={hasIssuedDeclaration ? 'Reemitindo...' : 'Emitindo...'}
-                  successMessage={hasIssuedDeclaration ? 'Nova versao da declaracao emitida com os dados atuais.' : 'Declaracao emitida com sucesso.'}
+                  successMessage={hasIssuedDeclaration ? 'Nova versão da declaração emitida com os dados atuais.' : 'Declaração emitida com sucesso.'}
                   className="h-12 rounded-2xl border-2 border-slate-100 bg-white px-4 font-black text-[10px] uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                 />
               </>
@@ -212,9 +212,9 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
         </div>
         {contrato && (hasIssuedContract || hasIssuedDeclaration) && (
           <div className="rounded-[1.5rem] border border-blue-200 bg-blue-50/90 px-5 py-4">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">Reemissao disponivel</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">Reemissão disponível</p>
             <p className="mt-1 text-sm font-medium text-blue-900/80">
-              Se dados do aluno ou do professor forem atualizados, use reemitir para gerar uma nova versao com as informacoes atuais do portal.
+              Se dados do aluno ou do professor forem atualizados, use reemitir para gerar uma nova versão com as informações atuais do portal.
             </p>
           </div>
         )}
@@ -425,7 +425,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
           <Card className="border-none overflow-hidden bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
             <CardHeader className="p-8 bg-slate-50/80 border-b border-slate-100">
               <CardTitle className="text-xs font-black text-blue-500 uppercase tracking-[0.2em]">
-                HistÃ³rico de Aditivos
+                Histórico de Aditivos
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">

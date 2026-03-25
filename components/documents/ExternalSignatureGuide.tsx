@@ -26,18 +26,18 @@ export default function ExternalSignatureGuide({
           {audience === 'professor' ? (
             <>
               <p className="text-sm leading-6 text-amber-900/80">
-                Como a conta gratuita do ZapSign nao oferece API, o processo e manual: emita o contrato aqui na plataforma, baixe o PDF pronto e envie o arquivo para assinatura na plataforma externa.
+                Como a conta gratuita do ZapSign não oferece API, o processo é manual: emita o contrato aqui na plataforma, baixe o PDF pronto e envie o arquivo para assinatura na plataforma externa.
               </p>
               <div className={`grid gap-3 ${compact ? 'md:grid-cols-2' : 'md:grid-cols-4'}`}>
                 <div className="rounded-2xl bg-white/80 p-3">
                   <FileCheck2 className="mb-2 h-4 w-4 text-amber-700" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">1. Emitir</p>
-                  <p className="mt-1 text-xs font-medium text-amber-900/80">Congele a versao do contrato no portal.</p>
+                  <p className="mt-1 text-xs font-medium text-amber-900/80">Congele a versão do contrato no portal.</p>
                 </div>
                 <div className="rounded-2xl bg-white/80 p-3">
                   <FileDown className="mb-2 h-4 w-4 text-amber-700" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">2. Baixar PDF</p>
-                  <p className="mt-1 text-xs font-medium text-amber-900/80">Use a opcao de impressao e salvar em PDF.</p>
+                  <p className="mt-1 text-xs font-medium text-amber-900/80">Use a opção de impressão e salvar em PDF.</p>
                 </div>
                 <div className="rounded-2xl bg-white/80 p-3">
                   <Signature className="mb-2 h-4 w-4 text-amber-700" />
@@ -47,20 +47,20 @@ export default function ExternalSignatureGuide({
                 <div className="rounded-2xl bg-white/80 p-3">
                   <ShieldCheck className="mb-2 h-4 w-4 text-amber-700" />
                   <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">4. Validade externa</p>
-                  <p className="mt-1 text-xs font-medium text-amber-900/80">A assinatura juridica valida fica registrada na plataforma externa.</p>
+                  <p className="mt-1 text-xs font-medium text-amber-900/80">A assinatura jurídica válida fica registrada na plataforma externa.</p>
                 </div>
               </div>
               <p className="text-xs font-medium leading-5 text-amber-900/75">
-                Plano gratuito do ZapSign: ate 5 documentos por mes, com notificacoes de status, lembretes e trilha de auditoria no proprio ZapSign.
+                Plano gratuito do ZapSign: até 5 documentos por mês, com notificações de status, lembretes e trilha de auditoria no próprio ZapSign.
               </p>
             </>
           ) : (
             <>
               <p className="text-sm leading-6 text-amber-900/80">
-                O aceite digital mostrado no portal serve como registro operacional interno. Quando a escola optar por assinatura formal, a versao valida do contrato sera enviada para assinatura em plataforma externa, como o ZapSign.
+                O aceite digital mostrado no portal serve como registro operacional interno. Quando a escola optar por assinatura formal, a versão válida do contrato será enviada para assinatura em plataforma externa, como o ZapSign.
               </p>
               <p className="text-xs font-medium leading-5 text-amber-900/75">
-                Se o professor enviar o contrato por plataforma externa, a trilha juridica de assinatura passa a valer pela ferramenta de assinatura utilizada, e nao apenas pelo aceite interno exibido aqui.
+                Se o professor enviar o contrato por plataforma externa, a trilha jurídica de assinatura passa a valer pela ferramenta de assinatura utilizada, e não apenas pelo aceite interno exibido aqui.
               </p>
             </>
           )}

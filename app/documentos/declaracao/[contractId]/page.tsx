@@ -17,8 +17,8 @@ export default async function EnrollmentDeclarationPage({
 
   return (
     <DocumentShell
-      title="Declaracao de Matricula"
-      subtitle="Documento pronto para impressao e salvamento em PDF."
+      title="Declaração de Matrícula"
+      subtitle="Documento pronto para impressão e salvamento em PDF."
       backHref="/aluno/documentos"
     >
       <div className="space-y-12 text-slate-900">
@@ -42,8 +42,8 @@ export default async function EnrollmentDeclarationPage({
         <section className="rounded-[1.5rem] bg-slate-50 p-6">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emitente</p>
           <p className="mt-2 text-lg font-black">{LEGAL_TEACHER_NAME}</p>
-          <p className="text-sm text-slate-600">CPF: {context.teacher?.cpf || 'nao informado'}</p>
-          <p className="text-sm text-slate-600">E-mail: {context.teacher?.email || 'nao informado'}</p>
+          <p className="text-sm text-slate-600">CPF: {context.teacher?.cpf || 'não informado'}</p>
+          <p className="text-sm text-slate-600">E-mail: {context.teacher?.email || 'não informado'}</p>
         </section>
 
         <footer className="space-y-6 border-t border-slate-200 pt-10">
@@ -52,14 +52,14 @@ export default async function EnrollmentDeclarationPage({
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Documento</p>
-                <p className="mt-2 text-sm font-bold">Declaracao de Matricula</p>
+                <p className="mt-2 text-sm font-bold">Declaração de Matrícula</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato vinculado</p>
                 <p className="mt-2 text-sm font-bold">#{context.contract.id}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emissao</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emissão</p>
                 <p className="mt-2 text-sm font-bold">{declaration.issueDate}</p>
               </div>
             </div>

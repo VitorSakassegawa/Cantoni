@@ -12,7 +12,7 @@ function getStatusLabel(status: string) {
     case 'accepted':
       return 'Aceito digitalmente'
     case 'superseded':
-      return 'Versao superada'
+      return 'Versão superada'
     default:
       return 'Emitido'
   }
@@ -64,7 +64,7 @@ export default async function IssuedDocumentPage({
   return (
     <DocumentShell
       title={issuance.title}
-      subtitle={`Versao ${issuance.version} - status ${issuance.status}`}
+      subtitle={`Versão ${issuance.version} - status ${issuance.status}`}
       backHref={backHref}
     >
       {issuance.kind === 'contract' ? (
@@ -87,14 +87,14 @@ export default async function IssuedDocumentPage({
               {payload.title || issuance.title}
             </h2>
             <p className="text-sm leading-7 text-slate-600">
-              Documento emitido em {formatDateTime(issuance.created_at)}. Esta versao permanece congelada mesmo que o cadastro seja alterado depois.
+              Documento emitido em {formatDateTime(issuance.created_at)}. Esta versão permanece congelada mesmo que o cadastro seja alterado depois.
             </p>
           </header>
 
           <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissao</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissão</p>
                 <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
               </div>
               <div className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}>
@@ -103,7 +103,7 @@ export default async function IssuedDocumentPage({
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versao</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versão</p>
                 <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
               </div>
               <div>
@@ -111,12 +111,12 @@ export default async function IssuedDocumentPage({
                 <p className="mt-2 text-sm font-bold">{statusLabel}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Numero de emissao</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Número de emissão</p>
                 <p className="mt-2 text-sm font-bold">{issuanceCode}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash de integridade</p>
-                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'nao disponivel'}</p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'não disponível'}</p>
               </div>
             </div>
           </section>
@@ -142,14 +142,14 @@ export default async function IssuedDocumentPage({
             <div className="mb-5">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quadro-resumo do contrato</p>
               <p className="mt-2 text-sm text-slate-600">
-                Esta versao emitida consolida os dados financeiros e academicos que estavam vigentes no momento da emissao.
+                Esta versão emitida consolida os dados financeiros e acadêmicos que estavam vigentes no momento da emissão.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodo</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Período</p>
                 <p className="mt-2 text-sm font-bold">
-                  {formatDateOnly(payload.summary?.startDate)} - {formatDateOnly(payload.summary?.endDate)}
+                  {formatDateOnly(payload.summary?.startDate)} – {formatDateOnly(payload.summary?.endDate)}
                 </p>
               </div>
               <div>
@@ -173,7 +173,20 @@ export default async function IssuedDocumentPage({
             {(payload.sections || []).map((section: any) => (
               <div key={section.title} className="document-card space-y-3">
                 <h3 className="text-lg font-black tracking-tight">{section.title}</h3>
-                <p className="text-sm leading-7 text-slate-700">{section.body}</p>
+                {section.body?.split('\n').map((paragraph: string, index: number) => (
+                  <p key={`${section.title}-body-${index}`} className="text-sm leading-7 text-slate-700">
+                    {paragraph}
+                  </p>
+                ))}
+                {section.items?.length ? (
+                  <div className="space-y-3 pt-1">
+                    {section.items.map((item: string) => (
+                      <p key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             ))}
           </section>
@@ -182,18 +195,18 @@ export default async function IssuedDocumentPage({
             <section className="document-section space-y-4 border-t border-slate-200 pt-8">
               <h3 className="text-lg font-black tracking-tight">Historico de aditivos considerados</h3>
               <div className="space-y-3">
-                {payload.addenda.map((entry: any) => (
-                  <div key={entry.id} className="document-card rounded-[1.25rem] border border-slate-200 p-4">
-                    <p className="text-sm font-black text-slate-900">
-                      Aditivo #{entry.id} - novo saldo {formatCurrency(Number(entry.newOpenValue || 0))}
-                    </p>
-                    <p className="mt-2 text-sm text-slate-600">
-                      Reorganizacao de {entry.previousOpenInstallments}x para {entry.newOpenInstallments}x, com primeira parcela em {formatDateOnly(entry.firstDueDate)}.
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
+              {payload.addenda.map((entry: any) => (
+                <div key={entry.id} className="document-card rounded-[1.25rem] border border-slate-200 p-4">
+                  <p className="text-sm font-black text-slate-900">
+                    Aditivo #{entry.id} – novo saldo {formatCurrency(Number(entry.newOpenValue || 0))}
+                  </p>
+                  <p className="mt-2 text-sm text-slate-600">
+                    Reorganização de {entry.previousOpenInstallments}x para {entry.newOpenInstallments}x, com primeira parcela em {formatDateOnly(entry.firstDueDate)}.
+                  </p>
+                </div>
+              ))}
+            </div>
+          </section>
           )}
 
           {issuance.requires_acceptance && issuance.status !== 'accepted' && !isProfessor && (
@@ -212,16 +225,16 @@ export default async function IssuedDocumentPage({
               </p>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Versao aceita</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Versão aceita</p>
                   <p className="mt-1 text-sm font-bold text-emerald-900">v{issuance.accepted_version || issuance.version}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">IP</p>
-                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_ip || 'nao informado'}</p>
+                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_ip || 'não informado'}</p>
                 </div>
                 <div>
                   <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">User-Agent</p>
-                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_user_agent || 'nao informado'}</p>
+                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_user_agent || 'não informado'}</p>
                 </div>
               </div>
             </div>
@@ -242,16 +255,16 @@ export default async function IssuedDocumentPage({
                   {payload.student?.fullName || 'Aluno'}
                 </p>
                 <p className="text-center text-xs font-medium text-slate-500">
-                  CPF: {payload.student?.cpf || 'nao informado'}
+                  CPF: {payload.student?.cpf || 'não informado'}
                 </p>
               </div>
               <div className="space-y-3">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
                 <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
-                  {payload.teacher?.fullName || 'Professor responsavel'}
+                  {payload.teacher?.fullName || 'Professor responsável'}
                 </p>
                 <p className="text-center text-xs font-medium text-slate-500">
-                  CPF: {payload.teacher?.cpf || 'nao informado'}
+                  CPF: {payload.teacher?.cpf || 'não informado'}
                 </p>
               </div>
             </div>
@@ -274,7 +287,7 @@ export default async function IssuedDocumentPage({
           <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="mb-5 flex items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissao</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissão</p>
                 <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
               </div>
               <div className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}>
@@ -283,7 +296,7 @@ export default async function IssuedDocumentPage({
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versao</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versão</p>
                 <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
               </div>
               <div>
@@ -291,12 +304,12 @@ export default async function IssuedDocumentPage({
                 <p className="mt-2 text-sm font-bold">{statusLabel}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Numero de emissao</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Número de emissão</p>
                 <p className="mt-2 text-sm font-bold">{issuanceCode}</p>
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash de integridade</p>
-                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'nao disponivel'}</p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'não disponível'}</p>
               </div>
             </div>
           </section>

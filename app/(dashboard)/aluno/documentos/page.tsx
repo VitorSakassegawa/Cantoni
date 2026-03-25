@@ -56,7 +56,7 @@ export default async function AlunoDocumentosPage() {
       <div className="space-y-3">
         <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Documentos</h1>
         <p className="text-slate-500 font-medium">
-          Acesse seus documentos academicos em versao pronta para impressao e salvamento em PDF.
+          Acesse seus documentos acadêmicos em versão pronta para impressão e salvamento em PDF.
         </p>
       </div>
 
@@ -92,12 +92,12 @@ export default async function AlunoDocumentosPage() {
                           <Badge variant="outline" className="border-slate-200 text-[9px] font-black uppercase text-slate-500">
                             {contractIssuance
                               ? `Contrato emitido v${contractIssuance.version} - ${contractIssuance.status}`
-                              : 'Contrato em previa'}
+                              : 'Contrato em prévia'}
                           </Badge>
                           <Badge variant="outline" className="border-slate-200 text-[9px] font-black uppercase text-slate-500">
                             {declarationIssuance
-                              ? `Declaracao emitida v${declarationIssuance.version}`
-                              : 'Declaracao em previa'}
+                              ? `Declaração emitida v${declarationIssuance.version}`
+                              : 'Declaração em prévia'}
                           </Badge>
                         </>
                       )
@@ -116,14 +116,14 @@ export default async function AlunoDocumentosPage() {
                           className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
                         >
                           <FileCheck2 className="h-4 w-4" />
-                          {contractIssuance ? 'Contrato emitido' : 'Ver previa'}
+                          {contractIssuance ? 'Contrato emitido' : 'Ver prévia'}
                         </Link>
                         <Link
                           href={declarationIssuance ? `/documentos/emitidos/${declarationIssuance.id}` : `/documentos/declaracao/${contrato.id}`}
                           className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                         >
                           <GraduationCap className="h-4 w-4" />
-                          {declarationIssuance ? 'Declaracao emitida' : 'Ver previa'}
+                          {declarationIssuance ? 'Declaração emitida' : 'Ver prévia'}
                         </Link>
                       </>
                     )
@@ -136,7 +136,7 @@ export default async function AlunoDocumentosPage() {
       ) : (
         <Card className="glass-card">
           <CardContent className="py-12 text-center">
-            <p className="text-sm font-medium text-slate-400">Nenhum documento disponivel no momento.</p>
+            <p className="text-sm font-medium text-slate-400">Nenhum documento disponível no momento.</p>
           </CardContent>
         </Card>
       )}
