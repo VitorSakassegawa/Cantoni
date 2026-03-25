@@ -143,6 +143,14 @@ export default function AulaRow({
   const canRemark = ['agendada', 'confirmada', 'cancelada', 'pendente_remarcacao', 'pendente_remarcacao_rejeitada'].includes(status)
   const remarkBlockReason = !isProfessor ? (aula as any).remarkBlockReason : null
 
+  function getFriendlyRemarkError(message?: string) {
+    if (!message) return 'Não foi possível processar a remarcação.'
+    if (message.toLowerCase().includes('limite') && message.toLowerCase().includes('remarca')) {
+      return 'Você já usou sua remarcação disponível neste mês para este contrato.'
+    }
+    return message
+  }
+
   async function handleCancel() {
     setLoading(true)
     try {
@@ -160,6 +168,11 @@ export default function AulaRow({
   }
 
   async function handleRemark() {
+    if (remarkBlockReason) {
+      toast.error(remarkBlockReason)
+      return
+    }
+
     if (!selectedDate) return toast.error('Selecione uma data no calendário')
     
     // Combining date and time
@@ -190,7 +203,7 @@ export default function AulaRow({
         }
       }
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao processar remarcação')
+      toast.error(getFriendlyRemarkError(error.message))
     } finally {
       setLoading(false)
     }

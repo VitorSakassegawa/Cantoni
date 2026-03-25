@@ -20,15 +20,18 @@ export default async function AlunoAulasPage() {
     .eq('aluno_id', user.id)
     .eq('status', 'ativo')
 
-  const contratoIds = (contratos as any[])?.map((c: any) => c.id) || []
-  const contratoAtivo = (contratos as any[])?.[0]
+  const contratosAtivos = (contratos as any[]) || []
+  const contratoIds = contratosAtivos.map((c: any) => c.id) || []
+  const remarcacaoLimitByContratoId = contratosAtivos.reduce((acc: Record<number, number | null>, contrato: any) => {
+    acc[contrato.id] = contrato?.planos?.remarca_max_mes ?? null
+    return acc
+  }, {})
 
-  const { data: remarcacaoMesAtual } = await supabase
+  const { data: remarcacoesMes } = await supabase
     .from('remarcacoes_mes')
-    .select('quantidade')
+    .select('mes, quantidade')
     .eq('aluno_id', user.id)
-    .eq('mes', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0])
-    .maybeSingle()
+    .order('mes', { ascending: false })
 
   // Pegamos apenas as aulas de hoje em diante para o "Próximas 5"
   // mas o 'Ver Tudo' do frontend vai mostrar o que entregarmos aqui.
@@ -47,8 +50,15 @@ export default async function AlunoAulasPage() {
     remarkBlockReason: getStudentRemarkBlockReason({
       status: lesson.status,
       hasRequestedDate: Boolean(lesson.data_hora_solicitada),
-      monthlyRescheduleCount: remarcacaoMesAtual?.quantidade || 0,
-      monthlyRescheduleLimit: contratoAtivo?.planos?.remarca_max_mes ?? null,
+      monthlyRescheduleCount:
+        remarcacoesMes?.find((entry: any) => {
+          const lessonDate = new Date(lesson.data_hora)
+          const lessonMonth = new Date(lessonDate.getFullYear(), lessonDate.getMonth(), 1)
+            .toISOString()
+            .split('T')[0]
+          return entry.mes === lessonMonth
+        })?.quantidade || 0,
+      monthlyRescheduleLimit: remarcacaoLimitByContratoId[lesson.contrato_id] ?? null,
     }),
   }))
 
