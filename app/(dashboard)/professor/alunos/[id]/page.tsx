@@ -117,6 +117,19 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
         .limit(10)
     : { data: [] as any[] }
 
+  const { data: documentIssuances } = contrato
+    ? await supabase
+        .from('document_issuances')
+        .select('id, kind, version, status, created_at')
+        .eq('contract_id', contrato.id)
+        .order('version', { ascending: false })
+    : { data: [] as any[] }
+
+  const latestContractIssuance = (documentIssuances || []).find((entry: any) => entry.kind === 'contract')
+  const latestDeclarationIssuance = (documentIssuances || []).find((entry: any) => entry.kind === 'enrollment_declaration')
+  const hasIssuedContract = Boolean(latestContractIssuance)
+  const hasIssuedDeclaration = Boolean(latestDeclarationIssuance)
+
   const progresso = contrato ? (contrato.aulas_dadas / contrato.aulas_totais) * 100 : 0
 
   return (
@@ -169,13 +182,17 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                 <IssueDocumentButton
                   contractId={contrato.id}
                   kind="contract"
-                  label="Emitir contrato"
+                  label={hasIssuedContract ? 'Reemitir contrato' : 'Emitir contrato'}
+                  loadingLabel={hasIssuedContract ? 'Reemitindo...' : 'Emitindo...'}
+                  successMessage={hasIssuedContract ? 'Nova versao do contrato emitida com os dados atuais.' : 'Contrato emitido com sucesso.'}
                   className="h-12 rounded-2xl border-2 border-slate-100 bg-white px-4 font-black text-[10px] uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                 />
                 <IssueDocumentButton
                   contractId={contrato.id}
                   kind="enrollment_declaration"
-                  label="Emitir declaração"
+                  label={hasIssuedDeclaration ? 'Reemitir declaracao' : 'Emitir declaracao'}
+                  loadingLabel={hasIssuedDeclaration ? 'Reemitindo...' : 'Emitindo...'}
+                  successMessage={hasIssuedDeclaration ? 'Nova versao da declaracao emitida com os dados atuais.' : 'Declaracao emitida com sucesso.'}
                   className="h-12 rounded-2xl border-2 border-slate-100 bg-white px-4 font-black text-[10px] uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                 />
               </>
@@ -193,6 +210,14 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
           </div>
 
         </div>
+        {contrato && (hasIssuedContract || hasIssuedDeclaration) && (
+          <div className="rounded-[1.5rem] border border-blue-200 bg-blue-50/90 px-5 py-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">Reemissao disponivel</p>
+            <p className="mt-1 text-sm font-medium text-blue-900/80">
+              Se dados do aluno ou do professor forem atualizados, use reemitir para gerar uma nova versao com as informacoes atuais do portal.
+            </p>
+          </div>
+        )}
         {contrato && <ExternalSignatureGuide audience="professor" compact />}
       </div>
 
@@ -615,3 +640,4 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
     </div>
   )
 }
+

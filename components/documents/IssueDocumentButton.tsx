@@ -8,11 +8,15 @@ export default function IssueDocumentButton({
   contractId,
   kind,
   label,
+  loadingLabel,
+  successMessage,
   className,
 }: {
   contractId: number
   kind: 'contract' | 'enrollment_declaration'
   label: string
+  loadingLabel?: string
+  successMessage?: string
   className?: string
 }) {
   const router = useRouter()
@@ -32,7 +36,7 @@ export default function IssueDocumentButton({
         throw new Error(data.error || 'Falha ao emitir documento')
       }
 
-      toast.success('Documento emitido com sucesso.')
+      toast.success(successMessage || 'Documento emitido com sucesso.')
       router.push(`/documentos/emitidos/${data.issuanceId}`)
       router.refresh()
     } catch (error: any) {
@@ -49,7 +53,7 @@ export default function IssueDocumentButton({
       disabled={loading}
       className={className}
     >
-      {loading ? 'Emitindo...' : label}
+      {loading ? (loadingLabel || 'Emitindo...') : label}
     </button>
   )
 }
