@@ -68,7 +68,7 @@ export default async function AlunoDocumentosPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-10 pb-20 animate-fade-in">
+    <div className="mx-auto max-w-6xl animate-fade-in space-y-10 pb-20">
       <Link
         href="/aluno"
         className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
