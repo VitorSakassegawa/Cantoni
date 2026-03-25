@@ -60,7 +60,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ]
 
   return (
-    <div className="relative min-h-screen bg-[var(--background)] transition-colors duration-500 lg:flex">
+    <div className="relative min-h-screen overflow-x-hidden bg-[var(--background)] transition-colors duration-500 lg:flex">
       <div
         className="pointer-events-none absolute top-[-10%] right-[-10%] h-[50%] w-[50%] animate-pulse rounded-full bg-blue-500/20 blur-[140px]"
         style={{ animationDuration: '8s' }}
@@ -71,7 +71,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       />
       <div className="pointer-events-none absolute top-[20%] left-[20%] h-[30%] w-[30%] rounded-full bg-sky-400/10 blur-[120px]" />
 
-      <div className="sticky top-0 z-30 border-b border-white/40 bg-white/70 px-4 py-4 shadow-lg shadow-blue-900/5 backdrop-blur-2xl lg:hidden">
+      <div className="sticky top-0 z-30 overflow-x-hidden border-b border-white/40 bg-white/70 px-4 py-4 shadow-lg shadow-blue-900/5 backdrop-blur-2xl lg:hidden">
         <div className="flex items-center justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
@@ -140,8 +140,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       </aside>
 
-      <main className="flex-1 overflow-auto">
-        <div className="mobile-safe-bottom px-4 py-4 sm:px-6 lg:p-8">
+      <main className="flex-1 overflow-x-hidden overflow-y-auto">
+        <div className="mobile-safe-bottom min-w-0 max-w-full px-4 py-4 sm:px-6 lg:p-8">
           <OfflineStatusBar />
           <PwaInstallPrompt />
           {children}

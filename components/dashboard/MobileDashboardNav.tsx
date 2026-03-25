@@ -43,7 +43,7 @@ export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname()
 
   return (
-    <div className="mt-4 flex snap-x gap-3 overflow-x-auto pb-1">
+    <div className="-mx-1 mt-4 flex max-w-full snap-x gap-3 overflow-x-auto px-1 pb-1">
       {items.map((item) => {
         const Icon = iconMap[item.icon as keyof typeof iconMap] || LayoutDashboard
         const isActive = normalizePath(pathname, item.href)
