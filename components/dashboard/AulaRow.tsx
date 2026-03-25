@@ -4,10 +4,11 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { formatDateTime, formatDateOnly } from '@/lib/utils'
+import { formatDateTime } from '@/lib/utils'
 
-import type { Aula } from '@/lib/types'
-import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp, Globe } from 'lucide-react'
+import type { StatusAula } from '@/lib/types'
+import type { TimelineAula } from '@/lib/dashboard-types'
+import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp } from 'lucide-react'
 
 import ManageAulaModal from './ManageAulaModal'
 import RescheduleCalendar from './RescheduleCalendar'
@@ -17,7 +18,7 @@ import ReactMarkdown from 'react-markdown'
 import { Sparkles } from 'lucide-react'
 
 import { toast } from 'sonner'
-import { cancelarAula, remarcarAula, solicitarRemarcacao, rejeitarRemarcacao } from '@/lib/actions/aulas'
+import { cancelarAula, remarcarAula, solicitarRemarcacao } from '@/lib/actions/aulas'
 import {
   Dialog,
   DialogContent,
@@ -80,7 +81,7 @@ function VocabularyCard({ word, translation, example }: { word: string, translat
 }
 
 interface Props {
-  aula: Aula
+  aula: TimelineAula
   index: number
   isProfessor?: boolean
   studentName?: string
@@ -88,7 +89,9 @@ interface Props {
   showContractType?: boolean
 }
 
-const STATUS_BADGE: Record<string, any> = {
+type BadgeVariant = 'secondary' | 'default' | 'success' | 'outline' | 'warning' | 'destructive'
+
+const STATUS_BADGE: Record<StatusAula, BadgeVariant> = {
   agendada: 'secondary',
   confirmada: 'default',
   dada: 'success',
@@ -113,8 +116,8 @@ export default function AulaRow({
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const [status, setStatus] = useState<any>(aula.status)
-  const [dataHoraSolicitada, setDataHoraSolicitada] = useState<any>(aula.data_hora_solicitada)
+  const [status, setStatus] = useState<StatusAula>(aula.status)
+  const [dataHoraSolicitada, setDataHoraSolicitada] = useState<string | null>(aula.data_hora_solicitada || null)
   const [loading, setLoading] = useState(false)
   const [showRemarkModal, setShowRemarkModal] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
@@ -141,7 +144,7 @@ export default function AulaRow({
 
   const canCancel = ['agendada', 'confirmada'].includes(status)
   const canRemark = ['agendada', 'confirmada', 'cancelada', 'pendente_remarcacao', 'pendente_remarcacao_rejeitada'].includes(status)
-  const remarkBlockReason = !isProfessor ? (aula as any).remarkBlockReason : null
+  const remarkBlockReason = !isProfessor ? aula.remarkBlockReason || null : null
 
   function getFriendlyRemarkError(message?: string) {
     if (!message) return 'Não foi possível processar a remarcação.'

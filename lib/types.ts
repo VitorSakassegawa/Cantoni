@@ -3,7 +3,15 @@ export type Nivel = 'iniciante' | 'basico' | 'intermediario' | 'avancado' | 'con
 export type TipoAula = 'regular' | 'conversacao' | 'certificado'
 export type Semestre = 'jan-jun' | 'jul-dez'
 export type StatusContrato = 'ativo' | 'vencido' | 'cancelado'
-export type StatusAula = 'agendada' | 'confirmada' | 'dada' | 'cancelada' | 'remarcada' | 'pendente_remarcacao' | 'pendente_remarcacao_rejeitada'
+export type StatusAula =
+  | 'agendada'
+  | 'confirmada'
+  | 'dada'
+  | 'finalizado'
+  | 'cancelada'
+  | 'remarcada'
+  | 'pendente_remarcacao'
+  | 'pendente_remarcacao_rejeitada'
 
 export type StatusPagamento = 'pendente' | 'pago' | 'atrasado' | 'vencido'
 export type FormaPagamento = 'pix' | 'cartao' | 'dinheiro' | 'boleto' | 'credit_card' | 'debit_card'
