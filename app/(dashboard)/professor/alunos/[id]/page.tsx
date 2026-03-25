@@ -17,6 +17,7 @@ import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
 import { BrainCircuit, Sparkles, Trash2 } from 'lucide-react'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import IssueDocumentButton from '@/components/documents/IssueDocumentButton'
+import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
 import { buildAttentionCandidate, buildRenewalCandidate } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 
@@ -192,6 +193,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
           </div>
 
         </div>
+        {contrato && <ExternalSignatureGuide audience="professor" compact />}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">

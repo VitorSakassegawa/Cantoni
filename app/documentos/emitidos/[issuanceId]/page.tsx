@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic'
 
 import DocumentShell from '@/components/documents/DocumentShell'
 import DocumentAcceptanceForm from '@/components/documents/DocumentAcceptanceForm'
+import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { formatCurrency, formatDateOnly, formatDateTime } from '@/lib/utils'
@@ -225,6 +226,10 @@ export default async function IssuedDocumentPage({
               </div>
             </div>
           )}
+
+          <div className="print:hidden">
+            <ExternalSignatureGuide audience={isProfessor ? 'professor' : 'student'} compact />
+          </div>
 
           <footer className="document-section space-y-6 border-t border-slate-200 pt-8">
             <p className="text-sm text-slate-600">

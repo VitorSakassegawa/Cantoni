@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase/server'
 import { FileCheck2, FileText, GraduationCap, ChevronLeft } from 'lucide-react'
+import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
 import { formatDateOnly } from '@/lib/utils'
 
 export default async function AlunoDocumentosPage() {
@@ -55,29 +56,31 @@ export default async function AlunoDocumentosPage() {
       <div className="space-y-3">
         <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Documentos</h1>
         <p className="text-slate-500 font-medium">
-          Acesse seus documentos acadêmicos em versão pronta para impressão e salvamento em PDF.
+          Acesse seus documentos academicos em versao pronta para impressao e salvamento em PDF.
         </p>
       </div>
 
+      <ExternalSignatureGuide audience="student" />
+
       {contratos && contratos.length > 0 ? (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {contratos.map((contrato: any) => (
             <Card key={contrato.id} className="glass-card overflow-hidden">
               <CardHeader className="border-b border-slate-100">
                 <CardTitle className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-blue-500">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center">
-                    <FileText className="w-5 h-5" />
+                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                    <FileText className="h-5 w-5" />
                   </div>
                   Contrato #{contrato.id}
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-6 space-y-5">
+              <CardContent className="space-y-5 pt-6">
                 <div>
                   <p className="text-sm font-black text-slate-900">
                     {formatDateOnly(contrato.data_inicio)} - {formatDateOnly(contrato.data_fim)}
                   </p>
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-2">
-                    {contrato.tipo_contrato} • status {contrato.status}
+                  <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    {contrato.tipo_contrato} - status {contrato.status}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {(() => {
@@ -86,15 +89,15 @@ export default async function AlunoDocumentosPage() {
 
                       return (
                         <>
-                          <Badge variant="outline" className="border-slate-200 text-slate-500 text-[9px] font-black uppercase">
+                          <Badge variant="outline" className="border-slate-200 text-[9px] font-black uppercase text-slate-500">
                             {contractIssuance
-                              ? `Contrato emitido v${contractIssuance.version} • ${contractIssuance.status}`
-                              : 'Contrato em prévia'}
+                              ? `Contrato emitido v${contractIssuance.version} - ${contractIssuance.status}`
+                              : 'Contrato em previa'}
                           </Badge>
-                          <Badge variant="outline" className="border-slate-200 text-slate-500 text-[9px] font-black uppercase">
+                          <Badge variant="outline" className="border-slate-200 text-[9px] font-black uppercase text-slate-500">
                             {declarationIssuance
-                              ? `Declaração emitida v${declarationIssuance.version}`
-                              : 'Declaração em prévia'}
+                              ? `Declaracao emitida v${declarationIssuance.version}`
+                              : 'Declaracao em previa'}
                           </Badge>
                         </>
                       )
@@ -112,15 +115,15 @@ export default async function AlunoDocumentosPage() {
                           href={contractIssuance ? `/documentos/emitidos/${contractIssuance.id}` : `/documentos/contrato/${contrato.id}`}
                           className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
                         >
-                          <FileCheck2 className="w-4 h-4" />
-                          {contractIssuance ? 'Contrato emitido' : 'Ver prévia'}
+                          <FileCheck2 className="h-4 w-4" />
+                          {contractIssuance ? 'Contrato emitido' : 'Ver previa'}
                         </Link>
                         <Link
                           href={declarationIssuance ? `/documentos/emitidos/${declarationIssuance.id}` : `/documentos/declaracao/${contrato.id}`}
                           className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                         >
-                          <GraduationCap className="w-4 h-4" />
-                          {declarationIssuance ? 'Declaração emitida' : 'Ver prévia'}
+                          <GraduationCap className="h-4 w-4" />
+                          {declarationIssuance ? 'Declaracao emitida' : 'Ver previa'}
                         </Link>
                       </>
                     )
@@ -133,7 +136,7 @@ export default async function AlunoDocumentosPage() {
       ) : (
         <Card className="glass-card">
           <CardContent className="py-12 text-center">
-            <p className="text-sm font-medium text-slate-400">Nenhum documento disponível no momento.</p>
+            <p className="text-sm font-medium text-slate-400">Nenhum documento disponivel no momento.</p>
           </CardContent>
         </Card>
       )}
