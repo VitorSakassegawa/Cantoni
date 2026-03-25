@@ -321,6 +321,15 @@ export default async function AlunoDashboard() {
               </div>
             ))}
           </div>
+          <div className="pt-5">
+            <Link
+              href="/aluno/jornada"
+              className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600"
+            >
+              Abrir jornada do aluno
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
         </CardContent>
       </Card>
 
