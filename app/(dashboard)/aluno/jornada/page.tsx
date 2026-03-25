@@ -8,6 +8,7 @@ import {
   BrainCircuit,
   CheckCircle2,
   Flame,
+  ShieldCheck,
   Sparkles,
   Star,
   Target,
@@ -249,6 +250,44 @@ export default async function AlunoJornadaPage() {
   const xpRules = buildJourneyXpRules()
   const weeklyGoalCompleted = weeklyMissions.every((mission) => mission.status === 'done')
   const currentWeekIsBest = personalBest.currentWeek.score >= personalBest.bestWeek.score
+  const streakRuleCards = [
+    {
+      id: 'count-once',
+      icon: CheckCircle2,
+      eyebrow: 'Conta no dia',
+      title: 'Uma atividade válida já mantém seu streak',
+      description: streakRules[0] || 'Basta uma ação válida em um novo dia para contar na sequência.',
+      tone: 'border-emerald-100 bg-emerald-50/80 text-emerald-700',
+      iconTone: 'bg-emerald-600 text-white',
+    },
+    {
+      id: 'same-day',
+      icon: Sparkles,
+      eyebrow: 'Sem exagero artificial',
+      title: 'Repetir no mesmo dia não soma duas vezes',
+      description: streakRules[1] || 'Você pode estudar à vontade, mas o streak conta apenas uma vez por dia.',
+      tone: 'border-blue-100 bg-blue-50/80 text-blue-700',
+      iconTone: 'bg-blue-600 text-white',
+    },
+    {
+      id: 'consistency',
+      icon: Flame,
+      eyebrow: 'Consistência',
+      title: 'Ontem + hoje = sequência crescendo',
+      description: streakRules[2] || 'Se você manteve atividade ontem e faz algo hoje, a sequência continua subindo.',
+      tone: 'border-amber-100 bg-amber-50/80 text-amber-700',
+      iconTone: 'bg-amber-500 text-white',
+    },
+    {
+      id: 'break-rule',
+      icon: ShieldCheck,
+      eyebrow: 'Atenção',
+      title: 'Se pular um dia, o streak recomeça em 1',
+      description: streakRules[3] || 'Perder um dia quebra a sequência, então vale entrar na Jornada todos os dias.',
+      tone: 'border-rose-100 bg-rose-50/80 text-rose-700',
+      iconTone: 'bg-rose-600 text-white',
+    },
+  ]
 
   return (
     <div className="space-y-10 animate-fade-in pb-16">
@@ -428,12 +467,35 @@ export default async function AlunoJornadaPage() {
 
             <div className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Regras do streak</p>
-              <div className="mt-4 space-y-3">
-                {streakRules.map((rule) => (
-                  <div key={rule} className="rounded-2xl border border-slate-100 bg-white px-4 py-3 text-sm font-medium leading-relaxed text-slate-600">
-                    {rule}
-                  </div>
-                ))}
+              <div className="mt-4 rounded-3xl border border-white/70 bg-white px-4 py-4 shadow-sm">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Como funciona</p>
+                <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
+                  Seu streak mede constância diária. O objetivo é registrar pelo menos uma ação válida por dia
+                  para manter a sequência viva e avançar na sua jornada.
+                </p>
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                {streakRuleCards.map((rule) => {
+                  const Icon = rule.icon
+
+                  return (
+                    <div
+                      key={rule.id}
+                      className={`rounded-3xl border px-4 py-4 shadow-sm transition-all hover:-translate-y-0.5 ${rule.tone}`}
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl shadow-sm ${rule.iconTone}`}>
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{rule.eyebrow}</p>
+                          <p className="text-sm font-black leading-tight">{rule.title}</p>
+                          <p className="text-sm font-medium leading-relaxed opacity-90">{rule.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             </div>
           </CardContent>
