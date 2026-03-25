@@ -9,6 +9,10 @@ import { calculateNextStreak } from '../lib/streak-utils.ts'
 import { evaluatePlacementEligibility } from '../lib/placement-eligibility.ts'
 import { buildPendingPaymentUpdates } from '../lib/contract-payments.ts'
 import { evaluateMonthlyRescheduleLimit } from '../lib/lesson-reschedule.ts'
+import {
+  getExternalSignatureStatusLabel,
+  getExternalSignatureStatusTone,
+} from '../lib/document-issuances.ts'
 
 assert.equal(normalizePaymentAmount('120.456'), 120.46)
 
@@ -177,6 +181,28 @@ assert.deepEqual(
     isProfessor: true,
   }),
   { allowed: true }
+)
+
+assert.equal(getExternalSignatureStatusLabel('pending_external_signature'), 'Pendente de assinatura externa')
+assert.equal(getExternalSignatureStatusLabel('sent_to_provider'), 'Enviado ao ZapSign')
+assert.equal(getExternalSignatureStatusLabel('signed_externally'), 'Assinado externamente')
+assert.equal(getExternalSignatureStatusLabel('internal_only'), 'Somente no portal')
+
+assert.equal(
+  getExternalSignatureStatusTone('pending_external_signature'),
+  'border-amber-200 bg-amber-50 text-amber-700'
+)
+assert.equal(
+  getExternalSignatureStatusTone('sent_to_provider'),
+  'border-blue-200 bg-blue-50 text-blue-700'
+)
+assert.equal(
+  getExternalSignatureStatusTone('signed_externally'),
+  'border-emerald-200 bg-emerald-50 text-emerald-700'
+)
+assert.equal(
+  getExternalSignatureStatusTone('internal_only'),
+  'border-slate-200 bg-slate-100 text-slate-600'
 )
 
 console.log('payment-utils tests passed')
