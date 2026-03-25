@@ -21,29 +21,25 @@ export async function createClient() {
           limit: () => chain,
         }
         return chain
-      }
+      },
     }
     return dummyClient as any
   }
 
-  return createServerClient(
-    url,
-    key,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {}
-        },
+  return createServerClient(url, key, {
+    cookies: {
+      getAll() {
+        return cookieStore.getAll()
       },
-    }
-  )
+      setAll(cookiesToSet) {
+        try {
+          cookiesToSet.forEach(({ name, value, options }) =>
+            cookieStore.set(name, value, options)
+          )
+        } catch {}
+      },
+    },
+  })
 }
 
 export async function createServiceClient() {
@@ -51,14 +47,14 @@ export async function createServiceClient() {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY
 
   if (!url || !key) {
-    console.error('❌ Supabase Service Role Key missing!')
+    console.error('Supabase Service Role Key missing!')
     throw new Error('Supabase URL or Service Role Key missing. Check environment variables.')
   }
 
   return createSupabaseClient(url, key, {
     auth: {
       autoRefreshToken: false,
-      persistSession: false
-    }
+      persistSession: false,
+    },
   })
 }

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { clearSupabaseAuthCookies, isInvalidRefreshTokenError } from '@/lib/supabase/auth-session'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
@@ -32,9 +33,26 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  let user = null
+  try {
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser()
+    user = authUser
+  } catch (error) {
+    if (isInvalidRefreshTokenError(error)) {
+      clearSupabaseAuthCookies(
+        { getAll: () => request.cookies.getAll() },
+        { set: (name, value, options) => supabaseResponse.cookies.set(name, value, options) }
+      )
+
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+
+    throw error
+  }
 
   const url = request.nextUrl.clone()
   const isAuth = url.pathname.startsWith('/login')
