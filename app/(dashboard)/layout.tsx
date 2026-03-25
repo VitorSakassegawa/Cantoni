@@ -62,14 +62,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="relative min-h-screen overflow-x-hidden bg-[var(--background)] transition-colors duration-500 lg:flex">
       <div
-        className="pointer-events-none absolute top-[-10%] right-[-10%] h-[50%] w-[50%] animate-pulse rounded-full bg-blue-500/20 blur-[140px]"
-        style={{ animationDuration: '8s' }}
+        className="pointer-events-none absolute top-[-10%] right-[-10%] h-[42%] w-[42%] animate-pulse rounded-full bg-blue-500/14 blur-[100px]"
+        style={{ animationDuration: '10s' }}
       />
       <div
-        className="pointer-events-none absolute bottom-[-10%] left-[-10%] h-[50%] w-[50%] animate-pulse rounded-full bg-indigo-600/15 blur-[140px]"
-        style={{ animationDuration: '12s' }}
+        className="pointer-events-none absolute bottom-[-10%] left-[-10%] h-[40%] w-[40%] animate-pulse rounded-full bg-indigo-600/10 blur-[96px]"
+        style={{ animationDuration: '14s' }}
       />
-      <div className="pointer-events-none absolute top-[20%] left-[20%] h-[30%] w-[30%] rounded-full bg-sky-400/10 blur-[120px]" />
+      <div className="pointer-events-none absolute top-[20%] left-[20%] h-[24%] w-[24%] rounded-full bg-sky-400/8 blur-[88px]" />
 
       <div className="sticky top-0 z-30 overflow-x-hidden border-b border-white/40 bg-white/70 px-4 py-4 shadow-lg shadow-blue-900/5 backdrop-blur-2xl lg:hidden">
         <div className="flex items-center justify-between gap-4">

@@ -8,6 +8,7 @@ import {
 import { calculateNextStreak } from '../lib/streak-utils.ts'
 import { evaluatePlacementEligibility } from '../lib/placement-eligibility.ts'
 import { buildPendingPaymentUpdates } from '../lib/contract-payments.ts'
+import { evaluateMonthlyRescheduleLimit } from '../lib/lesson-reschedule.ts'
 
 assert.equal(normalizePaymentAmount('120.456'), 120.46)
 
@@ -147,6 +148,35 @@ assert.throws(
       remainingAmount: 100,
     }),
   /Parcela inválida/
+)
+
+assert.deepEqual(
+  evaluateMonthlyRescheduleLimit({
+    monthlyLimit: 1,
+    currentCount: 1,
+  }),
+  {
+    allowed: false,
+    message: 'Você já usou o limite de 1 remarcação(ões) deste mês.',
+  }
+)
+
+assert.deepEqual(
+  evaluateMonthlyRescheduleLimit({
+    monthlyLimit: 1,
+    currentCount: 1,
+    isResolvingConflict: true,
+  }),
+  { allowed: true }
+)
+
+assert.deepEqual(
+  evaluateMonthlyRescheduleLimit({
+    monthlyLimit: 2,
+    currentCount: 2,
+    isProfessor: true,
+  }),
+  { allowed: true }
 )
 
 console.log('payment-utils tests passed')

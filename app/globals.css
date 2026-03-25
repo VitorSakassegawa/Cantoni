@@ -49,23 +49,23 @@ textarea {
 
 .glass-panel {
   background: var(--glass-bg);
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(16px) saturate(145%);
+  -webkit-backdrop-filter: blur(16px) saturate(145%);
   border: 1px solid var(--glass-border);
   box-shadow:
-    0 8px 18px -6px rgba(15, 23, 42, 0.08),
-    0 22px 44px -18px rgba(37, 99, 235, 0.18);
+    0 8px 18px -8px rgba(15, 23, 42, 0.08),
+    0 18px 36px -20px rgba(37, 99, 235, 0.14);
 }
 
 .glass-card {
   background: var(--glass-bg);
-  backdrop-filter: blur(20px) saturate(160%);
-  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(12px) saturate(135%);
+  -webkit-backdrop-filter: blur(12px) saturate(135%);
   border: 1px solid var(--glass-border);
   box-shadow:
-    0 12px 24px -10px rgba(15, 23, 42, 0.08),
-    0 28px 60px -20px rgba(37, 99, 235, 0.18);
-  @apply rounded-3xl transition-all duration-500 hover:translate-y-[-4px] hover:scale-[1.01] hover:shadow-2xl;
+    0 10px 22px -12px rgba(15, 23, 42, 0.08),
+    0 20px 42px -24px rgba(37, 99, 235, 0.14);
+  @apply rounded-3xl transition-all duration-300 hover:translate-y-[-2px] hover:shadow-xl;
 }
 
 .glass-input {
@@ -232,7 +232,18 @@ textarea {
 
   .glass-card,
   .glass-panel {
-    backdrop-filter: blur(16px) saturate(150%);
-    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(10px) saturate(125%);
+    -webkit-backdrop-filter: blur(10px) saturate(125%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-card,
+  .glass-panel,
+  .animate-slide-up,
+  .animate-fade-in {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
   }
 }

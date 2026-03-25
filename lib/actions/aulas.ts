@@ -11,6 +11,7 @@ import { horasAteAula, formatDateTime } from '@/lib/utils'
 import { logActivityBestEffort } from '@/lib/activity-log'
 import { registerStudentActivityBestEffort } from '@/lib/streak'
 import { getXpReward } from '@/lib/gamification'
+import { evaluateMonthlyRescheduleLimit } from '@/lib/lesson-reschedule'
 
 export async function cancelarAula(aulaId: number) {
   const { user, aula, contrato, isProfessor, serviceSupabase } = await requireLessonAccess(aulaId, {
@@ -94,8 +95,15 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
   const isResolvingConflict =
     aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
-  if (!isProfessor && !isResolvingConflict && qtdAtual >= plano.remarca_max_mes) {
-    throw new Error(`Você já usou o limite de ${plano.remarca_max_mes} remarcação(ões) deste mês.`)
+  const rescheduleCheck = evaluateMonthlyRescheduleLimit({
+    monthlyLimit: plano.remarca_max_mes,
+    currentCount: qtdAtual,
+    isProfessor,
+    isResolvingConflict,
+  })
+
+  if (!rescheduleCheck.allowed) {
+    throw new Error(rescheduleCheck.message)
   }
 
   let novoEventId = ''
@@ -103,7 +111,7 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
 
   try {
     const resMeet = await criarEventoMeet({
-      titulo: `Aula de Ingles - ${aluno.full_name} (REMARCADA)`,
+      titulo: `Aula de Inglês - ${aluno.full_name} (REMARCADA)`,
       dataHora: new Date(novaDataHora),
       emailAluno: aluno.email,
       emailProfessor: process.env.RESEND_FROM_EMAIL!,
@@ -226,8 +234,14 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
   const isResolvingConflict =
     aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
-  if (!isResolvingConflict && qtdAtual >= plano.remarca_max_mes) {
-    throw new Error(`Você já usou o limite de ${plano.remarca_max_mes} remarcação(ões) deste mês.`)
+  const rescheduleCheck = evaluateMonthlyRescheduleLimit({
+    monthlyLimit: plano.remarca_max_mes,
+    currentCount: qtdAtual,
+    isResolvingConflict,
+  })
+
+  if (!rescheduleCheck.allowed) {
+    throw new Error(rescheduleCheck.message)
   }
 
   const isoData = new Date(novaDataHora).toISOString()
