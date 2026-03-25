@@ -181,8 +181,8 @@ export default async function IssuedDocumentPage({
                 Quadro-resumo do contrato
               </p>
               <p className="mt-2 text-sm text-slate-600">
-                Esta versão emitida consolida os dados financeiros e acadêmicos que estavam
-                vigentes no momento da emissão.
+                Esta versão emitida consolida os dados financeiros e acadêmicos que estavam vigentes
+                no momento da emissão.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
@@ -249,9 +249,7 @@ export default async function IssuedDocumentPage({
 
           {payload.addenda?.length > 0 ? (
             <section className="document-section space-y-4 border-t border-slate-200 pt-8">
-              <h3 className="text-lg font-black tracking-tight">
-                Histórico de aditivos considerados
-              </h3>
+              <h3 className="text-lg font-black tracking-tight">Histórico de aditivos considerados</h3>
               <div className="space-y-3">
                 {payload.addenda.map((entry: any) => (
                   <div
@@ -259,13 +257,11 @@ export default async function IssuedDocumentPage({
                     className="document-card rounded-[1.25rem] border border-slate-200 p-4"
                   >
                     <p className="text-sm font-black text-slate-900">
-                      Aditivo #{entry.id} - novo saldo{' '}
-                      {formatCurrency(Number(entry.newOpenValue || 0))}
+                      Aditivo #{entry.id} - novo saldo {formatCurrency(Number(entry.newOpenValue || 0))}
                     </p>
                     <p className="mt-2 text-sm text-slate-600">
-                      Reorganização de {entry.previousOpenInstallments}x para{' '}
-                      {entry.newOpenInstallments}x, com primeira parcela em{' '}
-                      {formatDateOnly(entry.firstDueDate)}.
+                      Reorganização de {entry.previousOpenInstallments}x para {entry.newOpenInstallments}x,
+                      com primeira parcela em {formatDateOnly(entry.firstDueDate)}.
                     </p>
                   </div>
                 ))}
@@ -306,8 +302,7 @@ export default async function IssuedDocumentPage({
                 Aceite registrado
               </p>
               <p className="mt-2 text-sm font-medium text-emerald-900/80">
-                Aceito por {issuance.accepted_name || 'aluno'} em{' '}
-                {formatDateTime(issuance.accepted_at)}.
+                Aceito por {issuance.accepted_name || 'aluno'} em {formatDateTime(issuance.accepted_at)}.
               </p>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <div>
