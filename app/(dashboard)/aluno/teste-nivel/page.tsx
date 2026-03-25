@@ -6,6 +6,8 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
+import { createClient } from '@/lib/supabase/client'
+import { evaluatePlacementEligibility, type PlacementEligibilityResult } from '@/lib/placement-eligibility'
 import {
   ArrowLeft,
   ArrowRight,
@@ -78,11 +80,58 @@ export default function LevelTestPage() {
   const [audioDuration, setAudioDuration] = useState(0)
   const [audioCurrentTime, setAudioCurrentTime] = useState(0)
   const [cachedAudio, setCachedAudio] = useState<string | null>(null)
+  const [eligibility, setEligibility] = useState<PlacementEligibilityResult | null>(null)
+  const [eligibilityLoading, setEligibilityLoading] = useState(true)
 
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel()
     }
+  }, [])
+
+  useEffect(() => {
+    const supabase = createClient()
+
+    async function loadEligibility() {
+      setEligibilityLoading(true)
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
+
+      if (!user) {
+        setEligibility({
+          allowed: false,
+          reason: 'blocked',
+          title: 'Faça login novamente',
+          description: 'Sua sessão precisa estar ativa para iniciar o nivelamento.',
+        })
+        setEligibilityLoading(false)
+        return
+      }
+
+      const [{ data: profile }, { data: contracts }, { data: latestResult }] = await Promise.all([
+        supabase.from('profiles').select('placement_test_completed').eq('id', user.id).single(),
+        supabase.from('contratos').select('status, data_inicio, data_fim').eq('aluno_id', user.id).neq('status', 'cancelado'),
+        supabase
+          .from('placement_results')
+          .select('created_at')
+          .eq('student_id', user.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle(),
+      ])
+
+      setEligibility(
+        evaluatePlacementEligibility({
+          placementTestCompleted: profile?.placement_test_completed,
+          latestResultAt: latestResult?.created_at || null,
+          contracts: (contracts || []) as Array<{ status?: string | null; data_inicio?: string | null; data_fim?: string | null }>,
+        })
+      )
+      setEligibilityLoading(false)
+    }
+
+    void loadEligibility()
   }, [])
 
   const currentQuestion = questions[currentQuestionIndex]
@@ -132,6 +181,11 @@ export default function LevelTestPage() {
   }
 
   async function startQuiz(startLevel?: PlacementLevel) {
+    if (eligibilityLoading) return
+    if (!eligibility?.allowed) {
+      toast.error(eligibility?.description || 'Novo teste ainda não liberado.')
+      return
+    }
     await loadModule(startLevel || currentLevel, 'grammar')
   }
 
@@ -359,6 +413,18 @@ export default function LevelTestPage() {
           </p>
         </div>
 
+        <div className={`rounded-[2rem] border px-6 py-5 ${eligibility?.allowed ? 'border-emerald-100 bg-emerald-50/70' : 'border-amber-100 bg-amber-50/70'}`}>
+          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Liberação do teste</p>
+          <p className="mt-2 text-xl font-black tracking-tight text-slate-900">
+            {eligibilityLoading ? 'Verificando regras do portal...' : eligibility?.title}
+          </p>
+          <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500">
+            {eligibilityLoading
+              ? 'Estamos validando se este é um momento adequado para um novo nivelamento.'
+              : eligibility?.description}
+          </p>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 h-full">
           <Card className="glass-card border-none shadow-2xl rounded-[3rem] overflow-hidden p-10 flex flex-col justify-between">
             <div className="space-y-8">
@@ -386,10 +452,11 @@ export default function LevelTestPage() {
 
             <Button
               onClick={() => setStep('auto-eval')}
-              className="mt-12 w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3"
+              disabled={eligibilityLoading || !eligibility?.allowed}
+              className="mt-12 w-full h-16 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex items-center justify-center gap-3 disabled:opacity-50 disabled:grayscale disabled:hover:scale-100"
             >
               <ArrowRight className="w-5 h-5" />
-              Escolher nível inicial
+              {eligibilityLoading ? 'Validando acesso' : eligibility?.allowed ? 'Escolher nível inicial' : 'Aguardando liberação'}
             </Button>
           </Card>
 

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
+import { evaluatePlacementEligibility } from '@/lib/placement-eligibility'
 import {
   ArrowLeft,
   ArrowRight,
@@ -45,7 +46,7 @@ export default async function AlunoNivelamentoPage() {
 
   if (profile?.role === 'professor') redirect('/professor/nivelamento')
 
-  const [{ data: history }, { data: avaliacoes }] = await Promise.all([
+  const [{ data: history }, { data: avaliacoes }, { data: contracts }] = await Promise.all([
     supabase
       .from('placement_results')
       .select('*')
@@ -57,10 +58,16 @@ export default async function AlunoNivelamentoPage() {
       .eq('aluno_id', user.id)
       .order('mes_referencia', { ascending: false })
       .limit(6),
+    supabase.from('contratos').select('status, data_inicio, data_fim').eq('aluno_id', user.id).neq('status', 'cancelado'),
   ])
 
   const latestResult = history?.[0] || null
   const currentCefrIdx = CEFR_LEVELS.indexOf(profile?.cefr_level || 'A1')
+  const eligibility = evaluatePlacementEligibility({
+    placementTestCompleted: profile?.placement_test_completed,
+    latestResultAt: latestResult?.created_at || null,
+    contracts: (contracts || []) as Array<{ status?: string | null; data_inicio?: string | null; data_fim?: string | null }>,
+  })
 
   return (
     <div className="mx-auto max-w-7xl space-y-10 animate-fade-in pb-16">
@@ -86,22 +93,28 @@ export default async function AlunoNivelamentoPage() {
             </p>
           </div>
 
-          <Link
-            href="/aluno/teste-nivel"
-            className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-700 shadow-lg shadow-indigo-900/10 transition-all hover:scale-105"
-          >
-            {profile?.placement_test_completed ? (
-              <>
-                <RotateCcw className="h-4 w-4" />
-                Refazer teste
-              </>
-            ) : (
-              <>
-                <Target className="h-4 w-4" />
-                Iniciar teste
-              </>
-            )}
-          </Link>
+          {eligibility.allowed ? (
+            <Link
+              href="/aluno/teste-nivel"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-700 shadow-lg shadow-indigo-900/10 transition-all hover:scale-105"
+            >
+              {profile?.placement_test_completed ? (
+                <>
+                  <RotateCcw className="h-4 w-4" />
+                  Refazer teste
+                </>
+              ) : (
+                <>
+                  <Target className="h-4 w-4" />
+                  Iniciar teste
+                </>
+              )}
+            </Link>
+          ) : (
+            <div className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white/80">
+              Aguardando liberação
+            </div>
+          )}
         </div>
       </div>
 
@@ -166,6 +179,12 @@ export default async function AlunoNivelamentoPage() {
                 </Badge>
               </div>
             </div>
+
+            <div className={`rounded-3xl border px-5 py-5 ${eligibility.allowed ? 'border-emerald-100 bg-emerald-50/70' : 'border-amber-100 bg-amber-50/70'}`}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Janela de novo teste</p>
+              <p className="mt-2 text-lg font-black tracking-tight text-slate-900">{eligibility.title}</p>
+              <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500">{eligibility.description}</p>
+            </div>
           </CardContent>
         </Card>
 
@@ -188,19 +207,38 @@ export default async function AlunoNivelamentoPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-8 pt-6">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            {[
+              'Primeiro nivelamento direto no portal.',
+              'Início de um novo contrato.',
+              'Fechamento de semestre ou encerramento do contrato.',
+              'Refação ad hoc somente com liberação do professor.',
+            ].map((rule) => (
+              <div key={rule} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-sm font-medium leading-relaxed text-slate-600">
+                {rule}
+              </div>
+            ))}
+          </div>
+
           {!history || history.length === 0 ? (
             <div className="rounded-[2rem] border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
               <p className="text-lg font-black tracking-tight text-slate-900">Nenhum teste realizado ainda</p>
               <p className="mt-2 text-sm font-medium text-slate-500">
                 Assim que você concluir seu primeiro nivelamento, o histórico aparecerá aqui.
               </p>
-              <Link
-                href="/aluno/teste-nivel"
-                className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700"
-              >
-                Iniciar teste
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {eligibility.allowed ? (
+                <Link
+                  href="/aluno/teste-nivel"
+                  className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700"
+                >
+                  Iniciar teste
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              ) : (
+                <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Aguardando liberação
+                </div>
+              )}
             </div>
           ) : (
             <div className="space-y-8">
@@ -223,13 +261,19 @@ export default async function AlunoNivelamentoPage() {
                       </div>
                     </div>
 
-                    <Link
-                      href="/aluno/teste-nivel"
-                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
-                    >
-                      Refazer teste
-                      <RotateCcw className="h-4 w-4" />
-                    </Link>
+                    {eligibility.allowed ? (
+                      <Link
+                        href="/aluno/teste-nivel"
+                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                      >
+                        Refazer teste
+                        <RotateCcw className="h-4 w-4" />
+                      </Link>
+                    ) : (
+                      <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        Aguardando liberação
+                      </div>
+                    )}
                   </div>
 
                   {test.answers && test.answers.length > 0 && test.answers[0].question ? (
