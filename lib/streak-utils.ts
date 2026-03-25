@@ -32,7 +32,8 @@ export function calculateNextStreak(
 
   const yesterday = new Date(activity)
   yesterday.setDate(yesterday.getDate() - 1)
-  const isConsecutiveDay = previous && previous.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]
+  const isConsecutiveDay =
+    previous && previous.toISOString().split('T')[0] === yesterday.toISOString().split('T')[0]
 
   return {
     streakCount: isConsecutiveDay ? Math.max(1, currentStreak || 0) + 1 : 1,

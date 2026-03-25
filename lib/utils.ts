@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
-import { addDays, isWeekend, isSameDay, isBefore } from 'date-fns'
+import { addDays, isBefore, isWeekend } from 'date-fns'
+import { FERIADOS_NACIONAIS } from './constants/holidays'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -41,28 +42,27 @@ export function formatDate(date: string | Date): string {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
-    timeZone: 'America/Sao_Paulo'
+    timeZone: 'America/Sao_Paulo',
   }).format(parseCalendarDate(date))
 }
 
 export function formatDateTime(date: string | Date | null | undefined): string {
   if (!date) return 'Não informada'
   const d = new Date(date)
-  if (isNaN(d.getTime()) || d.getTime() === 0) return 'Não informada'
-  
+  if (Number.isNaN(d.getTime()) || d.getTime() === 0) return 'Não informada'
+
   return new Intl.DateTimeFormat('pt-BR', {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: 'America/Sao_Paulo'
+    timeZone: 'America/Sao_Paulo',
   }).format(d)
 }
 
 export function formatDateOnly(dateStr: string | null | undefined): string {
   if (!dateStr) return 'Não inf.'
-  // Date comes as YYYY-MM-DD
   const [y, m, d] = dateStr.split('T')[0].split('-')
   if (!y || !m || !d) return 'Não inf.'
   return `${d}/${m}/${y}`
@@ -74,7 +74,12 @@ export function horasAteAula(dataHora: string): number {
   return (aula.getTime() - now.getTime()) / (1000 * 60 * 60)
 }
 
-export function getSemestreAtual(): { semestre: 'jan-jun' | 'jul-dez'; ano: number; inicio: Date; fim: Date } {
+export function getSemestreAtual(): {
+  semestre: 'jan-jun' | 'jul-dez'
+  ano: number
+  inicio: Date
+  fim: Date
+} {
   const now = new Date()
   const mes = now.getMonth() + 1
   const ano = now.getFullYear()
@@ -84,8 +89,6 @@ export function getSemestreAtual(): { semestre: 'jan-jun' | 'jul-dez'; ano: numb
   return { semestre: 'jul-dez', ano, inicio: new Date(ano, 6, 1), fim: new Date(ano, 11, 31) }
 }
 
-import { FERIADOS_NACIONAIS } from './constants/holidays'
-
 export function isHoliday(date: Date, customHolidays: string[] = []) {
   const dateStr = date.toISOString().split('T')[0]
   return FERIADOS_NACIONAIS.includes(dateStr) || customHolidays.includes(dateStr)
@@ -94,29 +97,26 @@ export function isHoliday(date: Date, customHolidays: string[] = []) {
 export function gerarGradeAulas(
   dataInicio: Date,
   dataFim: Date,
-  diaDaSemana: number[], // 0=dom, 1=seg ... 6=sab
+  diaDaSemana: number[],
   totalAulas?: number,
   customHolidays: string[] = []
 ): Date[] {
   const aulas: Date[] = []
   let current = new Date(dataInicio)
-  
-  // Limite de segurança de 1 ano
+
+  // Limite de segurança de 1 ano.
   const maxSearch = addDays(dataInicio, 366)
   const limitDate = isBefore(dataFim, maxSearch) ? dataFim : maxSearch
 
   while (current <= limitDate) {
-    if (diaDaSemana.includes(current.getDay())) {
-      if (!isHoliday(current, customHolidays)) {
-        aulas.push(new Date(current))
-      }
+    if (diaDaSemana.includes(current.getDay()) && !isHoliday(current, customHolidays)) {
+      aulas.push(new Date(current))
     }
     if (totalAulas && aulas.length >= totalAulas) break
     current = addDays(current, 1)
   }
   return aulas
 }
-
 
 export function maskCPF(value: string): string {
   const cleanValue = value.replace(/\D/g, '')
@@ -140,6 +140,7 @@ export function maskPhone(value: string): string {
     .replace(/(\d{5})(\d)/, '$1-$2')
     .replace(/(-\d{4})\d+?$/, '$1')
 }
+
 export function maskDate(value: string): string {
   const cleanValue = value.replace(/\D/g, '')
   return cleanValue
@@ -147,10 +148,11 @@ export function maskDate(value: string): string {
     .replace(/(\d{2})(\d)/, '$1/$2')
     .replace(/(\/\d{4})\d+?$/, '$1')
 }
+
 export function maskCurrency(value: string): string {
   const cleanValue = value.replace(/\D/g, '')
   const numberValue = parseFloat(cleanValue) / 100
-  if (isNaN(numberValue)) return ''
+  if (Number.isNaN(numberValue)) return ''
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
