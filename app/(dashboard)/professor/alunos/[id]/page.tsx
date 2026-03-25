@@ -29,6 +29,7 @@ import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
+import ResendAccessButton from '@/components/dashboard/ResendAccessButton'
 import IssueDocumentButton from '@/components/documents/IssueDocumentButton'
 import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
 import ExternalSignatureStatusBadge from '@/components/documents/ExternalSignatureStatusBadge'
@@ -208,6 +209,10 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   Editar perfil
                 </Button>
               </Link>
+              <ResendAccessButton
+                alunoId={id}
+                className="h-11 rounded-2xl border-slate-200 px-4 text-[10px] font-black uppercase tracking-widest text-slate-600"
+              />
               {contrato ? (
                 <>
                   <IssueDocumentButton

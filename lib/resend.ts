@@ -335,3 +335,39 @@ export async function enviarResumoAulaAI({
     `),
   })
 }
+
+export async function enviarEmailPrimeiroAcesso({
+  to,
+  nomeAluno,
+  setupPasswordLink,
+}: {
+  to: string
+  nomeAluno: string
+  setupPasswordLink: string
+}) {
+  const resend = getResendClient()
+  return resend.emails.send({
+    from: FROM,
+    to,
+    subject: 'Primeiro acesso ao portal da Cantoni English School',
+    html: BaseLayout(`
+      <h2 style="color:#1e3a5f;margin-bottom:20px">Olá, ${nomeAluno}!</h2>
+      <p>Seu cadastro no portal já foi criado.</p>
+      <p style="font-size:14px">
+        Para entrar pela primeira vez, você precisa definir sua senha no botão abaixo.
+        O portal <strong>não usa os 6 primeiros dígitos do CPF como senha</strong>.
+      </p>
+
+      <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0">
+        <h3 style="margin-top:0;color:#1e3a5f;font-size:16px">Primeiro acesso</h3>
+        <a href="${setupPasswordLink}" style="display:inline-block;padding:14px 28px;background:#2563eb;color:white;text-decoration:none;border-radius:12px;font-weight:bold;margin:10px 0">
+          Definir minha senha
+        </a>
+      </div>
+
+      <p style="font-size:13px;color:#64748b">
+        Depois de definir a senha, você poderá entrar normalmente com seu e-mail e a senha escolhida.
+      </p>
+    `),
+  })
+}

@@ -144,13 +144,26 @@ export default function LoginPage() {
                   <div className="flex justify-between items-center">
                     <Label htmlFor="password" className="text-[10px] font-black uppercase text-gray-400 ml-1">Senha</Label>
                     {authMode === 'login' && (
-                      <button 
-                        type="button" 
-                        onClick={() => setAuthMode('forgot')}
-                        className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:underline"
-                      >
-                        Esqueci a senha
-                      </button>
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setAuthMode('forgot')}
+                          className="text-[9px] font-black text-blue-500 uppercase tracking-widest hover:underline"
+                        >
+                          Esqueci a senha
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setAuthMode('forgot')
+                            setError('')
+                            setSuccessMessage('Primeiro acesso? Use o link enviado por e-mail para definir sua senha. O portal não usa os 6 primeiros dígitos do CPF como senha.')
+                          }}
+                          className="text-[9px] font-black text-emerald-600 uppercase tracking-widest hover:underline"
+                        >
+                          Primeiro acesso
+                        </button>
+                      </div>
                     )}
                   </div>
                   <Input
@@ -162,6 +175,16 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
+                  {authMode === 'login' && (
+                    <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-3">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Primeiro acesso</p>
+                      <p className="mt-1 text-[11px] font-medium leading-relaxed text-slate-600">
+                        A senha inicial não é formada pelos 6 primeiros dígitos do CPF. Use o botão
+                        <span className="font-black text-blue-700"> Primeiro acesso</span> ou
+                        <span className="font-black text-blue-700"> Esqueci a senha</span> para receber o link de definição de senha no e-mail cadastrado.
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
               
