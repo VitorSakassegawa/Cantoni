@@ -44,16 +44,16 @@ export default async function ContractDocumentPage({
           <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
             <p className="mt-3 text-lg font-black">{context.student?.full_name || 'Aluno'}</p>
-            <p className="mt-2 text-sm text-slate-600">CPF: {context.student?.cpf || 'nao informado'}</p>
-            <p className="text-sm text-slate-600">E-mail: {context.student?.email || 'nao informado'}</p>
-            <p className="text-sm text-slate-600">Telefone: {context.student?.phone || 'nao informado'}</p>
+            <p className="mt-2 text-sm text-slate-600">
+              CPF: {context.student?.cpf || 'nao informado'} | E-mail: {context.student?.email || 'nao informado'} | Tel.: {context.student?.phone || 'nao informado'}
+            </p>
           </div>
           <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
             <p className="mt-3 text-lg font-black">{context.teacher?.full_name || 'Professor responsavel'}</p>
-            <p className="mt-2 text-sm text-slate-600">CPF: {context.teacher?.cpf || 'nao informado'}</p>
-            <p className="text-sm text-slate-600">E-mail: {context.teacher?.email || 'nao informado'}</p>
-            <p className="text-sm text-slate-600">Telefone: {context.teacher?.phone || 'nao informado'}</p>
+            <p className="mt-2 text-sm text-slate-600">
+              CPF: {context.teacher?.cpf || 'nao informado'} | E-mail: {context.teacher?.email || 'nao informado'} | Tel.: {context.teacher?.phone || 'nao informado'} | Pessoa Fisica
+            </p>
           </div>
         </section>
 
@@ -81,7 +81,9 @@ export default async function ContractDocumentPage({
             </div>
             <div>
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forma</p>
-              <p className="mt-2 text-sm font-bold capitalize">{context.contract.forma_pagamento || 'a combinar'}</p>
+              <p className="mt-2 text-sm font-bold">
+                {(context.contract.forma_pagamento || 'a combinar')} ({Math.max(context.payments?.length || 1, 1)} parcela{(context.payments?.length || 1) > 1 ? 's' : ''})
+              </p>
             </div>
           </div>
         </section>
@@ -143,23 +145,28 @@ export default async function ContractDocumentPage({
               </a>
             ))}
           </div>
-          <div className="document-signature grid gap-8 border-t border-dashed border-slate-300 pt-8 md:grid-cols-2">
+          <div className="space-y-4 border-t border-dashed border-slate-300 pt-8">
+            <p className="text-sm text-slate-600">
+              {context.teacher?.city || 'Guarulhos/SP'}, _____ de __________________ de {new Date().getFullYear()}.
+            </p>
+          </div>
+          <div className="document-signature grid gap-8 md:grid-cols-2">
             <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assinatura do contratado</p>
-              <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
-                {context.teacher?.full_name || 'Professor responsavel'}
-              </p>
-              <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
-                Cantoni English School
-              </p>
-            </div>
-            <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Assinatura do contratante</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
               <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
                 {context.student?.full_name || 'Aluno'}
               </p>
-              <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
-                Assinatura ou aceite digital no portal
+              <p className="text-center text-xs font-medium text-slate-500">
+                CPF: {context.student?.cpf || 'nao informado'}
+              </p>
+            </div>
+            <div className="space-y-3">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+              <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+                {context.teacher?.full_name || 'Professor responsavel'}
+              </p>
+              <p className="text-center text-xs font-medium text-slate-500">
+                CPF: {context.teacher?.cpf || 'nao informado'}
               </p>
             </div>
           </div>

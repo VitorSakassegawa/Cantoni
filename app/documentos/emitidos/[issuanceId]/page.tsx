@@ -161,7 +161,9 @@ export default async function IssuedDocumentPage({
               </div>
               <div>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forma</p>
-                <p className="mt-2 text-sm font-bold capitalize">{payload.summary?.paymentMethod || 'a combinar'}</p>
+                <p className="mt-2 text-sm font-bold">
+                  {payload.summary?.paymentMethod || 'a combinar'} ({payload.summary?.installmentCount || 1} parcela{(payload.summary?.installmentCount || 1) > 1 ? 's' : ''})
+                </p>
               </div>
             </div>
           </section>
@@ -225,23 +227,26 @@ export default async function IssuedDocumentPage({
           )}
 
           <footer className="document-section space-y-6 border-t border-slate-200 pt-8">
+            <p className="text-sm text-slate-600">
+              {payload.teacher?.city || 'Guarulhos/SP'}, _____ de __________________ de {new Date(issuance.created_at).getFullYear()}.
+            </p>
             <div className="document-signature grid gap-8 md:grid-cols-2">
-              <div className="space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
-                <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
-                  {payload.teacher?.fullName || 'Professor responsavel'}
-                </p>
-                <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
-                  Cantoni English School
-                </p>
-              </div>
               <div className="space-y-3">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
                 <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
                   {payload.student?.fullName || 'Aluno'}
                 </p>
-                <p className="text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
-                  {issuance.status === 'accepted' ? 'Aceite digital registrado no portal' : 'Pendente de aceite digital'}
+                <p className="text-center text-xs font-medium text-slate-500">
+                  CPF: {payload.student?.cpf || 'nao informado'}
+                </p>
+              </div>
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+                <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+                  {payload.teacher?.fullName || 'Professor responsavel'}
+                </p>
+                <p className="text-center text-xs font-medium text-slate-500">
+                  CPF: {payload.teacher?.cpf || 'nao informado'}
                 </p>
               </div>
             </div>
