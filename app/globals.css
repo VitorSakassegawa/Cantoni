@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f1f5f9;
+  --background: #eef4ff;
   --foreground: #0f172a;
   --primary: #1e3a8a;
   --accent: #2563eb;
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(30, 58, 138, 0.15);
+  --glass-bg: rgba(255, 255, 255, 0.82);
+  --glass-border: rgba(37, 99, 235, 0.18);
   --sidebar-bg: #1e3a8a;
 }
 
@@ -33,10 +33,10 @@ body {
   -webkit-tap-highlight-color: transparent;
   text-rendering: optimizeLegibility;
   background-image:
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
-    radial-gradient(at 0% 100%, rgba(30, 58, 138, 0.05) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.08) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.1) 0px, transparent 50%),
+    radial-gradient(at 0% 100%, rgba(30, 58, 138, 0.07) 0px, transparent 50%);
   background-attachment: fixed;
   overflow-x: hidden;
 }
@@ -55,8 +55,8 @@ textarea {
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-border);
   box-shadow:
-    0 4px 6px -1px rgba(0, 0, 0, 0.05),
-    0 10px 30px -5px rgba(30, 58, 138, 0.1);
+    0 8px 18px -6px rgba(15, 23, 42, 0.08),
+    0 22px 44px -18px rgba(37, 99, 235, 0.18);
 }
 
 .glass-card {
@@ -65,13 +65,13 @@ textarea {
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--glass-border);
   box-shadow:
-    0 10px 15px -3px rgba(0, 0, 0, 0.05),
-    0 20px 50px -10px rgba(30, 58, 138, 0.15);
+    0 12px 24px -10px rgba(15, 23, 42, 0.08),
+    0 28px 60px -20px rgba(37, 99, 235, 0.18);
   @apply rounded-3xl transition-all duration-500 hover:translate-y-[-4px] hover:scale-[1.01] hover:shadow-2xl;
 }
 
 .glass-input {
-  @apply border-slate-200 bg-white backdrop-blur-md transition-all duration-300 focus:bg-white;
+  @apply border-slate-300/80 bg-white/95 text-slate-900 backdrop-blur-md transition-all duration-300 placeholder:text-slate-400 focus:border-blue-400 focus:bg-white;
 }
 
 .lms-gradient {
@@ -79,7 +79,7 @@ textarea {
 }
 
 .lms-gradient-soft {
-  background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.09) 0%, rgba(59, 130, 246, 0.08) 100%);
 }
 
 @keyframes slideUp {
