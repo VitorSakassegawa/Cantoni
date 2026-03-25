@@ -24,8 +24,6 @@ import {
   Video,
 } from 'lucide-react'
 
-type PaymentWithStatus = ReturnType<typeof withEffectivePaymentStatus>
-
 export default async function AlunoDashboard() {
   const supabase = await createClient()
   const {
@@ -122,13 +120,51 @@ export default async function AlunoDashboard() {
     lastActivityDate: profile?.last_activity_date,
   })
 
+  const priorityCards = [
+    pagamentoPendenteComStatus?.effectiveStatus === 'atrasado'
+      ? {
+          id: 'payment-overdue',
+          icon: CreditCard,
+          title: 'Pagamento em atraso',
+          description: `Parcela ${pagamentoPendenteComStatus.parcela_num} venceu em ${formatDateOnly(
+            pagamentoPendenteComStatus.data_vencimento
+          )}.`,
+          href: '/aluno/pagamentos',
+          actionLabel: 'Pagar agora',
+          tone: 'border-rose-100 bg-rose-50 text-rose-700',
+          buttonTone: 'bg-rose-600 hover:bg-rose-700',
+        }
+      : null,
+    temRemarcacaoPendente
+      ? {
+          id: 'pending-reschedule',
+          icon: Calendar,
+          title: 'Remarcação pendente',
+          description: 'Você precisa sugerir uma nova data para concluir a remarcação aberta.',
+          href: '/aluno/aulas',
+          actionLabel: 'Sugerir datas',
+          tone: 'border-amber-100 bg-amber-50 text-amber-700',
+          buttonTone: 'bg-amber-600 hover:bg-amber-700',
+        }
+      : null,
+  ].filter(Boolean) as Array<{
+    id: string
+    icon: typeof CreditCard
+    title: string
+    description: string
+    href: string
+    actionLabel: string
+    tone: string
+    buttonTone: string
+  }>
+
   return (
-    <div className="space-y-10 animate-fade-in pb-16">
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-[#1e3a8a] p-10 text-white shadow-2xl shadow-blue-900/20">
+    <div className="space-y-8 animate-fade-in pb-16 lg:space-y-10">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-[#1e3a8a] p-6 text-white shadow-2xl shadow-blue-900/20 sm:p-8 lg:p-10">
         <div className="pointer-events-none absolute top-0 right-0 h-full w-[50%] bg-gradient-to-l from-white/10 to-transparent" />
         <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col justify-between gap-8 md:flex-row md:items-center">
+        <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-100">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-400" />
@@ -137,7 +173,7 @@ export default async function AlunoDashboard() {
             <h1 className="text-4xl font-black tracking-tighter md:text-5xl">
               Olá, {profile?.full_name?.split(' ')[0]}!
             </h1>
-            <div className="flex flex-wrap items-center gap-4 font-medium text-blue-100/80">
+            <div className="flex flex-wrap items-center gap-3 font-medium text-blue-100/80">
               <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
                 <Badge className="border-none bg-blue-500 text-[10px] font-black uppercase text-white">
                   {profile?.nivel || 'Nível não definido'}
@@ -162,7 +198,7 @@ export default async function AlunoDashboard() {
 
           <Link
             href="/aluno/perfil"
-            className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-bold text-blue-900 transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+            className="inline-flex items-center gap-2 self-start rounded-2xl bg-white px-6 py-3 text-sm font-bold text-blue-900 transition-all hover:scale-105 hover:shadow-xl active:scale-95"
           >
             <User className="h-4 w-4" />
             Ver perfil
@@ -170,48 +206,33 @@ export default async function AlunoDashboard() {
         </div>
       </div>
 
-      {pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' ? (
-        <div className="flex flex-col items-center justify-between gap-6 rounded-[2rem] border border-rose-100 bg-rose-50 p-6 shadow-xl shadow-rose-500/5 md:flex-row">
-          <div className="flex items-center gap-4 text-rose-600">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-100">
-              <CreditCard className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-black uppercase tracking-tight text-rose-900">Pagamento em atraso</p>
-              <p className="text-xs font-medium text-rose-700/70">
-                A parcela {pagamentoPendenteComStatus.parcela_num} de {formatCurrency(pagamentoPendenteComStatus.valor)}
-                {' '}venceu em {formatDateOnly(pagamentoPendenteComStatus.data_vencimento)}.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/aluno/pagamentos"
-            className="flex h-10 items-center rounded-xl bg-rose-600 px-8 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-rose-600/20 transition-all hover:bg-rose-700"
-          >
-            PAGAR AGORA
-          </Link>
-        </div>
-      ) : null}
-
-      {temRemarcacaoPendente ? (
-        <div className="flex flex-col items-center justify-between gap-6 rounded-[2rem] border border-amber-100 bg-amber-50 p-6 shadow-xl shadow-amber-500/5 md:flex-row">
-          <div className="flex items-center gap-4 text-amber-600">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
-              <Calendar className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-black uppercase tracking-tight text-amber-900">Ação necessária: remarcação</p>
-              <p className="text-xs font-medium text-amber-700/70">
-                Você tem aulas que precisam de uma nova data sugerida por você.
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/aluno/aulas"
-            className="flex h-10 items-center rounded-xl bg-amber-600 px-8 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-600/20 transition-all hover:bg-amber-700"
-          >
-            SUGERIR DATAS
-          </Link>
+      {priorityCards.length > 0 ? (
+        <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+          {priorityCards.map((card) => {
+            const Icon = card.icon
+            return (
+              <div
+                key={card.id}
+                className={`flex flex-col gap-4 rounded-[2rem] border p-5 shadow-xl md:flex-row md:items-center md:justify-between ${card.tone}`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white/70">
+                    <Icon className="h-6 w-6" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-black uppercase tracking-tight text-slate-900">{card.title}</p>
+                    <p className="text-xs font-medium text-current/80">{card.description}</p>
+                  </div>
+                </div>
+                <Link
+                  href={card.href}
+                  className={`inline-flex h-10 items-center justify-center rounded-xl px-6 text-[10px] font-black uppercase tracking-widest text-white shadow-lg transition-all ${card.buttonTone}`}
+                >
+                  {card.actionLabel}
+                </Link>
+              </div>
+            )
+          })}
         </div>
       ) : null}
 
@@ -263,9 +284,7 @@ export default async function AlunoDashboard() {
             <Video className="h-24 w-24 text-blue-900" />
           </div>
           <CardHeader className="pb-4">
-            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">
-              Próxima aula
-            </CardTitle>
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">Próxima aula</CardTitle>
           </CardHeader>
           <CardContent>
             {proximaAula ? (
@@ -336,15 +355,12 @@ export default async function AlunoDashboard() {
             </div>
           </CardContent>
         </Card>
-
       </div>
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <Card className={`glass-card transition-all duration-500 ${pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
-          <CardHeader className="pb-4 border-b border-slate-100">
-            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-              Financeiro
-            </CardTitle>
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Financeiro</CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             {pagamentoPendenteComStatus ? (
@@ -355,8 +371,9 @@ export default async function AlunoDashboard() {
                       {formatCurrency(pagamentoPendenteComStatus.valor)}
                     </p>
                     <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-gray-400">
-                      Parcela {pagamentoPendenteComStatus.parcela_num}/{totalParcelasPorContrato[pagamentoPendenteComStatus.contrato_id] || 1}
-                      {' '}• Vence em {formatDate(pagamentoPendenteComStatus.data_vencimento)}
+                      Parcela {pagamentoPendenteComStatus.parcela_num}/
+                      {totalParcelasPorContrato[pagamentoPendenteComStatus.contrato_id] || 1} • Vence em{' '}
+                      {formatDate(pagamentoPendenteComStatus.data_vencimento)}
                     </p>
                   </div>
                   <Badge
@@ -412,7 +429,9 @@ export default async function AlunoDashboard() {
             ) : (
               <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/30 py-12">
                 <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-sm">
-                  <Badge variant="success" className="border-none p-0">OK</Badge>
+                  <Badge variant="success" className="border-none p-0">
+                    OK
+                  </Badge>
                 </div>
                 <p className="text-sm font-black uppercase tracking-widest text-emerald-700">Tudo em dia!</p>
               </div>
@@ -471,7 +490,7 @@ export default async function AlunoDashboard() {
         </Card>
 
         <Card className="glass-card overflow-hidden">
-          <CardHeader className="pb-4 border-b border-slate-100">
+          <CardHeader className="border-b border-slate-100 pb-4">
             <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
               <Flame className="h-4 w-4 text-amber-500" /> Jornada
             </CardTitle>

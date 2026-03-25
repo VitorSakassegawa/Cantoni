@@ -16,6 +16,12 @@ import {
 } from 'lucide-react'
 import { Logo } from '@/components/dashboard/Logo'
 
+type NavItem = {
+  href: string
+  label: string
+  icon: React.ComponentType<{ className?: string }>
+}
+
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const {
@@ -24,151 +30,135 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, full_name')
-    .eq('id', user.id)
-    .single()
+  const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', user.id).single()
 
   const isProfessor = profile?.role === 'professor'
   const basePath = isProfessor ? '/professor' : '/aluno'
+  const navItems: NavItem[] = isProfessor
+    ? [
+        { href: basePath, label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/professor/pagamentos', label: 'Financeiro', icon: CreditCard },
+        { href: '/professor/alunos', label: 'Alunos', icon: Users },
+        { href: '/professor/aulas', label: 'Aulas', icon: BookOpen },
+        { href: '/professor/nivelamento', label: 'Nivelamento', icon: Sparkles },
+        { href: '/professor/calendario', label: 'Calendário', icon: Calendar },
+        { href: '/professor/perfil', label: 'Meu Perfil', icon: User },
+      ]
+    : [
+        { href: basePath, label: 'Dashboard', icon: LayoutDashboard },
+        { href: '/aluno/pagamentos', label: 'Financeiro', icon: CreditCard },
+        { href: '/aluno/aulas', label: 'Aulas', icon: BookOpen },
+        { href: '/aluno/jornada', label: 'Jornada', icon: Flame },
+        { href: '/aluno/nivelamento', label: 'Nivelamento', icon: Target },
+        { href: '/aluno/calendario', label: 'Calendário', icon: Calendar },
+        { href: '/aluno/documentos', label: 'Documentos', icon: FileText },
+        { href: '/aluno/perfil', label: 'Meu Perfil', icon: User },
+      ]
 
   return (
-    <div className="min-h-screen flex bg-[var(--background)] relative overflow-hidden transition-colors duration-500">
-      <div className="absolute top-[-10%] right-[-10%] w-[50%] h-[50%] bg-blue-500/20 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '8s' }} />
-      <div className="absolute bottom-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-600/15 rounded-full blur-[140px] pointer-events-none animate-pulse" style={{ animationDuration: '12s' }} />
-      <div className="absolute top-[20%] left-[20%] w-[30%] h-[30%] bg-sky-400/10 rounded-full blur-[120px] pointer-events-none" />
+    <div className="relative min-h-screen bg-[var(--background)] transition-colors duration-500 lg:flex">
+      <div
+        className="pointer-events-none absolute top-[-10%] right-[-10%] h-[50%] w-[50%] animate-pulse rounded-full bg-blue-500/20 blur-[140px]"
+        style={{ animationDuration: '8s' }}
+      />
+      <div
+        className="pointer-events-none absolute bottom-[-10%] left-[-10%] h-[50%] w-[50%] animate-pulse rounded-full bg-indigo-600/15 blur-[140px]"
+        style={{ animationDuration: '12s' }}
+      />
+      <div className="pointer-events-none absolute top-[20%] left-[20%] h-[30%] w-[30%] rounded-full bg-sky-400/10 blur-[120px]" />
 
-      <aside className="w-72 flex flex-col m-6 mr-0 z-10">
-        <div className="flex-1 glass-panel rounded-[2.5rem] border-white/30 flex flex-col overflow-hidden shadow-2xl shadow-blue-900/10">
+      <div className="sticky top-0 z-30 border-b border-white/40 bg-white/70 px-4 py-4 shadow-lg shadow-blue-900/5 backdrop-blur-2xl lg:hidden">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-white shadow-sm">
+              <Logo src="/logo-cantoni.svg" fallbackAvatar="C" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-black tracking-tight text-slate-900">{profile?.full_name}</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                {isProfessor ? 'Professor' : 'Aluno'}
+              </p>
+            </div>
+          </div>
+
+          <form action="/api/auth/signout" method="POST">
+            <button
+              type="submit"
+              className="inline-flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-600"
+            >
+              <LogOut className="h-4 w-4" />
+              Sair
+            </button>
+          </form>
+        </div>
+
+        <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
+          {navItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 shadow-sm"
+              >
+                <Icon className="h-4 w-4 text-blue-600" />
+                {item.label}
+              </Link>
+            )
+          })}
+        </div>
+      </div>
+
+      <aside className="z-10 m-6 mr-0 hidden w-72 flex-col lg:flex">
+        <div className="glass-panel flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border-white/30 shadow-2xl shadow-blue-900/10">
           <div className="p-8 pb-4">
-            <div className="flex flex-col items-center text-center space-y-4">
-              <div className="w-full px-4 flex items-center justify-center">
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="flex w-full items-center justify-center px-4">
                 <Logo src="/logo-cantoni.svg" fallbackAvatar="C" />
               </div>
-              <p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.2em] leading-tight max-w-[140px]">
+              <p className="max-w-[140px] text-[10px] font-black uppercase leading-tight tracking-[0.2em] text-blue-400">
                 Learning Management System
               </p>
             </div>
           </div>
 
-          <nav className="flex-1 px-4 space-y-2 py-4">
-            <Link
-              href={basePath}
-              className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group"
-            >
-              <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                <LayoutDashboard className="w-4 h-4" />
-              </div>
-              Dashboard
-            </Link>
-
-            {isProfessor && (
-              <>
-                <Link href="/professor/pagamentos" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <CreditCard className="w-4 h-4" />
+          <nav className="flex-1 space-y-2 px-4 py-4">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="group flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-bold text-blue-900/70 transition-all hover:bg-white/50 hover:text-blue-900"
+                >
+                  <div className="rounded-xl bg-blue-50 p-2 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                    <Icon className="h-4 w-4" />
                   </div>
-                  Financeiro
+                  {item.label}
                 </Link>
-                <Link href="/professor/alunos" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  Alunos
-                </Link>
-                <Link href="/professor/aulas" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                  Aulas
-                </Link>
-                <Link href="/professor/nivelamento" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  Nivelamento
-                </Link>
-                <Link href="/professor/calendario" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  Calendário
-                </Link>
-                <Link href="/professor/perfil" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <User className="w-4 h-4" />
-                  </div>
-                  Meu Perfil
-                </Link>
-              </>
-            )}
-
-            {!isProfessor && (
-              <>
-                <Link href="/aluno/pagamentos" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <CreditCard className="w-4 h-4" />
-                  </div>
-                  Financeiro
-                </Link>
-                <Link href="/aluno/aulas" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <BookOpen className="w-4 h-4" />
-                  </div>
-                  Aulas
-                </Link>
-                <Link href="/aluno/jornada" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Flame className="w-4 h-4" />
-                  </div>
-                  Jornada
-                </Link>
-                <Link href="/aluno/nivelamento" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Target className="w-4 h-4" />
-                  </div>
-                  Nivelamento
-                </Link>
-                <Link href="/aluno/calendario" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <Calendar className="w-4 h-4" />
-                  </div>
-                  Calendário
-                </Link>
-                <Link href="/aluno/documentos" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <FileText className="w-4 h-4" />
-                  </div>
-                  Documentos
-                </Link>
-                <Link href="/aluno/perfil" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
-                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                    <User className="w-4 h-4" />
-                  </div>
-                  Meu Perfil
-                </Link>
-              </>
-            )}
+              )
+            })}
           </nav>
 
-          <div className="p-6 mt-auto border-t border-white/20 bg-white/10">
-            <div className="flex items-center gap-3 mb-6 p-2 rounded-2xl bg-white/30 border border-white/40">
-              <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-lg">
+          <div className="mt-auto border-t border-white/20 bg-white/10 p-6">
+            <div className="mb-6 flex items-center gap-3 rounded-2xl border border-white/40 bg-white/30 p-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 font-bold text-white shadow-lg">
                 {profile?.full_name?.charAt(0)}
               </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-black text-blue-900 truncate tracking-tight">{profile?.full_name}</p>
-                <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">{isProfessor ? 'Professor' : 'Aluno'}</p>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-xs font-black tracking-tight text-blue-900">{profile?.full_name}</p>
+                <p className="text-[9px] font-black uppercase tracking-widest text-blue-400">
+                  {isProfessor ? 'Professor' : 'Aluno'}
+                </p>
               </div>
             </div>
 
             <form action="/api/auth/signout" method="POST">
               <button
                 type="submit"
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-red-50 text-red-500 hover:text-red-600 font-bold text-xs transition-colors w-full tracking-widest uppercase"
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-xs font-bold uppercase tracking-widest text-red-500 transition-colors hover:bg-red-50 hover:text-red-600"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="h-4 w-4" />
                 Desconectar
               </button>
             </form>
@@ -177,7 +167,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </aside>
 
       <main className="flex-1 overflow-auto">
-        <div className="p-8">{children}</div>
+        <div className="px-4 py-6 pb-10 sm:px-6 lg:p-8">{children}</div>
       </main>
     </div>
   )

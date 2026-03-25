@@ -12,6 +12,7 @@ import {
   BrainCircuit,
   Calendar,
   CheckCircle2,
+  ChevronDown,
   RotateCcw,
   Target,
   Trophy,
@@ -47,11 +48,7 @@ export default async function AlunoNivelamentoPage() {
   if (profile?.role === 'professor') redirect('/professor/nivelamento')
 
   const [{ data: history }, { data: avaliacoes }, { data: contracts }] = await Promise.all([
-    supabase
-      .from('placement_results')
-      .select('*')
-      .eq('student_id', user.id)
-      .order('created_at', { ascending: false }),
+    supabase.from('placement_results').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase
       .from('avaliacoes_habilidades')
       .select('*')
@@ -69,6 +66,29 @@ export default async function AlunoNivelamentoPage() {
     contracts: (contracts || []) as Array<{ status?: string | null; data_inicio?: string | null; data_fim?: string | null }>,
   })
 
+  const eligibilityRules = [
+    {
+      title: 'Primeiro teste',
+      body: 'Seu primeiro nivelamento pode ser feito diretamente no portal.',
+      tone: 'border-emerald-100 bg-emerald-50/70',
+    },
+    {
+      title: 'Novo contrato',
+      body: 'Quando um novo contrato começa, um novo teste pode ser liberado.',
+      tone: 'border-blue-100 bg-blue-50/70',
+    },
+    {
+      title: 'Fim de ciclo',
+      body: 'Virada de semestre e encerramento de contrato podem abrir uma nova avaliação.',
+      tone: 'border-indigo-100 bg-indigo-50/70',
+    },
+    {
+      title: 'Ad hoc',
+      body: 'Refação fora dessas janelas depende de aprovação do professor.',
+      tone: 'border-amber-100 bg-amber-50/70',
+    },
+  ]
+
   return (
     <div className="mx-auto max-w-7xl space-y-10 animate-fade-in pb-16">
       <Link
@@ -79,7 +99,7 @@ export default async function AlunoNivelamentoPage() {
         Voltar para dashboard
       </Link>
 
-      <div className="relative overflow-hidden rounded-[2.5rem] bg-indigo-600 p-10 text-white shadow-2xl shadow-indigo-900/20">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-indigo-600 p-6 text-white shadow-2xl shadow-indigo-900/20 sm:p-8 lg:p-10">
         <div className="absolute -top-16 -right-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
@@ -89,7 +109,7 @@ export default async function AlunoNivelamentoPage() {
             </div>
             <h1 className="text-4xl font-black tracking-tighter md:text-5xl">Seu mapeamento de inglês</h1>
             <p className="max-w-2xl text-sm font-medium leading-relaxed text-indigo-100/80">
-              Aqui você acompanha o último teste realizado, seu nível CEFR atual e o detalhamento das respostas.
+              Aqui você acompanha seu nível CEFR atual, o histórico de testes e o detalhamento das respostas de cada avaliação.
             </p>
           </div>
 
@@ -134,9 +154,7 @@ export default async function AlunoNivelamentoPage() {
               <div className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5">
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Último teste</p>
                 <p className="mt-2 text-lg font-black tracking-tight text-slate-900">
-                  {latestResult
-                    ? new Date(latestResult.created_at).toLocaleDateString('pt-BR')
-                    : 'Ainda não realizado'}
+                  {latestResult ? new Date(latestResult.created_at).toLocaleDateString('pt-BR') : 'Ainda não realizado'}
                 </p>
               </div>
             </div>
@@ -174,13 +192,20 @@ export default async function AlunoNivelamentoPage() {
                     {profile?.placement_test_completed ? 'Teste concluído' : 'Teste pendente'}
                   </p>
                 </div>
-                <Badge variant={profile?.placement_test_completed ? 'success' : 'warning'} className="text-[9px] font-black uppercase tracking-widest">
+                <Badge
+                  variant={profile?.placement_test_completed ? 'success' : 'warning'}
+                  className="text-[9px] font-black uppercase tracking-widest"
+                >
                   {profile?.placement_test_completed ? 'Concluído' : 'Pendente'}
                 </Badge>
               </div>
             </div>
 
-            <div className={`rounded-3xl border px-5 py-5 ${eligibility.allowed ? 'border-emerald-100 bg-emerald-50/70' : 'border-amber-100 bg-amber-50/70'}`}>
+            <div
+              className={`rounded-3xl border px-5 py-5 ${
+                eligibility.allowed ? 'border-emerald-100 bg-emerald-50/70' : 'border-amber-100 bg-amber-50/70'
+              }`}
+            >
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Janela de novo teste</p>
               <p className="mt-2 text-lg font-black tracking-tight text-slate-900">{eligibility.title}</p>
               <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500">{eligibility.description}</p>
@@ -203,40 +228,28 @@ export default async function AlunoNivelamentoPage() {
       <Card className="glass-card overflow-hidden">
         <CardHeader className="border-b border-slate-100 pb-4">
           <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-            <Calendar className="h-4 w-4 text-blue-500" /> Histórico de testes
+            <Target className="h-4 w-4 text-indigo-500" /> Quando um novo teste pode acontecer
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-8 pt-6">
+        <CardContent className="pt-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-            {[
-              {
-                title: 'Primeiro teste',
-                body: 'Seu primeiro nivelamento pode ser feito diretamente no portal.',
-                tone: 'border-emerald-100 bg-emerald-50/70',
-              },
-              {
-                title: 'Novo contrato',
-                body: 'Quando um novo contrato começa, um novo teste pode ser liberado.',
-                tone: 'border-blue-100 bg-blue-50/70',
-              },
-              {
-                title: 'Fim de ciclo',
-                body: 'Virada de semestre e encerramento de contrato podem abrir uma nova avaliação.',
-                tone: 'border-indigo-100 bg-indigo-50/70',
-              },
-              {
-                title: 'Ad hoc',
-                body: 'Refação fora dessas janelas depende de aprovação do professor.',
-                tone: 'border-amber-100 bg-amber-50/70',
-              },
-            ].map((rule) => (
+            {eligibilityRules.map((rule) => (
               <div key={rule.title} className={`rounded-3xl border px-5 py-5 shadow-sm ${rule.tone}`}>
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{rule.title}</p>
                 <p className="mt-3 text-sm font-medium leading-relaxed text-slate-700">{rule.body}</p>
               </div>
             ))}
           </div>
+        </CardContent>
+      </Card>
 
+      <Card className="glass-card overflow-hidden">
+        <CardHeader className="border-b border-slate-100 pb-4">
+          <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+            <Calendar className="h-4 w-4 text-blue-500" /> Histórico de testes
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-8 pt-6">
           {!history || history.length === 0 ? (
             <div className="rounded-[2rem] border border-dashed border-slate-200 bg-slate-50 p-10 text-center">
               <p className="text-lg font-black tracking-tight text-slate-900">Nenhum teste realizado ainda</p>
@@ -259,88 +272,115 @@ export default async function AlunoNivelamentoPage() {
             </div>
           ) : (
             <div className="space-y-8">
-              {history.map((test: any) => (
-                <div key={test.id} className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="space-y-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">
-                        {new Date(test.created_at).toLocaleDateString('pt-BR', {
-                          day: '2-digit',
-                          month: 'long',
-                          year: 'numeric',
-                        })}
-                      </p>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <p className="text-2xl font-black tracking-tight text-slate-900">CEFR {test.cefr_level}</p>
-                        <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest">
-                          {test.score}/{test.total_questions} pontos
-                        </Badge>
+              {history.map((test: any) => {
+                const answers = (test.answers as PlacementAnswerEntry[]) || []
+                const correctAnswers = answers.filter((answer) => answer.correct).length
+                const wrongAnswers = answers.filter((answer) => answer.correct === false).length
+
+                return (
+                  <div key={test.id} className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div className="space-y-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                          {new Date(test.created_at).toLocaleDateString('pt-BR', {
+                            day: '2-digit',
+                            month: 'long',
+                            year: 'numeric',
+                          })}
+                        </p>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <p className="text-2xl font-black tracking-tight text-slate-900">CEFR {test.cefr_level}</p>
+                          <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest">
+                            {test.score}/{test.total_questions} pontos
+                          </Badge>
+                        </div>
                       </div>
+
+                      {eligibility.allowed ? (
+                        <Link
+                          href="/aluno/teste-nivel"
+                          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                        >
+                          Refazer teste
+                          <RotateCcw className="h-4 w-4" />
+                        </Link>
+                      ) : (
+                        <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          Aguardando liberação
+                        </div>
+                      )}
                     </div>
 
-                    {eligibility.allowed ? (
-                      <Link
-                        href="/aluno/teste-nivel"
-                        className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
-                      >
-                        Refazer teste
-                        <RotateCcw className="h-4 w-4" />
-                      </Link>
-                    ) : (
-                      <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        Aguardando liberação
-                      </div>
-                    )}
-                  </div>
+                    {answers.length > 0 && answers[0].question ? (
+                      <details className="mt-6 overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/80">
+                        <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
+                          <div className="space-y-2">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                              Detalhamento das respostas
+                            </p>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant="success" className="text-[9px] font-black uppercase tracking-widest">
+                                {correctAnswers} corretas
+                              </Badge>
+                              <Badge variant="destructive" className="text-[9px] font-black uppercase tracking-widest">
+                                {wrongAnswers} incorretas
+                              </Badge>
+                            </div>
+                          </div>
+                          <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                            Ver perguntas
+                            <ChevronDown className="h-4 w-4" />
+                          </span>
+                        </summary>
 
-                  {test.answers && test.answers.length > 0 && test.answers[0].question ? (
-                    <div className="mt-6 space-y-4">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
-                        Detalhamento das respostas
-                      </p>
-                      <div className="grid gap-3">
-                        {(test.answers as PlacementAnswerEntry[]).map((answer, index) => (
-                          <div
-                            key={`${test.id}-${index}`}
-                            className={`rounded-3xl border px-5 py-5 ${
-                              answer.correct ? 'border-emerald-100 bg-emerald-50/60' : 'border-rose-100 bg-rose-50/60'
-                            }`}
-                          >
-                            <div className="flex items-start gap-4">
-                              <div
-                                className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${
-                                  answer.correct ? 'bg-emerald-500' : 'bg-rose-500'
-                                }`}
-                              >
-                                {answer.correct ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                              </div>
-                              <div className="space-y-3">
-                                <p className="text-sm font-bold leading-relaxed text-slate-900">
-                                  {index + 1}. {answer.question || 'Questão sem texto disponível'}
-                                </p>
-                                <div className="space-y-1 rounded-2xl bg-white/70 p-4">
-                                  <p className={`text-xs font-semibold ${answer.correct ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                    <span className="mr-2 text-[9px] font-black uppercase tracking-widest opacity-70">Sua resposta:</span>
-                                    {typeof answer.selected === 'number' && answer.options
-                                      ? answer.options[answer.selected]
-                                      : 'Resposta não identificada'}
+                        <div className="grid gap-3 border-t border-slate-100 px-5 py-5">
+                          {answers.map((answer, index) => (
+                            <div
+                              key={`${test.id}-${index}`}
+                              className={`rounded-3xl border px-5 py-5 ${
+                                answer.correct ? 'border-emerald-100 bg-emerald-50/60' : 'border-rose-100 bg-rose-50/60'
+                              }`}
+                            >
+                              <div className="flex items-start gap-4">
+                                <div
+                                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${
+                                    answer.correct ? 'bg-emerald-500' : 'bg-rose-500'
+                                  }`}
+                                >
+                                  {answer.correct ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                                </div>
+                                <div className="space-y-3">
+                                  <p className="text-sm font-bold leading-relaxed text-slate-900">
+                                    {index + 1}. {answer.question || 'Questão sem texto disponível'}
                                   </p>
-                                  {!answer.correct && typeof answer.correctAnswer === 'number' && answer.options ? (
-                                    <p className="text-xs font-semibold text-emerald-700">
-                                      <span className="mr-2 text-[9px] font-black uppercase tracking-widest opacity-70">Correta:</span>
-                                      {answer.options[answer.correctAnswer]}
+                                  <div className="space-y-1 rounded-2xl bg-white/70 p-4">
+                                    <p className={`text-xs font-semibold ${answer.correct ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                      <span className="mr-2 text-[9px] font-black uppercase tracking-widest opacity-70">
+                                        Sua resposta:
+                                      </span>
+                                      {typeof answer.selected === 'number' && answer.options
+                                        ? answer.options[answer.selected]
+                                        : 'Resposta não identificada'}
                                     </p>
-                                  ) : null}
+                                    {!answer.correct && typeof answer.correctAnswer === 'number' && answer.options ? (
+                                      <p className="text-xs font-semibold text-emerald-700">
+                                        <span className="mr-2 text-[9px] font-black uppercase tracking-widest opacity-70">
+                                          Correta:
+                                        </span>
+                                        {answer.options[answer.correctAnswer]}
+                                      </p>
+                                    ) : null}
+                                  </div>
                                 </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              ))}
+                          ))}
+                        </div>
+                      </details>
+                    ) : null}
+                  </div>
+                )
+              })}
             </div>
           )}
         </CardContent>

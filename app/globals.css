@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f1f5f9; /* Slate 100 for better depth */
+  --background: #f1f5f9;
   --foreground: #0f172a;
   --primary: #1e3a8a;
   --accent: #2563eb;
   --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(30, 58, 138, 0.15); /* Blue-ish subtle border */
+  --glass-border: rgba(30, 58, 138, 0.15);
   --sidebar-bg: #1e3a8a;
 }
 
@@ -20,11 +20,16 @@
   --sidebar-bg: #0f172a;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background-image: 
+  -webkit-tap-highlight-color: transparent;
+  background-image:
     radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.05) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
@@ -37,7 +42,7 @@ body {
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-border);
-  box-shadow: 
+  box-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
     0 10px 30px -5px rgba(30, 58, 138, 0.1);
 }
@@ -47,7 +52,7 @@ body {
   backdrop-filter: blur(20px) saturate(160%);
   -webkit-backdrop-filter: blur(20px) saturate(160%);
   border: 1px solid var(--glass-border);
-  box-shadow: 
+  box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.05),
     0 20px 50px -10px rgba(30, 58, 138, 0.15);
   @apply rounded-3xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.01] hover:translate-y-[-4px];
@@ -57,7 +62,6 @@ body {
   @apply bg-white border-slate-200 backdrop-blur-md focus:bg-white transition-all duration-300;
 }
 
-/* Premium LMS Gradients */
 .lms-gradient {
   background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
 }
@@ -66,7 +70,6 @@ body {
   background: linear-gradient(135deg, rgba(30, 58, 138, 0.05) 0%, rgba(59, 130, 246, 0.05) 100%);
 }
 
-/* Animations */
 @keyframes slideUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -85,12 +88,10 @@ body {
   animation: fadeIn 0.4s ease-out forwards;
 }
 
-/* Layout Utilities */
 .sidebar-item-active {
   @apply bg-white/10 text-white shadow-lg;
 }
 
-/* Markdown Content Styles */
 .markdown-insights {
   @apply text-sm;
 }
@@ -128,7 +129,6 @@ body {
   @apply italic font-semibold text-slate-700 bg-slate-100 px-1 py-0.5 rounded-md text-xs;
 }
 
-/* Custom Scrollbar */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
@@ -139,6 +139,14 @@ body {
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
   @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+}
+
+.mobile-safe-bottom {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom));
+}
+
+.mobile-safe-top {
+  padding-top: calc(0.5rem + env(safe-area-inset-top));
 }
 
 @page {
@@ -181,5 +189,23 @@ body {
   a {
     color: inherit !important;
     text-decoration: none !important;
+  }
+}
+
+@media (hover: none) {
+  .glass-card {
+    transform: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  .glass-card,
+  .glass-panel {
+    backdrop-filter: blur(16px) saturate(150%);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
   }
 }
