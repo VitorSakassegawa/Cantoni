@@ -189,9 +189,9 @@ export function buildEnrollmentDeclaration(input: {
   }).format(new Date())
 
   return {
-    title: 'Declaração de Matrícula',
-    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de língua estrangeira conduzido por ${getTeacherLegalName(teacher)}, no período de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
-    complementary: `O contrato atualmente vinculado ao portal é o de nº ${contract.id}, em status ${contract.status}, com organização pedagógica registrada no ambiente digital da escola.`,
+    title: 'Declara\u00e7\u00e3o de Matr\u00edcula',
+    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de l\u00edngua estrangeira conduzido por ${getTeacherLegalName(teacher)}, no per\u00edodo de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
+    complementary: `O contrato atualmente vinculado ao portal \u00e9 o de n.\u00ba ${contract.id}, em status ${contract.status}, com organiza\u00e7\u00e3o pedag\u00f3gica registrada no ambiente digital da escola.`,
     issueDate,
   }
 }
