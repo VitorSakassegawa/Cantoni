@@ -209,13 +209,30 @@ export default async function AlunoNivelamentoPage() {
         <CardContent className="space-y-8 pt-6">
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {[
-              'Primeiro nivelamento direto no portal.',
-              'Início de um novo contrato.',
-              'Fechamento de semestre ou encerramento do contrato.',
-              'Refação ad hoc somente com liberação do professor.',
+              {
+                title: 'Primeiro teste',
+                body: 'Seu primeiro nivelamento pode ser feito diretamente no portal.',
+                tone: 'border-emerald-100 bg-emerald-50/70',
+              },
+              {
+                title: 'Novo contrato',
+                body: 'Quando um novo contrato começa, um novo teste pode ser liberado.',
+                tone: 'border-blue-100 bg-blue-50/70',
+              },
+              {
+                title: 'Fim de ciclo',
+                body: 'Virada de semestre e encerramento de contrato podem abrir uma nova avaliação.',
+                tone: 'border-indigo-100 bg-indigo-50/70',
+              },
+              {
+                title: 'Ad hoc',
+                body: 'Refação fora dessas janelas depende de aprovação do professor.',
+                tone: 'border-amber-100 bg-amber-50/70',
+              },
             ].map((rule) => (
-              <div key={rule} className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4 text-sm font-medium leading-relaxed text-slate-600">
-                {rule}
+              <div key={rule.title} className={`rounded-3xl border px-5 py-5 shadow-sm ${rule.tone}`}>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{rule.title}</p>
+                <p className="mt-3 text-sm font-medium leading-relaxed text-slate-700">{rule.body}</p>
               </div>
             ))}
           </div>

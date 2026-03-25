@@ -13,7 +13,6 @@ import Link from 'next/link'
 import {
   ArrowRight,
   BookOpen,
-  BrainCircuit,
   Calendar,
   CreditCard,
   FileText,
@@ -357,30 +356,6 @@ export default async function AlunoDashboard() {
               >
                 Ver calendário completo
               </Link>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card relative overflow-hidden group cursor-pointer">
-          <Link href="/aluno/flashcards" className="absolute inset-0 z-20" />
-          <div className="absolute top-0 right-0 p-8 opacity-5 transition-opacity group-hover:opacity-10">
-            <BrainCircuit className="h-24 w-24 text-blue-900" />
-          </div>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">
-              Seu banco de palavras
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black tracking-tighter text-slate-900">{flashcardsDue?.length || 0}</span>
-                <span className="text-sm font-bold uppercase tracking-tighter text-slate-400">palavras para revisar</span>
-              </div>
-              <div className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-indigo-600 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-600/20 transition-all group-hover:bg-indigo-700">
-                PRATICAR AGORA
-                <BrainCircuit className="h-4 w-4" />
-              </div>
             </div>
           </CardContent>
         </Card>
