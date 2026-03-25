@@ -8,7 +8,8 @@ export default function ServiceWorkerRegister() {
 
     const register = async () => {
       try {
-        await navigator.serviceWorker.register('/sw.js')
+        const registration = await navigator.serviceWorker.register('/sw.js')
+        await registration.update()
       } catch (error) {
         console.error('Failed to register service worker', error)
       }

@@ -15,7 +15,10 @@ function isIos() {
 
 function isStandalone() {
   if (typeof window === 'undefined') return false
-  return window.matchMedia('(display-mode: standalone)').matches || (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  return (
+    window.matchMedia('(display-mode: standalone)').matches ||
+    (window.navigator as Navigator & { standalone?: boolean }).standalone === true
+  )
 }
 
 export default function PwaInstallPrompt() {

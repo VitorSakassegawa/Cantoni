@@ -39,11 +39,11 @@ function normalizePath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
+export default function DesktopDashboardNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname()
 
   return (
-    <div className="mt-4 flex snap-x gap-3 overflow-x-auto pb-1">
+    <nav className="flex-1 space-y-2 px-4 py-4">
       {items.map((item) => {
         const Icon = iconMap[item.icon as keyof typeof iconMap] || LayoutDashboard
         const isActive = normalizePath(pathname, item.href)
@@ -53,17 +53,25 @@ export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={isActive ? 'page' : undefined}
-            className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-2xl border px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${
+            className={`group flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all ${
               isActive
-                ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/20'
-                : 'border-slate-200 bg-white text-slate-600'
+                ? 'bg-blue-600 text-white shadow-xl shadow-blue-500/20'
+                : 'text-blue-900/70 hover:bg-white/50 hover:text-blue-900'
             }`}
           >
-            <Icon className={`h-4 w-4 ${isActive ? 'text-white' : 'text-blue-600'}`} />
-            {item.label}
+            <div
+              className={`rounded-xl p-2 transition-colors ${
+                isActive
+                  ? 'bg-white/15 text-white'
+                  : 'bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white'
+              }`}
+            >
+              <Icon className="h-4 w-4" />
+            </div>
+            <span className="tracking-tight">{item.label}</span>
           </Link>
         )
       })}
-    </div>
+    </nav>
   )
 }

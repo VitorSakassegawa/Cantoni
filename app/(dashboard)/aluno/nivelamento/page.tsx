@@ -84,7 +84,7 @@ export default async function AlunoNivelamentoPage() {
     },
     {
       title: 'Ad hoc',
-      body: 'Refação fora dessas janelas depende de aprovação do professor.',
+      body: 'Refazer fora dessas janelas depende de aprovação do professor.',
       tone: 'border-amber-100 bg-amber-50/70',
     },
   ]
@@ -165,6 +165,7 @@ export default async function AlunoNivelamentoPage() {
                 {CEFR_LEVELS.map((level, idx) => {
                   const isCompleted = idx < currentCefrIdx
                   const isCurrent = idx === currentCefrIdx
+
                   return (
                     <div key={level} className="flex flex-col items-center gap-2">
                       <div
@@ -328,7 +329,7 @@ export default async function AlunoNivelamentoPage() {
                             </div>
                           </div>
                           <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
-                            Ver perguntas
+                            Mostrar ou ocultar perguntas
                             <ChevronDown className="h-4 w-4" />
                           </span>
                         </summary>

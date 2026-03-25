@@ -22,6 +22,7 @@
 
 html {
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
 }
 
 body {
@@ -29,12 +30,21 @@ body {
   color: var(--foreground);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
   -webkit-tap-highlight-color: transparent;
+  text-rendering: optimizeLegibility;
   background-image:
     radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
     radial-gradient(at 100% 0%, rgba(30, 58, 138, 0.05) 0px, transparent 50%),
     radial-gradient(at 100% 100%, rgba(59, 130, 246, 0.08) 0px, transparent 50%),
     radial-gradient(at 0% 100%, rgba(30, 58, 138, 0.05) 0px, transparent 50%);
   background-attachment: fixed;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  touch-action: manipulation;
 }
 
 .glass-panel {
@@ -55,11 +65,11 @@ body {
   box-shadow:
     0 10px 15px -3px rgba(0, 0, 0, 0.05),
     0 20px 50px -10px rgba(30, 58, 138, 0.15);
-  @apply rounded-3xl transition-all duration-500 hover:shadow-2xl hover:scale-[1.01] hover:translate-y-[-4px];
+  @apply rounded-3xl transition-all duration-500 hover:translate-y-[-4px] hover:scale-[1.01] hover:shadow-2xl;
 }
 
 .glass-input {
-  @apply bg-white border-slate-200 backdrop-blur-md focus:bg-white transition-all duration-300;
+  @apply border-slate-200 bg-white backdrop-blur-md transition-all duration-300 focus:bg-white;
 }
 
 .lms-gradient {
@@ -71,13 +81,25 @@ body {
 }
 
 @keyframes slideUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .animate-slide-up {
@@ -97,11 +119,11 @@ body {
 }
 
 .markdown-insights h3 {
-  @apply text-xs font-black text-blue-800 uppercase tracking-widest mt-6 mb-3 border-b border-blue-100/50 pb-2 flex items-center gap-2;
+  @apply mt-6 mb-3 flex items-center gap-2 border-b border-blue-100/50 pb-2 text-xs font-black uppercase tracking-widest text-blue-800;
 }
 
 .markdown-insights p {
-  @apply mb-4 leading-relaxed text-slate-600 font-medium;
+  @apply mb-4 leading-relaxed font-medium text-slate-600;
 }
 
 .markdown-insights p:last-child {
@@ -113,7 +135,7 @@ body {
 }
 
 .markdown-insights ul {
-  @apply space-y-2 my-4;
+  @apply my-4 space-y-2;
 }
 
 .markdown-insights li {
@@ -122,11 +144,11 @@ body {
 
 .markdown-insights li::before {
   content: "✦";
-  @apply absolute left-0 top-0.5 text-[10px] text-blue-400 font-black;
+  @apply absolute left-0 top-0.5 text-[10px] font-black text-blue-400;
 }
 
 .markdown-insights em {
-  @apply italic font-semibold text-slate-700 bg-slate-100 px-1 py-0.5 rounded-md text-xs;
+  @apply rounded-md bg-slate-100 px-1 py-0.5 text-xs font-semibold italic text-slate-700;
 }
 
 .custom-scrollbar::-webkit-scrollbar {
@@ -138,7 +160,7 @@ body {
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-slate-300 transition-colors;
+  @apply rounded-full bg-slate-200 transition-colors hover:bg-slate-300;
 }
 
 .mobile-safe-bottom {
@@ -155,7 +177,8 @@ body {
 }
 
 @media print {
-  html, body {
+  html,
+  body {
     background: white !important;
     color: #0f172a !important;
     -webkit-print-color-adjust: exact;
@@ -201,6 +224,10 @@ body {
 @media (max-width: 768px) {
   body {
     background-attachment: scroll;
+  }
+
+  .glass-card {
+    @apply rounded-[1.75rem];
   }
 
   .glass-card,

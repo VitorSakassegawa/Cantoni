@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import {
   LogOut,
   BookOpen,
@@ -15,7 +14,9 @@ import {
   Target,
 } from 'lucide-react'
 import { Logo } from '@/components/dashboard/Logo'
+import DesktopDashboardNav from '@/components/dashboard/DesktopDashboardNav'
 import MobileDashboardNav from '@/components/dashboard/MobileDashboardNav'
+import OfflineStatusBar from '@/components/pwa/OfflineStatusBar'
 import PwaInstallPrompt from '@/components/pwa/PwaInstallPrompt'
 
 type NavItem = {
@@ -111,23 +112,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           </div>
 
-          <nav className="flex-1 space-y-2 px-4 py-4">
-            {navItems.map((item) => {
-              const Icon = item.icon
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="group flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-bold text-blue-900/70 transition-all hover:bg-white/50 hover:text-blue-900"
-                >
-                  <div className="rounded-xl bg-blue-50 p-2 text-blue-600 transition-colors group-hover:bg-blue-600 group-hover:text-white">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  {item.label}
-                </Link>
-              )
-            })}
-          </nav>
+          <DesktopDashboardNav items={navItems.map(({ href, label, iconKey }) => ({ href, label, icon: iconKey }))} />
 
           <div className="mt-auto border-t border-white/20 bg-white/10 p-6">
             <div className="mb-6 flex items-center gap-3 rounded-2xl border border-white/40 bg-white/30 p-2">
@@ -157,6 +142,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
       <main className="flex-1 overflow-auto">
         <div className="mobile-safe-bottom px-4 py-4 sm:px-6 lg:p-8">
+          <OfflineStatusBar />
           <PwaInstallPrompt />
           {children}
         </div>
