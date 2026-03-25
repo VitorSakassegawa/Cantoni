@@ -18,6 +18,7 @@ import { BrainCircuit, Sparkles, Trash2 } from 'lucide-react'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import IssueDocumentButton from '@/components/documents/IssueDocumentButton'
 import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
+import ExternalSignatureStatusBadge from '@/components/documents/ExternalSignatureStatusBadge'
 import { buildAttentionCandidate, buildRenewalCandidate } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 
@@ -120,7 +121,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
   const { data: documentIssuances } = contrato
     ? await supabase
         .from('document_issuances')
-        .select('id, kind, version, status, created_at')
+        .select('id, kind, version, status, created_at, external_signature_status')
         .eq('contract_id', contrato.id)
         .order('version', { ascending: false })
     : { data: [] as any[] }
@@ -216,6 +217,19 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
             <p className="mt-1 text-sm font-medium text-blue-900/80">
               Se dados do aluno ou do professor forem atualizados, use reemitir para gerar uma nova versão com as informações atuais do portal.
             </p>
+          </div>
+        )}
+        {contrato && latestContractIssuance && (
+          <div className="flex flex-wrap gap-2">
+            <ExternalSignatureStatusBadge status={latestContractIssuance.external_signature_status} />
+            <Badge variant="outline" className="border-blue-200 bg-white text-[9px] font-black uppercase text-blue-700">
+              Contrato v{latestContractIssuance.version} - {latestContractIssuance.status}
+            </Badge>
+            {latestDeclarationIssuance ? (
+              <Badge variant="outline" className="border-blue-200 bg-white text-[9px] font-black uppercase text-blue-700">
+                Declaração v{latestDeclarationIssuance.version} - {latestDeclarationIssuance.status}
+              </Badge>
+            ) : null}
           </div>
         )}
         {contrato && <ExternalSignatureGuide audience="professor" compact />}
@@ -437,7 +451,7 @@ export default async function AlunoDetailPage({ params }: { params: Promise<{ id
                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Saldo anterior</th>
                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Novo saldo</th>
                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Parcelamento</th>
-                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">1Âº vencimento</th>
+                      <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">1º vencimento</th>
                       <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Criado em</th>
                     </tr>
                   </thead>

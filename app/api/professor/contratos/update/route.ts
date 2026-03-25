@@ -8,21 +8,15 @@ export async function POST(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
+
   if (!user) {
-    return NextResponse.json({ error: 'NÃ£o autenticado' }, { status: 401 })
+    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
 
   if (profile?.role !== 'professor') {
-    return NextResponse.json(
-      { error: 'Apenas professores podem editar contratos' },
-      { status: 403 }
-    )
+    return NextResponse.json({ error: 'Apenas professores podem editar contratos' }, { status: 403 })
   }
 
   const {
@@ -47,13 +41,13 @@ export async function POST(request: NextRequest) {
   } = await request.json()
 
   if (!id) {
-    return NextResponse.json({ error: 'ID do contrato Ã© obrigatÃ³rio' }, { status: 400 })
+    return NextResponse.json({ error: 'ID do contrato é obrigatório' }, { status: 400 })
   }
 
   const vFloat = Number.parseFloat(valor)
   const dvInt = Number.parseInt(dia_vencimento, 10)
   if (Number.isNaN(vFloat) || Number.isNaN(dvInt)) {
-    return NextResponse.json({ error: 'Dados numÃ©ricos invÃ¡lidos' }, { status: 400 })
+    return NextResponse.json({ error: 'Dados numéricos inválidos' }, { status: 400 })
   }
 
   const { data: existingContract, error: existingContractError } = await supabase
@@ -63,7 +57,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (existingContractError || !existingContract) {
-    return NextResponse.json({ error: 'Contrato nÃ£o encontrado' }, { status: 404 })
+    return NextResponse.json({ error: 'Contrato não encontrado' }, { status: 404 })
   }
 
   const { count: paidPaymentsCount } = await supabase
@@ -83,7 +77,8 @@ export async function POST(request: NextRequest) {
   if (hasPaidPayments && isFinancialChange) {
     return NextResponse.json(
       {
-        error: 'Este contrato jÃ¡ possui parcelas pagas. AlteraÃ§Ãµes financeiras exigem fluxo de renegociaÃ§Ã£o/aditivo.',
+        error:
+          'Este contrato já possui parcelas pagas. Alterações financeiras exigem fluxo de renegociação/aditivo.',
       },
       { status: 409 }
     )
@@ -126,9 +121,7 @@ export async function POST(request: NextRequest) {
       .filter((pagamento: any) => pagamento.status === 'pago')
       .reduce((acc: number, pagamento: any) => acc + Number(pagamento.valor || 0), 0)
     const remainingAmount = Math.max(0, vFloat - paidAmount)
-    const valorParcela = unpaidPayments.length > 0
-      ? Number((remainingAmount / unpaidPayments.length).toFixed(2))
-      : 0
+    const valorParcela = unpaidPayments.length > 0 ? Number((remainingAmount / unpaidPayments.length).toFixed(2)) : 0
 
     await mapWithConcurrency(unpaidPayments, 5, async (pagamento: any) => {
       const parcelaNumero = Number(pagamento.parcela_num)

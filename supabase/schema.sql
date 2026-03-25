@@ -241,6 +241,17 @@ create table if not exists document_issuances (
   accepted_version integer,
   acceptance_ip text,
   acceptance_user_agent text,
+  external_signature_status text not null default 'internal_only' check (
+    external_signature_status in (
+      'internal_only',
+      'pending_external_signature',
+      'sent_to_provider',
+      'signed_externally'
+    )
+  ),
+  external_signature_notes text,
+  external_signature_sent_at timestamptz,
+  external_signed_at timestamptz,
   accepted_at timestamptz,
   created_at timestamptz not null default now(),
   unique (contract_id, kind, version)

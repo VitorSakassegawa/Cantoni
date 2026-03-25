@@ -101,7 +101,9 @@ export function buildAttentionCandidate(
   const reasons: string[] = []
   let score = 0
 
-  const overduePayments = contract.pagamentos?.filter((payment: any) => getEffectivePaymentStatus(payment) === 'atrasado').length || 0
+  const overduePayments =
+    contract.pagamentos?.filter((payment: any) => getEffectivePaymentStatus(payment) === 'atrasado')
+      .length || 0
   if (overduePayments > 0) {
     reasons.push(`${overduePayments} pagamento(s) em atraso`)
     score += 3
@@ -127,7 +129,10 @@ export function buildAttentionCandidate(
   const lastActivityDate = contract.profiles?.last_activity_date
   if (lastActivityDate) {
     const parsedActivity = parseISO(`${lastActivityDate}T00:00:00`)
-    if (!Number.isNaN(parsedActivity.getTime()) && isBefore(parsedActivity, new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000))) {
+    if (
+      !Number.isNaN(parsedActivity.getTime()) &&
+      isBefore(parsedActivity, new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000))
+    ) {
       reasons.push('sem atividade recente')
       score += 1
     }

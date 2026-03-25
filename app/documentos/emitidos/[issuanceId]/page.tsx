@@ -1,11 +1,19 @@
 export const dynamic = 'force-dynamic'
 
-import DocumentShell from '@/components/documents/DocumentShell'
 import DocumentAcceptanceForm from '@/components/documents/DocumentAcceptanceForm'
 import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
+import ExternalSignatureStatusBadge from '@/components/documents/ExternalSignatureStatusBadge'
+import ExternalSignatureStatusForm from '@/components/documents/ExternalSignatureStatusForm'
+import DocumentShell from '@/components/documents/DocumentShell'
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 import { formatCurrency, formatDateOnly, formatDateTime } from '@/lib/utils'
+import { redirect } from 'next/navigation'
+
+type SnapshotSection = {
+  title: string
+  body?: string
+  items?: string[]
+}
 
 function getStatusLabel(status: string) {
   switch (status) {
@@ -44,7 +52,11 @@ export default async function IssuedDocumentPage({
   if (!user) redirect('/login')
 
   const { data: viewer } = await supabase.from('profiles').select('*').eq('id', user.id).single()
-  const { data: issuance } = await supabase.from('document_issuances').select('*').eq('id', parsedIssuanceId).single()
+  const { data: issuance } = await supabase
+    .from('document_issuances')
+    .select('*')
+    .eq('id', parsedIssuanceId)
+    .single()
 
   if (!issuance) {
     redirect('/aluno/documentos')
@@ -56,6 +68,7 @@ export default async function IssuedDocumentPage({
   }
 
   const payload = issuance.payload || {}
+  const sections = (payload.sections || []) as SnapshotSection[]
   const backHref = isProfessor ? '/professor' : '/aluno/documentos'
   const issuanceCode = `CES-${String(issuance.id).padStart(6, '0')}-V${issuance.version}`
   const statusLabel = getStatusLabel(issuance.status)
@@ -76,7 +89,9 @@ export default async function IssuedDocumentPage({
                 alt="Cantoni English School"
                 className="h-16 w-auto object-contain"
               />
-              <div className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}>
+              <div
+                className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+              >
                 {statusLabel}
               </div>
             </div>
@@ -87,50 +102,72 @@ export default async function IssuedDocumentPage({
               {payload.title || issuance.title}
             </h2>
             <p className="text-sm leading-7 text-slate-600">
-              Documento emitido em {formatDateTime(issuance.created_at)}. Esta versão permanece congelada mesmo que o cadastro seja alterado depois.
+              Documento emitido em {formatDateTime(issuance.created_at)}. Esta versão permanece
+              congelada mesmo que o cadastro seja alterado depois.
             </p>
           </header>
 
           <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
-            <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissão</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Comprovante de emissão
+                </p>
                 <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
               </div>
-              <div className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}>
-                {statusLabel}
+              <div className="flex flex-wrap items-center gap-2">
+                <div
+                  className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+                >
+                  {statusLabel}
+                </div>
+                <ExternalSignatureStatusBadge status={issuance.external_signature_status} />
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versão</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Versão
+                </p>
                 <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Status
+                </p>
                 <p className="mt-2 text-sm font-bold">{statusLabel}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Número de emissão</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Número de emissão
+                </p>
                 <p className="mt-2 text-sm font-bold">{issuanceCode}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash de integridade</p>
-                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'não disponível'}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Hash de integridade
+                </p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">
+                  {issuance.content_hash || 'não disponível'}
+                </p>
               </div>
             </div>
           </section>
 
           <section className="document-section grid gap-6 md:grid-cols-2">
             <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Contratante
+              </p>
               <p className="mt-3 text-lg font-black">{payload.student?.fullName}</p>
               <p className="mt-2 text-sm text-slate-600">CPF: {payload.student?.cpf}</p>
               <p className="text-sm text-slate-600">E-mail: {payload.student?.email}</p>
               <p className="text-sm text-slate-600">Telefone: {payload.student?.phone}</p>
             </div>
             <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Contratado
+              </p>
               <p className="mt-3 text-lg font-black">{payload.teacher?.fullName}</p>
               <p className="mt-2 text-sm text-slate-600">CPF: {payload.teacher?.cpf}</p>
               <p className="text-sm text-slate-600">E-mail: {payload.teacher?.email}</p>
@@ -140,48 +177,67 @@ export default async function IssuedDocumentPage({
 
           <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="mb-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quadro-resumo do contrato</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                Quadro-resumo do contrato
+              </p>
               <p className="mt-2 text-sm text-slate-600">
-                Esta versão emitida consolida os dados financeiros e acadêmicos que estavam vigentes no momento da emissão.
+                Esta versão emitida consolida os dados financeiros e acadêmicos que estavam
+                vigentes no momento da emissão.
               </p>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Período</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Período
+                </p>
                 <p className="mt-2 text-sm font-bold">
-                  {formatDateOnly(payload.summary?.startDate)} – {formatDateOnly(payload.summary?.endDate)}
+                  {formatDateOnly(payload.summary?.startDate)} -{' '}
+                  {formatDateOnly(payload.summary?.endDate)}
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aulas</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Aulas
+                </p>
                 <p className="mt-2 text-sm font-bold">{payload.summary?.lessons} contratadas</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valor global</p>
-                <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.summary?.totalValue || 0))}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Valor global
+                </p>
+                <p className="mt-2 text-sm font-bold">
+                  {formatCurrency(Number(payload.summary?.totalValue || 0))}
+                </p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forma</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Forma
+                </p>
                 <p className="mt-2 text-sm font-bold">
-                  {payload.summary?.paymentMethod || 'a combinar'} ({payload.summary?.installmentCount || 1} parcela{(payload.summary?.installmentCount || 1) > 1 ? 's' : ''})
+                  {payload.summary?.paymentMethod || 'a combinar'} (
+                  {payload.summary?.installmentCount || 1} parcela
+                  {(payload.summary?.installmentCount || 1) > 1 ? 's' : ''})
                 </p>
               </div>
             </div>
           </section>
 
           <section className="document-section space-y-8">
-            {(payload.sections || []).map((section: any) => (
+            {sections.map((section) => (
               <div key={section.title} className="document-card space-y-3">
                 <h3 className="text-lg font-black tracking-tight">{section.title}</h3>
-                {section.body?.split('\n').map((paragraph: string, index: number) => (
+                {section.body?.split('\n').map((paragraph, index) => (
                   <p key={`${section.title}-body-${index}`} className="text-sm leading-7 text-slate-700">
                     {paragraph}
                   </p>
                 ))}
                 {section.items?.length ? (
                   <div className="space-y-3 pt-1">
-                    {section.items.map((item: string) => (
-                      <p key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
+                    {section.items.map((item) => (
+                      <p
+                        key={item}
+                        className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700"
+                      >
                         {item}
                       </p>
                     ))}
@@ -191,54 +247,96 @@ export default async function IssuedDocumentPage({
             ))}
           </section>
 
-          {payload.addenda?.length > 0 && (
+          {payload.addenda?.length > 0 ? (
             <section className="document-section space-y-4 border-t border-slate-200 pt-8">
-              <h3 className="text-lg font-black tracking-tight">Historico de aditivos considerados</h3>
+              <h3 className="text-lg font-black tracking-tight">
+                Histórico de aditivos considerados
+              </h3>
               <div className="space-y-3">
-              {payload.addenda.map((entry: any) => (
-                <div key={entry.id} className="document-card rounded-[1.25rem] border border-slate-200 p-4">
-                  <p className="text-sm font-black text-slate-900">
-                    Aditivo #{entry.id} – novo saldo {formatCurrency(Number(entry.newOpenValue || 0))}
-                  </p>
-                  <p className="mt-2 text-sm text-slate-600">
-                    Reorganização de {entry.previousOpenInstallments}x para {entry.newOpenInstallments}x, com primeira parcela em {formatDateOnly(entry.firstDueDate)}.
-                  </p>
-                </div>
-              ))}
-            </div>
-          </section>
-          )}
+                {payload.addenda.map((entry: any) => (
+                  <div
+                    key={entry.id}
+                    className="document-card rounded-[1.25rem] border border-slate-200 p-4"
+                  >
+                    <p className="text-sm font-black text-slate-900">
+                      Aditivo #{entry.id} - novo saldo{' '}
+                      {formatCurrency(Number(entry.newOpenValue || 0))}
+                    </p>
+                    <p className="mt-2 text-sm text-slate-600">
+                      Reorganização de {entry.previousOpenInstallments}x para{' '}
+                      {entry.newOpenInstallments}x, com primeira parcela em{' '}
+                      {formatDateOnly(entry.firstDueDate)}.
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ) : null}
 
-          {issuance.requires_acceptance && issuance.status !== 'accepted' && !isProfessor && (
+          {isProfessor ? (
+            <ExternalSignatureStatusForm
+              issuanceId={issuance.id}
+              currentStatus={issuance.external_signature_status}
+              currentNotes={issuance.external_signature_notes}
+            />
+          ) : null}
+
+          {issuance.external_signature_notes ? (
+            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 print:hidden">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Observações da assinatura externa
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                {issuance.external_signature_notes}
+              </p>
+            </div>
+          ) : null}
+
+          {issuance.requires_acceptance && issuance.status !== 'accepted' && !isProfessor ? (
             <DocumentAcceptanceForm
               issuanceId={issuance.id}
               defaultName={viewer?.full_name || ''}
               terms={payload.acceptanceTerms || []}
             />
-          )}
+          ) : null}
 
-          {issuance.status === 'accepted' && (
+          {issuance.status === 'accepted' ? (
             <div className="document-card rounded-[1.5rem] border border-emerald-100 bg-emerald-50 p-6 print:hidden">
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Aceite registrado</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                Aceite registrado
+              </p>
               <p className="mt-2 text-sm font-medium text-emerald-900/80">
-                Aceito por {issuance.accepted_name || 'aluno'} em {formatDateTime(issuance.accepted_at)}.
+                Aceito por {issuance.accepted_name || 'aluno'} em{' '}
+                {formatDateTime(issuance.accepted_at)}.
               </p>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Versão aceita</p>
-                  <p className="mt-1 text-sm font-bold text-emerald-900">v{issuance.accepted_version || issuance.version}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                    Versão aceita
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-emerald-900">
+                    v{issuance.accepted_version || issuance.version}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">IP</p>
-                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_ip || 'não informado'}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                    IP
+                  </p>
+                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">
+                    {issuance.acceptance_ip || 'não informado'}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">User-Agent</p>
-                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">{issuance.acceptance_user_agent || 'não informado'}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                    User-Agent
+                  </p>
+                  <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">
+                    {issuance.acceptance_user_agent || 'não informado'}
+                  </p>
                 </div>
               </div>
             </div>
-          )}
+          ) : null}
 
           <div className="print:hidden">
             <ExternalSignatureGuide audience={isProfessor ? 'professor' : 'student'} compact />
@@ -246,11 +344,14 @@ export default async function IssuedDocumentPage({
 
           <footer className="document-section space-y-6 border-t border-slate-200 pt-8">
             <p className="text-sm text-slate-600">
-              {payload.teacher?.city || 'Guarulhos/SP'}, _____ de __________________ de {new Date(issuance.created_at).getFullYear()}.
+              {payload.teacher?.city || 'Guarulhos/SP'}, _____ de __________________ de{' '}
+              {new Date(issuance.created_at).getFullYear()}.
             </p>
             <div className="document-signature grid gap-8 md:grid-cols-2">
               <div className="space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Contratante
+                </p>
                 <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
                   {payload.student?.fullName || 'Aluno'}
                 </p>
@@ -259,7 +360,9 @@ export default async function IssuedDocumentPage({
                 </p>
               </div>
               <div className="space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Contratado
+                </p>
                 <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
                   {payload.teacher?.fullName || 'Professor responsável'}
                 </p>
@@ -280,36 +383,57 @@ export default async function IssuedDocumentPage({
                 className="h-16 w-auto object-contain"
               />
             </div>
-            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Cantoni English School</p>
-            <h2 className="text-3xl font-black tracking-tight">{payload.title || issuance.title}</h2>
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
+              Cantoni English School
+            </p>
+            <h2 className="text-3xl font-black tracking-tight">
+              {payload.title || issuance.title}
+            </h2>
           </header>
 
           <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
-            <div className="mb-5 flex items-center justify-between gap-4">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante de emissão</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Comprovante de emissão
+                </p>
                 <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
               </div>
-              <div className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}>
-                {statusLabel}
+              <div className="flex flex-wrap items-center gap-2">
+                <div
+                  className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+                >
+                  {statusLabel}
+                </div>
+                <ExternalSignatureStatusBadge status={issuance.external_signature_status} />
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Versão</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Versão
+                </p>
                 <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Status
+                </p>
                 <p className="mt-2 text-sm font-bold">{statusLabel}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Número de emissão</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Número de emissão
+                </p>
                 <p className="mt-2 text-sm font-bold">{issuanceCode}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash de integridade</p>
-                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'não disponível'}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Hash de integridade
+                </p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">
+                  {issuance.content_hash || 'não disponível'}
+                </p>
               </div>
             </div>
           </section>
@@ -319,11 +443,30 @@ export default async function IssuedDocumentPage({
             <p className="text-base leading-8 text-slate-600">{payload.complementary}</p>
           </section>
           <section className="rounded-[1.5rem] bg-slate-50 p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emitente</p>
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              Emitente
+            </p>
             <p className="mt-2 text-lg font-black">{payload.teacher?.fullName}</p>
             <p className="text-sm text-slate-600">CPF: {payload.teacher?.cpf}</p>
             <p className="text-sm text-slate-600">E-mail: {payload.teacher?.email}</p>
           </section>
+          {isProfessor ? (
+            <ExternalSignatureStatusForm
+              issuanceId={issuance.id}
+              currentStatus={issuance.external_signature_status}
+              currentNotes={issuance.external_signature_notes}
+            />
+          ) : null}
+          {issuance.external_signature_notes ? (
+            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 print:hidden">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+                Observações da assinatura externa
+              </p>
+              <p className="mt-2 text-sm leading-6 text-slate-700">
+                {issuance.external_signature_notes}
+              </p>
+            </div>
+          ) : null}
           <footer className="pt-10 text-right">
             <p className="text-sm text-slate-600">
               {payload.teacher?.city || 'Guarulhos/SP'}, {payload.issueDate}
