@@ -90,7 +90,7 @@ export default async function AlunoNivelamentoPage() {
   ]
 
   return (
-    <div className="mx-auto max-w-7xl space-y-10 animate-fade-in pb-16">
+    <div className="mx-auto max-w-7xl animate-fade-in space-y-10 pb-16">
       <Link
         href="/aluno"
         className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"

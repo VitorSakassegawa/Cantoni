@@ -1,4 +1,4 @@
-const VERSION = 'v3'
+const VERSION = 'v4'
 const STATIC_CACHE = `cantoni-static-${VERSION}`
 const PAGE_CACHE = `cantoni-pages-${VERSION}`
 const ASSET_CACHE = `cantoni-assets-${VERSION}`
@@ -10,12 +10,7 @@ function isSameOrigin(url) {
 }
 
 function isCacheablePage(pathname) {
-  return (
-    pathname.startsWith('/aluno') ||
-    pathname.startsWith('/professor') ||
-    pathname.startsWith('/documentos') ||
-    pathname === '/'
-  )
+  return pathname === '/' || pathname === '/offline'
 }
 
 self.addEventListener('install', (event) => {

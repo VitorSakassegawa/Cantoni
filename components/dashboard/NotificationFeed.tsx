@@ -11,18 +11,21 @@ function severityConfig(severity: FeedItem['severity']) {
         icon: TriangleAlert,
         badgeVariant: 'warning' as const,
         iconClass: 'text-amber-600',
+        label: 'Atenção',
       }
     case 'success':
       return {
         icon: CheckCircle2,
         badgeVariant: 'success' as const,
         iconClass: 'text-emerald-600',
+        label: 'Concluído',
       }
     default:
       return {
         icon: Info,
         badgeVariant: 'secondary' as const,
         iconClass: 'text-blue-600',
+        label: 'Info',
       }
   }
 }
@@ -33,16 +36,12 @@ interface NotificationFeedProps {
   emptyMessage: string
 }
 
-export default function NotificationFeed({
-  title,
-  items,
-  emptyMessage,
-}: NotificationFeedProps) {
+export default function NotificationFeed({ title, items, emptyMessage }: NotificationFeedProps) {
   return (
     <Card className="glass-card overflow-hidden">
-      <CardHeader className="pb-4 border-b border-slate-100">
-        <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
-          <Bell className="w-4 h-4 text-blue-500" /> {title}
+      <CardHeader className="border-b border-slate-100 pb-4">
+        <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+          <Bell className="h-4 w-4 text-blue-500" /> {title}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
@@ -55,21 +54,21 @@ export default function NotificationFeed({
               const Icon = config.icon
 
               return (
-                <div key={item.id} className="p-5 flex items-start justify-between gap-4">
-                  <div className="flex items-start gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center shrink-0">
-                      <Icon className={`w-4 h-4 ${config.iconClass}`} />
+                <div key={item.id} className="flex items-start justify-between gap-4 p-5">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-50">
+                      <Icon className={`h-4 w-4 ${config.iconClass}`} />
                     </div>
                     <div className="min-w-0 space-y-2">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[11px] font-black text-slate-900 tracking-tight">{item.title}</p>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-[11px] font-black tracking-tight text-slate-900">{item.title}</p>
                         <Badge variant={config.badgeVariant} className="text-[8px] font-black uppercase tracking-widest">
-                          {item.severity}
+                          {config.label}
                         </Badge>
                       </div>
-                      <p className="text-[10px] font-bold text-slate-500 leading-relaxed">{item.description}</p>
+                      <p className="text-[10px] font-bold leading-relaxed text-slate-500">{item.description}</p>
                       {item.meta ? (
-                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">{item.meta}</p>
+                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">{item.meta}</p>
                       ) : null}
                     </div>
                   </div>
@@ -77,10 +76,10 @@ export default function NotificationFeed({
                   {item.href ? (
                     <Link
                       href={item.href}
-                      className="shrink-0 inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-800 transition-colors"
+                      className="inline-flex shrink-0 items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-600 transition-colors hover:text-blue-800"
                     >
                       {item.actionLabel || 'Abrir'}
-                      <ChevronRight className="w-3 h-3" />
+                      <ChevronRight className="h-3 w-3" />
                     </Link>
                   ) : null}
                 </div>
