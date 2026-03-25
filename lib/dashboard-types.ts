@@ -48,6 +48,7 @@ export type TimelineAula = Aula & {
     profiles?: Pick<Profile, 'full_name'> | null
   } | null
   contratos?: {
+    aluno_id?: string
     tipo_contrato?: string | null
     profiles?: Pick<Profile, 'full_name'> | null
   } | null
@@ -57,8 +58,63 @@ export type TimelineAula = Aula & {
   motivo_remarcacao?: string | null
   ai_summary_pt?: string | null
   ai_summary_en?: string | null
-  homework_type?: string | null
+  homework_type?: 'regular' | 'esl_brains' | 'evolve' | null
   homework_link?: string | null
   homework_image_url?: string | null
+  homework_due_date?: string | null
+  class_notes?: string | null
+  vocabulary_json?: VocabularyEntry[] | null
   remarkBlockReason?: string | null
+}
+
+export type VocabularyEntry = {
+  word: string
+  translation: string
+  example?: string
+}
+
+export type LessonAnalysisResult = {
+  summary_pt: string
+  summary_en: string
+  homework?: string
+  due_date?: string
+  vocabulary: VocabularyEntry[]
+}
+
+export type PlacementQuestion = {
+  id: number
+  question: string
+  options: string[]
+  correctAnswer: number
+}
+
+export type PlacementModule = 'grammar' | 'reading' | 'listening'
+export type PlacementLevel = 'A1' | 'A2' | 'B1' | 'B2' | 'C1'
+
+export type PlacementQuestionSet = {
+  module: PlacementModule
+  text: string | null
+  questions: PlacementQuestion[]
+  error?: string
+}
+
+export type PlacementAnswer = PlacementQuestion & {
+  selected: number
+  correct: boolean
+}
+
+export type PlacementEvaluationResult = {
+  suggestedLevel: PlacementLevel
+  suggestedNivel: string
+  score: number
+  total: number
+  confirmed: boolean
+  insights: string
+}
+
+export type PlacementResultRecord = {
+  id: string
+  created_at: string
+  cefr_level: string
+  insights: string | null
 }

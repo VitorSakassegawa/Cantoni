@@ -14,6 +14,60 @@ import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 import { maskCurrency } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
 
+type ContractKind = 'semestral' | 'ad-hoc'
+type PaymentMethod = 'pix' | 'cartao' | 'dinheiro'
+
+type PlacementSummary = {
+  cefr_level: string
+  insights: string | null
+  created_at: string
+}
+
+type ContractInitialData = {
+  id: number
+  tipo_contrato?: ContractKind
+  plano_id?: number
+  data_inicio?: string
+  data_fim?: string
+  horario?: string
+  dias_da_semana?: number[]
+  valor?: number
+  aulas_totais?: number
+  desconto_valor?: number
+  desconto_percentual?: number
+  livro_atual?: string
+  nivel_atual?: string
+  dia_vencimento?: number
+  diaVencimento?: number
+  forma_pagamento?: PaymentMethod
+  num_parcelas?: number
+  status?: string
+  has_paid_payments?: boolean
+}
+
+type ContractPayload = {
+  alunoId: string
+  planoId: number
+  dataInicio: string
+  dataFim: string
+  semestre: 'jan-jun' | 'jul-dez'
+  ano: number
+  dia_vencimento: number
+  forma_pagamento: PaymentMethod
+  tipoContrato: ContractKind
+  descontoValor: number
+  descontoPercentual: number
+  numParcelas: number
+  livro_atual?: string
+  nivel_atual: string
+  valor: number
+  diasDaSemana: number[]
+  horario: string
+  aulasTotais: number
+  id?: number
+  status?: string
+}
+
 const DIAS_SEMANA = [
   { label: 'Segunda', value: 1 },
   { label: 'Terça', value: 2 },
@@ -42,7 +96,7 @@ const OPCOES_LIVRO = [
 interface ContratoFormProps {
   alunoId: string
   defaultNivel?: string
-  initialData?: any // Full contract object for editing
+  initialData?: ContractInitialData
   onSuccess?: () => void
 }
 
@@ -53,7 +107,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [loading, setLoading] = useState(false)
 
   // Fields
-  const [tipoContrato, setTipoContrato] = useState(initialData?.tipo_contrato || 'semestral')
+  const [tipoContrato, setTipoContrato] = useState<ContractKind>(initialData?.tipo_contrato || 'semestral')
   const [planoId, setPlanoId] = useState(initialData?.plano_id?.toString() || '1')
   const [dataInicio, setDataInicio] = useState(initialData?.data_inicio || '')
   const [dataFim, setDataFim] = useState(initialData?.data_fim || '')
@@ -78,10 +132,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [livroManual, setLivroManual] = useState('')
   const [nivel, setNivel] = useState(initialData?.nivel_atual || defaultNivel || 'a1_beginner')
   const [diaVencimento, setDiaVencimento] = useState(initialData?.dia_vencimento?.toString() || initialData?.diaVencimento?.toString() || '5')
-  const [formaPagamento, setFormaPagamento] = useState(initialData?.forma_pagamento || 'pix')
+  const [formaPagamento, setFormaPagamento] = useState<PaymentMethod>(initialData?.forma_pagamento || 'pix')
   const [numParcelas, setNumParcelas] = useState(initialData?.num_parcelas?.toString() || (initialData?.tipo_contrato === 'ad-hoc' ? '1' : '6'))
 
-  const [placementData, setPlacementData] = useState<any>(null)
+  const [placementData, setPlacementData] = useState<PlacementSummary | null>(null)
   const [loadingPlacement, setLoadingPlacement] = useState(false)
 
   // Effect to handle Evolve book logic on initial load
@@ -90,12 +144,15 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       if (!alunoId) return
       setLoadingPlacement(true)
       try {
-        const { data, error } = await fetch(`/api/professor/nivelamento?alunoId=${alunoId}`).then(res => res.json())
+        const response = (await fetch(`/api/professor/nivelamento?alunoId=${alunoId}`).then((res) =>
+          res.json()
+        )) as { data?: PlacementSummary[]; error?: string }
+        const data = response.data || []
         if (data && data.length > 0) {
           setPlacementData(data[0]) // Latest test
         }
-      } catch (err) {
-        console.error('Error fetching placement for contract:', err)
+      } catch (error) {
+        console.error('Error fetching placement for contract:', error)
       } finally {
         setLoadingPlacement(false)
       }
@@ -215,7 +272,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
 
     try {
       const finalLivro = livroSelect === 'outro' ? livroManual : OPCOES_LIVRO.find(o => o.value === livroSelect)?.label
-      const payload: any = {
+      const payload: ContractPayload = {
         alunoId,
         planoId: parseInt(planoId),
         dataInicio,
@@ -258,8 +315,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       toast.success(`Contrato ${isEdit ? 'atualizado' : 'criado'} com sucesso!`)
       if (onSuccess) onSuccess()
       else router.push(`/professor/alunos/${alunoId}`)
-    } catch (err: any) {
-      toast.error(err.message)
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao salvar contrato')
     } finally {
       setLoading(false)
     }
@@ -307,7 +364,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Tipo de Contrato</Label>
               <Select value={tipoContrato} onChange={e => {
-                setTipoContrato(e.target.value)
+                setTipoContrato(e.target.value as ContractKind)
                 if (e.target.value === 'semestral') setIsCrossSemester(false)
               }} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
                 <option value="semestral">Semestral Padrão</option>
@@ -584,7 +641,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             </div>
             <div className="space-y-3">
               <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Pagamento</Label>
-              <Select value={formaPagamento} onChange={e => setFormaPagamento(e.target.value)} disabled={hasPaidPayments} className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`}>
+              <Select value={formaPagamento} onChange={e => setFormaPagamento(e.target.value as PaymentMethod)} disabled={hasPaidPayments} className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`}>
                 <option value="pix">PIX</option>
                 <option value="cartao">Cartão</option>
                 <option value="dinheiro">Dinheiro</option>

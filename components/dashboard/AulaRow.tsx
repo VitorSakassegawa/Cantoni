@@ -116,6 +116,7 @@ export default function AulaRow({
 }: Props) {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const lesson = aula
   const [status, setStatus] = useState<StatusAula>(aula.status)
   const [dataHoraSolicitada, setDataHoraSolicitada] = useState<string | null>(aula.data_hora_solicitada || null)
   const [loading, setLoading] = useState(false)
@@ -159,12 +160,12 @@ export default function AulaRow({
     try {
       const res = await cancelarAula(aula.id)
       if (res.success) {
-        setStatus(res.status as any)
+        setStatus(res.status as StatusAula)
         toast.success(res.status === 'cancelada' ? 'Aula cancelada!' : 'Aula contabilizada como dada.')
         setShowCancelModal(false)
       }
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao cancelar aula')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro ao cancelar aula')
     } finally {
       setLoading(false)
     }
@@ -205,8 +206,8 @@ export default function AulaRow({
           router.refresh()
         }
       }
-    } catch (error: any) {
-      toast.error(getFriendlyRemarkError(error.message))
+    } catch (error) {
+      toast.error(getFriendlyRemarkError(error instanceof Error ? error.message : undefined))
     } finally {
       setLoading(false)
     }
@@ -220,8 +221,8 @@ export default function AulaRow({
       await uploadHomeworkImage(aula.id, file)
       toast.success('Anexo enviado com sucesso!')
       window.location.reload()
-    } catch (err: any) {
-      toast.error(err.message || 'Erro no upload')
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Erro no upload')
     } finally {
       setUploading(false)
     }
@@ -345,17 +346,17 @@ export default function AulaRow({
             </div>
             
             <div className="flex items-center gap-2 flex-wrap">
-              {(aula as any).homework_type && (
+              {lesson.homework_type && (
                 <Badge variant="outline" className={`text-[8px] font-black tracking-widest uppercase rounded-md border-0 ${
-                  (aula as any).homework_type === 'esl_brains' ? 'bg-blue-50 text-blue-600' : 
-                  (aula as any).homework_type === 'evolve' ? 'bg-indigo-50 text-indigo-600' : 
+                  lesson.homework_type === 'esl_brains' ? 'bg-blue-50 text-blue-600' : 
+                  lesson.homework_type === 'evolve' ? 'bg-indigo-50 text-indigo-600' : 
                   'bg-slate-50 text-slate-500'
                 }`}>
-                  {(aula as any).homework_type.replace('_', ' ')}
+                  {lesson.homework_type.replace('_', ' ')}
                 </Badge>
               )}
               
-              {((aula as any).ai_summary_pt || (aula as any).ai_summary_en) && (
+              {(lesson.ai_summary_pt || lesson.ai_summary_en) && (
                 <button 
                   onClick={() => setShowAIModal(true)}
                   className="flex items-center gap-1.5 text-[9px] text-amber-600 hover:text-amber-700 font-black uppercase tracking-widest bg-amber-50/50 px-2 py-1 rounded-md transition-all border border-amber-100/50"
@@ -364,8 +365,8 @@ export default function AulaRow({
                 </button>
               )}
 
-              {(aula as any).homework_image_url ? (
-                <a href={(aula as any).homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/50 px-2 py-1 rounded-md transition-all">
+              {lesson.homework_image_url ? (
+                <a href={lesson.homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/50 px-2 py-1 rounded-md transition-all">
                   <Paperclip className="w-3 h-3" /> Ver Anexo
                 </a>
               ) : (
@@ -376,9 +377,9 @@ export default function AulaRow({
                 </label>
               )}
 
-              {(aula as any).homework_type === 'evolve' && (aula as any).homework_link && (
+              {lesson.homework_type === 'evolve' && lesson.homework_link && (
                 <div className="flex items-center gap-2">
-                  <a href={(aula as any).homework_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-widest bg-indigo-50/50 px-2 py-1 rounded-md transition-all">
+                  <a href={lesson.homework_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-widest bg-indigo-50/50 px-2 py-1 rounded-md transition-all">
                     <ExternalLink className="w-3 h-3" /> Cambridge One
                   </a>
                 </div>
@@ -389,8 +390,8 @@ export default function AulaRow({
 
         {showContractType && (
           <td className="py-6 px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">
-            {(aula as any).contratos 
-              ? ((aula as any).contratos.tipo_contrato === 'ad-hoc' ? 'Personalizado' : 'Semestral')
+            {lesson.contratos 
+              ? (lesson.contratos.tipo_contrato === 'ad-hoc' ? 'Personalizado' : 'Semestral')
               : '—'}
           </td>
         )}
@@ -584,7 +585,7 @@ export default function AulaRow({
 
             <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4 prose-table:border-collapse prose-th:bg-slate-50 prose-th:text-[10px] prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-td:text-xs prose-td:font-medium mb-10">
               <ReactMarkdown>
-                {summaryLang === 'pt' ? (aula as any).ai_summary_pt : (aula as any).ai_summary_en}
+                {summaryLang === 'pt' ? lesson.ai_summary_pt : lesson.ai_summary_en}
               </ReactMarkdown>
             </div>
 
