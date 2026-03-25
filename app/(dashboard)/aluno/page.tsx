@@ -3,27 +3,38 @@ export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { formatCurrency, formatDateTime, formatDate, formatDateOnly } from '@/lib/utils'
+import { formatCurrency, formatDate, formatDateOnly, formatDateTime } from '@/lib/utils'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
-import { Video, BookOpen, Calendar, User, CreditCard, Umbrella, Flame, Trophy, Layers, BrainCircuit, ArrowRight, FileText } from 'lucide-react'
-import Link from 'next/link'
-import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import { buildStudentNotifications, getDaysRemaining } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
-import { STUDENT_STREAK_RULES, getStreakSummary } from '@/lib/streak-utils'
+import { getStreakSummary } from '@/lib/streak-utils'
+import Link from 'next/link'
+import {
+  ArrowRight,
+  BookOpen,
+  BrainCircuit,
+  Calendar,
+  CreditCard,
+  FileText,
+  Flame,
+  Layers,
+  Target,
+  Umbrella,
+  User,
+  Video,
+} from 'lucide-react'
+
+type PaymentWithStatus = ReturnType<typeof withEffectivePaymentStatus>
 
 export default async function AlunoDashboard() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('*')
-    .eq('id', user.id)
-    .single()
-
+  const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single()
   if (profile?.role === 'professor') redirect('/professor')
 
   const { data: contratos } = await supabase
@@ -38,67 +49,55 @@ export default async function AlunoDashboard() {
   const contratoIds = contratosVigentes.map((item: any) => item.id)
   const now = new Date().toISOString()
 
-  const { data: proximaAula } = await supabase
-    .from('aulas')
-    .select('*')
-    .in('contrato_id', contratoIds.length > 0 ? contratoIds : [-1])
-    .in('status', ['agendada', 'confirmada'])
-    .gte('data_hora', now)
-    .order('data_hora')
-    .limit(1)
-    .maybeSingle()
+  const [
+    { data: proximaAula },
+    { data: pagamentos },
+    { data: aulasPendentes },
+    { data: flashcardsDue },
+    { data: activityLogs },
+  ] = await Promise.all([
+    supabase
+      .from('aulas')
+      .select('*')
+      .in('contrato_id', contratoIds.length > 0 ? contratoIds : [-1])
+      .in('status', ['agendada', 'confirmada'])
+      .gte('data_hora', now)
+      .order('data_hora')
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from('pagamentos')
+      .select('*')
+      .in('contrato_id', contratoIds.length > 0 ? contratoIds : [-1])
+      .order('data_vencimento', { ascending: true })
+      .order('parcela_num', { ascending: true }),
+    supabase
+      .from('aulas')
+      .select('id, status, data_hora_solicitada')
+      .in('contrato_id', contratoIds.length > 0 ? contratoIds : [-1])
+      .or(`status.eq.pendente_remarcacao,and(data_hora.gte.${now})`)
+      .order('data_hora', { ascending: true })
+      .limit(10),
+    supabase.from('flashcards').select('id').eq('aluno_id', user.id).lte('next_review', now),
+    supabase
+      .from('activity_logs')
+      .select('id, title, description, severity, created_at')
+      .or(`target_user_id.eq.${user.id},actor_user_id.eq.${user.id}`)
+      .order('created_at', { ascending: false })
+      .limit(5),
+  ])
 
-  const { data: pagamentos } = await supabase
-    .from('pagamentos')
-    .select('*')
-    .in('contrato_id', contratoIds.length > 0 ? contratoIds : [-1])
-    .order('data_vencimento', { ascending: true })
-    .order('parcela_num', { ascending: true })
-
-  const pagamentosComStatus = (pagamentos || []).map((payment: any) => withEffectivePaymentStatus(payment))
-  const pagamentosPendentes = pagamentosComStatus.filter((payment: any) => payment.effectiveStatus !== 'pago')
+  const pagamentosComStatus = ((pagamentos || []) as any[]).map((payment) => withEffectivePaymentStatus(payment))
+  const pagamentosPendentes = pagamentosComStatus.filter((payment) => payment.effectiveStatus !== 'pago')
   const pagamentoPendenteComStatus = pagamentosPendentes[0] || null
   const totalParcelasPorContrato = pagamentosComStatus.reduce((acc: Record<number, number>, payment: any) => {
     acc[payment.contrato_id] = (acc[payment.contrato_id] || 0) + 1
     return acc
   }, {})
 
-  const { data: aulasPendentes } = await supabase
-    .from('aulas')
-    .select('id, status, data_hora_solicitada')
-    .in('contrato_id', contratoIds.length > 0 ? contratoIds : [-1])
-    .or(`status.eq.pendente_remarcacao,and(data_hora.gte.${now})`)
-    .order('data_hora', { ascending: true })
-    .limit(10)
-
-  const temRemarcacaoPendente = aulasPendentes?.some((a: any) => a.status === 'pendente_remarcacao' && !a.data_hora_solicitada)
-
-  const progressPct = contrato
-    ? Math.round((contrato.aulas_dadas / contrato.aulas_totais) * 100)
-    : 0
-
-  const cefrLevels = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
-  const currentCefrIdx = cefrLevels.indexOf(profile?.cefr_level || 'A1')
-
-  const { data: flashcardsDue } = await supabase
-    .from('flashcards')
-    .select('id')
-    .eq('aluno_id', user.id)
-    .lte('next_review', now)
-
-  const { data: avaliacoes } = await supabase
-    .from('avaliacoes_habilidades')
-    .select('*')
-    .eq('aluno_id', user.id)
-    .order('mes_referencia', { ascending: false })
-    .limit(2)
-
-  const { data: activityLogs } = await supabase
-    .from('activity_logs')
-    .select('id, title, description, severity, created_at')
-    .or(`target_user_id.eq.${user.id},actor_user_id.eq.${user.id}`)
-    .order('created_at', { ascending: false })
-    .limit(5)
+  const temRemarcacaoPendente = (aulasPendentes || []).some(
+    (aula: any) => aula.status === 'pendente_remarcacao' && !aula.data_hora_solicitada
+  )
 
   const daysRemaining = getDaysRemaining(contrato?.data_fim)
   const studentNotifications = buildStudentNotifications({
@@ -125,110 +124,99 @@ export default async function AlunoDashboard() {
   })
 
   return (
-    <div className="space-y-10 pb-16 animate-fade-in">
-      <div className="relative overflow-hidden rounded-[2.5rem] p-10 bg-[#1e3a8a] text-white shadow-2xl shadow-blue-900/20">
-        <div className="absolute top-0 right-0 w-[50%] h-full bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
-        <div className="absolute -top-24 -right-24 w-64 h-64 bg-blue-400/20 rounded-full blur-3xl" />
+    <div className="space-y-10 animate-fade-in pb-16">
+      <div className="relative overflow-hidden rounded-[2.5rem] bg-[#1e3a8a] p-10 text-white shadow-2xl shadow-blue-900/20">
+        <div className="pointer-events-none absolute top-0 right-0 h-full w-[50%] bg-gradient-to-l from-white/10 to-transparent" />
+        <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl" />
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
+        <div className="relative z-10 flex flex-col justify-between gap-8 md:flex-row md:items-center">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-blue-100">
-              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-100">
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-400" />
               Portal do Aluno
             </div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
-              Olá, {profile?.full_name?.split(' ')[0]}! ✨
+            <h1 className="text-4xl font-black tracking-tighter md:text-5xl">
+              Olá, {profile?.full_name?.split(' ')[0]}!
             </h1>
-            <div className="flex flex-wrap gap-4 items-center text-blue-100/80 font-medium">
-              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10">
-                <Badge className="bg-blue-500 text-white border-none text-[10px] uppercase font-black">{profile?.nivel || 'Nível não definido'}</Badge>
+            <div className="flex flex-wrap items-center gap-4 font-medium text-blue-100/80">
+              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
+                <Badge className="border-none bg-blue-500 text-[10px] font-black uppercase text-white">
+                  {profile?.nivel || 'Nível não definido'}
+                </Badge>
               </div>
-              {profile?.birth_date && (
-                <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
-                  <Calendar className="w-3.5 h-3.5" />
+              {profile?.birth_date ? (
+                <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs">
+                  <Calendar className="h-3.5 w-3.5" />
                   Nasc: <span className="font-bold text-white">{formatDateOnly(profile.birth_date)}</span>
                 </div>
-              )}
-              <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/10 text-xs">
-                <BookOpen className="w-3.5 h-3.5" />
+              ) : null}
+              <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-xs">
+                <BookOpen className="h-3.5 w-3.5" />
                 {contrato?.planos?.descricao || 'Plano Regular'}
               </div>
-              <div className="flex items-center gap-2 bg-amber-400/20 px-3 py-1.5 rounded-xl border border-amber-400/30 text-xs text-amber-200">
-                <Flame className="w-3.5 h-3.5 fill-current" />
+              <div className="flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-400/20 px-3 py-1.5 text-xs text-amber-200">
+                <Flame className="h-3.5 w-3.5 fill-current" />
                 Streak: <span className="font-black text-white">{profile?.streak_count || 0} dias</span>
               </div>
             </div>
           </div>
 
-          <div className="flex gap-4">
-            <Link
-              href="/aluno/perfil"
-              className="px-6 py-3 rounded-2xl bg-white text-blue-900 font-bold text-sm hover:shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
-            >
-              <User className="w-4 h-4" />
-              Ver Perfil
-            </Link>
-          </div>
+          <Link
+            href="/aluno/perfil"
+            className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-sm font-bold text-blue-900 transition-all hover:scale-105 hover:shadow-xl active:scale-95"
+          >
+            <User className="h-4 w-4" />
+            Ver perfil
+          </Link>
         </div>
       </div>
 
-      {pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' && (
-        <div className="bg-rose-50 border border-rose-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-rose-500/5">
+      {pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' ? (
+        <div className="flex flex-col items-center justify-between gap-6 rounded-[2rem] border border-rose-100 bg-rose-50 p-6 shadow-xl shadow-rose-500/5 md:flex-row">
           <div className="flex items-center gap-4 text-rose-600">
-            <div className="w-12 h-12 rounded-2xl bg-rose-100 flex items-center justify-center shrink-0">
-              <CreditCard className="w-6 h-6" />
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-rose-100">
+              <CreditCard className="h-6 w-6" />
             </div>
             <div>
-              <p className="font-black text-rose-900 text-sm uppercase tracking-tight">Pagamento em Atraso</p>
-              <p className="text-xs text-rose-700/70 font-medium">A parcela {pagamentoPendenteComStatus.parcela_num} de {formatCurrency(pagamentoPendenteComStatus.valor)} venceu em {formatDateOnly(pagamentoPendenteComStatus.data_vencimento)}.</p>
-            </div>
-          </div>
-          <Link href="/aluno/pagamentos" className="h-10 px-8 rounded-xl bg-rose-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-lg shadow-rose-600/20 flex items-center">
-            PAGAR AGORA
-          </Link>
-        </div>
-      )}
-
-      {temRemarcacaoPendente && (
-        <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl shadow-amber-500/5">
-          <div className="flex items-center gap-4 text-amber-600">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 flex items-center justify-center shrink-0">
-              <Calendar className="w-6 h-6" />
-            </div>
-            <div>
-              <p className="font-black text-amber-900 text-sm uppercase tracking-tight">Ação Necessária: Remarcação</p>
-              <p className="text-xs text-amber-700/70 font-medium">Você tem aulas que precisam de uma nova data sugerida por você.</p>
-            </div>
-          </div>
-          <Link href="/aluno/aulas" className="h-10 px-8 rounded-xl bg-amber-600 text-white font-black text-[10px] uppercase tracking-widest hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20 flex items-center">
-            Sugerir Datas
-          </Link>
-        </div>
-      )}
-
-      {!profile?.placement_test_completed && (
-        <div className="bg-indigo-50 border border-indigo-100 rounded-[2rem] p-8 flex flex-col md:flex-row items-center justify-between gap-8 shadow-xl shadow-indigo-500/10 relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-200/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-indigo-300/30 transition-all duration-700" />
-          <div className="flex items-center gap-6 relative z-10">
-            <div className="w-16 h-16 rounded-[1.5rem] bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-lg shadow-indigo-500/10 rotate-3 group-hover:rotate-0 transition-transform duration-500">
-              <BrainCircuit className="w-8 h-8" />
-            </div>
-            <div>
-              <p className="font-black text-indigo-900 text-lg tracking-tight leading-tight">Mapeamento de Nível com IA ✨</p>
-              <p className="text-sm text-indigo-700/70 font-medium mt-1">Bem-vindo! Vamos mapear seu nível de inglês para personalizar suas aulas?</p>
+              <p className="text-sm font-black uppercase tracking-tight text-rose-900">Pagamento em atraso</p>
+              <p className="text-xs font-medium text-rose-700/70">
+                A parcela {pagamentoPendenteComStatus.parcela_num} de {formatCurrency(pagamentoPendenteComStatus.valor)}
+                {' '}venceu em {formatDateOnly(pagamentoPendenteComStatus.data_vencimento)}.
+              </p>
             </div>
           </div>
           <Link
-            href="/aluno/teste-nivel"
-            className="h-14 px-10 rounded-2xl bg-indigo-600 text-white font-black text-xs uppercase tracking-widest hover:bg-indigo-700 hover:scale-105 active:scale-95 transition-all shadow-xl shadow-indigo-600/20 flex items-center gap-3 relative z-10"
+            href="/aluno/pagamentos"
+            className="flex h-10 items-center rounded-xl bg-rose-600 px-8 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-rose-600/20 transition-all hover:bg-rose-700"
           >
-            INICIAR TESTE AGORA
-            <ArrowRight className="w-4 h-4" />
+            PAGAR AGORA
           </Link>
         </div>
-      )}
+      ) : null}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      {temRemarcacaoPendente ? (
+        <div className="flex flex-col items-center justify-between gap-6 rounded-[2rem] border border-amber-100 bg-amber-50 p-6 shadow-xl shadow-amber-500/5 md:flex-row">
+          <div className="flex items-center gap-4 text-amber-600">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-100">
+              <Calendar className="h-6 w-6" />
+            </div>
+            <div>
+              <p className="text-sm font-black uppercase tracking-tight text-amber-900">Ação necessária: remarcação</p>
+              <p className="text-xs font-medium text-amber-700/70">
+                Você tem aulas que precisam de uma nova data sugerida por você.
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/aluno/aulas"
+            className="flex h-10 items-center rounded-xl bg-amber-600 px-8 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-600/20 transition-all hover:bg-amber-700"
+          >
+            SUGERIR DATAS
+          </Link>
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <NotificationFeed
           title="Central do Aluno"
           items={studentNotifications}
@@ -237,27 +225,27 @@ export default async function AlunoDashboard() {
 
         {daysRemaining !== null && daysRemaining >= 0 && daysRemaining <= 30 ? (
           <Card className="glass-card overflow-hidden">
-            <CardHeader className="pb-4 border-b border-slate-100">
-              <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
-                <Layers className="w-4 h-4 text-blue-500" /> Renovação do Contrato
+            <CardHeader className="border-b border-slate-100 pb-4">
+              <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+                <Layers className="h-4 w-4 text-blue-500" /> Renovação do contrato
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
               <div>
-                <p className="text-3xl font-black text-slate-900 tracking-tighter">{daysRemaining} dia(s)</p>
-                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-2">
+                <p className="text-3xl font-black tracking-tighter text-slate-900">{daysRemaining} dia(s)</p>
+                <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-slate-400">
                   restantes até o fim do contrato atual
                 </p>
               </div>
-              <p className="text-sm text-slate-500 font-medium leading-relaxed">
-                Seu contrato entra agora na janela ideal de renovação. Isso ajuda a manter a agenda organizada e evita interrupções no plano de aulas.
+              <p className="text-sm font-medium leading-relaxed text-slate-500">
+                Seu contrato entrou na janela ideal de renovação para manter agenda e financeiro organizados.
               </p>
               <Link
                 href="/aluno/pagamentos"
-                className="inline-flex items-center gap-2 px-5 py-3 rounded-2xl bg-blue-600 text-white text-[10px] font-black uppercase tracking-widest hover:bg-blue-700 transition-all shadow-lg shadow-blue-500/20"
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
               >
                 Ver financeiro e contrato
-                <ArrowRight className="w-4 h-4" />
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </CardContent>
           </Card>
@@ -271,15 +259,15 @@ export default async function AlunoDashboard() {
       </div>
 
       <Card className="glass-card overflow-hidden">
-        <CardHeader className="pb-4 border-b border-slate-100">
-          <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
-            <FileText className="w-4 h-4 text-blue-500" /> Seus Documentos
+        <CardHeader className="border-b border-slate-100 pb-4">
+          <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+            <FileText className="h-4 w-4 text-blue-500" /> Seus documentos
           </CardTitle>
         </CardHeader>
-        <CardContent className="pt-6 flex flex-col md:flex-row md:items-center justify-between gap-5">
+        <CardContent className="flex flex-col justify-between gap-5 pt-6 md:flex-row md:items-center">
           <div className="space-y-2">
             <p className="text-lg font-black tracking-tight text-slate-900">Contrato e declaração prontos para PDF</p>
-            <p className="text-sm text-slate-500 font-medium">
+            <p className="text-sm font-medium text-slate-500">
               Abra seus documentos acadêmicos, confira as informações vigentes no portal e salve uma versão em PDF quando precisar.
             </p>
           </div>
@@ -288,202 +276,173 @@ export default async function AlunoDashboard() {
             className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
           >
             Abrir documentos
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="h-4 w-4" />
           </Link>
         </CardContent>
       </Card>
 
-      <Card className="glass-card overflow-hidden">
-        <CardHeader className="pb-4 border-b border-slate-100">
-          <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
-            <Flame className="w-4 h-4 text-amber-500" /> Como Funciona Seu Streak
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-6">
-          <div className="grid gap-4 md:grid-cols-3 mb-5">
-            <div className="rounded-2xl bg-amber-500 text-white px-4 py-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-100">Sequência Atual</p>
-              <p className="text-3xl font-black tracking-tight">{profile?.streak_count || 0} dias</p>
-            </div>
-            <div className="rounded-2xl bg-slate-50 border border-slate-100 px-4 py-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Melhor Recorde</p>
-              <p className="text-3xl font-black tracking-tight text-slate-900">{streakSummary.bestStreak} dias</p>
-            </div>
-            <div className="rounded-2xl bg-blue-50 border border-blue-100 px-4 py-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Status de Hoje</p>
-              <p className="text-sm font-black tracking-tight text-blue-900">{streakSummary.headline}</p>
-            </div>
-          </div>
-          <div className="grid gap-3 md:grid-cols-2">
-            {STUDENT_STREAK_RULES.map((rule) => (
-              <div key={rule} className="rounded-2xl bg-amber-50/70 border border-amber-100 px-4 py-3 text-sm font-medium text-amber-900/80">
-                {rule}
-              </div>
-            ))}
-          </div>
-          <div className="pt-5">
-            <Link
-              href="/aluno/jornada"
-              className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600"
-            >
-              Abrir jornada do aluno
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </CardContent>
-      </Card>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <Card className="glass-card group relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-            <Video className="w-24 h-24 text-blue-900" />
+          <div className="absolute top-0 right-0 p-8 opacity-5 transition-opacity group-hover:opacity-10">
+            <Video className="h-24 w-24 text-blue-900" />
           </div>
           <CardHeader className="pb-4">
-            <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              Próxima Aula
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">
+              Próxima aula
             </CardTitle>
           </CardHeader>
           <CardContent>
             {proximaAula ? (
               <div className="space-y-6">
                 <div>
-                  <p className="text-3xl font-black text-blue-900 tracking-tighter leading-tight">
+                  <p className="text-3xl font-black leading-tight tracking-tighter text-blue-900">
                     {formatDateTime(proximaAula.data_hora)}
                   </p>
-                  <p className="text-[11px] text-gray-400 font-bold uppercase mt-2 tracking-widest flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                  <p className="mt-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                    <span className="h-1.5 w-1.5 rounded-full bg-green-500" />
                     Duração: 45 minutos
                   </p>
                 </div>
 
-                <div className="flex flex-col sm:flex-row gap-3">
-                  {proximaAula.meet_link && (
+                <div className="flex flex-col gap-3 sm:flex-row">
+                  {proximaAula.meet_link ? (
                     <a
                       href={proximaAula.meet_link}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center gap-2 lms-gradient text-white px-8 py-3.5 rounded-2xl text-sm font-black hover:shadow-xl hover:shadow-blue-500/20 hover:translate-y-[-2px] active:translate-y-[0px] transition-all"
+                      className="inline-flex items-center justify-center gap-2 rounded-2xl px-8 py-3.5 text-sm font-black text-white transition-all hover:-translate-y-[2px] hover:shadow-xl hover:shadow-blue-500/20 active:translate-y-0 lms-gradient"
                     >
-                      <Video className="w-4 h-4" />
+                      <Video className="h-4 w-4" />
                       ENTRAR NO MEET
                     </a>
-                  )}
+                  ) : null}
                   <Link
                     href="/aluno/aulas"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl border border-slate-200 text-slate-600 text-sm font-black hover:bg-slate-50 transition-all"
+                    className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 px-6 py-3.5 text-sm font-black text-slate-600 transition-all hover:bg-slate-50"
                   >
                     Ver detalhes
                   </Link>
                 </div>
 
-                {proximaAula.homework && !proximaAula.homework_completed && (
-                  <div className="bg-blue-50/50 border border-blue-100/50 rounded-2xl p-5 relative overflow-hidden group/hw">
-                    <div className="absolute top-0 right-0 w-1 h-full bg-blue-500" />
-                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-widest">Tarefa Pendente</span>
-                    <p className="text-sm text-blue-900/80 mt-2 font-semibold leading-relaxed">{proximaAula.homework}</p>
+                {proximaAula.homework && !proximaAula.homework_completed ? (
+                  <div className="relative overflow-hidden rounded-2xl border border-blue-100/50 bg-blue-50/50 p-5">
+                    <div className="absolute top-0 right-0 h-full w-1 bg-blue-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Tarefa pendente</span>
+                    <p className="mt-2 text-sm font-semibold leading-relaxed text-blue-900/80">{proximaAula.homework}</p>
                   </div>
-                )}
+                ) : null}
               </div>
             ) : (
-              <div className="py-12 text-center lms-gradient-soft rounded-3xl border border-dashed border-blue-200">
-                <p className="text-sm font-bold text-blue-400/60 uppercase tracking-widest">Sem aulas agendadas</p>
+              <div className="rounded-3xl border border-dashed border-blue-200 py-12 text-center lms-gradient-soft">
+                <p className="text-sm font-bold uppercase tracking-widest text-blue-400/60">Sem aulas agendadas</p>
               </div>
             )}
           </CardContent>
         </Card>
 
         <Card className="glass-card overflow-hidden">
-          <CardHeader className="pb-4 border-b border-slate-100">
-            <CardTitle className="text-xs font-black text-slate-500 flex items-center gap-2 uppercase tracking-[0.2em]">
-              <Umbrella className="w-4 h-4 text-orange-500" /> Próximas Pausas
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              <Umbrella className="h-4 w-4 text-orange-500" /> Próximas pausas
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <div className="p-5 text-center space-y-4">
-              <p className="text-[10px] text-slate-500 font-medium tracking-tight">Consulte o calendário para planejar suas aulas em feriados e recessos.</p>
-              <Link href="/aluno/calendario" className="inline-block px-6 py-2 rounded-xl bg-orange-50 text-orange-600 text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all">
-                Ver Calendário Completo
+            <div className="space-y-4 p-5 text-center">
+              <p className="text-[10px] font-medium tracking-tight text-slate-500">
+                Consulte o calendário para planejar suas aulas em feriados e recessos.
+              </p>
+              <Link
+                href="/aluno/calendario"
+                className="inline-block rounded-xl bg-orange-50 px-6 py-2 text-[9px] font-black uppercase tracking-widest text-orange-600 transition-all hover:bg-orange-600 hover:text-white"
+              >
+                Ver calendário completo
               </Link>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="glass-card overflow-hidden relative group cursor-pointer">
+        <Card className="glass-card relative overflow-hidden group cursor-pointer">
           <Link href="/aluno/flashcards" className="absolute inset-0 z-20" />
-          <div className="absolute top-0 right-0 p-8 opacity-5 group-hover:opacity-10 transition-opacity">
-            <BrainCircuit className="w-24 h-24 text-blue-900" />
+          <div className="absolute top-0 right-0 p-8 opacity-5 transition-opacity group-hover:opacity-10">
+            <BrainCircuit className="h-24 w-24 text-blue-900" />
           </div>
           <CardHeader className="pb-4">
-            <CardTitle className="text-xs font-black text-indigo-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              Seu Banco de Palavras
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-indigo-400">
+              Seu banco de palavras
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
               <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black text-slate-900 tracking-tighter">
-                  {flashcardsDue?.length || 0}
-                </span>
-                <span className="text-sm font-bold text-slate-400 uppercase tracking-tighter">palavras para revisar</span>
+                <span className="text-4xl font-black tracking-tighter text-slate-900">{flashcardsDue?.length || 0}</span>
+                <span className="text-sm font-bold uppercase tracking-tighter text-slate-400">palavras para revisar</span>
               </div>
-              <div className="w-full h-12 rounded-2xl bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/20 group-hover:bg-indigo-700 transition-all">
+              <div className="flex h-12 items-center justify-center gap-2 rounded-2xl bg-indigo-600 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-600/20 transition-all group-hover:bg-indigo-700">
                 PRATICAR AGORA
-                <BrainCircuit className="w-4 h-4" />
+                <BrainCircuit className="h-4 w-4" />
               </div>
             </div>
           </CardContent>
         </Card>
 
-        <Card className={`glass-card group transition-all duration-500 ${pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
+        <Card className={`glass-card transition-all duration-500 ${pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
           <CardHeader className="pb-4">
-            <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">
               Financeiro
             </CardTitle>
           </CardHeader>
           <CardContent>
             {pagamentoPendenteComStatus ? (
               <div className="space-y-6">
-                <div className="flex justify-between items-start">
+                <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-4xl font-black text-slate-900 tracking-tighter">
+                    <p className="text-4xl font-black tracking-tighter text-slate-900">
                       {formatCurrency(pagamentoPendenteComStatus.valor)}
                     </p>
-                    <p className="text-[11px] font-bold text-gray-400 uppercase mt-2 tracking-widest">
-                      Parcela {pagamentoPendenteComStatus.parcela_num}/{totalParcelasPorContrato[pagamentoPendenteComStatus.contrato_id] || 1} • Vence em {formatDate(pagamentoPendenteComStatus.data_vencimento)}
+                    <p className="mt-2 text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                      Parcela {pagamentoPendenteComStatus.parcela_num}/{totalParcelasPorContrato[pagamentoPendenteComStatus.contrato_id] || 1}
+                      {' '}• Vence em {formatDate(pagamentoPendenteComStatus.data_vencimento)}
                     </p>
                   </div>
-                  <Badge variant={pagamentoPendenteComStatus.effectiveStatus === 'atrasado' ? 'destructive' : 'warning'} className="text-[10px] font-black uppercase px-3 py-1 rounded-lg">
-                    {pagamentoPendenteComStatus.effectiveStatus === 'atrasado' ? 'Em Atraso' : 'Pendente'}
+                  <Badge
+                    variant={pagamentoPendenteComStatus.effectiveStatus === 'atrasado' ? 'destructive' : 'warning'}
+                    className="rounded-lg px-3 py-1 text-[10px] font-black uppercase"
+                  >
+                    {pagamentoPendenteComStatus.effectiveStatus === 'atrasado' ? 'Em atraso' : 'Pendente'}
                   </Badge>
                 </div>
 
-                {pagamentoPendenteComStatus.pix_qrcode_base64 && (
-                  <div className="flex flex-col sm:flex-row items-center gap-8 bg-slate-50/50 p-6 rounded-3xl border border-slate-100 shadow-inner">
-                    <div className="relative group/qr">
-                      <div className="absolute -inset-1 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover/qr:opacity-40 transition" />
+                {pagamentoPendenteComStatus.pix_qrcode_base64 ? (
+                  <div className="flex flex-col items-center gap-8 rounded-3xl border border-slate-100 bg-slate-50/50 p-6 shadow-inner sm:flex-row">
+                    <div className="group/qr relative">
+                      <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-500 opacity-20 blur transition group-hover/qr:opacity-40" />
                       <img
-                        src={pagamentoPendenteComStatus.pix_qrcode_base64.startsWith('data:')
-                          ? pagamentoPendenteComStatus.pix_qrcode_base64
-                          : `data:image/png;base64,${pagamentoPendenteComStatus.pix_qrcode_base64}`}
+                        src={
+                          pagamentoPendenteComStatus.pix_qrcode_base64.startsWith('data:')
+                            ? pagamentoPendenteComStatus.pix_qrcode_base64
+                            : `data:image/png;base64,${pagamentoPendenteComStatus.pix_qrcode_base64}`
+                        }
                         alt="QR Code PIX"
-                        className="relative w-36 h-36 border-4 border-white rounded-2xl bg-white shadow-xl"
+                        className="relative h-36 w-36 rounded-2xl border-4 border-white bg-white shadow-xl"
                       />
                     </div>
-                    <div className="flex-1 space-y-4 w-full">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest text-center sm:text-left">Scan para pagar PIX</p>
-                      {pagamentoPendenteComStatus.pix_copia_cola && (
+                    <div className="w-full flex-1 space-y-4">
+                      <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 sm:text-left">
+                        Scan para pagar PIX
+                      </p>
+                      {pagamentoPendenteComStatus.pix_copia_cola ? (
                         <CopiarPixBtn codigo={pagamentoPendenteComStatus.pix_copia_cola} />
-                      )}
+                      ) : null}
                     </div>
                   </div>
-                )}
-
-                {!pagamentoPendenteComStatus.pix_qrcode_base64 && (
-                  <div className="p-5 bg-amber-50/50 rounded-2xl border border-amber-100 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center shadow-sm">
-                      <CreditCard className="w-5 h-5" />
+                ) : (
+                  <div className="flex items-center gap-4 rounded-2xl border border-amber-100 bg-amber-50/50 p-5">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-100 text-amber-600 shadow-sm">
+                      <CreditCard className="h-5 w-5" />
                     </div>
-                    <p className="text-xs font-bold text-amber-700 leading-tight uppercase tracking-tight">O código PIX será enviado para seu e-mail em breve.</p>
+                    <p className="text-xs font-bold uppercase leading-tight tracking-tight text-amber-700">
+                      O código PIX será enviado para seu e-mail em breve.
+                    </p>
                   </div>
                 )}
 
@@ -492,78 +451,69 @@ export default async function AlunoDashboard() {
                   className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700"
                 >
                   Ver detalhes financeiros
-                  <ArrowRight className="w-3.5 h-3.5" />
+                  <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             ) : (
-              <div className="py-12 flex flex-col items-center justify-center bg-emerald-50/30 rounded-3xl border border-dashed border-emerald-200">
-                <div className="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mb-4 shadow-sm">
-                  <Badge variant="success" className="p-0 border-none">✅</Badge>
+              <div className="flex flex-col items-center justify-center rounded-3xl border border-dashed border-emerald-200 bg-emerald-50/30 py-12">
+                <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 shadow-sm">
+                  <Badge variant="success" className="border-none p-0">OK</Badge>
                 </div>
-                <p className="text-sm font-black text-emerald-700 uppercase tracking-widest">Tudo em dia!</p>
+                <p className="text-sm font-black uppercase tracking-widest text-emerald-700">Tudo em dia!</p>
               </div>
             )}
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <Card className="lg:col-span-2 glass-card overflow-hidden relative">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-3xl -mr-16 -mt-16" />
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              <Trophy className="w-4 h-4" /> Mapeamento de Skills
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        <Card className="glass-card overflow-hidden lg:col-span-2">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              <Target className="h-4 w-4 text-indigo-500" /> Nivelamento
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-8">
-            <SkillsRadar data={avaliacoes || []} />
-
-            <div className="flex justify-between items-center px-2 pt-6 border-t border-slate-100">
-              {cefrLevels.map((level, idx) => {
-                const isCompleted = idx < currentCefrIdx
-                const isCurrent = idx === currentCefrIdx
-                return (
-                  <div key={level} className="flex flex-col items-center gap-3 relative">
-                    <div className={`
-                      w-8 h-8 rounded-lg flex items-center justify-center text-[9px] font-black transition-all duration-500
-                      ${isCompleted ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/10 scale-100' :
-                        isCurrent ? 'bg-white border-2 border-blue-600 text-blue-600 shadow-xl scale-125 z-10' :
-                        'bg-slate-100 text-slate-400'}
-                    `}>
-                      {level}
-                    </div>
-                  </div>
-                )
-              })}
+          <CardContent className="flex flex-col justify-between gap-6 pt-6 md:flex-row md:items-center">
+            <div className="space-y-2">
+              <p className="text-lg font-black tracking-tight text-slate-900">
+                Veja seu último teste, respostas certas e erradas e histórico técnico
+              </p>
+              <p className="text-sm font-medium leading-relaxed text-slate-500">
+                O detalhamento pedagógico do professor fica separado, mas você pode acompanhar seu próprio desempenho e evolução.
+              </p>
             </div>
+            <Link
+              href="/aluno/nivelamento"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700"
+            >
+              Abrir nivelamento
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </CardContent>
         </Card>
 
-        <Card className="glass-card overflow-hidden relative">
+        <Card className="glass-card overflow-hidden">
           <CardHeader className="pb-4">
-            <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-              Progresso do Contrato
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-blue-400">
+              <Flame className="h-4 w-4 text-amber-500" /> Jornada
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="flex justify-between items-end">
-              <div className="space-y-1">
-                <p className="text-xs font-black text-slate-400 uppercase tracking-widest">Concluído</p>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-3xl font-black text-blue-900 tracking-tighter">{contrato?.aulas_dadas || 0}</span>
-                  <span className="text-sm font-bold text-slate-400 uppercase tracking-tighter">/ {contrato?.aulas_totais || 20}</span>
-                </div>
-              </div>
-              <Badge className="bg-blue-900 text-white border-none font-black text-[8px] uppercase px-2 py-1 rounded-lg">
-                {progressPct}%
-              </Badge>
+          <CardContent className="space-y-4">
+            <div className="rounded-2xl bg-amber-500 px-4 py-4 text-white">
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-100">Sequência atual</p>
+              <p className="text-3xl font-black tracking-tight">{profile?.streak_count || 0} dias</p>
             </div>
-            <div className="relative h-3 bg-slate-100 rounded-full overflow-hidden shadow-inner">
-              <div
-                className="h-full bg-blue-600 rounded-full transition-all duration-1000"
-                style={{ width: `${progressPct}%` }}
-              />
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
+              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Status de hoje</p>
+              <p className="mt-2 text-sm font-black tracking-tight text-blue-900">{streakSummary.headline}</p>
             </div>
+            <Link
+              href="/aluno/jornada"
+              className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600"
+            >
+              Abrir jornada
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </CardContent>
         </Card>
       </div>

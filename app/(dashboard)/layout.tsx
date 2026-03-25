@@ -12,6 +12,7 @@ import {
   Sparkles,
   FileText,
   Flame,
+  Target,
 } from 'lucide-react'
 import { Logo } from '@/components/dashboard/Logo'
 
@@ -122,6 +123,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
                     <Flame className="w-4 h-4" />
                   </div>
                   Jornada
+                </Link>
+                <Link href="/aluno/nivelamento" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
+                  <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                    <Target className="w-4 h-4" />
+                  </div>
+                  Nivelamento
                 </Link>
                 <Link href="/aluno/calendario" className="flex items-center gap-4 px-4 py-3.5 rounded-2xl hover:bg-white/50 text-blue-900/70 hover:text-blue-900 font-bold text-sm transition-all group">
                   <div className="p-2 rounded-xl bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white transition-colors">

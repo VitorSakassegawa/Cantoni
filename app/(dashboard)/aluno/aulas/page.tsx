@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { BookOpen, ChevronLeft } from 'lucide-react'
+import { BookOpen, ChevronLeft, Layers } from 'lucide-react'
 import Link from 'next/link'
 import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import { getStudentRemarkBlockReason } from '@/lib/insights'
@@ -16,16 +16,20 @@ export default async function AlunoAulasPage() {
 
   const { data: contratos } = await supabase
     .from('contratos')
-    .select('id, planos(remarca_max_mes)')
+    .select('id, status, aulas_dadas, aulas_totais, aulas_restantes, data_inicio, data_fim, planos(remarca_max_mes, descricao)')
     .eq('aluno_id', user.id)
-    .eq('status', 'ativo')
+    .neq('status', 'cancelado')
 
-  const contratosAtivos = (contratos as any[]) || []
-  const contratoIds = contratosAtivos.map((c: any) => c.id) || []
-  const remarcacaoLimitByContratoId = contratosAtivos.reduce((acc: Record<number, number | null>, contrato: any) => {
+  const contratosAtivos = ((contratos as any[]) || []).filter((contrato) => contrato.status === 'ativo')
+  const contratoAtual = contratosAtivos[0] || ((contratos as any[]) || [])[0] || null
+  const contratoIds = (((contratos as any[]) || []).map((c: any) => c.id)) || []
+  const remarcacaoLimitByContratoId = (((contratos as any[]) || [])).reduce((acc: Record<number, number | null>, contrato: any) => {
     acc[contrato.id] = contrato?.planos?.remarca_max_mes ?? null
     return acc
   }, {})
+  const progressPct = contratoAtual
+    ? Math.round(((contratoAtual.aulas_dadas || 0) / Math.max(1, contratoAtual.aulas_totais || 1)) * 100)
+    : 0
 
   const { data: remarcacoesMes } = await supabase
     .from('remarcacoes_mes')
@@ -76,17 +80,76 @@ export default async function AlunoAulasPage() {
         <p className="text-slate-500 font-medium">Histórico completo de lições, frequências e materiais.</p>
       </div>
 
-      <Card className="glass-card border-none overflow-hidden">
-        <CardHeader className="p-8 bg-slate-50/50 border-b border-slate-100/50">
-          <CardTitle className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center"><BookOpen className="w-4 h-4" /></div>
-            Timeline de Aulas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <AulasTimeline aulas={aulasComRegras || []} isProfessor={false} />
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-8 xl:grid-cols-[0.9fr_1.1fr]">
+        <Card className="glass-card overflow-hidden">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              <Layers className="w-4 h-4 text-blue-500" /> Progresso do contrato
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6 pt-6">
+            {contratoAtual ? (
+              <>
+                <div className="space-y-2">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    {contratoAtual?.planos?.descricao || 'Plano atual'}
+                  </p>
+                  <p className="text-3xl font-black tracking-tighter text-slate-900">
+                    {contratoAtual.aulas_dadas || 0}
+                    <span className="ml-1 text-sm font-bold uppercase tracking-widest text-slate-400">
+                      / {contratoAtual.aulas_totais || 0}
+                    </span>
+                  </p>
+                  <p className="text-sm font-medium text-slate-500">
+                    {contratoAtual.aulas_restantes || 0} aula(s) restante(s) no contrato atual.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <span>Concluído</span>
+                    <span>{progressPct}%</span>
+                  </div>
+                  <div className="h-3 overflow-hidden rounded-full bg-slate-100 shadow-inner">
+                    <div className="h-full rounded-full bg-blue-600 transition-all duration-700" style={{ width: `${progressPct}%` }} />
+                  </div>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Período</p>
+                    <p className="mt-2 text-sm font-bold text-slate-900">
+                      {new Date(contratoAtual.data_inicio).toLocaleDateString('pt-BR')} - {new Date(contratoAtual.data_fim).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Remarcações</p>
+                    <p className="mt-2 text-sm font-bold text-slate-900">
+                      Até {contratoAtual?.planos?.remarca_max_mes ?? 0} por mês no plano atual
+                    </p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="rounded-3xl border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center text-sm font-medium text-slate-500">
+                Nenhum contrato encontrado para exibir progresso.
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card className="glass-card border-none overflow-hidden">
+          <CardHeader className="p-8 bg-slate-50/50 border-b border-slate-100/50">
+            <CardTitle className="text-xs font-black text-blue-400 uppercase tracking-[0.2em] flex items-center gap-3">
+              <div className="w-8 h-8 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center"><BookOpen className="w-4 h-4" /></div>
+              Timeline de Aulas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-0">
+            <AulasTimeline aulas={aulasComRegras || []} isProfessor={false} />
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
