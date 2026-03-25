@@ -218,8 +218,8 @@ export default function AulaRow({
     if (!file) return
     setUploading(true)
     try {
-      await uploadHomeworkImage(aula.id, file)
-      toast.success('Anexo enviado com sucesso!')
+      const result = await uploadHomeworkImage(aula.id, file)
+      toast.success(`Anexo enviado com sucesso! +${result.xpAwarded} XP na sua Jornada.`)
       window.location.reload()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro no upload')

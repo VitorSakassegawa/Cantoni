@@ -108,9 +108,9 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
 
     setCompleting(true)
     try {
-      const { success } = await concluirAula(aula.id)
+      const { success, xpAwarded } = await concluirAula(aula.id)
       if (success) {
-        toast.success('Aula concluída com sucesso!')
+        toast.success(`Aula concluída com sucesso! +${xpAwarded} XP na Jornada do aluno.`)
         onSuccess?.()
         onOpenChange(false)
       }

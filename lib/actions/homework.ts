@@ -4,6 +4,7 @@ import { requireLessonAccess } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { registerStudentActivityBestEffort } from '@/lib/streak'
+import { getXpReward } from '@/lib/gamification'
 
 export async function uploadHomeworkImage(aulaId: number, file: File) {
   await requireLessonAccess(aulaId, {
@@ -53,7 +54,7 @@ export async function uploadHomeworkImage(aulaId: number, file: File) {
 
   revalidatePath('/aluno')
   revalidatePath('/aluno/aulas')
-  return { success: true, url: publicUrl }
+  return { success: true, url: publicUrl, xpAwarded: getXpReward('homeworkComplete') }
 }
 
 export async function updateLessonHomework(

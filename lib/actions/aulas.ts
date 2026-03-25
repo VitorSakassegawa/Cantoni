@@ -10,6 +10,7 @@ import { enviarConfirmacaoRemarcacao } from '@/lib/resend'
 import { horasAteAula, formatDateTime } from '@/lib/utils'
 import { logActivityBestEffort } from '@/lib/activity-log'
 import { registerStudentActivityBestEffort } from '@/lib/streak'
+import { getXpReward } from '@/lib/gamification'
 
 export async function cancelarAula(aulaId: number) {
   const { user, aula, contrato, isProfessor, serviceSupabase } = await requireLessonAccess(aulaId, {
@@ -269,7 +270,7 @@ export async function concluirAula(aulaId: number) {
   const result = await ContractService.concluirAula(aulaId, '')
 
   if (result.alreadyConcluded) {
-    return { success: true }
+    return { success: true, xpAwarded: getXpReward('lessonComplete') }
   }
 
   const contrato = (
@@ -300,7 +301,7 @@ export async function concluirAula(aulaId: number) {
     await registerStudentActivityBestEffort(contrato.contratos.aluno_id)
   }
 
-  return { success: true, ...result }
+  return { success: true, xpAwarded: getXpReward('lessonComplete'), ...result }
 }
 
 export async function rejeitarRemarcacao(aulaId: number, justificativa: string) {

@@ -1,5 +1,14 @@
 import { STUDENT_STREAK_RULES, getStreakSummary } from '@/lib/streak-utils'
 
+export const JOURNEY_XP_REWARDS = {
+  flashcardReview: 4,
+  flashcardAdd: 6,
+  homeworkComplete: 18,
+  lessonComplete: 25,
+} as const
+
+export type JourneyXpAction = keyof typeof JOURNEY_XP_REWARDS
+
 export type JourneyMission = {
   id: string
   title: string
@@ -60,15 +69,23 @@ export type JourneyLevelSummary = {
   title: string
 }
 
+export type JourneyXpRule = {
+  id: JourneyXpAction
+  title: string
+  description: string
+  xp: number
+  href: string
+}
+
 const STREAK_MILESTONES = [3, 7, 14, 30, 60]
 const FLASHCARD_MILESTONES = [10, 25, 50, 100]
 const HOMEWORK_MILESTONES = [5, 10, 20, 40]
 const LESSON_MILESTONES = [5, 10, 20, 40]
 
 function getAchievementRarity(milestone: number): AchievementRarity {
-  if (milestone >= 60 || milestone >= 100) return 'legendary'
-  if (milestone >= 30 || milestone >= 50) return 'epic'
-  if (milestone >= 14 || milestone >= 25) return 'rare'
+  if (milestone >= 60) return 'legendary'
+  if (milestone >= 30) return 'epic'
+  if (milestone >= 14) return 'rare'
   return 'common'
 }
 
@@ -94,6 +111,43 @@ function buildMilestoneAchievement(
 
 function buildProgressPct(current: number, target: number) {
   return Math.min(100, Math.round((current / target) * 100))
+}
+
+export function getXpReward(action: JourneyXpAction) {
+  return JOURNEY_XP_REWARDS[action]
+}
+
+export function buildJourneyXpRules(): JourneyXpRule[] {
+  return [
+    {
+      id: 'flashcardReview',
+      title: 'Revisar flashcards',
+      description: 'Cada revisão salva na sessão de estudo soma XP na sua jornada.',
+      xp: JOURNEY_XP_REWARDS.flashcardReview,
+      href: '/aluno/flashcards',
+    },
+    {
+      id: 'flashcardAdd',
+      title: 'Adicionar palavras novas',
+      description: 'Expandir seu banco pessoal de vocabulário também vira progresso visível.',
+      xp: JOURNEY_XP_REWARDS.flashcardAdd,
+      href: '/aluno/flashcards',
+    },
+    {
+      id: 'homeworkComplete',
+      title: 'Enviar homework',
+      description: 'Fechar tarefas no portal pesa bastante no seu ritmo semanal.',
+      xp: JOURNEY_XP_REWARDS.homeworkComplete,
+      href: '/aluno/aulas',
+    },
+    {
+      id: 'lessonComplete',
+      title: 'Concluir aula',
+      description: 'Aulas concluídas registradas no sistema são sua maior fonte de XP.',
+      xp: JOURNEY_XP_REWARDS.lessonComplete,
+      href: '/aluno',
+    },
+  ]
 }
 
 export function buildJourneyMissions(snapshot: JourneySnapshot) {

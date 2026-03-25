@@ -12,11 +12,13 @@ import {
   Star,
   Target,
   Trophy,
+  WandSparkles,
 } from 'lucide-react'
 import {
   buildJourneyAchievements,
   buildJourneyLevel,
   buildJourneyMissions,
+  buildJourneyXpRules,
   buildPersonalBestWeek,
   type AchievementRarity,
   type JourneyAchievement,
@@ -42,6 +44,7 @@ function rarityClasses(rarity: AchievementRarity, unlocked: boolean) {
       card: 'border-slate-100 bg-slate-50/80',
       icon: 'bg-white text-slate-400',
       badge: 'secondary' as const,
+      glow: '',
     }
   }
 
@@ -51,24 +54,28 @@ function rarityClasses(rarity: AchievementRarity, unlocked: boolean) {
         card: 'border-amber-300 bg-gradient-to-br from-amber-100 via-yellow-50 to-white shadow-xl shadow-amber-200/40',
         icon: 'bg-amber-500 text-white',
         badge: 'warning' as const,
+        glow: 'animate-pulse',
       }
     case 'epic':
       return {
         card: 'border-indigo-200 bg-gradient-to-br from-indigo-100 via-white to-blue-50 shadow-xl shadow-indigo-200/35',
         icon: 'bg-indigo-600 text-white',
         badge: 'default' as const,
+        glow: '',
       }
     case 'rare':
       return {
         card: 'border-blue-200 bg-blue-50/80 shadow-lg shadow-blue-200/30',
         icon: 'bg-blue-600 text-white',
         badge: 'default' as const,
+        glow: '',
       }
     default:
       return {
         card: 'border-emerald-200 bg-emerald-50/80 shadow-lg shadow-emerald-200/25',
         icon: 'bg-emerald-600 text-white',
         badge: 'success' as const,
+        glow: '',
       }
   }
 }
@@ -126,51 +133,59 @@ export default async function AlunoJornadaPage() {
   const weekStart = startOfWeek(new Date())
   const weekEnd = endOfWeek(new Date())
 
-  const [{ count: dueFlashcardsCount }, { count: totalFlashcardsCount }, { count: pendingHomeworkCount }, { count: completedHomeworkCount }, { count: completedLessonsCount }, { count: weeklyFlashcardsCount }, { count: weeklyHomeworkCount }, { count: weeklyLessonsCount }] =
-    await Promise.all([
-      supabase
-        .from('flashcards')
-        .select('id', { count: 'exact', head: true })
-        .eq('aluno_id', user.id)
-        .lte('next_review', now),
-      supabase.from('flashcards').select('id', { count: 'exact', head: true }).eq('aluno_id', user.id),
-      supabase
-        .from('aulas')
-        .select('id', { count: 'exact', head: true })
-        .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
-        .eq('has_homework', true)
-        .eq('homework_completed', false),
-      supabase
-        .from('aulas')
-        .select('id', { count: 'exact', head: true })
-        .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
-        .eq('homework_completed', true),
-      supabase
-        .from('aulas')
-        .select('id', { count: 'exact', head: true })
-        .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
-        .in('status', ['dada', 'finalizado']),
-      supabase
-        .from('flashcards')
-        .select('id', { count: 'exact', head: true })
-        .eq('aluno_id', user.id)
-        .gte('created_at', weekStart.toISOString())
-        .lte('created_at', weekEnd.toISOString()),
-      supabase
-        .from('aulas')
-        .select('id', { count: 'exact', head: true })
-        .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
-        .eq('homework_completed', true)
-        .gte('data_hora', weekStart.toISOString())
-        .lte('data_hora', weekEnd.toISOString()),
-      supabase
-        .from('aulas')
-        .select('id', { count: 'exact', head: true })
-        .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
-        .in('status', ['dada', 'finalizado'])
-        .gte('data_hora', weekStart.toISOString())
-        .lte('data_hora', weekEnd.toISOString()),
-    ])
+  const [
+    { count: dueFlashcardsCount },
+    { count: totalFlashcardsCount },
+    { count: pendingHomeworkCount },
+    { count: completedHomeworkCount },
+    { count: completedLessonsCount },
+    { count: weeklyFlashcardsCount },
+    { count: weeklyHomeworkCount },
+    { count: weeklyLessonsCount },
+  ] = await Promise.all([
+    supabase
+      .from('flashcards')
+      .select('id', { count: 'exact', head: true })
+      .eq('aluno_id', user.id)
+      .lte('next_review', now),
+    supabase.from('flashcards').select('id', { count: 'exact', head: true }).eq('aluno_id', user.id),
+    supabase
+      .from('aulas')
+      .select('id', { count: 'exact', head: true })
+      .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
+      .eq('has_homework', true)
+      .eq('homework_completed', false),
+    supabase
+      .from('aulas')
+      .select('id', { count: 'exact', head: true })
+      .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
+      .eq('homework_completed', true),
+    supabase
+      .from('aulas')
+      .select('id', { count: 'exact', head: true })
+      .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
+      .in('status', ['dada', 'finalizado']),
+    supabase
+      .from('flashcards')
+      .select('id', { count: 'exact', head: true })
+      .eq('aluno_id', user.id)
+      .gte('created_at', weekStart.toISOString())
+      .lte('created_at', weekEnd.toISOString()),
+    supabase
+      .from('aulas')
+      .select('id', { count: 'exact', head: true })
+      .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
+      .eq('homework_completed', true)
+      .gte('data_hora', weekStart.toISOString())
+      .lte('data_hora', weekEnd.toISOString()),
+    supabase
+      .from('aulas')
+      .select('id', { count: 'exact', head: true })
+      .in('contrato_id', contractIds.length > 0 ? contractIds : [-1])
+      .in('status', ['dada', 'finalizado'])
+      .gte('data_hora', weekStart.toISOString())
+      .lte('data_hora', weekEnd.toISOString()),
+  ])
 
   const weeklyHistory: WeeklyPerformance[] = []
   for (let index = 0; index < 6; index += 1) {
@@ -227,15 +242,18 @@ export default async function AlunoJornadaPage() {
     weeklyHistory,
   }
 
-  const { missions, weeklyMissions, streakSummary, streakRules } = buildJourneyMissions(snapshot)
+  const { weeklyMissions, streakSummary, streakRules } = buildJourneyMissions(snapshot)
   const achievements = buildJourneyAchievements(snapshot)
   const levelSummary = buildJourneyLevel(snapshot)
   const personalBest = buildPersonalBestWeek(snapshot)
+  const xpRules = buildJourneyXpRules()
+  const weeklyGoalCompleted = weeklyMissions.every((mission) => mission.status === 'done')
+  const currentWeekIsBest = personalBest.currentWeek.score >= personalBest.bestWeek.score
 
   return (
-    <div className="space-y-10 pb-16 animate-fade-in">
+    <div className="space-y-10 animate-fade-in pb-16">
       <div className="relative overflow-hidden rounded-[2.5rem] bg-[#1e3a8a] p-10 text-white shadow-2xl shadow-blue-900/20">
-        <div className="absolute top-0 right-0 h-full w-[50%] bg-gradient-to-l from-white/10 to-transparent pointer-events-none" />
+        <div className="pointer-events-none absolute top-0 right-0 h-full w-[50%] bg-gradient-to-l from-white/10 to-transparent" />
         <div className="absolute -top-24 -right-24 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl" />
 
         <div className="relative z-10 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
@@ -244,11 +262,12 @@ export default async function AlunoJornadaPage() {
               <Flame className="h-3.5 w-3.5 text-amber-300" />
               Jornada do aluno
             </div>
-            <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
+            <h1 className="text-4xl font-black tracking-tighter md:text-5xl">
               Consistência virou progresso visível
             </h1>
             <p className="max-w-2xl text-sm font-medium leading-relaxed text-blue-100/80">
-              Veja seu XP, seu nível, suas metas e sua melhor semana pessoal usando aulas, flashcards e homework que já existem no portal.
+              Veja seu XP, seu nível, suas metas e sua melhor semana pessoal usando aulas,
+              flashcards e homework que já existem no portal.
             </p>
           </div>
 
@@ -264,6 +283,54 @@ export default async function AlunoJornadaPage() {
           </div>
         </div>
       </div>
+
+      {currentWeekIsBest ? (
+        <div className="rounded-[2rem] border border-amber-200 bg-gradient-to-r from-amber-50 via-yellow-50 to-white p-6 shadow-xl shadow-amber-200/25">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-amber-500 text-white shadow-lg shadow-amber-500/20">
+                <Trophy className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Ranking pessoal</p>
+                <p className="mt-1 text-xl font-black tracking-tight text-slate-900">
+                  Sua semana atual já é sua melhor semana pessoal
+                </p>
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  Continue nesse ritmo para consolidar um novo recorde com {personalBest.currentWeek.score} XP.
+                </p>
+              </div>
+            </div>
+            <Badge variant="warning" className="self-start text-[9px] font-black uppercase tracking-widest md:self-center">
+              Recorde em andamento
+            </Badge>
+          </div>
+        </div>
+      ) : null}
+
+      {weeklyGoalCompleted ? (
+        <div className="rounded-[2rem] border border-emerald-200 bg-gradient-to-r from-emerald-50 via-white to-emerald-50 p-6 shadow-xl shadow-emerald-200/25">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-4">
+              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-600/20">
+                <WandSparkles className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Semana fechada</p>
+                <p className="mt-1 text-xl font-black tracking-tight text-slate-900">
+                  Você concluiu todas as missões semanais
+                </p>
+                <p className="mt-1 text-sm font-medium text-slate-500">
+                  Sua jornada está equilibrada entre aulas, homework e vocabulário.
+                </p>
+              </div>
+            </div>
+            <Badge variant="success" className="self-start text-[9px] font-black uppercase tracking-widest md:self-center">
+              Missões completas
+            </Badge>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr]">
         <Card className="glass-card overflow-hidden">
@@ -296,18 +363,40 @@ export default async function AlunoJornadaPage() {
             <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Barra de progressão</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Barra de progresso</p>
                   <p className="mt-2 text-lg font-black tracking-tight text-blue-900">
                     {levelSummary.currentLevelXp} XP dentro do nível {levelSummary.level}
                   </p>
                 </div>
-                <Badge className="bg-blue-600 text-white border-none text-[9px] font-black uppercase tracking-widest">
+                <Badge className="border-none bg-blue-600 text-[9px] font-black uppercase tracking-widest text-white">
                   {levelSummary.progressPct}%
                 </Badge>
               </div>
               <div className="mt-4 h-3 overflow-hidden rounded-full bg-white/70">
                 <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${levelSummary.progressPct}%` }} />
               </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              {xpRules.map((rule) => (
+                <Link
+                  key={rule.id}
+                  href={rule.href}
+                  className="group rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5 transition-all hover:-translate-y-1 hover:border-blue-200 hover:bg-blue-50/70"
+                >
+                  <div className="flex items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Como ganhar XP</p>
+                      <p className="mt-2 text-lg font-black tracking-tight text-slate-900">{rule.title}</p>
+                      <p className="mt-1 text-sm font-medium leading-relaxed text-slate-500">{rule.description}</p>
+                    </div>
+                    <div className="rounded-2xl bg-blue-600 px-3 py-2 text-center text-white shadow-lg shadow-blue-500/20">
+                      <p className="text-[9px] font-black uppercase tracking-widest">+ XP</p>
+                      <p className="text-2xl font-black tracking-tight">{rule.xp}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -369,7 +458,7 @@ export default async function AlunoJornadaPage() {
                 }`}
               >
                 <div className="flex flex-col gap-4">
-                  <div className="flex items-center justify-between gap-3">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-black tracking-tight text-slate-900">{mission.title}</p>
@@ -457,17 +546,20 @@ export default async function AlunoJornadaPage() {
               const ui = rarityClasses(achievement.rarity, achievement.unlocked)
 
               return (
-                <div key={achievement.id} className={`rounded-3xl border px-5 py-5 transition-all ${ui.card}`}>
+                <div
+                  key={achievement.id}
+                  className={`rounded-3xl border px-5 py-5 transition-all hover:-translate-y-1 ${ui.card} ${ui.glow}`}
+                >
                   <div className="flex items-center justify-between">
-                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${ui.icon}`}>
-                      <Icon className="h-5 w-5" />
+                    <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${ui.icon}`}>
+                      <Icon className="h-6 w-6" />
                     </div>
                     <Badge variant={ui.badge} className="text-[8px] font-black uppercase tracking-widest">
                       {achievement.unlocked ? achievement.rarity : 'bloqueada'}
                     </Badge>
                   </div>
                   <div className="mt-5 space-y-2">
-                    <p className="text-sm font-black tracking-tight text-slate-900">{achievement.title}</p>
+                    <p className="text-base font-black tracking-tight text-slate-900">{achievement.title}</p>
                     <p className="text-[11px] font-medium leading-relaxed text-slate-500">{achievement.description}</p>
                     <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                       {achievement.progressLabel}

@@ -3,6 +3,7 @@
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { registerStudentActivityBestEffort } from '@/lib/streak'
+import { getXpReward } from '@/lib/gamification'
 
 /**
  * SuperMemo-2 (SM-2) Algorithm simplified
@@ -55,7 +56,7 @@ export async function addFlashcard(word: string, translation: string, example?: 
   await registerStudentActivityBestEffort(user.id)
   revalidatePath('/aluno')
   revalidatePath('/aluno/flashcards')
-  return { success: true }
+  return { success: true, xpAwarded: getXpReward('flashcardAdd') }
 }
 
 export async function updateFlashcardReview(id: string, quality: number) {
@@ -96,5 +97,5 @@ export async function updateFlashcardReview(id: string, quality: number) {
   await registerStudentActivityBestEffort(user.id)
   revalidatePath('/aluno')
   revalidatePath('/aluno/flashcards')
-  return { success: true }
+  return { success: true, xpAwarded: getXpReward('flashcardReview') }
 }
