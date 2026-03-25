@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Toaster } from '@/components/ui/sonner'
+import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="pt-BR" className="h-full">
       <body className="min-h-full">
+        <ServiceWorkerRegister />
         {children}
         <Toaster position="top-right" richColors closeButton />
       </body>

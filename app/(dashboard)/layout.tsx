@@ -15,11 +15,14 @@ import {
   Target,
 } from 'lucide-react'
 import { Logo } from '@/components/dashboard/Logo'
+import MobileDashboardNav from '@/components/dashboard/MobileDashboardNav'
+import PwaInstallPrompt from '@/components/pwa/PwaInstallPrompt'
 
 type NavItem = {
   href: string
   label: string
   icon: React.ComponentType<{ className?: string }>
+  iconKey: string
 }
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,23 +39,23 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const basePath = isProfessor ? '/professor' : '/aluno'
   const navItems: NavItem[] = isProfessor
     ? [
-        { href: basePath, label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/professor/pagamentos', label: 'Financeiro', icon: CreditCard },
-        { href: '/professor/alunos', label: 'Alunos', icon: Users },
-        { href: '/professor/aulas', label: 'Aulas', icon: BookOpen },
-        { href: '/professor/nivelamento', label: 'Nivelamento', icon: Sparkles },
-        { href: '/professor/calendario', label: 'Calendário', icon: Calendar },
-        { href: '/professor/perfil', label: 'Meu Perfil', icon: User },
+        { href: basePath, label: 'Dashboard', icon: LayoutDashboard, iconKey: 'dashboard' },
+        { href: '/professor/pagamentos', label: 'Financeiro', icon: CreditCard, iconKey: 'financeiro' },
+        { href: '/professor/alunos', label: 'Alunos', icon: Users, iconKey: 'alunos' },
+        { href: '/professor/aulas', label: 'Aulas', icon: BookOpen, iconKey: 'aulas' },
+        { href: '/professor/nivelamento', label: 'Nivelamento', icon: Sparkles, iconKey: 'nivelamento' },
+        { href: '/professor/calendario', label: 'Calendário', icon: Calendar, iconKey: 'calendario' },
+        { href: '/professor/perfil', label: 'Meu Perfil', icon: User, iconKey: 'perfil' },
       ]
     : [
-        { href: basePath, label: 'Dashboard', icon: LayoutDashboard },
-        { href: '/aluno/pagamentos', label: 'Financeiro', icon: CreditCard },
-        { href: '/aluno/aulas', label: 'Aulas', icon: BookOpen },
-        { href: '/aluno/jornada', label: 'Jornada', icon: Flame },
-        { href: '/aluno/nivelamento', label: 'Nivelamento', icon: Target },
-        { href: '/aluno/calendario', label: 'Calendário', icon: Calendar },
-        { href: '/aluno/documentos', label: 'Documentos', icon: FileText },
-        { href: '/aluno/perfil', label: 'Meu Perfil', icon: User },
+        { href: basePath, label: 'Dashboard', icon: LayoutDashboard, iconKey: 'dashboard' },
+        { href: '/aluno/pagamentos', label: 'Financeiro', icon: CreditCard, iconKey: 'financeiro' },
+        { href: '/aluno/aulas', label: 'Aulas', icon: BookOpen, iconKey: 'aulas' },
+        { href: '/aluno/jornada', label: 'Jornada', icon: Flame, iconKey: 'jornada' },
+        { href: '/aluno/nivelamento', label: 'Nivelamento', icon: Target, iconKey: 'target' },
+        { href: '/aluno/calendario', label: 'Calendário', icon: Calendar, iconKey: 'calendario' },
+        { href: '/aluno/documentos', label: 'Documentos', icon: FileText, iconKey: 'documentos' },
+        { href: '/aluno/perfil', label: 'Meu Perfil', icon: User, iconKey: 'perfil' },
       ]
 
   return (
@@ -92,21 +95,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </form>
         </div>
 
-        <div className="mt-4 flex gap-3 overflow-x-auto pb-1">
-          {navItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="inline-flex shrink-0 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-[10px] font-black uppercase tracking-widest text-slate-600 shadow-sm"
-              >
-                <Icon className="h-4 w-4 text-blue-600" />
-                {item.label}
-              </Link>
-            )
-          })}
-        </div>
+        <MobileDashboardNav items={navItems.map(({ href, label, iconKey }) => ({ href, label, icon: iconKey }))} />
       </div>
 
       <aside className="z-10 m-6 mr-0 hidden w-72 flex-col lg:flex">
@@ -167,7 +156,10 @@ export default async function DashboardLayout({ children }: { children: React.Re
       </aside>
 
       <main className="flex-1 overflow-auto">
-        <div className="px-4 py-6 pb-10 sm:px-6 lg:p-8">{children}</div>
+        <div className="mobile-safe-bottom px-4 py-4 sm:px-6 lg:p-8">
+          <PwaInstallPrompt />
+          {children}
+        </div>
       </main>
     </div>
   )
