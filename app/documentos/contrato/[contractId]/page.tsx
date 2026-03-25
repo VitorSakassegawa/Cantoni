@@ -5,6 +5,8 @@ import { getDocumentContext } from '@/lib/document-access'
 import { buildContractSections, LEGAL_REFERENCE_LINKS } from '@/lib/documents'
 import { formatCurrency, formatDateOnly } from '@/lib/utils'
 
+const LEGAL_TEACHER_NAME = 'Gabriel de Oliveira Cantoni'
+
 export default async function ContractDocumentPage({
   params,
 }: {
@@ -50,7 +52,7 @@ export default async function ContractDocumentPage({
           </div>
           <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
-            <p className="mt-3 text-lg font-black">{context.teacher?.full_name || 'Professor responsavel'}</p>
+            <p className="mt-3 text-lg font-black">{LEGAL_TEACHER_NAME}</p>
             <p className="mt-2 text-sm text-slate-600">
               CPF: {context.teacher?.cpf || 'nao informado'} | E-mail: {context.teacher?.email || 'nao informado'} | Tel.: {context.teacher?.phone || 'nao informado'} | Pessoa Fisica
             </p>
@@ -161,12 +163,12 @@ export default async function ContractDocumentPage({
               </p>
             </div>
             <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
-              <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
-                {context.teacher?.full_name || 'Professor responsavel'}
-              </p>
-              <p className="text-center text-xs font-medium text-slate-500">
-                CPF: {context.teacher?.cpf || 'nao informado'}
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+                <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
+                  {LEGAL_TEACHER_NAME}
+                </p>
+                <p className="text-center text-xs font-medium text-slate-500">
+                  CPF: {context.teacher?.cpf || 'nao informado'}
               </p>
             </div>
           </div>

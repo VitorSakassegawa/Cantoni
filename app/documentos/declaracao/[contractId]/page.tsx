@@ -4,6 +4,8 @@ import DocumentShell from '@/components/documents/DocumentShell'
 import { getDocumentContext } from '@/lib/document-access'
 import { buildEnrollmentDeclaration } from '@/lib/documents'
 
+const LEGAL_TEACHER_NAME = 'Gabriel de Oliveira Cantoni'
+
 export default async function EnrollmentDeclarationPage({
   params,
 }: {
@@ -39,7 +41,7 @@ export default async function EnrollmentDeclarationPage({
 
         <section className="rounded-[1.5rem] bg-slate-50 p-6">
           <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emitente</p>
-          <p className="mt-2 text-lg font-black">{context.teacher?.full_name || 'Professor responsavel'}</p>
+          <p className="mt-2 text-lg font-black">{LEGAL_TEACHER_NAME}</p>
           <p className="text-sm text-slate-600">CPF: {context.teacher?.cpf || 'nao informado'}</p>
           <p className="text-sm text-slate-600">E-mail: {context.teacher?.email || 'nao informado'}</p>
         </section>
@@ -67,7 +69,7 @@ export default async function EnrollmentDeclarationPage({
           </p>
           <div className="mt-16">
             <p className="mx-auto w-full max-w-sm border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
-              {context.teacher?.full_name || 'Professor responsavel'}
+              {LEGAL_TEACHER_NAME}
             </p>
             <p className="mt-2 text-center text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
               Cantoni English School

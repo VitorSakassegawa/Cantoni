@@ -27,6 +27,8 @@ const WEEKDAY_LABELS: Record<number, string> = {
   6: 'sabado',
 }
 
+const LEGAL_TEACHER_NAME = 'Gabriel de Oliveira Cantoni'
+
 function getPersonName(person: any, fallback: string) {
   return person?.full_name || fallback
 }
@@ -45,6 +47,10 @@ function getPersonPhone(person: any) {
 
 function getTeacherCity(teacher: any) {
   return teacher?.city || 'Guarulhos/SP'
+}
+
+function getTeacherLegalName(teacher: any) {
+  return teacher?.cpf ? LEGAL_TEACHER_NAME : getPersonName(teacher, 'o professor')
 }
 
 function getWeeklyFrequency(contract: any) {
@@ -108,7 +114,7 @@ export function buildContractSections(input: {
   return [
     {
       title: '1. Partes e finalidade',
-      body: `O presente instrumento regula a prestacao de servicos educacionais personalizados de ensino de lingua inglesa entre ${getPersonName(teacher, 'o professor')} (Contratado, Pessoa Fisica, CPF ${getPersonCpf(teacher)}, e-mail ${getPersonEmail(teacher)}, tel. ${getPersonPhone(teacher)}) e ${getPersonName(student, 'o aluno')} (Contratante, CPF ${getPersonCpf(student)}), com foco em transparencia, boa-fe objetiva e clareza das informacoes essenciais do servico.`,
+      body: `O presente instrumento regula a prestacao de servicos educacionais personalizados de ensino de lingua inglesa entre ${getTeacherLegalName(teacher)} (Contratado, Pessoa Fisica, CPF ${getPersonCpf(teacher)}, e-mail ${getPersonEmail(teacher)}, tel. ${getPersonPhone(teacher)}) e ${getPersonName(student, 'o aluno')} (Contratante, CPF ${getPersonCpf(student)}), com foco em transparencia, boa-fe objetiva e clareza das informacoes essenciais do servico.`,
     },
     {
       title: '2. Objeto e formato das aulas',
@@ -174,7 +180,7 @@ export function buildEnrollmentDeclaration(input: {
 
   return {
     title: 'Declaracao de Matricula',
-    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de lingua estrangeira conduzido por ${getPersonName(teacher, 'o professor')}, no periodo de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
+    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de lingua estrangeira conduzido por ${getTeacherLegalName(teacher)}, no periodo de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
     complementary: `O contrato atualmente vinculado ao portal e o de no ${contract.id}, em status ${contract.status}, com organizacao pedagogica registrada no ambiente digital da escola.`,
     issueDate,
   }
@@ -199,7 +205,7 @@ export function buildContractSnapshot(input: {
       phone: getPersonPhone(input.student),
     },
     teacher: {
-      fullName: getPersonName(input.teacher, 'Professor responsavel'),
+      fullName: getTeacherLegalName(input.teacher),
       cpf: getPersonCpf(input.teacher),
       email: getPersonEmail(input.teacher),
       phone: getPersonPhone(input.teacher),
@@ -241,7 +247,7 @@ export function buildDeclarationSnapshot(input: {
     title: declaration.title,
     generatedAt: new Date().toISOString(),
     teacher: {
-      fullName: getPersonName(input.teacher, 'Professor responsavel'),
+      fullName: getTeacherLegalName(input.teacher),
       cpf: getPersonCpf(input.teacher),
       email: getPersonEmail(input.teacher),
       city: getTeacherCity(input.teacher),
