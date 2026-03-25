@@ -257,29 +257,6 @@ export default async function AlunoDashboard() {
         )}
       </div>
 
-      <Card className="glass-card overflow-hidden">
-        <CardHeader className="border-b border-slate-100 pb-4">
-          <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
-            <FileText className="h-4 w-4 text-blue-500" /> Seus documentos
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col justify-between gap-5 pt-6 md:flex-row md:items-center">
-          <div className="space-y-2">
-            <p className="text-lg font-black tracking-tight text-slate-900">Contrato e declaração prontos para PDF</p>
-            <p className="text-sm font-medium text-slate-500">
-              Abra seus documentos acadêmicos, confira as informações vigentes no portal e salve uma versão em PDF quando precisar.
-            </p>
-          </div>
-          <Link
-            href="/aluno/documentos"
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
-          >
-            Abrir documentos
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </CardContent>
-      </Card>
-
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <Card className="glass-card group relative overflow-hidden">
           <div className="absolute top-0 right-0 p-8 opacity-5 transition-opacity group-hover:opacity-10">
@@ -360,13 +337,16 @@ export default async function AlunoDashboard() {
           </CardContent>
         </Card>
 
+      </div>
+
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
         <Card className={`glass-card transition-all duration-500 ${pagamentoPendenteComStatus?.effectiveStatus === 'atrasado' ? 'ring-2 ring-red-500/20' : ''}`}>
-          <CardHeader className="pb-4">
-            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">
+          <CardHeader className="pb-4 border-b border-slate-100">
+            <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
               Financeiro
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {pagamentoPendenteComStatus ? (
               <div className="space-y-6">
                 <div className="flex items-start justify-between">
@@ -439,10 +419,33 @@ export default async function AlunoDashboard() {
             )}
           </CardContent>
         </Card>
+
+        <Card className="glass-card overflow-hidden">
+          <CardHeader className="border-b border-slate-100 pb-4">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
+              <FileText className="h-4 w-4 text-blue-500" /> Seus documentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-5 pt-6">
+            <div className="space-y-2">
+              <p className="text-lg font-black tracking-tight text-slate-900">Contrato e declaração prontos para PDF</p>
+              <p className="text-sm font-medium text-slate-500">
+                Abra seus documentos acadêmicos, confira as informações vigentes no portal e salve uma versão em PDF quando precisar.
+              </p>
+            </div>
+            <Link
+              href="/aluno/documentos"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+            >
+              Abrir documentos
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        <Card className="glass-card overflow-hidden lg:col-span-2">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <Card className="glass-card overflow-hidden">
           <CardHeader className="border-b border-slate-100 pb-4">
             <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
               <Target className="h-4 w-4 text-indigo-500" /> Nivelamento
@@ -468,8 +471,8 @@ export default async function AlunoDashboard() {
         </Card>
 
         <Card className="glass-card overflow-hidden">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-blue-400">
+          <CardHeader className="pb-4 border-b border-slate-100">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
               <Flame className="h-4 w-4 text-amber-500" /> Jornada
             </CardTitle>
           </CardHeader>
