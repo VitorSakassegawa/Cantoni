@@ -6,13 +6,55 @@ export type ContractSection = {
   items?: string[]
 }
 
+type DocumentPerson = {
+  full_name?: string | null
+  cpf?: string | null
+  email?: string | null
+  phone?: string | null
+  city?: string | null
+}
+
+type DocumentPlan = {
+  freq_semana?: number | null
+  remarca_max_mes?: number | null
+}
+
+type DocumentContract = {
+  id: number
+  aulas_totais: number
+  data_inicio: string
+  data_fim: string
+  horario?: string | null
+  tipo_contrato?: string | null
+  valor?: number | string | null
+  forma_pagamento?: string | null
+  status?: string | null
+  dias_da_semana?: number[] | null
+  planos?: DocumentPlan | null
+}
+
+type DocumentPayment = {
+  parcela_num: number
+  valor?: number | string | null
+  data_vencimento: string
+}
+
+type DocumentAddendum = {
+  id: number
+  previous_open_value?: number | string | null
+  new_open_value?: number | string | null
+  previous_open_installments?: number | null
+  new_open_installments?: number | null
+  first_due_date?: string | null
+}
+
 export const LEGAL_REFERENCE_LINKS = [
   {
-    label: 'CDC - Lei nº 8.078/1990',
+    label: 'CDC - Lei n.º 8.078/1990',
     href: 'https://www.planalto.gov.br/ccivil_03/leis/l8078compilado.htm',
   },
   {
-    label: 'Código Civil - Lei nº 10.406/2002',
+    label: 'Código Civil - Lei n.º 10.406/2002',
     href: 'https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm',
   },
 ]
@@ -35,42 +77,40 @@ const WEEKDAY_LABELS: Record<number, string> = {
 
 const LEGAL_TEACHER_NAME = 'Gabriel de Oliveira Cantoni'
 
-function getPersonName(person: any, fallback: string) {
+function getPersonName(person: DocumentPerson | null | undefined, fallback: string) {
   return person?.full_name || fallback
 }
 
-function getPersonCpf(person: any) {
+function getPersonCpf(person: DocumentPerson | null | undefined) {
   return person?.cpf || 'não informado'
 }
 
-function getPersonEmail(person: any) {
+function getPersonEmail(person: DocumentPerson | null | undefined) {
   return person?.email || 'não informado'
 }
 
-function getPersonPhone(person: any) {
+function getPersonPhone(person: DocumentPerson | null | undefined) {
   return person?.phone || 'não informado'
 }
 
-function getTeacherCity(teacher: any) {
+function getTeacherCity(teacher: DocumentPerson | null | undefined) {
   return teacher?.city || 'Guarulhos/SP'
 }
 
-function getTeacherLegalName(teacher: any) {
+function getTeacherLegalName(teacher: DocumentPerson | null | undefined) {
   return teacher?.cpf ? LEGAL_TEACHER_NAME : getPersonName(teacher, 'o professor')
 }
 
-function getWeeklyFrequency(contract: any) {
-  return Number(contract?.planos?.freq_semana || 1)
+function getWeeklyFrequency(contract: DocumentContract) {
+  return Number(contract.planos?.freq_semana || 1)
 }
 
-function getRescheduleLimit(contract: any) {
-  return Number(contract?.planos?.remarca_max_mes || getWeeklyFrequency(contract))
+function getRescheduleLimit(contract: DocumentContract) {
+  return Number(contract.planos?.remarca_max_mes || getWeeklyFrequency(contract))
 }
 
-function getFirstDueDate(payments: any[]) {
-  return payments?.[0]?.data_vencimento
-    ? formatDateOnly(payments[0].data_vencimento)
-    : 'a definir'
+function getFirstDueDate(payments: DocumentPayment[]) {
+  return payments[0]?.data_vencimento ? formatDateOnly(payments[0].data_vencimento) : 'a definir'
 }
 
 function getPaymentMethodLabel(method?: string | null) {
@@ -89,25 +129,25 @@ export function formatContractDays(days?: number[] | null) {
   return days.map((day) => WEEKDAY_LABELS[day] || `dia ${day}`).join(', ')
 }
 
-export function buildPaymentSummary(payments: any[]) {
-  if (!payments || payments.length === 0) {
+export function buildPaymentSummary(payments: DocumentPayment[]) {
+  if (!payments.length) {
     return 'Pagamento ainda não detalhado no portal.'
   }
 
   return payments
     .map(
-      (payment: any) =>
+      (payment) =>
         `${payment.parcela_num}. ${formatCurrency(Number(payment.valor || 0))} com vencimento em ${formatDateOnly(payment.data_vencimento)}`
     )
     .join('; ')
 }
 
 export function buildContractSections(input: {
-  student: any
-  teacher: any
-  contract: any
-  payments: any[]
-  addenda: any[]
+  student: DocumentPerson
+  teacher: DocumentPerson
+  contract: DocumentContract
+  payments: DocumentPayment[]
+  addenda: DocumentAddendum[]
 }): ContractSection[] {
   const { student, teacher, contract, payments, addenda } = input
   const paymentCount = payments.length || 1
@@ -117,7 +157,7 @@ export function buildContractSections(input: {
   const weeklyFrequency = getWeeklyFrequency(contract)
   const rescheduleLimit = getRescheduleLimit(contract)
   const firstDueDate = getFirstDueDate(payments)
-  const hasAddenda = (addenda || []).length > 0
+  const hasAddenda = addenda.length > 0
 
   return [
     {
@@ -164,7 +204,7 @@ export function buildContractSections(input: {
     },
     {
       title: '10. Proteção de dados pessoais (LGPD)',
-      body: 'Os dados pessoais coletados neste contrato, como nome, CPF, e-mail e telefone, serão utilizados exclusivamente para identificação das partes, gestão da relação contratual e comunicações inerentes ao serviço, em conformidade com a Lei nº 13.709/2018. Os dados não serão compartilhados com terceiros sem consentimento expresso do titular, salvo obrigação legal.',
+      body: 'Os dados pessoais coletados neste contrato, como nome, CPF, e-mail e telefone, serão utilizados exclusivamente para identificação das partes, gestão da relação contratual e comunicações inerentes ao serviço, em conformidade com a Lei n.º 13.709/2018. Os dados não serão compartilhados com terceiros sem consentimento expresso do titular, salvo obrigação legal.',
     },
     {
       title: '11. Base de transparência contratual',
@@ -178,9 +218,9 @@ export function buildContractSections(input: {
 }
 
 export function buildEnrollmentDeclaration(input: {
-  student: any
-  teacher: any
-  contract: any
+  student: DocumentPerson
+  teacher: DocumentPerson
+  contract: DocumentContract
 }) {
   const { student, teacher, contract } = input
   const issueDate = new Intl.DateTimeFormat('pt-BR', {
@@ -199,11 +239,11 @@ export function buildEnrollmentDeclaration(input: {
 }
 
 export function buildContractSnapshot(input: {
-  student: any
-  teacher: any
-  contract: any
-  payments: any[]
-  addenda: any[]
+  student: DocumentPerson
+  teacher: DocumentPerson
+  contract: DocumentContract
+  payments: DocumentPayment[]
+  addenda: DocumentAddendum[]
 }) {
   return {
     kind: 'contract',
@@ -230,12 +270,12 @@ export function buildContractSnapshot(input: {
       lessons: input.contract.aulas_totais,
       totalValue: Number(input.contract.valor || 0),
       paymentMethod: getPaymentMethodLabel(input.contract.forma_pagamento),
-      installmentCount: input.payments?.length || 1,
-      firstDueDate: input.payments?.[0]?.data_vencimento || null,
+      installmentCount: input.payments.length || 1,
+      firstDueDate: input.payments[0]?.data_vencimento || null,
       weeklyFrequency: getWeeklyFrequency(input.contract),
     },
     sections: buildContractSections(input),
-    addenda: (input.addenda || []).map((entry: any) => ({
+    addenda: input.addenda.map((entry) => ({
       id: entry.id,
       previousOpenValue: Number(entry.previous_open_value || 0),
       newOpenValue: Number(entry.new_open_value || 0),
@@ -248,9 +288,9 @@ export function buildContractSnapshot(input: {
 }
 
 export function buildDeclarationSnapshot(input: {
-  student: any
-  teacher: any
-  contract: any
+  student: DocumentPerson
+  teacher: DocumentPerson
+  contract: DocumentContract
 }) {
   const declaration = buildEnrollmentDeclaration(input)
 

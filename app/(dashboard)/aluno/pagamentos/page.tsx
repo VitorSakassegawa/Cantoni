@@ -4,7 +4,14 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDate, formatDateOnly } from '@/lib/utils'
-import { AlertCircle, CheckCircle2, ChevronLeft, Clock3, CreditCard } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle2,
+  ChevronLeft,
+  Clock3,
+  CreditCard,
+  TriangleAlert,
+} from 'lucide-react'
 import Link from 'next/link'
 import PaymentWrapper from '@/components/dashboard/PaymentWrapper'
 import { withEffectivePaymentStatus } from '@/lib/payments'
@@ -13,6 +20,18 @@ import type { PaymentContractSummary, PaymentWithEffectiveStatus } from '@/lib/d
 type ProfileSummary = {
   full_name: string
   email: string
+}
+
+type StudentOverdueItem = {
+  id: number
+  contratoId: number
+  parcela: number
+  valor: number
+  dataVencimento: string
+}
+
+type PaymentRow = PaymentWithEffectiveStatus & {
+  data_pagamento?: string | null
 }
 
 export default async function AlunoPagamentosPage() {
@@ -45,7 +64,7 @@ export default async function AlunoPagamentosPage() {
     .order('data_vencimento', { ascending: true })
     .order('parcela_num', { ascending: true })
 
-  const pagamentosComStatus = ((pagamentos || []) as Array<any>).map((payment) =>
+  const pagamentosComStatus = ((pagamentos || []) as PaymentRow[]).map((payment) =>
     withEffectivePaymentStatus(payment)
   ) as PaymentWithEffectiveStatus[]
 
@@ -61,9 +80,18 @@ export default async function AlunoPagamentosPage() {
     }))
     .filter((grupo) => grupo.pagamentos.length > 0)
 
-  const overdueCount = pagamentosComStatus.filter(
+  const overduePayments = pagamentosComStatus.filter(
     (payment) => payment.effectiveStatus === 'atrasado'
-  ).length
+  )
+  const overdueItems: StudentOverdueItem[] = overduePayments.map((payment) => ({
+    id: payment.id,
+    contratoId: payment.contrato_id,
+    parcela: payment.parcela_num,
+    valor: payment.valor,
+    dataVencimento: payment.data_vencimento,
+  }))
+
+  const overdueCount = overduePayments.length
   const pendingCount = pagamentosComStatus.filter(
     (payment) => payment.effectiveStatus === 'pendente'
   ).length
@@ -162,6 +190,40 @@ export default async function AlunoPagamentosPage() {
         </Card>
       </div>
 
+      {overdueItems.length > 0 ? (
+        <Card className="overflow-hidden border-none bg-rose-50 shadow-xl shadow-rose-200/30">
+          <CardHeader className="border-b border-rose-100 bg-rose-100/60">
+            <CardTitle className="flex items-center gap-3 text-xs font-black uppercase tracking-[0.2em] text-rose-700">
+              <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-rose-600">
+                <TriangleAlert className="h-4 w-4" />
+              </div>
+              Pagamentos que precisam de atenção
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3 p-6">
+            {overdueItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex flex-col gap-3 rounded-2xl border border-rose-200 bg-white p-4 md:flex-row md:items-center md:justify-between"
+              >
+                <div className="space-y-1">
+                  <p className="text-sm font-black text-slate-900">
+                    Contrato #{item.contratoId} • Parcela {item.parcela}
+                  </p>
+                  <p className="text-xs font-medium text-slate-600">
+                    Vencida em {formatDate(item.dataVencimento)} • valor{' '}
+                    {formatCurrency(item.valor)}
+                  </p>
+                </div>
+                <Badge className="w-fit border-none bg-rose-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                  Em atraso
+                </Badge>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
+
       <div className="space-y-8">
         {pagamentosAgrupados.map(({ contrato, pagamentos }) => (
           <Card key={contrato.id} className="glass-card border-none overflow-hidden">
@@ -193,6 +255,9 @@ export default async function AlunoPagamentosPage() {
                         Vencimento
                       </th>
                       <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">
+                        Situação
+                      </th>
+                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">
                         Data de pagamento
                       </th>
                       <th className="px-8 py-6 text-right text-[10px] font-black uppercase tracking-widest">
@@ -204,17 +269,19 @@ export default async function AlunoPagamentosPage() {
                     {pagamentos.map((payment) => (
                       <tr
                         key={payment.id}
-                        className="group transition-all duration-300 hover:bg-slate-50/50"
+                        className={`group transition-all duration-300 hover:bg-slate-50/50 ${
+                          payment.effectiveStatus === 'atrasado'
+                            ? 'bg-rose-50/60'
+                            : payment.effectiveStatus === 'pendente'
+                              ? 'bg-amber-50/30'
+                              : ''
+                        }`}
                       >
                         <td className="px-8 py-6">
                           <span className="text-sm font-black text-slate-900">{payment.parcela_num}</span>
                           <span className="text-[10px] font-bold uppercase tracking-tighter text-slate-400">
                             {' '}
-                            /{' '}
-                            {String(totalPorContrato[payment.contrato_id] || pagamentos.length).padStart(
-                              2,
-                              '0'
-                            )}
+                            /{String(totalPorContrato[payment.contrato_id] || pagamentos.length).padStart(2, '0')}
                           </span>
                         </td>
                         <td className="px-4 py-6 text-sm font-black tracking-tighter text-slate-900">
@@ -222,6 +289,23 @@ export default async function AlunoPagamentosPage() {
                         </td>
                         <td className="px-4 py-6 text-xs font-bold text-slate-500">
                           {formatDate(payment.data_vencimento)}
+                        </td>
+                        <td className="px-4 py-6">
+                          <Badge
+                            className={`border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+                              payment.effectiveStatus === 'pago'
+                                ? 'bg-emerald-500 text-white'
+                                : payment.effectiveStatus === 'atrasado'
+                                  ? 'bg-rose-500 text-white'
+                                  : 'bg-amber-400 text-white'
+                            }`}
+                          >
+                            {payment.effectiveStatus === 'atrasado'
+                              ? 'Em atraso'
+                              : payment.effectiveStatus === 'pendente'
+                                ? 'Pendente'
+                                : 'Pago'}
+                          </Badge>
                         </td>
                         <td className="px-4 py-6 text-xs font-bold text-slate-600">
                           {payment.data_pagamento ? (
@@ -245,7 +329,7 @@ export default async function AlunoPagamentosPage() {
                               variant="success"
                               className="rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-widest"
                             >
-                              {payment.effectiveStatus}
+                              Pago
                             </Badge>
                           )}
                         </td>
