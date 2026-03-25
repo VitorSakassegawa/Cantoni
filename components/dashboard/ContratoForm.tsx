@@ -307,12 +307,16 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         body: JSON.stringify(payload),
       })
 
+      const responseData = await res.json()
+
       if (!res.ok) {
-        const errorData = await res.json()
-        throw new Error(errorData.error || `Erro ao ${isEdit ? 'atualizar' : 'criar'} contrato`)
+        throw new Error(responseData.error || `Erro ao ${isEdit ? 'atualizar' : 'criar'} contrato`)
       }
       
       toast.success(`Contrato ${isEdit ? 'atualizado' : 'criado'} com sucesso!`)
+      if (!isEdit && responseData.emailWarning) {
+        toast.warning(responseData.emailWarning)
+      }
       if (onSuccess) onSuccess()
       else router.push(`/professor/alunos/${alunoId}`)
     } catch (error) {

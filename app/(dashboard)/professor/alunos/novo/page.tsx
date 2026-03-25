@@ -11,6 +11,7 @@ import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
 import { maskCPF, maskPhone, maskDate } from '@/lib/utils'
 import { User, Mail, Phone, Fingerprint, Calendar, GraduationCap } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function NovoAlunoPage() {
   const router = useRouter()
@@ -99,7 +100,13 @@ export default function NovoAlunoPage() {
         
         throw new Error(data.error || 'Erro ao criar aluno')
       }
-      
+
+      if (data.emailWarning) {
+        toast.warning(data.emailWarning)
+      } else {
+        toast.success('Aluno criado e link de primeiro acesso enviado por e-mail.')
+      }
+
       router.push(`/professor/alunos/${data.alunoId}`)
     } catch (err: any) {
       setError(err.message)

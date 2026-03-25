@@ -229,6 +229,7 @@ Instrucoes:
       }
 
       let setupPasswordLink: string | undefined
+      let emailWarning: string | null = null
       try {
         const { data: linkData } = await serviceSupabase.auth.admin.generateLink({
           type: 'recovery',
@@ -240,25 +241,28 @@ Instrucoes:
         setupPasswordLink = linkData?.properties?.action_link
       } catch (error) {
         console.error('Generate link error:', error)
+        emailWarning = 'Contrato criado, mas não foi possível gerar o link de primeiro acesso.'
       }
 
-      void enviarEmailBoasVindas({
-        to: aluno.email,
-        nomeAluno: aluno.full_name,
-        plano: plano.descricao || '',
-        dataInicio: new Date(dataInicio).toLocaleDateString('pt-BR'),
-        dataFim: new Date(dataFim).toLocaleDateString('pt-BR'),
-        aulas: primeirasCinco,
-        setupPasswordLink,
-      })
-        .then((result: any) => {
-          if (result?.error) {
-            console.error('Welcome email delivery error:', result.error)
-          }
+      try {
+        const emailResult: any = await enviarEmailBoasVindas({
+          to: aluno.email,
+          nomeAluno: aluno.full_name,
+          plano: plano.descricao || '',
+          dataInicio: new Date(dataInicio).toLocaleDateString('pt-BR'),
+          dataFim: new Date(dataFim).toLocaleDateString('pt-BR'),
+          aulas: primeirasCinco,
+          setupPasswordLink,
         })
-        .catch((error) => {
-          console.error('Welcome email error:', error)
-        })
+
+        if (emailResult?.error) {
+          console.error('Welcome email delivery error:', emailResult.error)
+          emailWarning = emailResult.error.message || 'Contrato criado, mas o e-mail de boas-vindas não pôde ser entregue.'
+        }
+      } catch (error) {
+        console.error('Welcome email error:', error)
+        emailWarning = 'Contrato criado, mas houve falha ao enviar o e-mail de boas-vindas.'
+      }
 
       await logActivityBestEffort({
         actorUserId: professor.id,
@@ -276,7 +280,7 @@ Instrucoes:
         },
       })
 
-      return NextResponse.json({ success: true, contrato })
+      return NextResponse.json({ success: true, contrato, emailWarning })
     } catch (error: any) {
       console.error('Contract creation flow failed:', error)
       await cleanupContractArtifacts(serviceSupabase, contrato.id, createdEventIds)

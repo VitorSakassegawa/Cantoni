@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
 
   const { data: existingContract, error: existingContractError } = await supabase
     .from('contratos')
-    .select('valor, dia_vencimento, forma_pagamento, data_inicio, data_fim')
+    .select('plano_id, data_inicio, data_fim, semestre, ano, livro_atual, nivel_atual, horario, valor, dia_vencimento, forma_pagamento, status, tipo_contrato, dias_da_semana, desconto_valor, desconto_percentual')
     .eq('id', id)
     .single()
 
@@ -156,13 +156,38 @@ export async function POST(request: NextRequest) {
 
     const failedUpdates = updateResults.filter((result) => result.error)
     if (failedUpdates.length > 0) {
+      const { error: rollbackError } = await supabase
+        .from('contratos')
+        .update({
+          plano_id: existingContract.plano_id,
+          data_inicio: existingContract.data_inicio,
+          data_fim: existingContract.data_fim,
+          semestre: existingContract.semestre,
+          ano: existingContract.ano,
+          livro_atual: existingContract.livro_atual,
+          nivel_atual: existingContract.nivel_atual,
+          horario: existingContract.horario,
+          valor: existingContract.valor,
+          dia_vencimento: existingContract.dia_vencimento,
+          forma_pagamento: existingContract.forma_pagamento,
+          status: existingContract.status,
+          tipo_contrato: existingContract.tipo_contrato,
+          dias_da_semana: existingContract.dias_da_semana,
+          desconto_valor: existingContract.desconto_valor || 0,
+          desconto_percentual: existingContract.desconto_percentual || 0,
+        })
+        .eq('id', id)
+
       return NextResponse.json(
         {
-          error: 'Falha ao atualizar uma ou mais parcelas pendentes do contrato.',
+          error: rollbackError
+            ? 'Falha ao atualizar parcelas pendentes e não foi possível restaurar o contrato automaticamente.'
+            : 'Falha ao atualizar uma ou mais parcelas pendentes. O contrato foi restaurado para o estado anterior.',
           details: failedUpdates.map((result) => ({
             id: result.id,
             message: result.error?.message || 'Erro desconhecido',
           })),
+          rollbackError: rollbackError?.message || null,
         },
         { status: 502 }
       )
