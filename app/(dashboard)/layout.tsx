@@ -140,7 +140,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </div>
       </aside>
 
-      <main className="flex-1 overflow-x-hidden overflow-y-auto">
+      <main className="min-w-0 flex-1 overflow-x-hidden">
         <div className="mobile-safe-bottom min-w-0 max-w-full px-4 py-4 sm:px-6 lg:p-8">
           <OfflineStatusBar />
           <PwaInstallPrompt />
