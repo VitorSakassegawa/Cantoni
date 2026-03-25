@@ -13,28 +13,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role')
-    .eq('id', user.id)
-    .single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
 
   if (profile?.role !== 'professor') {
-    return NextResponse.json(
-      { error: 'Apenas professores podem renegociar contratos' },
-      { status: 403 }
-    )
+    return NextResponse.json({ error: 'Apenas professores podem renegociar contratos' }, { status: 403 })
   }
 
-  const {
-    contractId,
-    alunoId,
-    newOpenValue,
-    newInstallments,
-    firstDueDate,
-    paymentMethod,
-    notes,
-  } = await request.json()
+  const { contractId, alunoId, newOpenValue, newInstallments, firstDueDate, paymentMethod, notes } =
+    await request.json()
 
   const parsedContractId = Number.parseInt(String(contractId), 10)
   const parsedOpenValue = Number.parseFloat(String(newOpenValue))

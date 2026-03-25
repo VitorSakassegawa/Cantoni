@@ -7,6 +7,7 @@ import {
 } from '../lib/payments.ts'
 import { calculateNextStreak } from '../lib/streak-utils.ts'
 import { evaluatePlacementEligibility } from '../lib/placement-eligibility.ts'
+import { buildPendingPaymentUpdates } from '../lib/contract-payments.ts'
 
 assert.equal(normalizePaymentAmount('120.456'), 120.46)
 
@@ -98,6 +99,54 @@ assert.equal(
     now: new Date('2026-03-25T12:00:00Z'),
   }).reason,
   'professor_approved'
+)
+
+assert.deepEqual(
+  buildPendingPaymentUpdates({
+    dataInicio: '2026-04-19',
+    diaVencimento: 19,
+    formaPagamento: 'pix',
+    unpaidPayments: [
+      { id: 1, parcela_num: 1 },
+      { id: 2, parcela_num: 2 },
+      { id: 3, parcela_num: 3 },
+    ],
+    remainingAmount: 540,
+  }),
+  [
+    { id: 1, valor: 180, forma: 'pix', data_vencimento: '2026-05-19' },
+    { id: 2, valor: 180, forma: 'pix', data_vencimento: '2026-06-19' },
+    { id: 3, valor: 180, forma: 'pix', data_vencimento: '2026-07-19' },
+  ]
+)
+
+assert.deepEqual(
+  buildPendingPaymentUpdates({
+    dataInicio: '2026-04-30',
+    diaVencimento: 31,
+    formaPagamento: 'pix',
+    unpaidPayments: [
+      { id: 10, parcela_num: 1 },
+      { id: 11, parcela_num: 2 },
+    ],
+    remainingAmount: 100,
+  }),
+  [
+    { id: 10, valor: 50, forma: 'pix', data_vencimento: '2026-05-31' },
+    { id: 11, valor: 50, forma: 'pix', data_vencimento: '2026-06-30' },
+  ]
+)
+
+assert.throws(
+  () =>
+    buildPendingPaymentUpdates({
+      dataInicio: '2026-04-19',
+      diaVencimento: 19,
+      formaPagamento: 'pix',
+      unpaidPayments: [{ id: 99, parcela_num: 0 }],
+      remainingAmount: 100,
+    }),
+  /Parcela inválida/
 )
 
 console.log('payment-utils tests passed')

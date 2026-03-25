@@ -267,9 +267,12 @@ create index if not exists idx_activity_logs_lesson_id on activity_logs (lesson_
 create index if not exists idx_activity_logs_payment_id on activity_logs (payment_id);
 create index if not exists idx_activity_logs_created_at on activity_logs (created_at desc);
 create index if not exists idx_contract_addenda_contract_id on contract_addenda (contract_id, created_at desc);
+create index if not exists idx_contract_addenda_created_by on contract_addenda (created_by);
 create index if not exists idx_contratos_aluno_id on contratos (aluno_id);
 create index if not exists idx_contratos_plano_id on contratos (plano_id);
 create index if not exists idx_document_issuances_contract_kind on document_issuances (contract_id, kind, version desc);
+create index if not exists idx_document_issuances_issued_by on document_issuances (issued_by);
+create index if not exists idx_document_issuances_accepted_by on document_issuances (accepted_by);
 create index if not exists idx_document_issuances_student_id on document_issuances (student_id, created_at desc);
 create index if not exists idx_flashcards_aluno_id on flashcards (aluno_id);
 create index if not exists idx_pagamentos_contrato_id on pagamentos (contrato_id);

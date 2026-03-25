@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { mapWithConcurrency } from '@/lib/async'
 import { logActivityBestEffort } from '@/lib/activity-log'
+import { buildPendingPaymentUpdates } from '@/lib/contract-payments'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -77,8 +78,7 @@ export async function POST(request: NextRequest) {
   if (hasPaidPayments && isFinancialChange) {
     return NextResponse.json(
       {
-        error:
-          'Este contrato já possui parcelas pagas. Alterações financeiras exigem fluxo de renegociação/aditivo.',
+        error: 'Este contrato já possui parcelas pagas. Alterações financeiras exigem fluxo de renegociação/aditivo.',
       },
       { status: 409 }
     )
@@ -121,39 +121,55 @@ export async function POST(request: NextRequest) {
       .filter((pagamento: any) => pagamento.status === 'pago')
       .reduce((acc: number, pagamento: any) => acc + Number(pagamento.valor || 0), 0)
     const remainingAmount = Math.max(0, vFloat - paidAmount)
-    const valorParcela = unpaidPayments.length > 0 ? Number((remainingAmount / unpaidPayments.length).toFixed(2)) : 0
 
-    await mapWithConcurrency(unpaidPayments, 5, async (pagamento: any) => {
-      const parcelaNumero = Number(pagamento.parcela_num)
-      if (!Number.isFinite(parcelaNumero) || parcelaNumero <= 0) {
-        return
-      }
+    let paymentUpdates
+    try {
+      paymentUpdates = buildPendingPaymentUpdates({
+        dataInicio,
+        diaVencimento: dvInt,
+        formaPagamento: forma_pagamento,
+        unpaidPayments,
+        remainingAmount,
+      })
+    } catch (error: any) {
+      return NextResponse.json(
+        { error: error.message || 'Falha ao recalcular as parcelas pendentes' },
+        { status: 400 }
+      )
+    }
 
-      const dueBase = new Date(`${dataInicio}T12:00:00`)
-      dueBase.setMonth(dueBase.getMonth() + parcelaNumero)
-      const ultimoDiaMes = new Date(dueBase.getFullYear(), dueBase.getMonth() + 1, 0).getDate()
-      const diaEfetivo = Math.min(dvInt, ultimoDiaMes)
-      const newDate = new Date(dueBase.getFullYear(), dueBase.getMonth(), diaEfetivo, 12, 0, 0)
-      if (Number.isNaN(newDate.getTime())) {
-        return
-      }
-
-      await supabase
+    const updateResults = await mapWithConcurrency(paymentUpdates, 5, async (paymentUpdate) => {
+      const { error } = await supabase
         .from('pagamentos')
         .update({
-          valor: valorParcela,
-          forma: forma_pagamento,
-          data_vencimento: newDate.toISOString().split('T')[0],
+          valor: paymentUpdate.valor,
+          forma: paymentUpdate.forma,
+          data_vencimento: paymentUpdate.data_vencimento,
         })
-        .eq('id', pagamento.id)
+        .eq('id', paymentUpdate.id)
+
+      return {
+        id: paymentUpdate.id,
+        error,
+      }
     })
+
+    const failedUpdates = updateResults.filter((result) => result.error)
+    if (failedUpdates.length > 0) {
+      return NextResponse.json(
+        {
+          error: 'Falha ao atualizar uma ou mais parcelas pendentes do contrato.',
+          details: failedUpdates.map((result) => ({
+            id: result.id,
+            message: result.error?.message || 'Erro desconhecido',
+          })),
+        },
+        { status: 502 }
+      )
+    }
   }
 
-  const { data: contrato } = await supabase
-    .from('contratos')
-    .select('id, aluno_id')
-    .eq('id', id)
-    .single()
+  const { data: contrato } = await supabase.from('contratos').select('id, aluno_id').eq('id', id).single()
 
   await logActivityBestEffort({
     actorUserId: user.id,

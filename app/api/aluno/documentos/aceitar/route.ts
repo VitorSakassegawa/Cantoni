@@ -14,11 +14,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
   }
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('role, full_name')
-    .eq('id', user.id)
-    .single()
+  const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', user.id).single()
 
   if (profile?.role !== 'aluno') {
     return NextResponse.json({ error: 'Apenas o aluno pode registrar aceite' }, { status: 403 })
