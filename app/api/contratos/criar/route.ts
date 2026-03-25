@@ -250,9 +250,15 @@ Instrucoes:
         dataFim: new Date(dataFim).toLocaleDateString('pt-BR'),
         aulas: primeirasCinco,
         setupPasswordLink,
-      }).catch((error) => {
-        console.error('Welcome email error:', error)
       })
+        .then((result: any) => {
+          if (result?.error) {
+            console.error('Welcome email delivery error:', result.error)
+          }
+        })
+        .catch((error) => {
+          console.error('Welcome email error:', error)
+        })
 
       await logActivityBestEffort({
         actorUserId: professor.id,

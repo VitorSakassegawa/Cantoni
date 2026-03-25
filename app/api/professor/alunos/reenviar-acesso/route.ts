@@ -52,11 +52,22 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  await enviarEmailPrimeiroAcesso({
+  const emailResult = await enviarEmailPrimeiroAcesso({
     to: aluno.email,
     nomeAluno: aluno.full_name,
     setupPasswordLink: linkData.properties.action_link,
   })
+
+  if ((emailResult as any)?.error) {
+    return NextResponse.json(
+      {
+        error:
+          (emailResult as any).error.message ||
+          'O link foi gerado, mas o envio do e-mail falhou. Verifique a configuração do Resend.',
+      },
+      { status: 502 }
+    )
+  }
 
   return NextResponse.json({ success: true })
 }
