@@ -17,7 +17,7 @@ function getResendClient() {
   return new Resend(key)
 }
 
-const FROM = process.env.RESEND_FROM_EMAIL || 'Teacher Gabriel <gabecantoni@gmail.com>'
+const FROM = process.env.RESEND_FROM_EMAIL || 'Cantoni English School <gabriel@cantonies.com.br>'
 
 
 function BaseLayout(content: string) {
@@ -25,7 +25,7 @@ function BaseLayout(content: string) {
     <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;color:#334155;line-height:1.6">
       ${content}
       <hr style="border:none;border-top:1px solid #e2e8f0;margin:30px 0" />
-      <p style="color:#94a3b8;font-size:11px">Teacher Gabriel Cantoni — Cantoni English</p>
+      <p style="color:#94a3b8;font-size:11px">Cantoni English School</p>
     </div>
   `
 }
@@ -56,10 +56,10 @@ export async function enviarEmailBoasVindas({
   return resend.emails.send({
     from: FROM,
     to,
-    subject: '🎉 Bem-vindo(a) às aulas de inglês com Teacher Gabriel!',
+    subject: '🎉 Bem-vindo(a) às aulas de inglês com a Cantoni English School!',
     html: BaseLayout(`
       <h2 style="color:#1e3a5f;margin-bottom:20px">Olá, ${nomeAluno}! 👋</h2>
-      <p>Seja muito bem-vindo(a) às aulas de inglês com <strong>Teacher Gabriel Cantoni</strong>!</p>
+      <p>Seja muito bem-vindo(a) às aulas de inglês com <strong>Cantoni English School</strong>!</p>
       
       <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0">
         <h3 style="margin-top:0;color:#1e3a5f;font-size:16px">🔑 Acesso à Plataforma</h3>
@@ -111,7 +111,7 @@ export async function enviarEmailCobranca({
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `💰 Parcela ${parcela}/${totalParcelas} — Aulas de Inglês Teacher Gabriel`,
+    subject: `💰 Parcela ${parcela}/${totalParcelas} — Aulas de Inglês Cantoni English School`,
     html: BaseLayout(`
       <h2 style="color:#1e3a5f">Olá, ${nomeAluno}!</h2>
       <p>Segue a cobrança referente à parcela <strong>${parcela}/${totalParcelas}</strong> das suas aulas de inglês.</p>
@@ -371,3 +371,4 @@ export async function enviarEmailPrimeiroAcesso({
     `),
   })
 }
+

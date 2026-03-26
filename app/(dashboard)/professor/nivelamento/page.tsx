@@ -10,7 +10,6 @@ import {
   History, 
   Target, 
   Award,
-  ArrowRight,
   BookOpen,
   BrainCircuit,
   Calendar
@@ -20,19 +19,53 @@ import { toast } from 'sonner'
 import { requestNewPlacementTest } from '@/lib/actions/placement-test'
 import ReactMarkdown from 'react-markdown'
 
+interface PlacementStudent {
+  id: string
+  full_name: string | null
+  email: string | null
+  cefr_level: string | null
+  placement_test_completed: boolean | null
+}
+
+interface PlacementAnswer {
+  question?: string
+  options?: string[]
+  selected?: number
+  correct?: boolean
+  correctAnswer?: number
+}
+
+interface PlacementResult {
+  id: string
+  created_at: string
+  cefr_level: string
+  score: number
+  total_questions: number
+  insights: string | null
+  answers: PlacementAnswer[] | null
+}
+
+function getErrorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Erro inesperado'
+}
+
+function getSelectedOptionLabel(answer: PlacementAnswer) {
+  if (!answer.options || typeof answer.selected !== 'number') {
+    return `Opção ${answer.selected ?? '-'}`
+  }
+
+  return answer.options[answer.selected] ?? `Opção ${answer.selected}`
+}
+
 export default function ProfessorNivelamentoPage() {
-  const [students, setStudents] = useState<any[]>([])
+  const [students, setStudents] = useState<PlacementStudent[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [selectedStudent, setSelectedStudent] = useState<any>(null)
-  const [history, setHistory] = useState<any[]>([])
+  const [selectedStudent, setSelectedStudent] = useState<PlacementStudent | null>(null)
+  const [history, setHistory] = useState<PlacementResult[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
 
   const supabase = createClient()
-
-  useEffect(() => {
-    fetchStudents()
-  }, [])
 
   async function fetchStudents() {
     setLoading(true)
@@ -45,10 +78,41 @@ export default function ProfessorNivelamentoPage() {
     if (error) {
       toast.error('Erro ao carregar alunos')
     } else {
-      setStudents(data || [])
+      setStudents((data as PlacementStudent[]) || [])
     }
     setLoading(false)
   }
+
+  useEffect(() => {
+    let active = true
+
+    async function loadInitialStudents() {
+      setLoading(true)
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('role', 'aluno')
+        .order('full_name')
+
+      if (!active) {
+        return
+      }
+
+      if (error) {
+        toast.error('Erro ao carregar alunos')
+      } else {
+        setStudents((data as PlacementStudent[]) || [])
+      }
+
+      setLoading(false)
+    }
+
+    void loadInitialStudents()
+
+    return () => {
+      active = false
+    }
+  }, [supabase])
 
   async function loadHistory(studentId: string) {
     setLoadingHistory(true)
@@ -61,29 +125,29 @@ export default function ProfessorNivelamentoPage() {
     if (error) {
       toast.error('Erro ao carregar histórico')
     } else {
-      setHistory(data || [])
+      setHistory((data as PlacementResult[]) || [])
     }
     setLoadingHistory(false)
   }
 
-  async function handleReset(student: any) {
+  async function handleReset(student: PlacementStudent) {
     if (!confirm(`Deseja solicitar um novo teste para ${student.full_name}?`)) return
     
     try {
       await requestNewPlacementTest(student.id)
       toast.success('Novo teste solicitado com sucesso!')
-      fetchStudents()
+      void fetchStudents()
       if (selectedStudent?.id === student.id) {
         setSelectedStudent({ ...student, placement_test_completed: false })
       }
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao solicitar teste')
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err))
     }
   }
 
-  const filteredStudents = students.filter(s => 
-    s.full_name?.toLowerCase().includes(search.toLowerCase()) ||
-    s.email?.toLowerCase().includes(search.toLowerCase())
+  const filteredStudents = students.filter((student) => 
+    student.full_name?.toLowerCase().includes(search.toLowerCase()) ||
+    student.email?.toLowerCase().includes(search.toLowerCase())
   )
 
   return (
@@ -252,7 +316,7 @@ export default function ProfessorNivelamentoPage() {
                                 Detalhamento de Questões ({test.answers.length})
                               </h4>
                               <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
-                                {test.answers.map((ans: any, idx: number) => (
+                                {test.answers.map((ans, idx) => (
                                   <div key={idx} className={`p-5 rounded-3xl border-2 ${ans.correct ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'} text-sm shadow-sm`}>
                                     <div className="flex items-start gap-3">
                                       <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white ${ans.correct ? 'bg-emerald-500' : 'bg-rose-500'} mt-0.5`}>
@@ -263,7 +327,7 @@ export default function ProfessorNivelamentoPage() {
                                         <div className="space-y-1.5 bg-white/60 p-3 rounded-2xl">
                                           <p className={`text-xs font-semibold ${ans.correct ? 'text-emerald-700' : 'text-rose-700'}`}>
                                             <span className="opacity-70 font-black uppercase tracking-widest text-[9px] mr-2">Aluno marcou:</span> 
-                                            {ans.options ? ans.options[ans.selected] : `Opção ${ans.selected}`}
+                                            {getSelectedOptionLabel(ans)}
                                           </p>
                                           {!ans.correct && typeof ans.correctAnswer === 'number' && ans.options && (
                                             <p className="text-xs font-semibold text-emerald-700">
@@ -292,3 +356,4 @@ export default function ProfessorNivelamentoPage() {
     </div>
   )
 }
+

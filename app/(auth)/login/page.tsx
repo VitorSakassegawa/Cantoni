@@ -11,6 +11,10 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
+
 export default function LoginPage() {
   const [authMode, setAuthMode] = useState<'login' | 'signup' | 'forgot'>('login')
   const [email, setEmail] = useState('')
@@ -46,12 +50,13 @@ export default function LoginPage() {
         })
         if (authError) throw authError
 
-        toast.success('Conta criada com sucesso! Você já pode entrar.')
+        toast.success('Conta criada com sucesso! VocÃª jÃ¡ pode entrar.')
         setAuthMode('login')
       }
-    } catch (err: any) {
-      setError(err.message || 'Erro na autenticação.')
-      toast.error(err.message || 'Erro inesperado.')
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Erro na autenticação.')
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -69,11 +74,12 @@ export default function LoginPage() {
         redirectTo: `${baseUrl}/redefinir-senha`,
       })
       if (error) throw error
-      setSuccessMessage('E-mail de recuperação enviado! Verifique sua caixa de entrada.')
-      toast.success('Link de recuperação enviado!')
-    } catch (err: any) {
-      setError(err.message)
-      toast.error(err.message)
+      setSuccessMessage('E-mail de recuperaÃ§Ã£o enviado! Verifique sua caixa de entrada.')
+      toast.success('Link de recuperaÃ§Ã£o enviado!')
+    } catch (error: unknown) {
+      const message = getErrorMessage(error, 'Erro ao enviar o link de recuperação.')
+      setError(message)
+      toast.error(message)
     } finally {
       setLoading(false)
     }
@@ -89,8 +95,8 @@ export default function LoginPage() {
           <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-[#1e3a5f] text-3xl font-black text-white shadow-xl shadow-blue-900/20 transition-transform duration-500 hover:rotate-0 rotate-3">
             GC
           </div>
-          <h1 className="text-3xl font-black tracking-tighter text-[#1e3a5f]">Gabriel Cantoni</h1>
-          <p className="mt-2 text-sm font-medium uppercase tracking-widest text-gray-500">Aulas de Inglês Exclusivas</p>
+          <h1 className="text-3xl font-black tracking-tighter text-[#1e3a5f]">Cantoni English School</h1>
+          <p className="mt-2 text-sm font-medium uppercase tracking-widest text-gray-500">Portal AcadÃªmico</p>
         </div>
 
         <Card className="glass-card overflow-hidden border-none shadow-2xl shadow-blue-900/5">
@@ -102,7 +108,7 @@ export default function LoginPage() {
             </CardTitle>
             <CardDescription className="text-xs font-semibold uppercase tracking-tight text-gray-400">
               {authMode === 'login' && 'Acesse seus materiais e aulas'}
-              {authMode === 'signup' && 'Comece sua jornada no inglês agora'}
+              {authMode === 'signup' && 'Comece sua jornada no inglÃªs agora'}
               {authMode === 'forgot' && 'Enviaremos um link para seu e-mail'}
             </CardDescription>
           </CardHeader>
@@ -160,7 +166,7 @@ export default function LoginPage() {
                             setAuthMode('forgot')
                             setError('')
                             setSuccessMessage(
-                              'Primeiro acesso? Use o link enviado por e-mail para definir sua senha. O portal não usa os 6 primeiros dígitos do CPF como senha.'
+                              'Primeiro acesso? Use o link enviado por e-mail para definir sua senha. O portal nÃ£o usa os 6 primeiros dÃ­gitos do CPF como senha.'
                             )
                           }}
                           className="text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:underline"
@@ -173,7 +179,7 @@ export default function LoginPage() {
                   <Input
                     id="password"
                     type="password"
-                    placeholder="••••••••"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                     className="rounded-xl border-gray-100 bg-white/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -183,9 +189,9 @@ export default function LoginPage() {
                     <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-3">
                       <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Primeiro acesso</p>
                       <p className="mt-1 text-[11px] font-medium leading-relaxed text-slate-600">
-                        A senha inicial não é formada pelos 6 primeiros dígitos do CPF. Use
+                        A senha inicial nÃ£o Ã© formada pelos 6 primeiros dÃ­gitos do CPF. Use
                         <span className="font-black text-blue-700"> Primeiro acesso</span> ou
-                        <span className="font-black text-blue-700"> Esqueci a senha</span> para receber o link de definição de senha no e-mail cadastrado.
+                        <span className="font-black text-blue-700"> Esqueci a senha</span> para receber o link de definiÃ§Ã£o de senha no e-mail cadastrado.
                       </p>
                     </div>
                   ) : null}
@@ -224,7 +230,7 @@ export default function LoginPage() {
                   onClick={() => setAuthMode(authMode === 'login' ? 'signup' : 'login')}
                   className="text-xs font-bold text-[#1e3a5f] underline-offset-4 hover:underline"
                 >
-                  {authMode === 'login' ? 'Não tem conta? Crie uma agora' : 'Já tem conta? Faça o login'}
+                  {authMode === 'login' ? 'NÃ£o tem conta? Crie uma agora' : 'JÃ¡ tem conta? FaÃ§a o login'}
                 </button>
                 {authMode === 'forgot' ? (
                   <button
@@ -243,3 +249,7 @@ export default function LoginPage() {
     </div>
   )
 }
+
+
+
+

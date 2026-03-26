@@ -1,4 +1,4 @@
-# Teacher Gabriel Cantoni — Setup Guide
+# Cantoni English School — Setup Guide
 
 ## 1. Supabase: Run the schema
 
@@ -74,3 +74,4 @@ npm run dev
 ```
 
 Visit http://localhost:3000 → redirects to /login.
+

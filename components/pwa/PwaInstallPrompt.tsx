@@ -23,13 +23,12 @@ function isStandalone() {
 
 export default function PwaInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
-  const [dismissed, setDismissed] = useState(false)
-  const [installed, setInstalled] = useState(false)
+  const [dismissed, setDismissed] = useState(() =>
+    typeof window !== 'undefined' ? window.localStorage.getItem('pwa-install-dismissed') === 'true' : false
+  )
+  const [installed, setInstalled] = useState(() => isStandalone())
 
   useEffect(() => {
-    setInstalled(isStandalone())
-    setDismissed(window.localStorage.getItem('pwa-install-dismissed') === 'true')
-
     const handleBeforeInstallPrompt = (event: Event) => {
       event.preventDefault()
       setDeferredPrompt(event as BeforeInstallPromptEvent)

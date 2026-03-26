@@ -6,15 +6,29 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { RotateCcw } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
-import ReviewRescheduleModal from './ReviewRescheduleModal'
+import ReviewRescheduleModal, { type RescheduleModalLesson } from './ReviewRescheduleModal'
 import Link from 'next/link'
 
+interface RescheduleStudentProfile {
+  full_name: string | null
+}
+
+interface RescheduleContract {
+  aluno_id: string | null
+  profiles?: RescheduleStudentProfile | null
+}
+
+interface RescheduleRequestItem extends RescheduleModalLesson {
+  contratos?: RescheduleContract | null
+  contracts?: RescheduleContract | null
+}
+
 interface Props {
-  initialSolicitacoes: any[]
+  initialSolicitacoes: RescheduleRequestItem[]
 }
 
 export default function ReschedulingRequests({ initialSolicitacoes }: Props) {
-  const [selectedAula, setSelectedAula] = useState<any>(null)
+  const [selectedAula, setSelectedAula] = useState<RescheduleRequestItem | null>(null)
   const [showModal, setShowModal] = useState(false)
 
   return (
@@ -27,7 +41,7 @@ export default function ReschedulingRequests({ initialSolicitacoes }: Props) {
         </CardHeader>
         <CardContent className="p-0">
           <div className="divide-y divide-amber-100/50">
-            {initialSolicitacoes.map((sol: any) => {
+            {initialSolicitacoes.map((sol) => {
               const hasNovaData = sol.data_hora_solicitada && !formatDateTime(sol.data_hora_solicitada).includes('Não informada')
               return (
                 <div key={sol.id} className="p-5 space-y-3">
@@ -91,3 +105,5 @@ export default function ReschedulingRequests({ initialSolicitacoes }: Props) {
     </>
   )
 }
+
+

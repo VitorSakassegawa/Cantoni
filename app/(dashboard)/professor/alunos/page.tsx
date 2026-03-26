@@ -31,7 +31,7 @@ export default async function AlunosPage() {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="space-y-1">
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Gestão de Alunos</h1>
-          <p className="text-slate-500 font-medium">Visualize e gerencie todos os alunos matriculados na Cantoni English.</p>
+          <p className="text-slate-500 font-medium">Visualize e gerencie todos os alunos matriculados na Cantoni English School.</p>
         </div>
         <Link href="/professor/alunos/novo">
           <Button className="h-14 px-8 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all">
@@ -171,3 +171,4 @@ export default async function AlunosPage() {
     </div>
   )
 }
+

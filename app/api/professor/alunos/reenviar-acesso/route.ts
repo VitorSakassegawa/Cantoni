@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { enviarEmailPrimeiroAcesso } from '@/lib/resend'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -9,17 +8,17 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+    return NextResponse.json({ error: 'Nao autenticado.' }, { status: 401 })
   }
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'professor') {
-    return NextResponse.json({ error: 'Sem permissão.' }, { status: 403 })
+    return NextResponse.json({ error: 'Sem permissao.' }, { status: 403 })
   }
 
   const { alunoId } = await request.json()
   if (!alunoId) {
-    return NextResponse.json({ error: 'Aluno não informado.' }, { status: 400 })
+    return NextResponse.json({ error: 'Aluno nao informado.' }, { status: 400 })
   }
 
   const serviceSupabase = await createServiceClient()
@@ -30,42 +29,21 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (alunoError || !aluno || aluno.role !== 'aluno') {
-    return NextResponse.json({ error: 'Aluno não encontrado.' }, { status: 404 })
+    return NextResponse.json({ error: 'Aluno nao encontrado.' }, { status: 404 })
   }
 
   if (!aluno.email) {
     return NextResponse.json({ error: 'Aluno sem e-mail cadastrado.' }, { status: 400 })
   }
 
-  const { data: linkData, error: linkError } = await serviceSupabase.auth.admin.generateLink({
-    type: 'recovery',
-    email: aluno.email,
-    options: {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
-    },
+  const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(aluno.email, {
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
   })
 
-  if (linkError || !linkData?.properties?.action_link) {
+  if (resetError) {
     return NextResponse.json(
-      { error: linkError?.message || 'Não foi possível gerar o link de primeiro acesso.' },
+      { error: resetError.message || 'Nao foi possivel enviar o e-mail de primeiro acesso.' },
       { status: 500 }
-    )
-  }
-
-  const emailResult = await enviarEmailPrimeiroAcesso({
-    to: aluno.email,
-    nomeAluno: aluno.full_name,
-    setupPasswordLink: linkData.properties.action_link,
-  })
-
-  if ((emailResult as any)?.error) {
-    return NextResponse.json(
-      {
-        error:
-          (emailResult as any).error.message ||
-          'O link foi gerado, mas o envio do e-mail falhou. Verifique a configuração do Resend.',
-      },
-      { status: 502 }
     )
   }
 

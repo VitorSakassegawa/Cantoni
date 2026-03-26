@@ -1,5 +1,5 @@
 -- ============================================================
--- Teacher Gabriel Cantoni - Supabase schema snapshot
+-- Cantoni English School - Supabase schema snapshot
 -- ============================================================
 
 create extension if not exists pgcrypto;
@@ -816,3 +816,4 @@ begin
     and status = 'accepted';
 end;
 $$;
+

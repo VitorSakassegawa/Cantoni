@@ -1,7 +1,6 @@
 import crypto from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { enviarEmailPrimeiroAcesso } from '@/lib/resend'
 
 function generateTemporaryPassword() {
   return crypto.randomBytes(18).toString('base64url')
@@ -14,19 +13,19 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Não autenticado.' }, { status: 401 })
+    return NextResponse.json({ error: 'Nao autenticado.' }, { status: 401 })
   }
 
   const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (prof?.role !== 'professor') {
-    return NextResponse.json({ error: 'Sem permissão.' }, { status: 403 })
+    return NextResponse.json({ error: 'Sem permissao.' }, { status: 403 })
   }
 
   const { nome, email, telefone, nivel, tipoAula, cpf, birthDate } = await request.json()
 
   if (!nome || !email || !email.includes('@') || !cpf) {
     return NextResponse.json(
-      { error: 'Dados obrigatórios inválidos. Informe nome, e-mail e CPF.' },
+      { error: 'Dados obrigatorios invalidos. Informe nome, e-mail e CPF.' },
       { status: 400 }
     )
   }
@@ -34,7 +33,7 @@ export async function POST(request: NextRequest) {
   const cleanCPF = cpf.replace(/\D/g, '')
   if (cleanCPF.length !== 11) {
     return NextResponse.json(
-      { error: 'CPF inválido. Ele deve conter 11 dígitos numéricos.' },
+      { error: 'CPF invalido. Ele deve conter 11 digitos numericos.' },
       { status: 400 }
     )
   }
@@ -77,28 +76,13 @@ export async function POST(request: NextRequest) {
 
   let emailWarning: string | null = null
   try {
-    const { data: linkData, error: linkError } = await serviceSupabase.auth.admin.generateLink({
-      type: 'recovery',
-      email,
-      options: {
-        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
-      },
+    const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
     })
 
-    if (linkError || !linkData?.properties?.action_link) {
-      emailWarning = 'Aluno criado, mas não foi possível gerar o link de primeiro acesso.'
-    } else {
-      const emailResult = await enviarEmailPrimeiroAcesso({
-        to: email,
-        nomeAluno: nome,
-        setupPasswordLink: linkData.properties.action_link,
-      })
-
-      if ((emailResult as any)?.error) {
-        emailWarning =
-          (emailResult as any).error.message ||
-          'Aluno criado, mas o e-mail de primeiro acesso não pôde ser entregue.'
-      }
+    if (resetError) {
+      emailWarning =
+        resetError.message || 'Aluno criado, mas o e-mail de primeiro acesso nao pode ser entregue.'
     }
   } catch (error) {
     console.error('Student first access email error:', error)

@@ -52,7 +52,7 @@ export async function generateAIContent(
 
 export async function generateLessonSummary(notes: string) {
   const prompt = `
-    Você é um assistente de ensino de inglês de alta qualidade para o professor Gabriel Cantoni.
+    Você é um assistente de ensino de inglês de alta qualidade para a Cantoni English School.
     Resuma as seguintes notas de aula de forma amigável, motivadora e extremamente organizada para o aluno.
     
     Notas da Aula:
@@ -278,3 +278,4 @@ export function extractAndParseJSON(text: string): any {
     throw e
   }
 }
+

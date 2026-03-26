@@ -9,6 +9,10 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
+
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -19,7 +23,7 @@ export default function ResetPasswordPage() {
   async function handleReset(e: React.FormEvent) {
     e.preventDefault()
     if (password !== confirmPassword) {
-      toast.error('As senhas não coincidem.')
+      toast.error('As senhas nÃ£o coincidem.')
       return
     }
 
@@ -29,8 +33,8 @@ export default function ResetPasswordPage() {
       if (error) throw error
       toast.success('Senha redefinida com sucesso!')
       router.push('/login')
-    } catch (err: any) {
-      toast.error(err.message || 'Erro ao redefinir senha.')
+    } catch (error: unknown) {
+      toast.error(getErrorMessage(error, 'Erro ao redefinir senha.'))
     } finally {
       setLoading(false)
     }
@@ -46,15 +50,15 @@ export default function ResetPasswordPage() {
           <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-[#1e3a5f] text-white text-3xl font-black mb-4 shadow-xl shadow-blue-900/20">
             GC
           </div>
-          <h1 className="text-3xl font-black text-[#1e3a5f] tracking-tighter">Gabriel Cantoni</h1>
-          <p className="text-gray-500 text-sm mt-2 font-medium uppercase tracking-widest text-[9px]">Redefinição de Senha</p>
+          <h1 className="text-3xl font-black text-[#1e3a5f] tracking-tighter">Cantoni English School</h1>
+          <p className="text-gray-500 text-sm mt-2 font-medium uppercase tracking-widest text-[9px]">RedefiniÃ§Ã£o de Senha</p>
         </div>
 
         <Card className="glass-card border-none shadow-2xl shadow-blue-900/5 overflow-hidden">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-xl font-bold text-gray-900">Nova Senha</CardTitle>
             <CardDescription className="text-xs font-semibold uppercase tracking-tight text-gray-400">
-              Escolha uma senha forte para sua segurança
+              Escolha uma senha forte para sua seguranÃ§a
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -64,7 +68,7 @@ export default function ResetPasswordPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="bg-white/50 border-gray-100 rounded-xl focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -76,7 +80,7 @@ export default function ResetPasswordPage() {
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   className="bg-white/50 border-gray-100 rounded-xl focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -94,3 +98,7 @@ export default function ResetPasswordPage() {
     </div>
   )
 }
+
+
+
+

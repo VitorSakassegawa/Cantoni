@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
@@ -5,11 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
-import { formatCurrency, formatDateTime, formatDateOnly } from '@/lib/utils'
-import { Users, BookOpen, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, DollarSign, Umbrella } from 'lucide-react'
+import { formatDateTime } from '@/lib/utils'
+import { Users, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as CalendarIcon, CheckCircle2, Umbrella } from 'lucide-react'
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, parseISO, isSameDay, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { RotateCcw } from 'lucide-react'
 import CurrentDateGreeting from '@/components/dashboard/CurrentDateGreeting'
 import ReschedulingRequestsList from '@/components/dashboard/ReschedulingRequestsList'
 import FinanceDash from '@/components/dashboard/FinanceDash'
@@ -77,16 +77,6 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
   // Rest of the data
   const today = new Date()
-  const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate()).toISOString()
-  const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1).toISOString()
-  const { data: aulasHoje } = await supabase
-    .from('aulas')
-    .select('id, contratos!inner(status)')
-    .eq('contratos.status', 'ativo')
-    .gte('data_hora', todayStart)
-    .lt('data_hora', todayEnd)
-    .in('status', ['agendada', 'confirmada'])
-
 
   // Fetch all relevant payments (Paid, Pending, Overdue)
   const { data: allPayments } = await supabase
@@ -97,7 +87,6 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
   const allPaymentsWithStatus = (allPayments || []).map((payment: any) => withEffectivePaymentStatus(payment))
 
   const pagamentosPagos = allPaymentsWithStatus.filter((p: any) => p.effectiveStatus === 'pago')
-  const pagamentosPendentes = allPaymentsWithStatus.filter((p: any) => p.effectiveStatus === 'pendente')
   const pagamentosAtrasados = allPaymentsWithStatus.filter((p: any) => p.effectiveStatus === 'atrasado')
 
   // Calculate monthly total (collected)
@@ -105,11 +94,6 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
   const totalArrecadadoMes = pagamentosPagos
     .filter((p: any) => p.data_pagamento && p.data_pagamento >= startOfMonth)
     .reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0)
-
-  const { count: totalAlunos } = await supabase
-    .from('contratos')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'ativo')
 
   const { data: alunosAtivos } = await supabase
     .from('contratos')
@@ -226,7 +210,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           <div className="space-y-4">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-blue-100">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
-              Gabriel Cantoni LMS
+              Cantoni English School LMS
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
               Bom dia, Gabriel! 🍎
@@ -541,3 +525,4 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     </div>
   )
 }
+
