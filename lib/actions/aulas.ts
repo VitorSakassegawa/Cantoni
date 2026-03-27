@@ -161,24 +161,13 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
       meet_link: novoMeetLink,
       motivo_remarcacao: aula.motivo_remarcacao
         ? `${aula.motivo_remarcacao} (Original: ${formatDateTime(aula.data_hora)})`
-        : `Solicitado pelo aluno (Original: ${formatDateTime(aula.data_hora)})`,
+        : `${isProfessor ? 'Remarcado pelo professor' : 'Solicitado pelo aluno'} (Original: ${formatDateTime(aula.data_hora)})`,
     })
     .select()
     .single()
 
   if (insertError) {
     throw new Error('Erro ao criar nova aula')
-  }
-
-  if (!isResolvingConflict) {
-    await serviceSupabase.from('remarcacoes_mes').upsert(
-      {
-        aluno_id: contrato.aluno_id,
-        mes: mesStr,
-        quantidade: qtdAtual + 1,
-      },
-      { onConflict: 'aluno_id,mes' }
-    )
   }
 
   await enviarConfirmacaoRemarcacao({
@@ -264,6 +253,17 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
   if (updateError) {
     console.error('[solicitarRemarcacao] Erro no update:', updateError)
     throw new Error(`Erro ao solicitar remarcação: ${updateError.message}`)
+  }
+
+  if (!isResolvingConflict) {
+    await serviceSupabase.from('remarcacoes_mes').upsert(
+      {
+        aluno_id: contrato.aluno_id,
+        mes: mesStr,
+        quantidade: qtdAtual + 1,
+      },
+      { onConflict: 'aluno_id,mes' }
+    )
   }
 
   revalidatePath('/professor')
