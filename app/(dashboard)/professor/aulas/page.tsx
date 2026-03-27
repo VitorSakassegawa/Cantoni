@@ -7,6 +7,7 @@ import Link from 'next/link'
 import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import ManualTranscriptImportButton from '@/components/dashboard/ManualTranscriptImportButton'
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -96,6 +97,9 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
+          <div className="border-b border-slate-100 px-6 py-6">
+            <ManualTranscriptImportButton />
+          </div>
           <AulasTimeline aulas={aulas || []} isProfessor={true} />
         </CardContent>
       </Card>
