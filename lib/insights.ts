@@ -228,6 +228,8 @@ export function buildStudentNotifications(input: {
   hasPendingPayment: boolean
   hasOverduePayment: boolean
   hasPendingReschedule: boolean
+  hasUpcomingHomework: boolean
+  upcomingHomeworkLabel?: string | null
   flashcardsDue: number
   recentActivityCount: number
 }) {
@@ -275,14 +277,27 @@ export function buildStudentNotifications(input: {
     })
   }
 
+  if (input.hasUpcomingHomework) {
+    items.push({
+      id: 'upcoming-homework',
+      title: 'Há homework para sua próxima aula',
+      description: input.upcomingHomeworkLabel
+        ? `Revise e entregue antes da aula: ${input.upcomingHomeworkLabel}`
+        : 'Revise sua tarefa antes do próximo encontro para aproveitar melhor a aula.',
+      severity: 'warning',
+      href: '/aluno/aulas',
+      actionLabel: 'Ver tarefa',
+    })
+  }
+
   if (input.flashcardsDue > 0) {
     items.push({
       id: 'flashcards-due',
-      title: 'Revisão rápida disponível',
+      title: 'Flashcards prontos para a próxima aula',
       description: `${input.flashcardsDue} flashcard(s) já estão prontos para revisar hoje.`,
       severity: 'success',
       href: '/aluno/flashcards',
-      actionLabel: 'Praticar',
+      actionLabel: 'Revisar',
     })
   }
 

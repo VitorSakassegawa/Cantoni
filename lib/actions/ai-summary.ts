@@ -5,6 +5,7 @@ import { requireLessonAccess } from '@/lib/auth'
 import { createClient } from '@/lib/supabase/server'
 import { generateLessonAnalysisV2 } from '@/lib/ai'
 import { enviarResumoAulaAI } from '@/lib/resend'
+import { syncFlashcardsFromVocabulary } from '@/lib/flashcards-auto'
 
 export async function getAIAnalysisV2(aulaId: number, content?: string) {
   const { aula, contrato, isProfessor } = await requireLessonAccess(aulaId, {
@@ -93,21 +94,16 @@ export async function enviarResumoAI(
     }
 
     if (vocabulary && Array.isArray(vocabulary) && vocabulary.length > 0) {
-      const flashcardsToInsert = vocabulary.map((item: any) => ({
-        aluno_id: student.id,
-        word: item.word,
-        translation: item.translation,
-        example: item.example || '',
-        next_review: new Date().toISOString(),
-      }))
-
-      const { error: flashError } = await supabase.from('flashcards').insert(flashcardsToInsert)
-      if (flashError) {
-        console.error('Error inserting flashcards:', flashError)
+      try {
+        await syncFlashcardsFromVocabulary(student.id, vocabulary)
+      } catch (flashError) {
+        console.error('Error syncing flashcards:', flashError)
       }
     }
 
     revalidatePath('/professor')
+    revalidatePath('/aluno')
+    revalidatePath('/aluno/flashcards')
     return { success: true }
   } catch (error: any) {
     console.error('Error sending AI summary:', error)

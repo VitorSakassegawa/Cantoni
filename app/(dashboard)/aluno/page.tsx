@@ -110,6 +110,10 @@ export default async function AlunoDashboard() {
   const temRemarcacaoPendente = (aulasPendentes || []).some(
     (aula: any) => aula.status === 'pendente_remarcacao' && !aula.data_hora_solicitada
   )
+  const homeworkPendenteProximaAula = Boolean(proximaAula?.homework && !proximaAula?.homework_completed)
+  const homeworkPreview = proximaAula?.homework
+    ? `${String(proximaAula.homework).trim().slice(0, 90)}${String(proximaAula.homework).trim().length > 90 ? '...' : ''}`
+    : null
 
   const daysRemaining = getDaysRemaining(contrato?.data_fim)
   const studentNotifications = buildStudentNotifications({
@@ -117,6 +121,8 @@ export default async function AlunoDashboard() {
     hasPendingPayment: Boolean(pagamentoPendenteComStatus),
     hasOverduePayment: pagamentoPendenteComStatus?.effectiveStatus === 'atrasado',
     hasPendingReschedule: temRemarcacaoPendente,
+    hasUpcomingHomework: homeworkPendenteProximaAula,
+    upcomingHomeworkLabel: homeworkPreview,
     flashcardsDue: flashcardsDue?.length || 0,
     recentActivityCount: activityLogs?.length || 0,
   })
@@ -295,6 +301,25 @@ export default async function AlunoDashboard() {
                     <p className="mt-2 text-sm font-semibold leading-relaxed text-blue-900/80">
                       {proximaAula.homework}
                     </p>
+                  </div>
+                ) : null}
+
+                {(flashcardsDue?.length || 0) > 0 ? (
+                  <div className="relative overflow-hidden rounded-2xl border border-indigo-100/60 bg-indigo-50/60 p-5">
+                    <div className="absolute top-0 right-0 h-full w-1 bg-indigo-500" />
+                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">
+                      Revisão recomendada
+                    </span>
+                    <p className="mt-2 text-sm font-semibold leading-relaxed text-indigo-900/80">
+                      Você tem {flashcardsDue?.length || 0} flashcard(s) para revisar antes da próxima aula.
+                    </p>
+                    <Link
+                      href="/aluno/flashcards"
+                      className="mt-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700"
+                    >
+                      Abrir flashcards
+                      <ArrowRight className="h-3.5 w-3.5" />
+                    </Link>
                   </div>
                 ) : null}
               </div>

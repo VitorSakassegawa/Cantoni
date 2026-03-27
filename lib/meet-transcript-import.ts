@@ -9,6 +9,7 @@ import {
   mergeTranscriptIntoLessonNotes,
   truncateTranscriptForAI,
 } from '@/lib/google-meet'
+import { syncFlashcardsFromVocabulary } from '@/lib/flashcards-auto'
 
 type LessonRow = {
   id: number
@@ -23,6 +24,7 @@ type LessonRow = {
   contratos?: {
     profiles?:
       | {
+          id?: string | null
           full_name?: string | null
           email?: string | null
           cefr_level?: string | null
@@ -30,6 +32,7 @@ type LessonRow = {
           tipo_aula?: string | null
         }
       | Array<{
+          id?: string | null
           full_name?: string | null
           email?: string | null
           cefr_level?: string | null
@@ -54,6 +57,7 @@ function normalizeStudentProfile(lesson: LessonRow) {
     : lesson.contratos?.profiles
 
   return {
+    id: profile?.id || null,
     name: profile?.full_name || 'Student',
     level: profile?.cefr_level || profile?.nivel || 'A1',
     lessonType: profile?.tipo_aula || 'General English',
@@ -97,7 +101,7 @@ export async function runMeetTranscriptImport({
   const { data: lessons, error } = await supabase
     .from('aulas')
     .select(
-      'id, data_hora, status, meet_link, class_notes, ai_summary_pt, ai_summary_en, homework, homework_due_date, contratos(profiles(full_name, email, cefr_level, nivel, tipo_aula))'
+      'id, data_hora, status, meet_link, class_notes, ai_summary_pt, ai_summary_en, homework, homework_due_date, contratos(profiles(id, full_name, email, cefr_level, nivel, tipo_aula))'
     )
     .not('meet_link', 'is', null)
     .lte('data_hora', importableUntil)
@@ -144,10 +148,11 @@ export async function runMeetTranscriptImport({
       }
 
       const mergedNotes = mergeTranscriptIntoLessonNotes(lesson.class_notes, importedTranscript)
+      const studentProfile = normalizeStudentProfile(lesson)
       const analysis = await generateLessonAnalysisV2(
         truncateTranscriptForAI(importedTranscript.transcriptText),
         {
-          ...normalizeStudentProfile(lesson),
+          ...studentProfile,
           durationMinutes: inferDurationMinutes(
             importedTranscript.transcriptStartedAt,
             importedTranscript.transcriptEndedAt
@@ -173,6 +178,10 @@ export async function runMeetTranscriptImport({
 
       if (updateError) {
         throw updateError
+      }
+
+      if (studentProfile.id && Array.isArray(analysis.vocabulary) && analysis.vocabulary.length > 0) {
+        await syncFlashcardsFromVocabulary(studentProfile.id, analysis.vocabulary)
       }
 
       imported += 1
