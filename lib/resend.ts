@@ -721,12 +721,98 @@ export async function enviarEmailRecuperacaoSenha({
   })
 }
 
+export async function enviarEmailCancelamentoContrato({
+  to,
+  nomeAluno,
+  effectiveDate,
+  reasonLabel,
+  outstandingAction,
+  creditAction,
+  notes,
+}: {
+  to: string
+  nomeAluno: string
+  effectiveDate: string
+  reasonLabel: string
+  outstandingAction: string
+  creditAction: string
+  notes?: string
+}) {
+  const resend = getResendClient()
+
+  const outstandingCopy =
+    outstandingAction === 'waive_open_balance'
+      ? 'O saldo em aberto vinculado a este contrato foi encerrado administrativamente.'
+      : 'Eventuais valores ainda em aberto permanecem sob acompanhamento administrativo.'
+
+  const creditCopy =
+    creditAction === 'refund_manual'
+      ? 'Caso exista valor pago e ainda não consumido, ele seguirá o fluxo de reembolso manual informado pela escola.'
+      : creditAction === 'convert_to_credit'
+        ? 'Caso exista valor pago e ainda não consumido, ele ficará registrado como crédito administrativo para acompanhamento interno.'
+        : 'Não há ação financeira complementar prevista além do encerramento deste contrato.'
+
+  return resend.emails.send({
+    from: FROM,
+    to,
+    subject: 'Atualização sobre o encerramento do seu contrato',
+    html: BaseLayout({
+      eyebrow: 'Encerramento contratual',
+      title: `Olá, ${nomeAluno}!`,
+      intro:
+        'Registramos o encerramento do seu contrato no portal da Cantoni English School. Abaixo, reunimos as informações principais deste fechamento para sua referência.',
+      tone: 'warning',
+      content: [
+        statGrid([
+          { label: 'Data efetiva', value: effectiveDate },
+          { label: 'Motivo registrado', value: reasonLabel },
+        ]),
+        card(
+          'Orientação financeira',
+          `<p style="margin:0 0 10px 0;">${escapeHtml(outstandingCopy)}</p><p style="margin:0;">${escapeHtml(creditCopy)}</p>`
+        ),
+        notes ? card('Observações da escola', `<p style="margin:0;">${nl2br(notes)}</p>`) : '',
+      ].join(''),
+      note:
+        'Se você precisar confirmar algum detalhe administrativo ou acadêmico, basta responder este e-mail para que a escola faça o acompanhamento.',
+    }),
+  })
+}
+
 export function getEmailTemplatePreviews() {
   const appUrl = getAppUrl()
   const meetLink = `${appUrl}/professor`
   const secureLink = `${appUrl}/redefinir-senha`
 
   return [
+    {
+      slug: 'cancelamento-contrato',
+      name: 'Cancelamento de contrato',
+      subject: 'Atualização sobre o encerramento do seu contrato',
+      html: BaseLayout({
+        eyebrow: 'Encerramento contratual',
+        title: 'Olá, Gabriel!',
+        intro:
+          'Registramos o encerramento do seu contrato no portal da Cantoni English School. Abaixo, reunimos as informações principais deste fechamento para sua referência.',
+        tone: 'warning',
+        content: [
+          statGrid([
+            { label: 'Data efetiva', value: '30/04/2026' },
+            { label: 'Motivo registrado', value: 'Incompatibilidade de agenda' },
+          ]),
+          card(
+            'Orientação financeira',
+            '<p style="margin:0 0 10px 0;">Eventuais valores ainda em aberto permanecem sob acompanhamento administrativo.</p><p style="margin:0;">Caso exista valor pago e ainda não consumido, ele ficará registrado como crédito administrativo para acompanhamento interno.</p>'
+          ),
+          card(
+            'Observações da escola',
+            '<p style="margin:0;">Se a sua rotina permitir retomar as aulas no futuro, teremos prazer em orientar um novo planejamento.</p>'
+          ),
+        ].join(''),
+        note:
+          'Se você precisar confirmar algum detalhe administrativo ou acadêmico, basta responder este e-mail para que a escola faça o acompanhamento.',
+      }),
+    },
     {
       slug: 'boas-vindas',
       name: 'Boas-vindas',

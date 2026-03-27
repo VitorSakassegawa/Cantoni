@@ -10,6 +10,7 @@ import {
   type CancellationReasonCode,
 } from '@/lib/contract-cancellation'
 import { deletarEventoCalendar } from '@/lib/google-calendar'
+import { enviarEmailCancelamentoContrato } from '@/lib/resend'
 
 type LessonRow = {
   id: number
@@ -85,6 +86,12 @@ export async function POST(request: NextRequest) {
   if (contract.status === 'cancelado') {
     return NextResponse.json({ error: 'Este contrato ja foi cancelado.' }, { status: 409 })
   }
+
+  const { data: studentProfile } = await serviceSupabase
+    .from('profiles')
+    .select('full_name, email')
+    .eq('id', contract.aluno_id)
+    .single()
 
   const [lessonsResult, paymentsResult] = await Promise.all([
     serviceSupabase
@@ -225,9 +232,28 @@ export async function POST(request: NextRequest) {
     },
   })
 
+  let emailWarning: string | null = null
+  if (studentProfile?.email) {
+    try {
+      await enviarEmailCancelamentoContrato({
+        to: studentProfile.email,
+        nomeAluno: studentProfile.full_name || 'Aluno',
+        effectiveDate,
+        reasonLabel,
+        outstandingAction,
+        creditAction,
+        notes: notes || undefined,
+      })
+    } catch (emailError) {
+      console.error('Cancellation email failed:', emailError)
+      emailWarning = 'Contrato cancelado, mas houve falha ao enviar o comunicado por e-mail.'
+    }
+  }
+
   return NextResponse.json({
     success: true,
     summary,
     cancelledFutureLessons,
+    emailWarning,
   })
 }

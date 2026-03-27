@@ -94,6 +94,9 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
         throw new Error(data.error || 'Nao foi possivel cancelar o contrato.')
       }
 
+      if (data.emailWarning) {
+        toast.warning(data.emailWarning)
+      }
       toast.success('Contrato cancelado com sucesso.')
       setOpen(false)
       router.refresh()
