@@ -41,6 +41,13 @@ export default async function AlunoAulasPage() {
     .eq('aluno_id', user.id)
     .order('mes', { ascending: false })
 
+  const currentMonth = new Date().toISOString().split('T')[0].slice(0, 8) + '01'
+  const currentMonthlyReschedules =
+    remarcacoesMes?.find((entry: any) => entry.mes === currentMonth)?.quantidade || 0
+  const currentMonthlyLimit = contratoAtual?.planos?.remarca_max_mes ?? 0
+  const currentMonthlyAvailable =
+    typeof currentMonthlyLimit === 'number' ? Math.max(0, currentMonthlyLimit - currentMonthlyReschedules) : 0
+
   const { data: aulas } = await supabase
     .from('aulas')
     .select('*')
@@ -125,11 +132,35 @@ export default async function AlunoAulasPage() {
                       {new Date(contratoAtual.data_fim).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
+
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Remarcações</p>
-                    <p className="mt-2 text-sm font-bold text-slate-900">
-                      Até {contratoAtual?.planos?.remarca_max_mes ?? 0} por mês no plano atual
-                    </p>
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Remarcações</p>
+                        <p className="mt-2 text-sm font-bold text-slate-900">
+                          Até {currentMonthlyLimit} por mês no plano atual
+                        </p>
+                      </div>
+                      <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-slate-100">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Disponíveis</p>
+                        <p className="mt-1 text-2xl font-black tracking-tight text-slate-900">{currentMonthlyAvailable}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <span>Usadas no mês</span>
+                      <span>
+                        {currentMonthlyReschedules}/{currentMonthlyLimit}
+                      </span>
+                    </div>
+                    <div className="mt-2 h-2 overflow-hidden rounded-full bg-white shadow-inner">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-700"
+                        style={{
+                          width: `${currentMonthlyLimit > 0 ? Math.min(100, (currentMonthlyReschedules / currentMonthlyLimit) * 100) : 0}%`,
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </>
