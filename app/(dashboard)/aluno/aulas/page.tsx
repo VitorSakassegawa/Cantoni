@@ -154,6 +154,8 @@ export default async function AlunoAulasPage() {
             <AulasTimeline
               aulas={aulasComRegras || []}
               isProfessor={false}
+              showStudentName={false}
+              showContractType={false}
               defaultFilter="upcoming"
               showFilterHint={true}
             />

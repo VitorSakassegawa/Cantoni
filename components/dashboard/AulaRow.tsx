@@ -155,6 +155,10 @@ export default function AulaRow({
 
   const canCancel = ['agendada', 'confirmada'].includes(status)
   const canRemark = ['agendada', 'confirmada', 'cancelada', 'pendente_remarcacao', 'pendente_remarcacao_rejeitada'].includes(status)
+  const hasActionButtons =
+    isProfessor ||
+    canCancel ||
+    (canRemark && (status !== 'pendente_remarcacao' || !aula.data_hora_solicitada))
   const remarkBlockReason = !isProfessor ? aula.remarkBlockReason || null : null
 
   function getFriendlyRemarkError(message?: string) {
@@ -467,6 +471,9 @@ export default function AulaRow({
               </Button>
             )}
           </div>
+          {!hasActionButtons ? (
+            <span className="block text-right text-lg font-light leading-none text-slate-300">—</span>
+          ) : null}
         </td>
       </tr>
 

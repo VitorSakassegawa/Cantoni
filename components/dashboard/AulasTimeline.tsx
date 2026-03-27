@@ -64,21 +64,21 @@ export default function AulasTimeline({
   }> = [
     {
       key: 'upcoming',
-      label: 'Proximas',
+      label: 'Próximas',
       count: summary.upcoming,
       tone: 'bg-blue-50 text-blue-700',
       icon: CalendarClock,
     },
     {
       key: 'reschedules',
-      label: 'Remarcacoes',
+      label: 'Remarcações',
       count: summary.reschedules,
       tone: 'bg-amber-50 text-amber-700',
       icon: RotateCcw,
     },
     {
       key: 'completed',
-      label: 'Concluidas',
+      label: 'Concluídas',
       count: summary.completed,
       tone: 'bg-emerald-50 text-emerald-700',
       icon: CheckCircle2,
@@ -87,18 +87,18 @@ export default function AulasTimeline({
 
   const emptyMessage =
     activeFilter === 'upcoming'
-      ? 'Nenhuma proxima aula registrada'
+      ? 'Nenhuma próxima aula registrada'
       : activeFilter === 'reschedules'
-        ? 'Nenhuma remarcacao encontrada'
-        : 'Nenhuma aula concluida encontrada'
+        ? 'Nenhuma remarcação encontrada'
+        : 'Nenhuma aula concluída encontrada'
 
   return (
     <div className="space-y-6 animate-fade-in">
       {showFilterHint ? (
         <div className="mx-6 rounded-2xl border border-slate-100 bg-slate-50/70 px-5 py-4">
-          <p className="text-sm font-semibold text-slate-700">Sua visao comeca pelas proximas aulas.</p>
+          <p className="text-sm font-semibold text-slate-700">Sua visão começa pelas próximas aulas.</p>
           <p className="mt-1 text-xs font-medium text-slate-500">
-            Para revisar aulas concluidas, materiais e eventuais remarcacoes, basta clicar no card correspondente.
+            Para revisar aulas concluídas, materiais e eventuais remarcações, basta clicar no card correspondente.
           </p>
         </div>
       ) : null}
@@ -143,7 +143,7 @@ export default function AulasTimeline({
                   Aula #
                 </th>
                 <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
-                  Data e horario
+                  Data e horário
                 </th>
                 <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
                   Status
@@ -152,7 +152,7 @@ export default function AulasTimeline({
                   Google Meet
                 </th>
                 <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
-                  Licao / conteudo
+                  Lição / conteúdo
                 </th>
                 {showContractType ? (
                   <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -165,7 +165,7 @@ export default function AulasTimeline({
                   </th>
                 ) : null}
                 <th className="px-4 py-6 pr-8 text-right text-[10px] font-black uppercase tracking-[0.2em]">
-                  Acoes
+                  Ações
                 </th>
               </tr>
             </thead>
