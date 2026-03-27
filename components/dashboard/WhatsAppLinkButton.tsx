@@ -1,3 +1,5 @@
+'use client'
+
 import { MessageCircle } from 'lucide-react'
 import { buttonVariants } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
