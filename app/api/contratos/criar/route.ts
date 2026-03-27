@@ -13,8 +13,17 @@ import { mapWithConcurrency } from '@/lib/async'
 import { findContractEndDateForLessons, gerarGradeAulas, formatDateTime } from '@/lib/utils'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 import { logActivityBestEffort } from '@/lib/activity-log'
+import {
+  calculateCreditApplicationPlan,
+  getAppliedCreditTotal,
+  listAvailableContractCredits,
+} from '@/lib/contract-credits'
 
 const CALENDAR_CONCURRENCY = 4
+
+function getErrorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback
+}
 
 async function cleanupContractArtifacts(
   serviceSupabase: Awaited<ReturnType<typeof createServiceClient>>,
@@ -54,11 +63,12 @@ export async function POST(request: NextRequest) {
       dia_vencimento,
       forma_pagamento,
       tipoContrato,
-      descontoValor,
-      descontoPercentual,
-      aulasTotais,
-      numParcelas,
-    } = await request.json()
+        descontoValor,
+        descontoPercentual,
+        aulasTotais,
+        numParcelas,
+        creditToApply,
+      } = await request.json()
 
     const serviceSupabase = await createServiceClient()
     const { data: plano } = await serviceSupabase.from('planos').select('*').eq('id', planoId).single()
@@ -70,8 +80,39 @@ export async function POST(request: NextRequest) {
 
     const startObj = new Date(`${dataInicio}T12:00:00`)
     const requestedEndObj = dataFim ? new Date(`${dataFim}T12:00:00`) : undefined
+    const contractValue = Number(valor || 0)
+    const requestedCreditToApply = Number(creditToApply || 0)
+
+    if (!Number.isFinite(contractValue) || contractValue < 0) {
+      return NextResponse.json({ error: 'Valor do contrato inválido' }, { status: 400 })
+    }
+
+    if (!Number.isFinite(requestedCreditToApply) || requestedCreditToApply < 0) {
+      return NextResponse.json({ error: 'Crédito aplicado inválido' }, { status: 400 })
+    }
+
     const specs = calculateContractSpecs(startObj, planoId, diasDaSemana, tipoContrato, requestedEndObj)
     const totalLessons = normalizeLessonTotal(aulasTotais, specs.totalLessons)
+    const availableCreditSources = await listAvailableContractCredits(serviceSupabase, alunoId)
+    const totalAvailableCredit = Number(
+      availableCreditSources.reduce((total, source) => total + source.availableValue, 0).toFixed(2)
+    )
+
+    if (requestedCreditToApply - totalAvailableCredit > 0.009) {
+      return NextResponse.json(
+        {
+          error: `O crédito disponível foi atualizado e agora totaliza R$ ${totalAvailableCredit.toFixed(2)}.`,
+        },
+        { status: 409 }
+      )
+    }
+
+    const creditApplications = calculateCreditApplicationPlan({
+      requestedAmount: Math.min(contractValue, requestedCreditToApply),
+      sources: availableCreditSources,
+    })
+    const appliedCreditTotal = getAppliedCreditTotal(creditApplications)
+    const netContractValue = Number(Math.max(0, contractValue - appliedCreditTotal).toFixed(2))
 
     const { data: recessosDb } = await serviceSupabase
       .from('recessos')
@@ -81,7 +122,7 @@ export async function POST(request: NextRequest) {
     for (const recesso of recessosDb || []) {
       const start = new Date(`${recesso.data_inicio}T12:00:00`)
       const end = new Date(`${recesso.data_fim}T12:00:00`)
-      let current = new Date(start)
+      const current = new Date(start)
       while (current <= end) {
         customHolidays.push(current.toISOString().split('T')[0])
         current.setDate(current.getDate() + 1)
@@ -111,7 +152,7 @@ export async function POST(request: NextRequest) {
         livro_atual,
         nivel_atual,
         horario,
-        valor,
+        valor: netContractValue,
         dia_vencimento,
         forma_pagamento,
         tipo_contrato: tipoContrato || 'semestral',
@@ -210,7 +251,7 @@ export async function POST(request: NextRequest) {
       }
 
       const nParcelas = numParcelas || (tipoContrato === 'ad-hoc' ? 1 : specs.remainingMonths)
-      const valorParcela = Number((Number(valor) / nParcelas).toFixed(2))
+      const valorParcela = Number((netContractValue / nParcelas).toFixed(2))
       const pagamentosParaInserir = []
 
       for (let i = 1; i <= nParcelas; i += 1) {
@@ -239,6 +280,25 @@ export async function POST(request: NextRequest) {
         throw insertPagamentosErr
       }
 
+      if (creditApplications.length > 0) {
+        const { error: creditApplicationError } = await serviceSupabase
+          .from('contract_credit_applications')
+          .insert(
+            creditApplications.map((application) => ({
+              source_cancellation_id: application.cancellationId,
+              source_contract_id: application.sourceContractId,
+              target_contract_id: contrato.id,
+              student_id: alunoId,
+              applied_amount: application.amount,
+              applied_by: professor.id,
+            }))
+          )
+
+        if (creditApplicationError) {
+          throw creditApplicationError
+        }
+      }
+
       let setupPasswordLink: string | undefined
       let emailWarning: string | null = null
       let calendarWarning: string | null = null
@@ -257,7 +317,7 @@ export async function POST(request: NextRequest) {
       }
 
       try {
-        const emailResult: any = await enviarEmailBoasVindas({
+        const emailResult = (await enviarEmailBoasVindas({
           to: aluno.email,
           nomeAluno: aluno.full_name,
           plano: plano.descricao || '',
@@ -265,7 +325,7 @@ export async function POST(request: NextRequest) {
           dataFim: new Date(effectiveEndDate).toLocaleDateString('pt-BR'),
           aulas: primeirasCinco,
           setupPasswordLink,
-        })
+        })) as { error?: { message?: string } | null } | null
 
         if (emailResult?.error) {
           console.error('Welcome email delivery error:', emailResult.error)
@@ -295,21 +355,23 @@ export async function POST(request: NextRequest) {
           planoId,
           tipoContrato: tipoContrato || 'semestral',
           totalLessons,
-          value: valor,
+          value: netContractValue,
+          grossValue: contractValue,
+          appliedCreditTotal,
         },
       })
 
       return NextResponse.json({ success: true, contrato, emailWarning, calendarWarning })
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Contract creation flow failed:', error)
       await cleanupContractArtifacts(serviceSupabase, contrato.id, createdEventIds)
       return NextResponse.json(
-        { error: error.message || 'Erro ao finalizar criação do contrato' },
+        { error: getErrorMessage(error, 'Erro ao finalizar criação do contrato') },
         { status: 500 }
       )
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Contract authorization error:', error)
-    return NextResponse.json({ error: error.message || 'Erro interno' }, { status: 500 })
+    return NextResponse.json({ error: getErrorMessage(error, 'Erro interno') }, { status: 500 })
   }
 }

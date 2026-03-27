@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select } from '@/components/ui/select'
-import { Calendar, BookOpen, Clock, Info, Percent, DollarSign, AlertTriangle, Sparkles, BrainCircuit, Target } from 'lucide-react'
+import { Calendar, Clock, Info, Percent, DollarSign, AlertTriangle, BrainCircuit, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 import { findContractEndDateForLessons, formatDateOnly, gerarGradeAulas, maskCurrency } from '@/lib/utils'
@@ -71,6 +71,14 @@ type ContractPayload = {
   aulasTotais: number
   id?: number
   status?: string
+  creditToApply?: number
+}
+
+type AvailableCreditSource = {
+  cancellationId: number
+  sourceContractId: number
+  availableValue: number
+  effectiveDate: string
 }
 
 const DIAS_SEMANA = [
@@ -144,6 +152,11 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [loadingPlacement, setLoadingPlacement] = useState(false)
   const [customHolidays, setCustomHolidays] = useState<string[]>([])
   const [scheduleAdjustedEndDate, setScheduleAdjustedEndDate] = useState<string | null>(null)
+  const [loadingCredits, setLoadingCredits] = useState(false)
+  const [availableCreditTotal, setAvailableCreditTotal] = useState(0)
+  const [availableCreditSources, setAvailableCreditSources] = useState<AvailableCreditSource[]>([])
+  const [useCredit, setUseCredit] = useState(false)
+  const [creditToApplyMasked, setCreditToApplyMasked] = useState('')
 
   // Effect to handle Evolve book logic on initial load
   useEffect(() => {
@@ -191,6 +204,35 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
     }
 
     fetchRecessos()
+
+    async function fetchCredits() {
+      if (!alunoId || isEdit) return
+
+      setLoadingCredits(true)
+      try {
+        const response = await fetch(`/api/professor/alunos/${alunoId}/creditos`)
+        const data = await response.json()
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Falha ao consultar créditos disponíveis')
+        }
+
+        const totalAvailable = Number(data.totalAvailable || 0)
+        setAvailableCreditTotal(totalAvailable)
+        setAvailableCreditSources(data.sources || [])
+
+        if (totalAvailable > 0) {
+          setUseCredit(true)
+          setCreditToApplyMasked(maskCurrency((totalAvailable * 100).toFixed(0)))
+        }
+      } catch (error) {
+        console.error('Error fetching contract credits:', error)
+      } finally {
+        setLoadingCredits(false)
+      }
+    }
+
+    fetchCredits()
     
     if (initialData?.livro_atual) {
       const isEvolve = initialData.livro_atual.toLowerCase().includes('evolve')
@@ -203,7 +245,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         setLivroManual(initialData.livro_atual)
       }
     }
-  }, [initialData, alunoId])
+  }, [initialData, alunoId, isEdit])
 
   useEffect(() => {
     if (tipoContrato === 'ad-hoc') {
@@ -250,12 +292,12 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         setIsCrossSemester(specs.isCrossSemester)
 
         // Initial Final Value without discounts yet
-        updateFinalValue(calculatedBaseValue, descontoValor, descontoPercentual)
+        updateFinalValue(calculatedBaseValue, descontoValor)
       } catch (e) {
         console.error('Calculation error:', e)
       }
     }
-  }, [dataInicio, dataFim, planoId, diasSelecionados, tipoContrato, customHolidays])
+  }, [customHolidays, dataFim, dataInicio, diasSelecionados, descontoPercentual, descontoValor, planoId, tipoContrato])
 
   // Cross-feeding Logic
   const handleDescontoValorChange = (val: string) => {
@@ -264,7 +306,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       const numericVal = parseFloat(val.replace(/\D/g, '') || '0') / 100
       const percentage = (numericVal / baseValue) * 100
       setDescontoPercentual(percentage > 0 ? percentage.toFixed(1) : '')
-      updateFinalValue(baseValue, val, percentage > 0 ? percentage.toFixed(1) : '')
+      updateFinalValue(baseValue, val)
     }
   }
 
@@ -275,17 +317,38 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       const dollarValue = (baseValue * numericPerc) / 100
       const maskedDollar = maskCurrency((dollarValue * 100).toFixed(0))
       setDescontoValor(dollarValue > 0 ? maskedDollar : '')
-      updateFinalValue(baseValue, dollarValue > 0 ? maskedDollar : '', val)
+      updateFinalValue(baseValue, dollarValue > 0 ? maskedDollar : '')
     }
   }
 
-  const updateFinalValue = (base: number, dValor: string, dPerc: string) => {
+  const updateFinalValue = (base: number, dValor: string) => {
     const dv = parseFloat(dValor.replace(/\D/g, '') || '0') / 100
-    const dp = parseFloat(dPerc || '0')
     let finalValue = base - dv
     if (finalValue < 0) finalValue = 0
     setValorFinalComMascara(maskCurrency((finalValue * 100).toFixed(0)))
   }
+
+  const grossFinalValue = parseFloat(valorFinalComMascara.replace(/\D/g, '') || '0') / 100
+  const parsedInstallmentCount = parseInt(numParcelas || '1', 10) || 1
+  const parsedCreditToApply = useCredit
+    ? parseFloat(creditToApplyMasked.replace(/\D/g, '') || '0') / 100
+    : 0
+  const creditAppliedPreview = Math.min(availableCreditTotal, grossFinalValue, parsedCreditToApply)
+  const netFinalValue = Math.max(0, grossFinalValue - creditAppliedPreview)
+  const installmentPreview = parsedInstallmentCount > 0 ? netFinalValue / parsedInstallmentCount : netFinalValue
+
+  useEffect(() => {
+    if (isEdit || !useCredit) {
+      return
+    }
+
+    const parsedCurrentCredit = parseFloat(creditToApplyMasked.replace(/\D/g, '') || '0') / 100
+    const maxCredit = Math.min(availableCreditTotal, grossFinalValue)
+
+    if (Math.abs(parsedCurrentCredit - maxCredit) > 0.009) {
+      setCreditToApplyMasked(maxCredit > 0 ? maskCurrency((maxCredit * 100).toFixed(0)) : '')
+    }
+  }, [availableCreditTotal, creditToApplyMasked, grossFinalValue, isEdit, useCredit])
 
   const toggleDia = (dia: number) => {
     if (tipoContrato === 'semestral') {
@@ -335,10 +398,11 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         numParcelas: parseInt(numParcelas),
         livro_atual: finalLivro,
         nivel_atual: nivel,
-        valor: baseValue - (parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100),
-        diasDaSemana: diasSelecionados,
-        horario,
-        aulasTotais: parseInt(aulasTotais),
+          valor: baseValue - (parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100),
+          creditToApply: creditAppliedPreview,
+          diasDaSemana: diasSelecionados,
+          horario,
+          aulasTotais: parseInt(aulasTotais),
       }
 
       if (isEdit) {
@@ -560,6 +624,98 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               </div>
             </div>
           </div>
+
+          {!isEdit && (
+            <div className="rounded-[2rem] border border-blue-100 bg-blue-50/70 p-6 space-y-5">
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">Crédito disponível</p>
+                  <p className="text-sm font-medium leading-relaxed text-blue-900/80">
+                    Créditos administrativos oriundos de cancelamentos podem ser abatidos deste novo contrato.
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Disponível</p>
+                  <p className="text-2xl font-black text-blue-700">
+                    {loadingCredits ? '...' : formatCurrency(availableCreditTotal)}
+                  </p>
+                </div>
+              </div>
+
+              {availableCreditTotal > 0 ? (
+                <>
+                  <label className="flex items-center gap-3 rounded-2xl bg-white/80 px-4 py-3 border border-blue-100">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-blue-300"
+                      checked={useCredit}
+                      onChange={(e) => {
+                        setUseCredit(e.target.checked)
+                        if (!e.target.checked) {
+                          setCreditToApplyMasked('')
+                        } else {
+                          const maxCredit = Math.min(availableCreditTotal, grossFinalValue)
+                          setCreditToApplyMasked(maxCredit > 0 ? maskCurrency((maxCredit * 100).toFixed(0)) : '')
+                        }
+                      }}
+                    />
+                    <span className="text-sm font-bold text-slate-700">
+                      Aplicar crédito neste contrato
+                    </span>
+                  </label>
+
+                  {useCredit && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="space-y-3">
+                        <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500">
+                          Crédito a aplicar
+                        </Label>
+                        <Input
+                          className="h-14 rounded-2xl bg-white border-blue-100 font-bold"
+                          value={creditToApplyMasked}
+                          onChange={(e) => setCreditToApplyMasked(maskCurrency(e.target.value))}
+                          placeholder="R$ 0,00"
+                        />
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                          Máximo aplicável agora: {formatCurrency(Math.min(availableCreditTotal, grossFinalValue))}
+                        </p>
+                      </div>
+
+                      <div className="rounded-[1.5rem] bg-white border border-blue-100 px-5 py-4 space-y-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cobrança após crédito</p>
+                        <p className="text-3xl font-black tracking-tight text-slate-900">{formatCurrency(netFinalValue)}</p>
+                        <p className="text-xs font-medium text-slate-500">
+                          {parseInt(numParcelas || '1', 10) || 1} parcela(s) de aproximadamente {formatCurrency(installmentPreview || 0)}.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {availableCreditSources.length > 0 ? (
+                    <div className="rounded-[1.5rem] bg-white/70 border border-blue-100 px-5 py-4">
+                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Origem do crédito</p>
+                      <div className="mt-3 space-y-2">
+                        {availableCreditSources.map((source) => (
+                          <div key={source.cancellationId} className="flex items-center justify-between gap-3 text-sm">
+                            <span className="font-medium text-slate-600">
+                              Contrato #{source.sourceContractId} • {formatDateOnly(source.effectiveDate)}
+                            </span>
+                            <span className="font-black text-blue-700">
+                              {formatCurrency(source.availableValue)}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </>
+              ) : (
+                <p className="text-sm font-medium text-slate-500">
+                  Nenhum crédito administrativo disponível para este aluno no momento.
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Section 4: Descontos Cross-feeding */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

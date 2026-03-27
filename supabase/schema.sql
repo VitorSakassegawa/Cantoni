@@ -63,7 +63,6 @@ create table if not exists contratos (
   desconto_valor numeric(10, 2) not null default 0,
   desconto_percentual numeric(5, 2) not null default 0,
   dias_da_semana integer[],
-  infinitepay_customer_id text,
   created_at timestamptz not null default now()
 );
 
@@ -126,7 +125,6 @@ create table if not exists pagamentos (
   data_vencimento date not null,
   data_pagamento date,
   forma text check (forma in ('pix', 'cartao', 'dinheiro', 'boleto', 'credit_card', 'debit_card')),
-  infinitepay_invoice_id text unique,
   mercadopago_id text unique,
   mercadopago_status text,
   mercadopago_payment_method text,
@@ -261,6 +259,17 @@ create table if not exists payment_cancellation_entries (
   created_at timestamptz not null default now()
 );
 
+create table if not exists contract_credit_applications (
+  id bigserial primary key,
+  source_cancellation_id bigint not null references contract_cancellations(id) on delete cascade,
+  source_contract_id integer not null references contratos(id) on delete cascade,
+  target_contract_id integer not null references contratos(id) on delete cascade,
+  student_id uuid not null references profiles(id) on delete cascade,
+  applied_amount numeric(10, 2) not null check (applied_amount > 0),
+  applied_by uuid references profiles(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists document_issuances (
   id bigserial primary key,
   contract_id integer not null references contratos(id) on delete cascade,
@@ -300,6 +309,9 @@ create index if not exists idx_contract_cancellations_contract_id on contract_ca
 create index if not exists idx_contract_cancellations_student_id on contract_cancellations (student_id);
 create index if not exists idx_payment_cancellation_entries_contract_id on payment_cancellation_entries (contract_id);
 create index if not exists idx_payment_cancellation_entries_cancellation_id on payment_cancellation_entries (contract_cancellation_id);
+create index if not exists idx_contract_credit_applications_target_contract_id on contract_credit_applications (target_contract_id);
+create index if not exists idx_contract_credit_applications_source_cancellation_id on contract_credit_applications (source_cancellation_id);
+create index if not exists idx_contract_credit_applications_student_id on contract_credit_applications (student_id);
 create index if not exists idx_avaliacoes_habilidades_contrato_id on avaliacoes_habilidades (contrato_id);
 create index if not exists idx_activity_logs_actor_user_id on activity_logs (actor_user_id);
 create index if not exists idx_activity_logs_target_user_id on activity_logs (target_user_id);

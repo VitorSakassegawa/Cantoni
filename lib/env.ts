@@ -23,10 +23,6 @@ type Env = z.infer<typeof envSchema>
 function buildRawEnv() {
   return {
     ...process.env,
-    CRON_SECRET:
-      process.env.CRON_SECRET ??
-      process.env.INFINITEPAY_WEBHOOK_SECRET ??
-      process.env.MERCADOPAGO_WEBHOOK_SECRET,
   }
 }
 

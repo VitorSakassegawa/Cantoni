@@ -14,8 +14,10 @@ Edit `.env.local` with your real keys:
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google Cloud Console -> OAuth 2.0 |
 | `GOOGLE_REFRESH_TOKEN` | After step 3 below |
 | `GOOGLE_OAUTH_SETUP_SECRET` | Any long random secret used to unlock Google OAuth setup in production |
-| `INFINITEPAY_API_KEY` | InfinitePay dashboard -> Developers |
-| `INFINITEPAY_WEBHOOK_SECRET` | Any secret string; configure the same value in the InfinitePay webhook |
+| `CRON_SECRET` | Any long random secret used only by internal cron routes |
+| `MERCADOPAGO_ACCESS_TOKEN` | Mercado Pago -> Developers -> Production/Test credentials |
+| `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY` | Mercado Pago -> Developers -> Production/Test credentials |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Mercado Pago webhook secret configured in the developer panel |
 | `RESEND_API_KEY` | resend.com -> API Keys |
 | `RESEND_FROM_EMAIL` | Your verified domain email |
 
@@ -55,11 +57,11 @@ WHERE email = 'gabriel@youremail.com';
 
 Or use Supabase Auth -> Users -> create the user manually, then run the SQL above.
 
-## 5. Configure InfinitePay webhook
+## 5. Configure Mercado Pago webhook
 
-In the InfinitePay developer dashboard, add a webhook:
-- URL: `https://your-site.netlify.app/api/webhooks/infinitepay`
-- Events: `charge.paid`
+In the Mercado Pago developer dashboard, add a webhook:
+- URL: `https://your-site.netlify.app/api/webhooks/mercadopago`
+- Events: payment notifications
 
 ## 6. Deploy to Netlify
 
@@ -87,7 +89,7 @@ SELECT cron.schedule(
 ```
 
 Option B - external cron service:
-- Call `GET /api/cron/lembretes-aula` hourly with header `x-cron-secret: your_webhook_secret`
+- Call `GET /api/cron/lembretes-aula` hourly with header `x-cron-secret: your_cron_secret`
 - Call `GET /api/cron/marcar-atrasados` daily with the same header
 - Call `GET /api/cron/importar-transcricoes-meet` every 30-60 minutes with the same header to import Meet transcripts and generate lesson summaries automatically
 

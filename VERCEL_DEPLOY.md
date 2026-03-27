@@ -26,20 +26,22 @@ No painel da Vercel, abra a seção **"Environment Variables"** e adicione:
 | `GOOGLE_CLIENT_ID` | Seu Google Client ID |
 | `GOOGLE_CLIENT_SECRET` | Seu Google Client Secret |
 | `GOOGLE_REFRESH_TOKEN` | Seu Google Refresh Token |
-| `INFINITEPAY_API_KEY` | Sua chave da InfinitePay |
-| `INFINITEPAY_WEBHOOK_SECRET` | O segredo do webhook que você definiu |
+| `CRON_SECRET` | Segredo usado pelas rotas internas de cron |
+| `MERCADOPAGO_ACCESS_TOKEN` | Seu access token do Mercado Pago |
+| `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY` | Sua public key do Mercado Pago |
+| `MERCADOPAGO_WEBHOOK_SECRET` | O segredo do webhook configurado no Mercado Pago |
 | `RESEND_API_KEY` | Sua chave da Resend |
 | `RESEND_FROM_EMAIL` | Seu e-mail de envio verificado |
 
 > [!IMPORTANT]
 > A Vercel detectará automaticamente que o projeto é Next.js e configurará os comandos de build corretamente.
 
-## 4. Atualizar Webhooks (InfinitePay)
+## 4. Atualizar Webhooks (Mercado Pago)
 
-Após o deploy, a Vercel fornecerá uma URL (ex: `https://meu-projeto.vercel.app`). Você deve atualizar o webhook na InfinitePay:
+Após o deploy, a Vercel fornecerá uma URL (ex: `https://meu-projeto.vercel.app`). Você deve atualizar o webhook no Mercado Pago:
 
-1.  Vá ao painel da InfinitePay → Desenvolvedores.
-2.  Atualize a URL do webhook para: `https://sua-url-da-vercel.vercel.app/api/webhooks/infinitepay`
+1.  Vá ao painel do Mercado Pago → Developers.
+2.  Atualize a URL do webhook para: `https://sua-url-da-vercel.vercel.app/api/webhooks/mercadopago`
 
 ## 5. Configurar Cron Jobs (Opcional)
 
@@ -62,7 +64,7 @@ Se preferir usar o Cron da Vercel em vez do `pg_cron` do Supabase:
 }
 ```
 
-2.  Lembre-se de passar o header `x-cron-secret` se suas APIs de cron exigirem.
+2.  Lembre-se de configurar `CRON_SECRET` e passar o header `x-cron-secret` se suas APIs de cron exigirem.
 
 ---
 

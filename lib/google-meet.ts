@@ -58,14 +58,14 @@ function buildConferenceFilter(meetingCode: string, scheduledAt: Date) {
   return `space.meeting_code = "${meetingCode}" AND start_time >= "${startWindow}" AND start_time <= "${endWindow}"`
 }
 
-function pickClosestConferenceRecord(records: ConferenceRecord[], scheduledAt: Date) {
+function sortConferenceRecordsByDistance(records: ConferenceRecord[], scheduledAt: Date) {
   return [...records]
     .filter((record) => record.name && record.startTime)
     .sort((left, right) => {
       const leftDistance = Math.abs(new Date(left.startTime!).getTime() - scheduledAt.getTime())
       const rightDistance = Math.abs(new Date(right.startTime!).getTime() - scheduledAt.getTime())
       return leftDistance - rightDistance
-    })[0] ?? null
+    })
 }
 
 async function listTranscriptEntriesText(transcriptName: string) {
@@ -112,46 +112,50 @@ export async function importMeetTranscriptForLesson({
     pageSize: 10,
   })
 
-  const conferenceRecord = pickClosestConferenceRecord(
+  const candidateRecords = sortConferenceRecordsByDistance(
     conferenceResponse.data.conferenceRecords || [],
     scheduledDate
   )
 
-  if (!conferenceRecord?.name) {
+  if (candidateRecords.length === 0) {
     return null
   }
 
-  const transcriptsResponse = await meet.conferenceRecords.transcripts.list({
-    parent: conferenceRecord.name,
-    pageSize: 20,
-  })
+  for (const candidateRecord of candidateRecords) {
+    const transcriptsResponse = await meet.conferenceRecords.transcripts.list({
+      parent: candidateRecord.name!,
+      pageSize: 20,
+    })
 
-  const transcript = [...(transcriptsResponse.data.transcripts || [])]
-    .filter((item: TranscriptResource) => item.name)
-    .sort((left, right) => {
-      const leftTime = new Date(left.startTime || 0).getTime()
-      const rightTime = new Date(right.startTime || 0).getTime()
-      return rightTime - leftTime
-    })[0]
+    const transcript = [...(transcriptsResponse.data.transcripts || [])]
+      .filter((item: TranscriptResource) => item.name)
+      .sort((left, right) => {
+        const leftTime = new Date(left.startTime || 0).getTime()
+        const rightTime = new Date(right.startTime || 0).getTime()
+        return rightTime - leftTime
+      })[0]
 
-  if (!transcript?.name) {
-    return null
+    if (!transcript?.name) {
+      continue
+    }
+
+    const transcriptText = await listTranscriptEntriesText(transcript.name)
+    if (!transcriptText) {
+      continue
+    }
+
+    return {
+      meetingCode,
+      conferenceRecord: candidateRecord.name!,
+      transcriptName: transcript.name,
+      transcriptText,
+      transcriptDocUrl: transcript.docsDestination?.exportUri || null,
+      transcriptStartedAt: transcript.startTime || null,
+      transcriptEndedAt: transcript.endTime || null,
+    }
   }
 
-  const transcriptText = await listTranscriptEntriesText(transcript.name)
-  if (!transcriptText) {
-    return null
-  }
-
-  return {
-    meetingCode,
-    conferenceRecord: conferenceRecord.name,
-    transcriptName: transcript.name,
-    transcriptText,
-    transcriptDocUrl: transcript.docsDestination?.exportUri || null,
-    transcriptStartedAt: transcript.startTime || null,
-    transcriptEndedAt: transcript.endTime || null,
-  }
+  return null
 }
 
 export function mergeTranscriptIntoLessonNotes(
