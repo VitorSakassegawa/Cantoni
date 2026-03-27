@@ -103,7 +103,7 @@ export default async function AlunoPagamentosPage() {
   const userProfile = profile as ProfileSummary | null
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
+    <div className="mx-auto max-w-6xl space-y-10 animate-fade-in pb-20">
       <Link
         href="/aluno"
         className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
@@ -120,7 +120,7 @@ export default async function AlunoPagamentosPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
-        <Card className="glass-card border-none overflow-hidden">
+        <Card className="glass-card overflow-hidden border-none">
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
@@ -137,7 +137,8 @@ export default async function AlunoPagamentosPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card border-none overflow-hidden">
+
+        <Card className="glass-card overflow-hidden border-none">
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
@@ -154,7 +155,8 @@ export default async function AlunoPagamentosPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card border-none overflow-hidden">
+
+        <Card className="glass-card overflow-hidden border-none">
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
@@ -171,7 +173,8 @@ export default async function AlunoPagamentosPage() {
             </div>
           </CardContent>
         </Card>
-        <Card className="glass-card border-none overflow-hidden">
+
+        <Card className="glass-card overflow-hidden border-none">
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
@@ -211,8 +214,7 @@ export default async function AlunoPagamentosPage() {
                     Contrato #{item.contratoId} • Parcela {item.parcela}
                   </p>
                   <p className="text-xs font-medium text-slate-600">
-                    Vencida em {formatDate(item.dataVencimento)} • valor{' '}
-                    {formatCurrency(item.valor)}
+                    Vencida em {formatDate(item.dataVencimento)} • valor {formatCurrency(item.valor)}
                   </p>
                 </div>
                 <Badge className="w-fit border-none bg-rose-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
@@ -226,7 +228,7 @@ export default async function AlunoPagamentosPage() {
 
       <div className="space-y-8">
         {pagamentosAgrupados.map(({ contrato, pagamentos }) => (
-          <Card key={contrato.id} className="glass-card border-none overflow-hidden">
+          <Card key={contrato.id} className="glass-card overflow-hidden border-none">
             <CardHeader className="border-b border-slate-200 bg-slate-100/50 p-8">
               <CardTitle className="flex flex-col gap-3 text-xs font-black uppercase tracking-[0.2em] text-blue-600 md:flex-row md:items-center md:justify-between">
                 <div className="flex items-center gap-3">
@@ -235,11 +237,12 @@ export default async function AlunoPagamentosPage() {
                   </div>
                   <span>Contrato #{contrato.id}</span>
                 </div>
-                <span className="text-[10px] normal-case tracking-normal text-slate-400">
+                <span className="text-[10px] tracking-normal normal-case text-slate-400">
                   {formatDateOnly(contrato.data_inicio)} - {formatDateOnly(contrato.data_fim)}
                 </span>
               </CardTitle>
             </CardHeader>
+
             <CardContent className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
@@ -265,6 +268,7 @@ export default async function AlunoPagamentosPage() {
                       </th>
                     </tr>
                   </thead>
+
                   <tbody className="divide-y divide-slate-100">
                     {pagamentos.map((payment) => (
                       <tr
@@ -284,14 +288,17 @@ export default async function AlunoPagamentosPage() {
                             /{String(totalPorContrato[payment.contrato_id] || pagamentos.length).padStart(2, '0')}
                           </span>
                         </td>
+
                         <td className="px-4 py-6 text-sm font-black tracking-tighter text-slate-900">
                           {formatCurrency(payment.valor)}
                         </td>
+
                         <td className="px-4 py-6 text-xs font-bold text-slate-500">
                           {formatDate(payment.data_vencimento)}
                         </td>
+
                         <td className="px-4 py-6">
-                          <div className="space-y-2">
+                          <div className="flex flex-col items-start gap-2">
                             <Badge
                               className={`border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
                                 payment.effectiveStatus === 'pago'
@@ -307,13 +314,20 @@ export default async function AlunoPagamentosPage() {
                                   ? 'Pendente'
                                   : 'Pago'}
                             </Badge>
+
                             {payment.effectiveStatus !== 'pago' && payment.pix_copia_cola ? (
-                              <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">
-                                PIX gerado
-                              </p>
+                              <>
+                                <p className="pl-1 text-[10px] font-black uppercase tracking-widest text-blue-600">
+                                  PIX gerado
+                                </p>
+                                <p className="max-w-[190px] pl-1 text-[10px] font-bold leading-relaxed text-slate-400">
+                                  Aguardando compensação do Mercado Pago.
+                                </p>
+                              </>
                             ) : null}
                           </div>
                         </td>
+
                         <td className="px-4 py-6 text-xs font-bold text-slate-600">
                           {payment.data_pagamento ? (
                             formatDate(payment.data_pagamento)
@@ -323,25 +337,19 @@ export default async function AlunoPagamentosPage() {
                             </span>
                           )}
                         </td>
-                        <td className="flex justify-end px-8 py-6 text-right">
+
+                        <td className="px-8 py-6 text-right">
                           {payment.effectiveStatus !== 'pago' ? (
-                            <div className="space-y-2 text-right">
+                            <div className="flex justify-end">
                               <PaymentWrapper
                                 paymentId={String(payment.id)}
                                 amount={Number(payment.valor)}
                                 email={userProfile?.email || ''}
                                 nome={userProfile?.full_name || ''}
                                 hasPixGenerated={Boolean(payment.pix_copia_cola || payment.pix_qrcode_base64)}
+                                pixQrCodeBase64={payment.pix_qrcode_base64 || null}
+                                pixCopyPaste={payment.pix_copia_cola || null}
                               />
-                              {payment.pix_copia_cola ? (
-                                <p className="text-[10px] font-bold text-slate-400">
-                                  QR Code já criado. Aguardando compensação do Mercado Pago.
-                                </p>
-                              ) : payment.mercadopago_status ? (
-                                <p className="text-[10px] font-bold text-slate-400">
-                                  Status Mercado Pago: {payment.mercadopago_status}
-                                </p>
-                              ) : null}
                             </div>
                           ) : (
                             <Badge
