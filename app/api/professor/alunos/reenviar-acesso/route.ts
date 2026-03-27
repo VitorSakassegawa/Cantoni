@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { enviarEmailPrimeiroAcesso } from '@/lib/resend'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -36,13 +37,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Aluno sem e-mail cadastrado.' }, { status: 400 })
   }
 
-  const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(aluno.email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
+  const { data: linkData, error: linkError } = await serviceSupabase.auth.admin.generateLink({
+    type: 'recovery',
+    email: aluno.email,
+    options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
+    },
   })
 
-  if (resetError) {
+  if (linkError || !linkData?.properties?.action_link) {
     return NextResponse.json(
-      { error: resetError.message || 'Nao foi possivel enviar o e-mail de primeiro acesso.' },
+      { error: linkError?.message || 'Nao foi possivel gerar o link de primeiro acesso.' },
+      { status: 500 }
+    )
+  }
+
+  const emailResult = await enviarEmailPrimeiroAcesso({
+    to: aluno.email,
+    nomeAluno: aluno.full_name || 'Aluno(a)',
+    setupPasswordLink: linkData.properties.action_link,
+  })
+
+  if (emailResult?.error) {
+    return NextResponse.json(
+      { error: emailResult.error.message || 'Nao foi possivel enviar o e-mail de primeiro acesso.' },
       { status: 500 }
     )
   }

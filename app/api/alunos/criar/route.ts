@@ -1,6 +1,7 @@
 import crypto from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { enviarEmailPrimeiroAcesso } from '@/lib/resend'
 
 function generateTemporaryPassword() {
   return crypto.randomBytes(18).toString('base64url')
@@ -76,13 +77,28 @@ export async function POST(request: NextRequest) {
 
   let emailWarning: string | null = null
   try {
-    const { error: resetError } = await serviceSupabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
+    const { data: linkData, error: linkError } = await serviceSupabase.auth.admin.generateLink({
+      type: 'recovery',
+      email,
+      options: {
+        redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
+      },
     })
 
-    if (resetError) {
+    if (linkError || !linkData?.properties?.action_link) {
       emailWarning =
-        resetError.message || 'Aluno criado, mas o e-mail de primeiro acesso nao pode ser entregue.'
+        linkError?.message || 'Aluno criado, mas o link de primeiro acesso nao pode ser gerado.'
+    } else {
+      const emailResult = await enviarEmailPrimeiroAcesso({
+        to: email,
+        nomeAluno: nome,
+        setupPasswordLink: linkData.properties.action_link,
+      })
+
+      if (emailResult?.error) {
+        emailWarning =
+          emailResult.error.message || 'Aluno criado, mas o e-mail de primeiro acesso nao pode ser entregue.'
+      }
     }
   } catch (error) {
     console.error('Student first access email error:', error)

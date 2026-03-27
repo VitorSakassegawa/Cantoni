@@ -69,11 +69,13 @@ export default function LoginPage() {
     setSuccessMessage('')
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${baseUrl}/redefinir-senha`,
+      const response = await fetch('/api/auth/recuperar-senha', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
       })
-      if (error) throw error
+      const data = await response.json()
+      if (!response.ok) throw new Error(data.error || 'Erro ao enviar o link de recuperação.')
       setSuccessMessage('E-mail de recuperação enviado! Verifique sua caixa de entrada.')
       toast.success('Link de recuperação enviado!')
     } catch (error: unknown) {
@@ -249,7 +251,6 @@ export default function LoginPage() {
     </div>
   )
 }
-
 
 
 

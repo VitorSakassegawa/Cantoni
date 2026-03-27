@@ -1,6 +1,12 @@
 import 'server-only'
 import { Resend } from 'resend'
 
+type EmailSender = {
+  emails: {
+    send: (payload: Record<string, unknown>) => Promise<{ data: null; error: null }>
+  }
+}
+
 function getResendClient() {
   const key = process.env.RESEND_API_KEY
   if (!key || key === 're_123') {
@@ -12,7 +18,7 @@ function getResendClient() {
           return { data: null, error: null }
         }
       }
-    } as any
+    } as EmailSender
   }
   return new Resend(key)
 }
@@ -173,7 +179,7 @@ export async function enviarLembreteAula({
   has_homework,
   homeworkType,
   homeworkLink,
-  homeworkDueDate,
+  homeworkDueDate: _homeworkDueDate,
 }: {
   to: string
   nomeAluno: string
@@ -186,6 +192,7 @@ export async function enviarLembreteAula({
   homeworkDueDate?: string
 }) {
   const resend = getResendClient()
+  void _homeworkDueDate
   
   let homeworkSection = ''
   if (has_homework === false) {
@@ -367,6 +374,40 @@ export async function enviarEmailPrimeiroAcesso({
 
       <p style="font-size:13px;color:#64748b">
         Depois de definir a senha, você poderá entrar normalmente com seu e-mail e a senha escolhida.
+      </p>
+    `),
+  })
+}
+
+export async function enviarEmailRecuperacaoSenha({
+  to,
+  nomeAluno,
+  recoveryLink,
+}: {
+  to: string
+  nomeAluno: string
+  recoveryLink: string
+}) {
+  const resend = getResendClient()
+  return resend.emails.send({
+    from: FROM,
+    to,
+    subject: 'Recuperação de senha do portal da Cantoni English School',
+    html: BaseLayout(`
+      <h2 style="color:#1e3a5f;margin-bottom:20px">Olá, ${nomeAluno}!</h2>
+      <p>Recebemos uma solicitação para redefinir sua senha no portal da <strong>Cantoni English School</strong>.</p>
+      <p style="font-size:14px">
+        Clique no botão abaixo para criar uma nova senha com segurança.
+      </p>
+
+      <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0">
+        <a href="${recoveryLink}" style="display:inline-block;padding:14px 28px;background:#2563eb;color:white;text-decoration:none;border-radius:12px;font-weight:bold;margin:10px 0">
+          Redefinir minha senha
+        </a>
+      </div>
+
+      <p style="font-size:13px;color:#64748b">
+        Se você não pediu essa alteração, pode ignorar este e-mail com segurança.
       </p>
     `),
   })
