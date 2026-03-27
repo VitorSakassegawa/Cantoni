@@ -20,7 +20,7 @@ export default async function PagamentosPage() {
 
   const { data: pagamentos } = await supabase
     .from('pagamentos')
-    .select('*, contratos(id, aluno_id, profiles(full_name, email))')
+    .select('*, contratos(id, aluno_id, profiles(full_name, email, phone))')
     .order('data_vencimento')
 
   const pagamentosComStatus = ((pagamentos || []) as Array<any>).map((payment) =>
@@ -39,7 +39,9 @@ export default async function PagamentosPage() {
     if (!acc[contractId]) {
       acc[contractId] = {
         contratoId: contractId,
+        alunoId: payment.contratos?.aluno_id,
         studentName: payment.contratos?.profiles?.full_name || 'Desconhecido',
+        studentPhone: payment.contratos?.profiles?.phone || null,
         totalValue: 0,
         openValue: 0,
         paidCount: 0,

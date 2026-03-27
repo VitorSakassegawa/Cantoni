@@ -99,12 +99,12 @@ export default function LoginPage() {
         <Card className="glass-card overflow-hidden border-none shadow-2xl shadow-blue-900/5">
           <CardHeader className="pb-2 text-center">
             <CardTitle className="text-xl font-bold text-gray-900">
-              {authMode === 'login' && 'Entrar no portal'}
-              {authMode === 'forgot' && 'Recuperar senha'}
+              {authMode === 'login' ? 'Entrar no portal' : 'Recuperar senha'}
             </CardTitle>
             <CardDescription className="text-xs font-semibold uppercase tracking-tight text-gray-400">
-              {authMode === 'login' && 'Acesse materiais, agenda e registros acadêmicos'}
-              {authMode === 'forgot' && 'Enviaremos um link seguro para o seu e-mail'}
+              {authMode === 'login'
+                ? 'Acesse materiais, agenda e registros acadêmicos'
+                : 'Enviaremos um link seguro para o seu e-mail'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -124,32 +124,23 @@ export default function LoginPage() {
                 />
               </div>
 
-              {authMode !== 'forgot' ? (
+              {authMode === 'login' ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password" className="ml-1 text-[10px] font-black uppercase text-gray-400">
                       Senha
                     </Label>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setAuthMode('forgot')}
-                        className="text-[9px] font-black uppercase tracking-widest text-blue-500 hover:underline"
-                      >
-                        Esqueci a senha
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setAuthMode('forgot')
-                          setError('')
-                          setSuccessMessage('Primeiro acesso? Use o link enviado por e-mail para definir sua senha.')
-                        }}
-                        className="text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:underline"
-                      >
-                        Primeiro acesso
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAuthMode('forgot')
+                        setError('')
+                        setSuccessMessage('')
+                      }}
+                      className="text-[9px] font-black uppercase tracking-widest text-blue-500 hover:underline"
+                    >
+                      Esqueci a senha
+                    </button>
                   </div>
                   <Input
                     id="password"
@@ -161,7 +152,16 @@ export default function LoginPage() {
                     required
                   />
                 </div>
-              ) : null}
+              ) : (
+                <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                    Primeiro acesso
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    Use o link enviado ao seu e-mail para definir sua senha inicial.
+                  </p>
+                </div>
+              )}
 
               {error ? (
                 <div className="rounded-lg border border-red-100 bg-red-50 p-3">

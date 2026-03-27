@@ -30,12 +30,19 @@ import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import ResendAccessButton from '@/components/dashboard/ResendAccessButton'
+import WhatsAppLinkButton from '@/components/dashboard/WhatsAppLinkButton'
 import IssueDocumentButton from '@/components/documents/IssueDocumentButton'
 import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
 import ExternalSignatureStatusBadge from '@/components/documents/ExternalSignatureStatusBadge'
 import { buildAttentionCandidate, buildRenewalCandidate } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 import { formatCurrency, formatDate, formatDateOnly, formatDateTime } from '@/lib/utils'
+import {
+  buildFirstAccessWhatsAppMessage,
+  buildGeneralWhatsAppMessage,
+  buildPaymentWhatsAppMessage,
+  buildWhatsAppUrl,
+} from '@/lib/whatsapp'
 
 type RouteParams = Promise<{ id: string }>
 
@@ -80,6 +87,19 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
   const overduePaymentsCount = pagamentosComStatus.filter((payment: any) => payment.effectiveStatus === 'atrasado').length
   const totalPaymentsCount = pagamentosComStatus.length
   const nextOpenPayment = pagamentosComStatus.find((payment: any) => payment.status !== 'pago')
+  const generalWhatsAppHref = buildWhatsAppUrl(aluno.phone, buildGeneralWhatsAppMessage(aluno.full_name))
+  const firstAccessWhatsAppHref = buildWhatsAppUrl(aluno.phone, buildFirstAccessWhatsAppMessage(aluno.full_name))
+  const paymentWhatsAppHref = nextOpenPayment
+    ? buildWhatsAppUrl(
+        aluno.phone,
+        buildPaymentWhatsAppMessage({
+          studentName: aluno.full_name,
+          amount: formatCurrency(nextOpenPayment.valor),
+          dueDate: formatDateOnly(nextOpenPayment.data_vencimento),
+          installmentLabel: `parcela ${nextOpenPayment.parcela_num}/${totalPaymentsCount || 1}`,
+        })
+      )
+    : null
 
   const { data: remarcacoes } = await supabase
     .from('remarcacoes_mes')
@@ -213,6 +233,11 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 alunoId={id}
                 className="h-11 rounded-2xl border-slate-200 px-4 text-[10px] font-black uppercase tracking-widest text-slate-600"
               />
+              <WhatsAppLinkButton
+                href={firstAccessWhatsAppHref}
+                label="Avisar no WhatsApp"
+                className="h-11 rounded-2xl px-4"
+              />
               {contrato ? (
                 <>
                   <IssueDocumentButton
@@ -332,6 +357,9 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                     {paidPaymentsCount} paga(s) • {openPaymentsCount} aberta(s)
                   </Badge>
                 </div>
+                <div className="mt-5">
+                  <WhatsAppLinkButton href={paymentWhatsAppHref} label="Cobrar no WhatsApp" className="h-10 rounded-xl px-4" />
+                </div>
               </CardContent>
             </Card>
 
@@ -394,6 +422,9 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">WhatsApp</p>
                   <p className="text-xs font-bold text-slate-700">{aluno.phone || 'Não informado'}</p>
+                  <div className="mt-3">
+                    <WhatsAppLinkButton href={generalWhatsAppHref} label="Abrir conversa" className="h-9 rounded-xl px-3" />
+                  </div>
                 </div>
               </div>
               <div className="flex items-start gap-4">

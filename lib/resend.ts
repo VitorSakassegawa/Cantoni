@@ -226,7 +226,7 @@ function BaseLayout({
                           Cantoni English School
                         </div>
                         <div style="font-size:15px;line-height:1.6;color:#475569;">
-                          Formação em inglês com método, consistência e acompanhamento individual.
+                          English fluency, built around you.
                         </div>
                       </td>
                     </tr>
@@ -306,7 +306,7 @@ function BaseLayout({
         <tr>
           <td style="padding:16px 8px 0 8px;text-align:center;color:#94a3b8;font-size:12px;line-height:1.7;">
             Cantoni English School<br />
-            Comunicação institucional com clareza, discrição e padrão profissional.
+            Personalized teaching. Individual focus. Confident communication.
           </td>
         </tr>
       </table>

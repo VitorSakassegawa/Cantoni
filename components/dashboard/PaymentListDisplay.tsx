@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { formatCurrency, formatDateOnly } from '@/lib/utils'
 import { AlertCircle, Calendar, CheckCircle2, ChevronDown, ChevronRight } from 'lucide-react'
 import type { StudentPaymentGroup } from '@/lib/dashboard-types'
+import WhatsAppLinkButton from '@/components/dashboard/WhatsAppLinkButton'
+import { buildPaymentWhatsAppMessage, buildWhatsAppUrl } from '@/lib/whatsapp'
 
 interface PaymentListDisplayProps {
   groups: StudentPaymentGroup[]
@@ -23,6 +25,24 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
 
   const toggleExpand = (id: number) => {
     setExpandedId((prev) => (prev === id ? null : id))
+  }
+
+  const getWhatsAppHref = (group: StudentPaymentGroup) => {
+    const firstOpenInstallment = group.installments.find((installment) => installment.status !== 'pago')
+
+    if (!firstOpenInstallment) {
+      return null
+    }
+
+    return buildWhatsAppUrl(
+      group.studentPhone,
+      buildPaymentWhatsAppMessage({
+        studentName: group.studentName,
+        amount: formatCurrency(firstOpenInstallment.valor),
+        dueDate: formatDateOnly(firstOpenInstallment.data_vencimento),
+        installmentLabel: `parcela ${firstOpenInstallment.parcela_num}/${group.totalCount}`,
+      })
+    )
   }
 
   return (
@@ -63,7 +83,10 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
       </div>
 
       <div className="grid gap-4">
-        {filteredGroups.map((group) => (
+        {filteredGroups.map((group) => {
+          const whatsappHref = getWhatsAppHref(group)
+
+          return (
           <div
             key={group.contratoId}
             className="group overflow-hidden rounded-[2rem] border border-slate-100 bg-white transition-all hover:shadow-xl hover:shadow-blue-900/5"
@@ -109,6 +132,13 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
                       >
                         {group.status}
                       </Badge>
+                    </div>
+                    <div className="mt-3">
+                      <WhatsAppLinkButton
+                        href={whatsappHref}
+                        label="Cobrar no WhatsApp"
+                        className="h-9 rounded-xl px-3"
+                      />
                     </div>
                   </div>
                 </div>
@@ -201,7 +231,8 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
               </div>
             ) : null}
           </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

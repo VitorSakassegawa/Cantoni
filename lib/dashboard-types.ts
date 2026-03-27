@@ -13,13 +13,15 @@ export type PaymentWithEffectiveStatus = Pagamento & {
   contratos?: {
     id?: number
     aluno_id?: string
-    profiles?: Pick<Profile, 'full_name' | 'email'> | null
+    profiles?: Pick<Profile, 'full_name' | 'email' | 'phone'> | null
   } | null
 }
 
 export type StudentPaymentGroup = {
   contratoId: number
+  alunoId?: string
   studentName: string
+  studentPhone?: string | null
   totalValue: number
   openValue: number
   paidCount: number
