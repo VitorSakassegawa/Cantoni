@@ -72,7 +72,7 @@ function getToneStyles(tone: EmailTone) {
         accentBorder: '#86efac',
         badge: '#14532d',
         button: '#166534',
-        glow: 'rgba(22, 101, 52, 0.18)',
+        surface: '#f6fef9',
       }
     case 'warning':
       return {
@@ -81,7 +81,7 @@ function getToneStyles(tone: EmailTone) {
         accentBorder: '#fdba74',
         badge: '#9a3412',
         button: '#c2410c',
-        glow: 'rgba(180, 83, 9, 0.18)',
+        surface: '#fffaf5',
       }
     case 'danger':
       return {
@@ -90,7 +90,7 @@ function getToneStyles(tone: EmailTone) {
         accentBorder: '#fca5a5',
         badge: '#991b1b',
         button: '#b91c1c',
-        glow: 'rgba(185, 28, 28, 0.18)',
+        surface: '#fff7f7',
       }
     case 'accent':
       return {
@@ -99,7 +99,7 @@ function getToneStyles(tone: EmailTone) {
         accentBorder: '#99f6e4',
         badge: '#115e59',
         button: '#0f766e',
-        glow: 'rgba(15, 118, 110, 0.18)',
+        surface: '#f4fffd',
       }
     case 'primary':
     default:
@@ -109,14 +109,14 @@ function getToneStyles(tone: EmailTone) {
         accentBorder: '#93c5fd',
         badge: '#1d4ed8',
         button: '#1e3a5f',
-        glow: 'rgba(30, 58, 95, 0.18)',
+        surface: '#f8fbff',
       }
   }
 }
 
 function card(title: string, body: string) {
   return `
-    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:20px;margin:16px 0;">
+    <div style="background:#ffffff;border:1px solid #dbe4f0;border-radius:18px;padding:20px 18px;margin:16px 0;">
       <p style="margin:0 0 8px 0;font-size:11px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#64748b;">
         ${escapeHtml(title)}
       </p>
@@ -129,25 +129,25 @@ function card(title: string, body: string) {
 
 function statGrid(items: Array<{ label: string; value: string }>) {
   return `
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0 8px 0;">
-      <tr>
-        ${items
-          .map(
-            (item) => `
-              <td style="padding:0 8px 8px 0;vertical-align:top;">
-                <div style="min-width:140px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:18px;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0 8px 0;border-collapse:separate;">
+      ${items
+        .map(
+          (item) => `
+            <tr>
+              <td style="padding:0 0 10px 0;">
+                <div style="background:#f8fafc;border:1px solid #dbe4f0;border-radius:16px;padding:16px 18px;">
                   <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#64748b;margin-bottom:8px;">
                     ${escapeHtml(item.label)}
                   </div>
-                  <div style="font-size:18px;font-weight:800;color:#0f172a;">
+                  <div style="font-size:18px;font-weight:800;color:#0f172a;line-height:1.4;">
                     ${escapeHtml(item.value)}
                   </div>
                 </div>
               </td>
-            `
-          )
-          .join('')}
-      </tr>
+            </tr>
+          `
+        )
+        .join('')}
     </table>
   `
 }
@@ -162,7 +162,7 @@ function bulletList(items: string[]) {
 
 function lessonList(aulas: { data: string; link: string }[]) {
   if (!aulas.length) {
-    return '<p style="margin:0;color:#64748b;">As aulas serão adicionadas em breve no portal.</p>'
+    return '<p style="margin:0;color:#64748b;">As aulas serao adicionadas em breve no portal.</p>'
   }
 
   return `
@@ -171,7 +171,7 @@ function lessonList(aulas: { data: string; link: string }[]) {
         .slice(0, 5)
         .map(
           (aula) => `
-            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px 16px;margin-bottom:10px;">
+            <div style="background:#f8fafc;border:1px solid #dbe4f0;border-radius:16px;padding:14px 16px;margin-bottom:10px;">
               <div style="font-size:14px;font-weight:700;color:#0f172a;">${escapeHtml(aula.data)}</div>
               <div style="margin-top:6px;font-size:13px;">
                 <a href="${aula.link}" style="color:#2563eb;text-decoration:none;font-weight:700;">Abrir link da aula</a>
@@ -200,95 +200,116 @@ function BaseLayout({
   const logoUrl = getLogoUrl()
 
   return `
-    <div style="margin:0;background:#eef2ff;padding:32px 16px;font-family:'Segoe UI',Arial,sans-serif;color:#334155;">
-      <div style="max-width:640px;margin:0 auto;">
-        <div style="margin-bottom:18px;text-align:center;">
-          <div style="display:inline-block;padding:8px 14px;border-radius:999px;background:${colors.accentSoft};border:1px solid ${colors.accentBorder};font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:${colors.badge};">
-            ${escapeHtml(eyebrow)}
-          </div>
-        </div>
-
-        <div style="background:
-          radial-gradient(circle at top left, ${colors.accentSoft} 0%, rgba(255,255,255,0) 34%),
-          linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
-          border:1px solid #dbe4f0;border-radius:32px;padding:36px 28px;box-shadow:0 24px 60px ${colors.glow};overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:30px;">
-            <div style="display:flex;align-items:center;gap:14px;">
-              <div style="width:68px;height:68px;border-radius:22px;background:#ffffff;border:1px solid #dbe4f0;box-shadow:0 10px 30px rgba(15,23,42,0.08);display:flex;align-items:center;justify-content:center;padding:12px;">
-                <img src="${logoUrl}" alt="Cantoni English School" style="max-width:100%;max-height:100%;display:block;" />
-              </div>
-              <div>
-                <div style="font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:${colors.badge};margin-bottom:6px;">
-                  Cantoni English School
-                </div>
-                <div style="font-size:14px;line-height:1.5;color:#475569;">
-                  Inglês com método, constância e acompanhamento próximo.
-                </div>
-              </div>
-            </div>
-            <div style="width:74px;height:74px;border-radius:24px;background:linear-gradient(135deg, ${colors.accent} 0%, #0f172a 100%);box-shadow:0 18px 34px ${colors.glow};"></div>
-          </div>
-
-          <h1 style="margin:0 0 14px 0;font-size:32px;line-height:1.15;color:#0f172a;letter-spacing:-0.03em;">
-            ${escapeHtml(title)}
-          </h1>
-          <p style="margin:0 0 24px 0;font-size:16px;line-height:1.8;color:#475569;">
-            ${intro}
-          </p>
-
-          ${
-            ctaLabel && ctaHref
-              ? `
-                <div style="margin:0 0 28px 0;">
-                  <a href="${ctaHref}" style="display:inline-block;background:linear-gradient(135deg, ${colors.button} 0%, #0f172a 100%);color:#ffffff;text-decoration:none;font-size:14px;font-weight:800;padding:14px 22px;border-radius:16px;box-shadow:0 16px 30px ${colors.glow};">
-                    ${escapeHtml(ctaLabel)}
-                  </a>
-                  ${
-                    secondaryLabel && secondaryHref
-                      ? `
-                        <a href="${secondaryHref}" style="display:inline-block;margin-left:12px;color:${colors.accent};text-decoration:none;font-size:14px;font-weight:700;">
-                          ${escapeHtml(secondaryLabel)}
-                        </a>
-                      `
-                      : ''
-                  }
-                </div>
-              `
-              : ''
-          }
-
-          ${content}
-
-          ${
-            note
-              ? `
-                <div style="margin-top:28px;padding:16px 18px;border-radius:18px;background:#fffaf0;border:1px solid #fed7aa;color:#9a3412;font-size:13px;line-height:1.7;">
-                  ${note}
-                </div>
-              `
-              : ''
-          }
-
-          <div style="margin-top:30px;padding-top:22px;border-top:1px solid #e2e8f0;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;">
-            <div>
-              <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:4px;">Cantoni English School</div>
-              <div style="font-size:12px;line-height:1.7;color:#64748b;">
-                Comunicação oficial do portal acadêmico.<br />
-                Remetente: ${escapeHtml(FROM)}
-              </div>
-            </div>
-            <div style="text-align:right;font-size:11px;line-height:1.7;color:#94a3b8;">
-              Learn with structure.<br />
-              Grow with consistency.
-            </div>
-          </div>
-        </div>
-
-        <div style="padding:18px 8px 0 8px;text-align:center;color:#94a3b8;font-size:12px;line-height:1.7;">
-          Cantoni English School<br />
-          Uma comunicação mais clara, elegante e confiável para cada etapa da jornada.
-        </div>
-      </div>
+    <div style="margin:0;background:#edf2f7;padding:24px 12px;font-family:'Segoe UI',Arial,sans-serif;color:#334155;">
+      <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:640px;margin:0 auto;">
+        <tr>
+          <td style="padding-bottom:14px;text-align:center;">
+            <span style="display:inline-block;padding:8px 14px;border-radius:999px;background:${colors.accentSoft};border:1px solid ${colors.accentBorder};font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:${colors.badge};">
+              ${escapeHtml(eyebrow)}
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:${colors.surface};border:1px solid #dbe4f0;border-radius:28px;padding:28px 20px;">
+            <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+              <tr>
+                <td style="padding-bottom:22px;">
+                  <table role="presentation" cellspacing="0" cellpadding="0">
+                    <tr>
+                      <td style="width:64px;vertical-align:top;padding-right:14px;">
+                        <div style="width:64px;height:64px;border-radius:18px;background:#ffffff;border:1px solid #dbe4f0;padding:10px;box-sizing:border-box;">
+                          <img src="${logoUrl}" alt="Cantoni English School" style="width:100%;height:auto;display:block;" />
+                        </div>
+                      </td>
+                      <td style="vertical-align:top;">
+                        <div style="font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:${colors.badge};margin-bottom:6px;">
+                          Cantoni English School
+                        </div>
+                        <div style="font-size:15px;line-height:1.6;color:#475569;">
+                          Ingles com metodo, constancia e acompanhamento proximo.
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-bottom:18px;font-size:38px;line-height:1.08;font-weight:800;letter-spacing:-0.03em;color:#0f172a;">
+                  ${escapeHtml(title)}
+                </td>
+              </tr>
+              <tr>
+                <td style="padding-bottom:22px;font-size:18px;line-height:1.75;color:#475569;">
+                  ${intro}
+                </td>
+              </tr>
+              ${
+                ctaLabel && ctaHref
+                  ?                     `
+                    <tr>
+                      <td style="padding-bottom:24px;">
+                        <table role="presentation" cellspacing="0" cellpadding="0" width="100%">
+                          <tr>
+                            <td>
+                              <a href="${ctaHref}" style="display:block;background:${colors.button};color:#ffffff;text-decoration:none;font-size:16px;font-weight:800;padding:16px 20px;border-radius:16px;text-align:center;">
+                                ${escapeHtml(ctaLabel)}
+                              </a>
+                            </td>
+                          </tr>
+                          ${
+                            secondaryLabel && secondaryHref
+                              ?                                 `
+                                <tr>
+                                  <td style="padding-top:12px;text-align:center;">
+                                    <a href="${secondaryHref}" style="color:${colors.accent};text-decoration:none;font-size:14px;font-weight:700;">
+                                      ${escapeHtml(secondaryLabel)}
+                                    </a>
+                                  </td>
+                                </tr>
+                              `
+                              : ''
+                          }
+                        </table>
+                      </td>
+                    </tr>
+                  `
+                  : ''
+              }
+              <tr>
+                <td>${content}</td>
+              </tr>
+              ${
+                note
+                  ?                     `
+                    <tr>
+                      <td style="padding-top:20px;">
+                        <div style="padding:16px 18px;border-radius:16px;background:#fffaf0;border:1px solid #fed7aa;color:#9a3412;font-size:13px;line-height:1.7;">
+                          ${note}
+                        </div>
+                      </td>
+                    </tr>
+                  `
+                  : ''
+              }
+              <tr>
+                <td style="padding-top:24px;border-top:1px solid #e2e8f0;">
+                  <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:4px;">Cantoni English School</div>
+                  <div style="font-size:12px;line-height:1.7;color:#64748b;">
+                    Comunicacao oficial do portal academico.<br />
+                    Remetente: ${escapeHtml(FROM)}
+                  </div>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:16px 8px 0 8px;text-align:center;color:#94a3b8;font-size:12px;line-height:1.7;">
+            Cantoni English School<br />
+            Uma comunicacao clara, confiavel e confortavel de ler em qualquer tela.
+          </td>
+        </tr>
+      </table>
     </div>
   `
 }
