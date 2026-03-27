@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { payment } from '@/lib/mercadopago'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
@@ -23,6 +24,33 @@ function getAlunoProfile(localPayment: any) {
 function normalizeCpf(value: string | null | undefined) {
   const digits = (value || '').replace(/\D/g, '')
   return digits.length === 11 ? digits : null
+}
+
+function isMercadoPagoTestMode() {
+  return (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
+}
+
+function getMercadoPagoErrorMessage(error: any) {
+  const message = error?.message || ''
+  const errorCode = error?.error || ''
+
+  if (
+    isMercadoPagoTestMode() &&
+    (message.includes('staging-mp-ti-api') ||
+      message.includes('circuit breaker open') ||
+      errorCode === 'internal_server_error')
+  ) {
+    return {
+      status: 502,
+      message:
+        'O ambiente de testes do Mercado Pago para PIX está instável no momento. Tente novamente em alguns minutos ou use credenciais de produção para validar o fluxo real.',
+    }
+  }
+
+  return {
+    status: 500,
+    message: message || 'Erro interno ao processar pagamento com Mercado Pago',
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -84,7 +112,12 @@ export async function POST(req: NextRequest) {
       },
     }
 
-    const mpResponse = await payment.create({ body })
+    const mpResponse = await payment.create({
+      body,
+      requestOptions: {
+        idempotencyKey: crypto.randomUUID(),
+      },
+    })
     assertPaymentAmountMatches(amount, mpResponse.transaction_amount ?? body.transaction_amount)
 
     const localStatus = mapMercadoPagoStatus(mpResponse.status)
@@ -134,11 +167,12 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('Mercado Pago API error:', error)
+    const normalizedError = getMercadoPagoErrorMessage(error)
     return NextResponse.json(
       {
-        error: error.message || 'Erro interno ao processar pagamento com Mercado Pago',
+        error: normalizedError.message,
       },
-      { status: 500 }
+      { status: normalizedError.status }
     )
   }
 }
