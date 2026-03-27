@@ -6,11 +6,15 @@ import { CalendarClock, CheckCircle2, ChevronDown, ChevronUp, RotateCcw } from '
 import AulaRow from './AulaRow'
 import type { TimelineAula } from '@/lib/dashboard-types'
 
+type TimelineFilter = 'upcoming' | 'reschedules' | 'completed'
+
 interface Props {
   aulas: TimelineAula[]
   showStudentName?: boolean
   showContractType?: boolean
   isProfessor?: boolean
+  defaultFilter?: TimelineFilter
+  showFilterHint?: boolean
 }
 
 export default function AulasTimeline({
@@ -18,60 +22,116 @@ export default function AulasTimeline({
   showStudentName = true,
   showContractType = true,
   isProfessor = false,
+  defaultFilter = 'upcoming',
+  showFilterHint = false,
 }: Props) {
   const [showAll, setShowAll] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<TimelineFilter>(defaultFilter)
   const initialCount = 5
-  const displayedAulas = showAll ? aulas : aulas.slice(0, initialCount)
+
+  const filteredAulas = useMemo(() => {
+    if (activeFilter === 'upcoming') {
+      return aulas.filter((aula) => ['agendada', 'confirmada'].includes(aula.status))
+    }
+
+    if (activeFilter === 'reschedules') {
+      return aulas.filter((aula) =>
+        ['remarcada', 'pendente_remarcacao', 'pendente_remarcacao_rejeitada'].includes(aula.status)
+      )
+    }
+
+    return aulas.filter((aula) => ['dada', 'finalizado'].includes(aula.status))
+  }, [activeFilter, aulas])
+
+  const displayedAulas = showAll ? filteredAulas : filteredAulas.slice(0, initialCount)
 
   const summary = useMemo(() => {
     const upcoming = aulas.filter((aula) => ['agendada', 'confirmada'].includes(aula.status)).length
-    const pendingReschedules = aulas.filter((aula) => aula.status === 'pendente_remarcacao').length
+    const reschedules = aulas.filter((aula) =>
+      ['remarcada', 'pendente_remarcacao', 'pendente_remarcacao_rejeitada'].includes(aula.status)
+    ).length
     const completed = aulas.filter((aula) => ['dada', 'finalizado'].includes(aula.status)).length
-    return { upcoming, pendingReschedules, completed }
+
+    return { upcoming, reschedules, completed }
   }, [aulas])
+
+  const filterCards: Array<{
+    key: TimelineFilter
+    label: string
+    count: number
+    tone: string
+    icon: typeof CalendarClock
+  }> = [
+    {
+      key: 'upcoming',
+      label: 'Proximas',
+      count: summary.upcoming,
+      tone: 'bg-blue-50 text-blue-700',
+      icon: CalendarClock,
+    },
+    {
+      key: 'reschedules',
+      label: 'Remarcacoes',
+      count: summary.reschedules,
+      tone: 'bg-amber-50 text-amber-700',
+      icon: RotateCcw,
+    },
+    {
+      key: 'completed',
+      label: 'Concluidas',
+      count: summary.completed,
+      tone: 'bg-emerald-50 text-emerald-700',
+      icon: CheckCircle2,
+    },
+  ]
+
+  const emptyMessage =
+    activeFilter === 'upcoming'
+      ? 'Nenhuma proxima aula registrada'
+      : activeFilter === 'reschedules'
+        ? 'Nenhuma remarcacao encontrada'
+        : 'Nenhuma aula concluida encontrada'
 
   return (
     <div className="space-y-6 animate-fade-in">
+      {showFilterHint ? (
+        <div className="mx-6 rounded-2xl border border-slate-100 bg-slate-50/70 px-5 py-4">
+          <p className="text-sm font-semibold text-slate-700">Sua visao comeca pelas proximas aulas.</p>
+          <p className="mt-1 text-xs font-medium text-slate-500">
+            Para revisar aulas concluidas, materiais e eventuais remarcacoes, basta clicar no card correspondente.
+          </p>
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-4 px-6 pt-6 md:grid-cols-3">
-        <div className="rounded-2xl bg-blue-50 px-5 py-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">
-                Próximas
-              </p>
-              <p className="mt-2 text-2xl font-black tracking-tight text-blue-700">
-                {summary.upcoming}
-              </p>
-            </div>
-            <CalendarClock className="h-5 w-5 text-blue-500" />
-          </div>
-        </div>
-        <div className="rounded-2xl bg-amber-50 px-5 py-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">
-                Remarcações
-              </p>
-              <p className="mt-2 text-2xl font-black tracking-tight text-amber-700">
-                {summary.pendingReschedules}
-              </p>
-            </div>
-            <RotateCcw className="h-5 w-5 text-amber-500" />
-          </div>
-        </div>
-        <div className="rounded-2xl bg-emerald-50 px-5 py-4">
-          <div className="flex items-start justify-between">
-            <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
-                Concluídas
-              </p>
-              <p className="mt-2 text-2xl font-black tracking-tight text-emerald-700">
-                {summary.completed}
-              </p>
-            </div>
-            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-          </div>
-        </div>
+        {filterCards.map((card) => {
+          const Icon = card.icon
+          const isActive = activeFilter === card.key
+
+          return (
+            <button
+              key={card.key}
+              type="button"
+              onClick={() => {
+                setActiveFilter(card.key)
+                setShowAll(false)
+              }}
+              className={`rounded-2xl px-5 py-4 text-left transition-all ${
+                isActive
+                  ? `${card.tone} ring-2 ring-current/10 shadow-lg`
+                  : 'bg-slate-50 text-slate-500 hover:bg-white hover:shadow-md'
+              }`}
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest">{card.label}</p>
+                  <p className="mt-2 text-2xl font-black tracking-tight">{card.count}</p>
+                </div>
+                <Icon className="h-5 w-5" />
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       <div className="overflow-hidden rounded-[2.5rem] border-none shadow-xl shadow-blue-500/5">
@@ -83,7 +143,7 @@ export default function AulasTimeline({
                   Aula #
                 </th>
                 <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
-                  Data e horário
+                  Data e horario
                 </th>
                 <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
                   Status
@@ -92,7 +152,7 @@ export default function AulasTimeline({
                   Google Meet
                 </th>
                 <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
-                  Lição / conteúdo
+                  Licao / conteudo
                 </th>
                 {showContractType ? (
                   <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
@@ -105,7 +165,7 @@ export default function AulasTimeline({
                   </th>
                 ) : null}
                 <th className="px-4 py-6 pr-8 text-right text-[10px] font-black uppercase tracking-[0.2em]">
-                  Ações
+                  Acoes
                 </th>
               </tr>
             </thead>
@@ -129,17 +189,15 @@ export default function AulasTimeline({
             </tbody>
           </table>
 
-          {aulas.length === 0 ? (
+          {filteredAulas.length === 0 ? (
             <div className="py-20 text-center">
-              <p className="text-sm font-bold uppercase tracking-widest text-slate-300">
-                Nenhuma aula registrada
-              </p>
+              <p className="text-sm font-bold uppercase tracking-widest text-slate-300">{emptyMessage}</p>
             </div>
           ) : null}
         </div>
       </div>
 
-      {aulas.length > initialCount ? (
+      {filteredAulas.length > initialCount ? (
         <div className="flex justify-center border-t border-slate-50 bg-slate-50/30 p-6">
           <Button
             variant="ghost"
@@ -152,7 +210,7 @@ export default function AulasTimeline({
               </>
             ) : (
               <>
-                Ver todas as {aulas.length} aulas <ChevronDown className="h-3 w-3" />
+                Ver todas as {filteredAulas.length} aulas <ChevronDown className="h-3 w-3" />
               </>
             )}
           </Button>

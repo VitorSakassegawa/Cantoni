@@ -45,7 +45,7 @@ export default async function AlunoAulasPage() {
     .from('aulas')
     .select('*')
     .in('contrato_id', contratoIds)
-    .order('data_hora', { ascending: false })
+    .order('data_hora', { ascending: true })
 
   const aulasComRegras = (aulas || []).map((lesson: any) => ({
     ...lesson,
@@ -151,7 +151,12 @@ export default async function AlunoAulasPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">
-            <AulasTimeline aulas={aulasComRegras || []} isProfessor={false} />
+            <AulasTimeline
+              aulas={aulasComRegras || []}
+              isProfessor={false}
+              defaultFilter="upcoming"
+              showFilterHint={true}
+            />
           </CardContent>
         </Card>
       </div>
