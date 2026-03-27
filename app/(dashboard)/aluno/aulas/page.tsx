@@ -45,8 +45,7 @@ export default async function AlunoAulasPage() {
     .from('aulas')
     .select('*')
     .in('contrato_id', contratoIds)
-    .gte('data_hora', new Date().toISOString())
-    .order('data_hora', { ascending: true })
+    .order('data_hora', { ascending: false })
 
   const aulasComRegras = (aulas || []).map((lesson: any) => ({
     ...lesson,
