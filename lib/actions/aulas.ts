@@ -5,7 +5,12 @@ import { revalidatePath } from 'next/cache'
 import { requireLessonAccess, requireProfessor } from '@/lib/auth'
 import { createServiceClient } from '@/lib/supabase/server'
 import { ContractService } from '@/lib/services/contract-service'
-import { deletarEventoCalendar, criarEventoMeet } from '@/lib/google-calendar'
+import {
+  buildLessonInviteDescription,
+  buildLessonInviteTitle,
+  criarEventoMeet,
+  deletarEventoCalendar,
+} from '@/lib/google-calendar'
 import { enviarConfirmacaoRemarcacao } from '@/lib/resend'
 import { horasAteAula, formatDateTime } from '@/lib/utils'
 import { logActivityBestEffort } from '@/lib/activity-log'
@@ -110,22 +115,22 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
   let novoMeetLink = ''
 
   try {
+    const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${contrato.aluno_id}`
     const resMeet = await criarEventoMeet({
-      titulo: `Aula de Inglês - ${aluno.full_name} (REMARCADA)`,
+      titulo: buildLessonInviteTitle({
+        studentName: aluno.full_name,
+        isRescheduled: true,
+      }),
       dataHora: new Date(novaDataHora),
       emailAluno: aluno.email,
       emailProfessor: process.env.RESEND_FROM_EMAIL!,
-      descricao: `
-DETALHES DA AULA (REMARCADA)
-Aluno: ${aluno.full_name}
-Nivel: ${aluno.nivel || 'N/A'}
-
-[Ver no Sistema](${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${contrato.aluno_id})
-
----
-Instrucoes:
-- Clique no link do Google Meet abaixo para entrar na aula.
-      `.trim(),
+      descricao: buildLessonInviteDescription({
+        studentName: aluno.full_name,
+        level: contrato.nivel_atual || aluno.nivel,
+        book: contrato.livro_atual,
+        portalUrl,
+        isRescheduled: true,
+      }),
     })
 
     if (resMeet.success) {

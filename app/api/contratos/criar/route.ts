@@ -2,7 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { fromZonedTime } from 'date-fns-tz'
 import { requireProfessor } from '@/lib/auth'
 import { createServiceClient } from '@/lib/supabase/server'
-import { criarEventoMeet, deletarEventoCalendar } from '@/lib/google-calendar'
+import {
+  buildLessonInviteDescription,
+  buildLessonInviteTitle,
+  criarEventoMeet,
+  deletarEventoCalendar,
+} from '@/lib/google-calendar'
 import { enviarEmailBoasVindas } from '@/lib/resend'
 import { mapWithConcurrency } from '@/lib/async'
 import { findContractEndDateForLessons, gerarGradeAulas, formatDateTime } from '@/lib/utils'
@@ -140,25 +145,24 @@ export async function POST(request: NextRequest) {
         const isBonus = index >= specs.regularLessons
         let eventId = ''
         let meetLink = ''
+        const portalUrl = `${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${alunoId}`
 
         try {
           const result = await criarEventoMeet({
-            titulo: `Aula de Ingles - ${aluno.full_name}${isBonus ? ' (BONUS)' : ''}`,
+            titulo: buildLessonInviteTitle({
+              studentName: aluno.full_name,
+              isBonus,
+            }),
             dataHora: dataObj,
             emailAluno: aluno.email,
             emailProfessor: process.env.RESEND_FROM_EMAIL!,
-            descricao: `
-DETALHES DA AULA ${isBonus ? '(BONUS)' : ''}
-Aluno: ${aluno.full_name}
-Nivel: ${nivel_atual || 'N/A'}
-Livro: ${livro_atual || 'N/A'}
-
-[Ver no Sistema](${process.env.NEXT_PUBLIC_APP_URL}/professor/alunos/${alunoId})
----
-Instrucoes:
-- Clique no link do Google Meet abaixo para entrar na aula.
-- Caso precise remarcar, com 2h de antecedencia.
-            `.trim(),
+            descricao: buildLessonInviteDescription({
+              studentName: aluno.full_name,
+              level: nivel_atual,
+              book: livro_atual,
+              portalUrl,
+              isBonus,
+            }),
           })
 
           if (result.success) {

@@ -1,6 +1,78 @@
 import 'server-only'
 import { google } from 'googleapis'
 
+function formatLevelLabel(level?: string | null) {
+  if (!level) {
+    return 'Not defined yet'
+  }
+
+  return level
+    .replace(/_/g, ' ')
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+}
+
+function formatBookLabel(book?: string | null) {
+  return book?.trim() || 'To be defined in class'
+}
+
+export function buildLessonInviteTitle({
+  studentName,
+  isBonus = false,
+  isRescheduled = false,
+}: {
+  studentName: string
+  isBonus?: boolean
+  isRescheduled?: boolean
+}) {
+  const tags = [
+    isBonus ? 'Bonus Lesson' : null,
+    isRescheduled ? 'Rescheduled' : null,
+  ].filter(Boolean)
+
+  return `🇺🇸 English Lesson • ${studentName}${tags.length ? ` • ${tags.join(' • ')}` : ''}`
+}
+
+export function buildLessonInviteDescription({
+  studentName,
+  level,
+  book,
+  portalUrl,
+  isBonus = false,
+  isRescheduled = false,
+}: {
+  studentName: string
+  level?: string | null
+  book?: string | null
+  portalUrl: string
+  isBonus?: boolean
+  isRescheduled?: boolean
+}) {
+  const lessonLabel = isBonus
+    ? 'BONUS ENGLISH LESSON'
+    : isRescheduled
+      ? 'RESCHEDULED ENGLISH LESSON'
+      : 'ENGLISH LESSON'
+
+  return [
+    '🇺🇸 CANTONI ENGLISH SCHOOL',
+    '',
+    lessonLabel,
+    '',
+    `Student: ${studentName}`,
+    `Level: ${formatLevelLabel(level)}`,
+    `Material: ${formatBookLabel(book)}`,
+    'Format: Online via Google Meet',
+    '',
+    'Portal access:',
+    portalUrl,
+    '',
+    'Class guidance:',
+    '- Open the Google Meet link attached to this invite.',
+    '- Please join a few minutes early to settle in comfortably.',
+    '- If you need to reschedule, let us know at least 2 hours in advance.',
+  ].join('\n')
+}
+
 export function getGoogleAuth() {
   const auth = new google.auth.OAuth2(
     process.env.GOOGLE_CLIENT_ID,
