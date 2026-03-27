@@ -8,6 +8,7 @@ import {
   CreditCard,
   User,
   Calendar,
+  Mail,
   Sparkles,
   FileText,
   Flame,
@@ -46,6 +47,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         { href: '/professor/aulas', label: 'Aulas', icon: BookOpen, iconKey: 'aulas' },
         { href: '/professor/nivelamento', label: 'Nivelamento', icon: Sparkles, iconKey: 'nivelamento' },
         { href: '/professor/calendario', label: 'Calendário', icon: Calendar, iconKey: 'calendario' },
+        { href: '/professor/email-preview', label: 'E-mails', icon: Mail, iconKey: 'emails' },
         { href: '/professor/perfil', label: 'Meu Perfil', icon: User, iconKey: 'perfil' },
       ]
     : [

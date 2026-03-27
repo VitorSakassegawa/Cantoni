@@ -168,7 +168,7 @@ export default function LoginPage() {
                             setAuthMode('forgot')
                             setError('')
                             setSuccessMessage(
-                              'Primeiro acesso? Use o link enviado por e-mail para definir sua senha. O portal não usa os 6 primeiros dígitos do CPF como senha.'
+                              'Primeiro acesso? Use o link enviado por e-mail para definir sua senha.'
                             )
                           }}
                           className="text-[9px] font-black uppercase tracking-widest text-emerald-600 hover:underline"
@@ -187,16 +187,6 @@ export default function LoginPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                   />
-                  {authMode === 'login' ? (
-                    <div className="rounded-xl border border-blue-100 bg-blue-50/70 px-3 py-3">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-700">Primeiro acesso</p>
-                      <p className="mt-1 text-[11px] font-medium leading-relaxed text-slate-600">
-                        A senha inicial não é formada pelos 6 primeiros dígitos do CPF. Use
-                        <span className="font-black text-blue-700"> Primeiro acesso</span> ou
-                        <span className="font-black text-blue-700"> Esqueci a senha</span> para receber o link de definição de senha no e-mail cadastrado.
-                      </p>
-                    </div>
-                  ) : null}
                 </div>
               ) : null}
 
@@ -251,6 +241,4 @@ export default function LoginPage() {
     </div>
   )
 }
-
-
 

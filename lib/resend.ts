@@ -658,7 +658,6 @@ export async function enviarEmailPrimeiroAcesso({
       content: card(
         'Importante',
         bulletList([
-          'O portal <strong>não usa os 6 primeiros dígitos do CPF como senha</strong>.',
           'Depois de definir sua senha, você poderá entrar normalmente com seu e-mail.',
         ])
       ),
@@ -892,7 +891,6 @@ export function getEmailTemplatePreviews() {
         content: card(
           'Importante',
           bulletList([
-            'O portal <strong>não usa os 6 primeiros dígitos do CPF como senha</strong>.',
             'Depois de definir sua senha, você poderá entrar normalmente com seu e-mail.',
           ])
         ),
