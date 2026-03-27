@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Calendar, BookOpen, Clock, Info, Percent, DollarSign, AlertTriangle, Sparkles, BrainCircuit, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
-import { findContractEndDateForLessons, formatDateOnly, maskCurrency } from '@/lib/utils'
+import { findContractEndDateForLessons, formatDateOnly, gerarGradeAulas, maskCurrency } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
 
 type ContractKind = 'semestral' | 'ad-hoc'
@@ -226,13 +226,16 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           requestedEnd
         )
 
-        const targetLessons = specs.totalLessons
+        const targetLessons =
+          tipoContrato === 'ad-hoc' && requestedEnd
+            ? gerarGradeAulas(start, requestedEnd, diasSelecionados, undefined, customHolidays).length
+            : specs.totalLessons
         const generatedEnd = targetLessons > 0
           ? findContractEndDateForLessons(start, diasSelecionados, targetLessons, customHolidays)
           : specs.endDate
         const effectiveEnd = requestedEnd && requestedEnd > generatedEnd ? requestedEnd : generatedEnd
 
-        if (!dataFim || tipoContrato === 'semestral' || effectiveEnd.toISOString().split('T')[0] !== dataFim) {
+        if (tipoContrato === 'semestral' && (!dataFim || effectiveEnd.toISOString().split('T')[0] !== dataFim)) {
           setDataFim(effectiveEnd.toISOString().split('T')[0])
         }
 
@@ -241,12 +244,13 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         )
         
         setAulasTotais(targetLessons.toString())
-        setBonusAulas(specs.bonusLessons)
-        setBaseValue(specs.totalValue)
+        setBonusAulas(tipoContrato === 'semestral' ? specs.bonusLessons : 0)
+        const calculatedBaseValue = tipoContrato === 'ad-hoc' ? targetLessons * 90 : specs.totalValue
+        setBaseValue(calculatedBaseValue)
         setIsCrossSemester(specs.isCrossSemester)
 
         // Initial Final Value without discounts yet
-        updateFinalValue(specs.totalValue, descontoValor, descontoPercentual)
+        updateFinalValue(calculatedBaseValue, descontoValor, descontoPercentual)
       } catch (e) {
         console.error('Calculation error:', e)
       }
@@ -315,11 +319,12 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
 
     try {
       const finalLivro = livroSelect === 'outro' ? livroManual : OPCOES_LIVRO.find(o => o.value === livroSelect)?.label
+      const effectiveDataFim = scheduleAdjustedEndDate || dataFim
       const payload: ContractPayload = {
         alunoId,
         planoId: parseInt(planoId),
         dataInicio,
-        dataFim,
+        dataFim: effectiveDataFim,
         semestre: new Date(dataInicio).getMonth() <= 5 ? 'jan-jun' : 'jul-dez',
         ano: new Date(dataInicio).getFullYear(),
         dia_vencimento: parseInt(diaVencimento),
