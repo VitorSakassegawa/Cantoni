@@ -23,7 +23,7 @@ export default function ResetPasswordPage() {
   async function handleReset(e: React.FormEvent) {
     e.preventDefault()
     if (password !== confirmPassword) {
-      toast.error('As senhas nÃ£o coincidem.')
+      toast.error('As senhas não coincidem.')
       return
     }
 
@@ -51,14 +51,14 @@ export default function ResetPasswordPage() {
             GC
           </div>
           <h1 className="text-3xl font-black text-[#1e3a5f] tracking-tighter">Cantoni English School</h1>
-          <p className="text-gray-500 text-sm mt-2 font-medium uppercase tracking-widest text-[9px]">RedefiniÃ§Ã£o de Senha</p>
+          <p className="text-gray-500 text-sm mt-2 font-medium uppercase tracking-widest text-[9px]">Redefinição de Senha</p>
         </div>
 
         <Card className="glass-card border-none shadow-2xl shadow-blue-900/5 overflow-hidden">
           <CardHeader className="text-center pb-2">
             <CardTitle className="text-xl font-bold text-gray-900">Nova Senha</CardTitle>
             <CardDescription className="text-xs font-semibold uppercase tracking-tight text-gray-400">
-              Escolha uma senha forte para sua seguranÃ§a
+              Escolha uma senha forte para sua segurança
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -68,7 +68,7 @@ export default function ResetPasswordPage() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="••••••••"
                   className="bg-white/50 border-gray-100 rounded-xl focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -80,7 +80,7 @@ export default function ResetPasswordPage() {
                 <Input
                   id="confirmPassword"
                   type="password"
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                  placeholder="••••••••"
                   className="bg-white/50 border-gray-100 rounded-xl focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

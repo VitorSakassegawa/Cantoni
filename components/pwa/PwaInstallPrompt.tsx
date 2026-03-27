@@ -83,7 +83,7 @@ export default function PwaInstallPrompt() {
           </p>
           <p className="mt-1 text-xs font-medium leading-relaxed text-slate-500">
             {iosMode
-              ? 'No iPhone ou iPad, toque em Compartilhar e depois em “Adicionar à Tela de Início” para abrir como app.'
+              ? 'No iPhone ou iPad, toque em Compartilhar e depois em "Adicionar à Tela de Início" para abrir como app.'
               : 'Instale o portal para abrir mais rápido, usar em tela cheia e ter uma experiência melhor no celular.'}
           </p>
           <div className="mt-3 flex flex-wrap gap-3">

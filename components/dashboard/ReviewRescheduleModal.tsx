@@ -63,7 +63,7 @@ export default function ReviewRescheduleModal({ aula, open, onOpenChange, onSucc
     setLoading(true)
     try {
       await rejeitarRemarcacao(aula.id, justificativa)
-      toast.success('SolicitaÃ§Ã£o rejeitada. O aluno serÃ¡ notificado.')
+      toast.success('Solicitação rejeitada. O aluno será notificado.')
       onOpenChange(false)
       if (onSuccess) onSuccess()
       router.refresh()
@@ -80,27 +80,27 @@ export default function ReviewRescheduleModal({ aula, open, onOpenChange, onSucc
         <div className="bg-amber-500 h-2 w-full" />
         <div className="p-8 space-y-6">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Analisar RemarcaÃ§Ã£o</DialogTitle>
+            <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">Analisar Remarcação</DialogTitle>
             <DialogDescription className="text-slate-500 font-medium text-sm">
-              O aluno sugeriu uma nova data e horÃ¡rio. O que deseja fazer?
+              O aluno sugeriu uma nova data e horário. O que deseja fazer?
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-6">
             <div className="p-6 rounded-3xl bg-amber-50 border border-amber-100 flex flex-col items-center text-center gap-2">
               <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest">Nova Data Sugerida</p>
-              <p className="text-xl font-black text-slate-900">{aula?.data_hora_solicitada ? formatDateTime(aula.data_hora_solicitada) : 'â€”'}</p>
+              <p className="text-xl font-black text-slate-900">{aula?.data_hora_solicitada ? formatDateTime(aula.data_hora_solicitada) : '—'}</p>
               <div className="flex items-center gap-2 text-[10px] font-bold text-slate-400 mt-2">
                 <Clock className="w-3.5 h-3.5" />
-                Aula Original: {aula ? formatDateTime(aula.data_hora) : 'â€”'}
+                Aula Original: {aula ? formatDateTime(aula.data_hora) : '—'}
               </div>
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Justificativa (em caso de rejeiÃ§Ã£o)</Label>
+              <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Justificativa (em caso de rejeição)</Label>
               <textarea 
                 className="w-full h-24 p-4 rounded-2xl bg-white border-2 border-slate-100 focus:border-amber-500 focus:ring-4 focus:ring-amber-500/5 transition-all font-bold text-slate-900 outline-none text-xs resize-none"
-                placeholder="Explique porque nÃ£o pode aceitar este horÃ¡rio..."
+                placeholder="Explique porque não pode aceitar este horário..."
                 value={justificativa}
                 onChange={e => setJustificativa(e.target.value)}
               />
@@ -129,7 +129,7 @@ export default function ReviewRescheduleModal({ aula, open, onOpenChange, onSucc
                 className="col-span-2 h-12 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50"
                 onClick={onSuggestAlternative}
               >
-                Escolher outro horÃ¡rio
+                Escolher outro horário
               </Button>
             )}
           </DialogFooter>
