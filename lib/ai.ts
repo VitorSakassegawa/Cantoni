@@ -10,13 +10,14 @@ function getGenAI() {
   return new GoogleGenerativeAI(apiKey)
 }
 
-// Mode discovery confirmed: gemini-2.5-flash and gemini-2.0-flash are available
+// Text models and TTS models have different capabilities and must be configured separately.
 const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
 const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-pro'
 const STABLE_FALLBACK = 'gemini-1.5-flash-latest'
 
-const AUDIO_MODEL = 'gemini-2.5-flash'
-const AUDIO_FALLBACK = 'gemini-1.5-pro'
+const AUDIO_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts'
+const AUDIO_FALLBACK = process.env.GEMINI_TTS_FALLBACK_MODEL || 'gemini-2.5-pro-preview-tts'
+const AUDIO_VOICE = process.env.GEMINI_TTS_VOICE || 'Kore'
 
 export async function generateAIContent(
   prompt: string, 
@@ -205,15 +206,21 @@ export async function generateAIAudio(text: string, modelName: string = AUDIO_MO
   console.log(`--- Starting generateAIAudio with ${modelName} ---`)
   try {
     const genAI = getGenAI()
-    // Using v1beta for AUDIO modality support
     const model = genAI.getGenerativeModel({ model: modelName })
 
     const audioPromise = model.generateContent({
-      contents: [{ role: 'user', parts: [{ text: `Please provide the audio for the following text: "${text}"` }] }],
+      contents: [{ role: 'user', parts: [{ text }] }],
       generationConfig: {
-        // @ts-ignore
-        responseModalities: ["AUDIO"]
-      }
+        // @ts-expect-error - supported by the Gemini API for TTS models
+        responseModalities: ['AUDIO'],
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: AUDIO_VOICE,
+            },
+          },
+        },
+      },
     })
 
     const timeoutPromise = new Promise((_, reject) => 

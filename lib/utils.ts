@@ -118,6 +118,24 @@ export function gerarGradeAulas(
   return aulas
 }
 
+export function findContractEndDateForLessons(
+  dataInicio: Date,
+  diaDaSemana: number[],
+  totalAulas: number,
+  customHolidays: string[] = [],
+  maxDays = 366
+): Date {
+  const lessons = gerarGradeAulas(
+    dataInicio,
+    addDays(dataInicio, maxDays),
+    diaDaSemana,
+    totalAulas,
+    customHolidays
+  )
+
+  return lessons[lessons.length - 1] || new Date(dataInicio)
+}
+
 export function maskCPF(value: string): string {
   const cleanValue = value.replace(/\D/g, '')
   return cleanValue

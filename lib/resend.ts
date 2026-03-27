@@ -174,7 +174,11 @@ function lessonList(aulas: { data: string; link: string }[]) {
             <div style="background:#f8fafc;border:1px solid #dbe4f0;border-radius:16px;padding:14px 16px;margin-bottom:10px;">
               <div style="font-size:14px;font-weight:700;color:#0f172a;">${escapeHtml(aula.data)}</div>
               <div style="margin-top:6px;font-size:13px;">
-                <a href="${aula.link}" style="color:#2563eb;text-decoration:none;font-weight:700;">Abrir link da aula</a>
+                ${
+                  aula.link
+                    ? `<a href="${aula.link}" style="color:#2563eb;text-decoration:none;font-weight:700;">Abrir link da aula</a>`
+                    : '<span style="color:#64748b;">Link da aula será disponibilizado no portal.</span>'
+                }
               </div>
             </div>
           `

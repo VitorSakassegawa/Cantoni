@@ -5,7 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { criarEventoMeet, deletarEventoCalendar } from '@/lib/google-calendar'
 import { enviarEmailBoasVindas } from '@/lib/resend'
 import { mapWithConcurrency } from '@/lib/async'
-import { gerarGradeAulas, formatDateTime } from '@/lib/utils'
+import { findContractEndDateForLessons, gerarGradeAulas, formatDateTime } from '@/lib/utils'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 import { logActivityBestEffort } from '@/lib/activity-log'
 
@@ -64,9 +64,33 @@ export async function POST(request: NextRequest) {
     }
 
     const startObj = new Date(`${dataInicio}T12:00:00`)
-    const endObj = dataFim ? new Date(`${dataFim}T12:00:00`) : undefined
-    const specs = calculateContractSpecs(startObj, planoId, diasDaSemana, tipoContrato, endObj)
+    const requestedEndObj = dataFim ? new Date(`${dataFim}T12:00:00`) : undefined
+    const specs = calculateContractSpecs(startObj, planoId, diasDaSemana, tipoContrato, requestedEndObj)
     const totalLessons = normalizeLessonTotal(aulasTotais, specs.totalLessons)
+
+    const { data: recessosDb } = await serviceSupabase
+      .from('recessos')
+      .select('data_inicio, data_fim')
+
+    const customHolidays: string[] = []
+    for (const recesso of recessosDb || []) {
+      const start = new Date(`${recesso.data_inicio}T12:00:00`)
+      const end = new Date(`${recesso.data_fim}T12:00:00`)
+      let current = new Date(start)
+      while (current <= end) {
+        customHolidays.push(current.toISOString().split('T')[0])
+        current.setDate(current.getDate() + 1)
+      }
+    }
+
+    const generatedEndObj =
+      totalLessons > 0
+        ? findContractEndDateForLessons(startObj, diasDaSemana, totalLessons, customHolidays)
+        : requestedEndObj || specs.endDate
+    const effectiveEndObj =
+      requestedEndObj && requestedEndObj > generatedEndObj ? requestedEndObj : generatedEndObj
+    const effectiveEndDate = effectiveEndObj.toISOString().split('T')[0]
+    const datasAulas = gerarGradeAulas(startObj, effectiveEndObj, diasDaSemana, totalLessons, customHolidays)
 
     const { data: contrato, error: contratoErr } = await serviceSupabase
       .from('contratos')
@@ -74,7 +98,7 @@ export async function POST(request: NextRequest) {
         aluno_id: alunoId,
         plano_id: planoId,
         data_inicio: dataInicio,
-        data_fim: dataFim,
+        data_fim: effectiveEndDate,
         semestre,
         ano,
         aulas_totais: totalLessons,
@@ -104,25 +128,6 @@ export async function POST(request: NextRequest) {
     const createdEventIds: string[] = []
 
     try {
-      const { data: recessosDb } = await serviceSupabase
-        .from('recessos')
-        .select('data_inicio, data_fim')
-
-      const customHolidays: string[] = []
-      for (const recesso of recessosDb || []) {
-        const start = new Date(`${recesso.data_inicio}T12:00:00`)
-        const end = new Date(`${recesso.data_fim}T12:00:00`)
-        let current = new Date(start)
-        while (current <= end) {
-          customHolidays.push(current.toISOString().split('T')[0])
-          current.setDate(current.getDate() + 1)
-        }
-      }
-
-      const inicio = new Date(`${dataInicio}T12:00:00`)
-      const fim = new Date(`${dataFim}T23:59:59`)
-      const datasAulas = gerarGradeAulas(inicio, fim, diasDaSemana, totalLessons, customHolidays)
-
       const lessonDrafts = await mapWithConcurrency(datasAulas, CALENDAR_CONCURRENCY, async (dateOnly, index) => {
         const dateStr = dateOnly.toISOString().split('T')[0]
         const cleanHorario = (horario || '12:00').replace('h', ':').trim()
@@ -250,7 +255,7 @@ Instrucoes:
           nomeAluno: aluno.full_name,
           plano: plano.descricao || '',
           dataInicio: new Date(dataInicio).toLocaleDateString('pt-BR'),
-          dataFim: new Date(dataFim).toLocaleDateString('pt-BR'),
+          dataFim: new Date(effectiveEndDate).toLocaleDateString('pt-BR'),
           aulas: primeirasCinco,
           setupPasswordLink,
         })
