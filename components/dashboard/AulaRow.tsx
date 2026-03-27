@@ -15,6 +15,7 @@ import RescheduleCalendar from './RescheduleCalendar'
 import ReviewRescheduleModal from './ReviewRescheduleModal'
 import { uploadHomeworkImage } from '@/lib/actions/homework'
 import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { Sparkles } from 'lucide-react'
 import { extractVisibleLessonNotes, hasImportedTranscript } from '@/lib/lesson-notes'
 
@@ -613,7 +614,7 @@ export default function AulaRow({
             </DialogHeader>
 
             <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4 prose-table:border-collapse prose-th:bg-slate-50 prose-th:text-[10px] prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-td:text-xs prose-td:font-medium mb-10">
-              <ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {summaryLang === 'pt' ? lesson.ai_summary_pt : lesson.ai_summary_en}
               </ReactMarkdown>
             </div>
@@ -668,17 +669,14 @@ export default function AulaRow({
               </div>
             </div>
 
-            <div className="rounded-3xl border border-slate-100 bg-white px-5 py-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Anotacoes da aula</p>
-              <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-                {visibleClassNotes || 'Nenhuma anotacao registrada para esta aula.'}
+            {visibleClassNotes ? (
+              <div className="rounded-3xl border border-slate-100 bg-white px-5 py-5">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Anotações da aula</p>
+                <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                  {visibleClassNotes}
+                </div>
               </div>
-              {!visibleClassNotes && hasTranscriptImported ? (
-                <p className="mt-3 text-[11px] font-medium text-slate-400">
-                  A transcricao tecnica da reuniao foi importada para uso interno, mas nao e exibida aqui como anotacao do aluno.
-                </p>
-              ) : null}
-            </div>
+            ) : null}
 
             {lesson.vocabulary_json && lesson.vocabulary_json.length > 0 && (
               <div className="space-y-3">
