@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Calendar, Clock, Info, Percent, DollarSign, AlertTriangle, BrainCircuit, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
-import { findContractEndDateForLessons, formatDateOnly, gerarGradeAulas, maskCurrency } from '@/lib/utils'
+import { findContractEndDateForLessons, formatCurrency, formatDateOnly, gerarGradeAulas, maskCurrency } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
 
 type ContractKind = 'semestral' | 'ad-hoc'
