@@ -8,7 +8,7 @@ import { formatDateTime } from '@/lib/utils'
 
 import type { StatusAula } from '@/lib/types'
 import type { TimelineAula } from '@/lib/dashboard-types'
-import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp, NotebookText } from 'lucide-react'
 
 import ManageAulaModal from './ManageAulaModal'
 import RescheduleCalendar from './RescheduleCalendar'
@@ -129,7 +129,14 @@ export default function AulaRow({
   const [isExpanded, setIsExpanded] = useState(false)
   const [showReviewModal, setShowReviewModal] = useState(false)
   const [showAIModal, setShowAIModal] = useState(false)
+  const [showLessonDetailsModal, setShowLessonDetailsModal] = useState(false)
   const [summaryLang, setSummaryLang] = useState<'pt' | 'en'>('pt')
+  const hasLessonDetails = Boolean(
+    lesson.homework ||
+      lesson.class_notes ||
+      lesson.homework_due_date ||
+      (lesson.vocabulary_json && lesson.vocabulary_json.length > 0)
+  )
 
   useEffect(() => {
     const aulaIdParam = searchParams.get('aulaId')
@@ -333,6 +340,7 @@ export default function AulaRow({
               
               {aula.homework && aula.homework.length > 80 && (
                 <button 
+                  type="button"
                   onClick={() => setIsExpanded(!isExpanded)}
                   className="text-[9px] font-black uppercase text-blue-500 hover:text-blue-700 flex items-center gap-0.5 transition-colors w-fit tracking-widest"
                 >
@@ -358,10 +366,21 @@ export default function AulaRow({
               
               {(lesson.ai_summary_pt || lesson.ai_summary_en) && (
                 <button 
+                  type="button"
                   onClick={() => setShowAIModal(true)}
                   className="flex items-center gap-1.5 text-[9px] text-amber-600 hover:text-amber-700 font-black uppercase tracking-widest bg-amber-50/50 px-2 py-1 rounded-md transition-all border border-amber-100/50"
                 >
                   <Sparkles className="w-3 h-3" /> Resumo da IA
+                </button>
+              )}
+
+              {hasLessonDetails && (
+                <button
+                  type="button"
+                  onClick={() => setShowLessonDetailsModal(true)}
+                  className="flex items-center gap-1.5 text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/60 px-2 py-1 rounded-md transition-all border border-blue-100/60"
+                >
+                  <NotebookText className="w-3 h-3" /> Ver detalhes
                 </button>
               )}
 
@@ -596,6 +615,79 @@ export default function AulaRow({
               onClick={() => setShowAIModal(false)}
             >
               {summaryLang === 'pt' ? 'Fechar Resumo' : 'Close Summary'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLessonDetailsModal} onOpenChange={setShowLessonDetailsModal}>
+        <DialogContent className="sm:max-w-[680px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden bg-white max-h-[90vh] flex flex-col">
+          <div className="bg-blue-600 h-2 w-full flex-shrink-0" />
+          <div className="p-8 overflow-y-auto flex-1 space-y-6">
+            <DialogHeader>
+              <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center">
+                  <NotebookText className="w-5 h-5" />
+                </div>
+                Detalhes da Aula
+              </DialogTitle>
+              <DialogDescription className="text-slate-500 font-medium">
+                Conteudo, homework e anotacoes registrados para esta aula.
+              </DialogDescription>
+            </DialogHeader>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data da aula</p>
+                <p className="mt-2 text-sm font-bold text-slate-900">{formatDateTime(aula.data_hora)}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Prazo do homework</p>
+                <p className="mt-2 text-sm font-bold text-slate-900">
+                  {lesson.homework_due_date
+                    ? new Date(`${lesson.homework_due_date}T00:00:00`).toLocaleDateString('pt-BR')
+                    : 'Nao informado'}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-100 bg-white px-5 py-5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Homework</p>
+              <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                {lesson.homework || 'Nenhum homework registrado para esta aula.'}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-100 bg-white px-5 py-5">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Anotacoes da aula</p>
+              <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
+                {lesson.class_notes || 'Nenhuma anotacao registrada para esta aula.'}
+              </div>
+            </div>
+
+            {lesson.vocabulary_json && lesson.vocabulary_json.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vocabulario</p>
+                <div className="grid gap-3 md:grid-cols-2">
+                  {lesson.vocabulary_json.map((entry, entryIndex) => (
+                    <VocabularyCard
+                      key={`${entry.word}-${entryIndex}`}
+                      word={entry.word}
+                      translation={entry.translation}
+                      example={entry.example}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+          <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100">
+            <Button
+              type="button"
+              className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest"
+              onClick={() => setShowLessonDetailsModal(false)}
+            >
+              Fechar detalhes
             </Button>
           </DialogFooter>
         </DialogContent>
