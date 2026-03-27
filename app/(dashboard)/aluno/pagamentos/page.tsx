@@ -291,21 +291,28 @@ export default async function AlunoPagamentosPage() {
                           {formatDate(payment.data_vencimento)}
                         </td>
                         <td className="px-4 py-6">
-                          <Badge
-                            className={`border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
-                              payment.effectiveStatus === 'pago'
-                                ? 'bg-emerald-500 text-white'
-                                : payment.effectiveStatus === 'atrasado'
-                                  ? 'bg-rose-500 text-white'
-                                  : 'bg-amber-400 text-white'
-                            }`}
-                          >
-                            {payment.effectiveStatus === 'atrasado'
-                              ? 'Em atraso'
-                              : payment.effectiveStatus === 'pendente'
-                                ? 'Pendente'
-                                : 'Pago'}
-                          </Badge>
+                          <div className="space-y-2">
+                            <Badge
+                              className={`border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+                                payment.effectiveStatus === 'pago'
+                                  ? 'bg-emerald-500 text-white'
+                                  : payment.effectiveStatus === 'atrasado'
+                                    ? 'bg-rose-500 text-white'
+                                    : 'bg-amber-400 text-white'
+                              }`}
+                            >
+                              {payment.effectiveStatus === 'atrasado'
+                                ? 'Em atraso'
+                                : payment.effectiveStatus === 'pendente'
+                                  ? 'Pendente'
+                                  : 'Pago'}
+                            </Badge>
+                            {payment.effectiveStatus !== 'pago' && payment.pix_copia_cola ? (
+                              <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">
+                                PIX gerado
+                              </p>
+                            ) : null}
+                          </div>
                         </td>
                         <td className="px-4 py-6 text-xs font-bold text-slate-600">
                           {payment.data_pagamento ? (
@@ -318,12 +325,24 @@ export default async function AlunoPagamentosPage() {
                         </td>
                         <td className="flex justify-end px-8 py-6 text-right">
                           {payment.effectiveStatus !== 'pago' ? (
-                            <PaymentWrapper
-                              paymentId={String(payment.id)}
-                              amount={Number(payment.valor)}
-                              email={userProfile?.email || ''}
-                              nome={userProfile?.full_name || ''}
-                            />
+                            <div className="space-y-2 text-right">
+                              <PaymentWrapper
+                                paymentId={String(payment.id)}
+                                amount={Number(payment.valor)}
+                                email={userProfile?.email || ''}
+                                nome={userProfile?.full_name || ''}
+                                hasPixGenerated={Boolean(payment.pix_copia_cola || payment.pix_qrcode_base64)}
+                              />
+                              {payment.pix_copia_cola ? (
+                                <p className="text-[10px] font-bold text-slate-400">
+                                  QR Code já criado. Aguardando compensação do Mercado Pago.
+                                </p>
+                              ) : payment.mercadopago_status ? (
+                                <p className="text-[10px] font-bold text-slate-400">
+                                  Status Mercado Pago: {payment.mercadopago_status}
+                                </p>
+                              ) : null}
+                            </div>
                           ) : (
                             <Badge
                               variant="success"

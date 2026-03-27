@@ -10,7 +10,12 @@ interface PaymentBrickProps {
   paymentId: string // ID do banco local (pagamento_id)
   email?: string
   nome?: string
-  onSuccess?: () => void
+  onSuccess?: (result?: {
+    status?: string
+    local_status?: string
+    generated_pix?: boolean
+    reused_existing_pix?: boolean
+  }) => void
 }
 
 declare global {
@@ -85,8 +90,19 @@ export default function PaymentBrick({ amount, paymentId, email, nome, onSuccess
                 const result = await response.json()
 
                 if (response.ok) {
-                  toast.success('Pagamento processado com sucesso!')
-                  if (onSuccess) onSuccess()
+                  if (selectedPaymentMethod === 'pix' || result.generated_pix || result.reused_existing_pix) {
+                    toast.success(
+                      result.reused_existing_pix
+                        ? 'PIX já estava gerado. Atualizamos a tela para você continuar o pagamento.'
+                        : 'QR Code PIX gerado com sucesso. O status continuará pendente até a compensação.'
+                    )
+                  } else if (result.local_status === 'pago' || result.status === 'approved') {
+                    toast.success('Pagamento aprovado com sucesso!')
+                  } else {
+                    toast.success(`Pagamento criado com status ${result.status || 'pendente'}.`)
+                  }
+
+                  if (onSuccess) onSuccess(result)
                 } else {
                   throw new Error(result.error || 'Erro ao processar pagamento')
                 }

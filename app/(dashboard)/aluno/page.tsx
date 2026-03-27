@@ -352,10 +352,18 @@ export default async function AlunoDashboard() {
                     </div>
                     <div className="w-full flex-1 space-y-4">
                       <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 sm:text-left">
-                        Escaneie para pagar com PIX
+                        QR Code PIX gerado
+                      </p>
+                      <p className="text-center text-xs font-bold text-slate-500 sm:text-left">
+                        O pagamento ainda está pendente. Assim que o Mercado Pago confirmar a compensação, o status será atualizado.
                       </p>
                       {pagamentoPendenteComStatus.pix_copia_cola ? (
                         <CopiarPixBtn codigo={pagamentoPendenteComStatus.pix_copia_cola} />
+                      ) : null}
+                      {pagamentoPendenteComStatus.mercadopago_status ? (
+                        <p className="text-center text-[10px] font-black uppercase tracking-widest text-blue-500 sm:text-left">
+                          Mercado Pago: {pagamentoPendenteComStatus.mercadopago_status}
+                        </p>
                       ) : null}
                     </div>
                   </div>

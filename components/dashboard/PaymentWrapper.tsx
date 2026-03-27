@@ -17,9 +17,16 @@ interface PaymentWrapperProps {
   amount: number
   email: string
   nome: string
+  hasPixGenerated?: boolean
 }
 
-export default function PaymentWrapper({ paymentId, amount, email, nome }: PaymentWrapperProps) {
+export default function PaymentWrapper({
+  paymentId,
+  amount,
+  email,
+  nome,
+  hasPixGenerated = false,
+}: PaymentWrapperProps) {
   const [isOpen, setIsOpen] = useState(false)
 
   return (
@@ -29,7 +36,7 @@ export default function PaymentWrapper({ paymentId, amount, email, nome }: Payme
         className="h-10 px-6 rounded-xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-2"
       >
         <CreditCard className="w-4 h-4" />
-        Pagar Agora
+        {hasPixGenerated ? 'Ver PIX' : 'Pagar Agora'}
       </Button>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -41,7 +48,9 @@ export default function PaymentWrapper({ paymentId, amount, email, nome }: Payme
                 Finalizar Pagamento
               </DialogTitle>
               <DialogDescription className="text-center text-slate-500 font-medium text-sm">
-                Escolha a melhor forma de pagamento para sua mensalidade.
+                {hasPixGenerated
+                  ? 'Seu PIX já foi gerado. Você pode copiar o código ou escanear o QR novamente.'
+                  : 'Escolha a melhor forma de pagamento para sua mensalidade.'}
               </DialogDescription>
             </DialogHeader>
 
@@ -52,7 +61,6 @@ export default function PaymentWrapper({ paymentId, amount, email, nome }: Payme
               nome={nome} 
               onSuccess={() => {
                 setIsOpen(false)
-                // Refreshing the page to show paid status
                 window.location.reload()
               }}
             />

@@ -83,6 +83,27 @@ export async function POST(req: NextRequest) {
     const identificationNumber =
       normalizeCpf(formData?.payer?.identification?.number) || normalizeCpf(aluno?.cpf)
 
+    const hasOpenPixAlready =
+      paymentMethodId === 'pix' &&
+      localPayment.mercadopago_id &&
+      localPayment.mercadopago_status === 'pending' &&
+      (localPayment.pix_copia_cola || localPayment.pix_qrcode_base64)
+
+    if (hasOpenPixAlready) {
+      return NextResponse.json({
+        id: localPayment.mercadopago_id,
+        status: localPayment.mercadopago_status,
+        status_detail: 'pending_waiting_transfer',
+        reused_existing_pix: true,
+        point_of_interaction: {
+          transaction_data: {
+            qr_code: localPayment.pix_copia_cola,
+            qr_code_base64: localPayment.pix_qrcode_base64?.replace(/^data:image\/png;base64,/, '') || null,
+          },
+        },
+      })
+    }
+
     if (paymentMethodId === 'pix' && !identificationNumber) {
       return NextResponse.json(
         {
@@ -163,6 +184,10 @@ export async function POST(req: NextRequest) {
       id: mpResponse.id,
       status: mpResponse.status,
       status_detail: mpResponse.status_detail,
+      local_status: localStatus,
+      generated_pix:
+        Boolean(mpResponse.point_of_interaction?.transaction_data?.qr_code) ||
+        Boolean(mpResponse.point_of_interaction?.transaction_data?.qr_code_base64),
       point_of_interaction: mpResponse.point_of_interaction,
     })
   } catch (error: any) {
