@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
@@ -17,11 +17,64 @@ export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [validatingLink, setValidatingLink] = useState(true)
   const router = useRouter()
   const supabase = createClient()
 
+  useEffect(() => {
+    let active = true
+
+    async function bootstrapRecoverySession() {
+      try {
+        const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : ''
+        const params = new URLSearchParams(hash)
+        const accessToken = params.get('access_token')
+        const refreshToken = params.get('refresh_token')
+        const type = params.get('type')
+
+        if (type === 'recovery' && accessToken && refreshToken) {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          })
+
+          if (error) {
+            throw error
+          }
+
+          window.history.replaceState({}, document.title, window.location.pathname)
+        }
+
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        if (!session) {
+          toast.error('Link de redefinição inválido ou expirado. Solicite um novo e-mail.')
+          router.replace('/login')
+          return
+        }
+      } catch (error: unknown) {
+        toast.error(getErrorMessage(error, 'Não foi possível validar o link de redefinição.'))
+        router.replace('/login')
+        return
+      } finally {
+        if (active) {
+          setValidatingLink(false)
+        }
+      }
+    }
+
+    void bootstrapRecoverySession()
+
+    return () => {
+      active = false
+    }
+  }, [router, supabase])
+
   async function handleReset(e: React.FormEvent) {
     e.preventDefault()
+
     if (password !== confirmPassword) {
       toast.error('As senhas não coincidem.')
       return
@@ -31,6 +84,7 @@ export default function ResetPasswordPage() {
     try {
       const { error } = await supabase.auth.updateUser({ password })
       if (error) throw error
+
       toast.success('Senha redefinida com sucesso!')
       router.push('/login')
     } catch (error: unknown) {
@@ -40,23 +94,50 @@ export default function ResetPasswordPage() {
     }
   }
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-slate-50 to-blue-50/50 relative overflow-hidden">
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-100/30 rounded-full blur-3xl animate-pulse" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-200/20 rounded-full blur-3xl animate-pulse [animation-delay:1s]" />
+  if (validatingLink) {
+    return (
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50/50 p-4">
+        <div className="absolute left-[-10%] top-[-10%] h-[40%] w-[40%] animate-pulse rounded-full bg-blue-100/30 blur-3xl" />
+        <div className="absolute bottom-[-10%] right-[-10%] h-[40%] w-[40%] animate-pulse rounded-full bg-blue-200/20 blur-3xl [animation-delay:1s]" />
 
-      <div className="w-full max-w-md relative z-10">
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-[#1e3a5f] text-white text-3xl font-black mb-4 shadow-xl shadow-blue-900/20">
+        <div className="relative z-10 w-full max-w-md">
+          <Card className="glass-card overflow-hidden border-none shadow-2xl shadow-blue-900/5">
+            <CardHeader className="pb-2 text-center">
+              <CardTitle className="text-xl font-bold text-gray-900">Validando link</CardTitle>
+              <CardDescription className="text-xs font-semibold uppercase tracking-tight text-gray-400">
+                Aguarde enquanto preparamos sua redefinição de senha
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="py-6 text-center text-sm font-medium text-slate-500">
+                Estamos conferindo a autenticidade do link enviado por e-mail.
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-br from-slate-50 to-blue-50/50 p-4">
+      <div className="absolute left-[-10%] top-[-10%] h-[40%] w-[40%] animate-pulse rounded-full bg-blue-100/30 blur-3xl" />
+      <div className="absolute bottom-[-10%] right-[-10%] h-[40%] w-[40%] animate-pulse rounded-full bg-blue-200/20 blur-3xl [animation-delay:1s]" />
+
+      <div className="relative z-10 w-full max-w-md">
+        <div className="mb-10 text-center">
+          <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-[#1e3a5f] text-3xl font-black text-white shadow-xl shadow-blue-900/20">
             GC
           </div>
-          <h1 className="text-3xl font-black text-[#1e3a5f] tracking-tighter">Cantoni English School</h1>
-          <p className="text-gray-500 text-sm mt-2 font-medium uppercase tracking-widest text-[9px]">Redefinição de Senha</p>
+          <h1 className="text-3xl font-black tracking-tighter text-[#1e3a5f]">Cantoni English School</h1>
+          <p className="mt-2 text-[9px] font-medium uppercase tracking-widest text-gray-500">
+            Redefinição de senha
+          </p>
         </div>
 
-        <Card className="glass-card border-none shadow-2xl shadow-blue-900/5 overflow-hidden">
-          <CardHeader className="text-center pb-2">
-            <CardTitle className="text-xl font-bold text-gray-900">Nova Senha</CardTitle>
+        <Card className="glass-card overflow-hidden border-none shadow-2xl shadow-blue-900/5">
+          <CardHeader className="pb-2 text-center">
+            <CardTitle className="text-xl font-bold text-gray-900">Nova senha</CardTitle>
             <CardDescription className="text-xs font-semibold uppercase tracking-tight text-gray-400">
               Escolha uma senha forte para sua segurança
             </CardDescription>
@@ -64,32 +145,40 @@ export default function ResetPasswordPage() {
           <CardContent>
             <form onSubmit={handleReset} className="space-y-5">
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="text-[10px] font-black uppercase text-gray-400 ml-1">Nova Senha</Label>
+                <Label htmlFor="password" className="ml-1 text-[10px] font-black uppercase text-gray-400">
+                  Nova senha
+                </Label>
                 <Input
                   id="password"
                   type="password"
                   placeholder="••••••••"
-                  className="bg-white/50 border-gray-100 rounded-xl focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
+                  className="rounded-xl border-gray-100 bg-white/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword" className="text-[10px] font-black uppercase text-gray-400 ml-1">Confirmar Senha</Label>
+                <Label htmlFor="confirmPassword" className="ml-1 text-[10px] font-black uppercase text-gray-400">
+                  Confirmar senha
+                </Label>
                 <Input
                   id="confirmPassword"
                   type="password"
                   placeholder="••••••••"
-                  className="bg-white/50 border-gray-100 rounded-xl focus:ring-[#1e3a5f] focus:border-[#1e3a5f]"
+                  className="rounded-xl border-gray-100 bg-white/50 focus:border-[#1e3a5f] focus:ring-[#1e3a5f]"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-[#1e3a5f] hover:bg-[#162a45] text-white font-bold py-6 rounded-xl shadow-lg shadow-blue-900/20 transition-all active:scale-[0.98]" disabled={loading}>
-                {loading ? 'Salvando...' : 'Salvar Nova Senha'}
+              <Button
+                type="submit"
+                className="w-full rounded-xl bg-[#1e3a5f] py-6 font-bold text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[#162a45] active:scale-[0.98]"
+                disabled={loading}
+              >
+                {loading ? 'Salvando...' : 'Salvar nova senha'}
               </Button>
             </form>
           </CardContent>
@@ -98,7 +187,3 @@ export default function ResetPasswordPage() {
     </div>
   )
 }
-
-
-
-
