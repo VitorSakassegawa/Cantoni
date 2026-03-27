@@ -702,7 +702,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
 
           <Card className="border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
             <CardHeader className="border-b border-slate-100 bg-slate-50/80 p-8">
-              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-rose-500">HistÃ³rico de cancelamentos</CardTitle>
+              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-rose-500">Histórico de cancelamentos</CardTitle>
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -735,10 +735,10 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                           <p>Pago: {formatCurrency(Number(entry.paid_amount || 0))}</p>
                           <p>Consumido: {formatCurrency(Number(entry.consumed_value || 0))}</p>
                           <p>Aberto: {formatCurrency(Number(entry.outstanding_value || 0))}</p>
-                          <p>CrÃ©dito: {formatCurrency(Number(entry.credit_value || 0))}</p>
+                          <p>Crédito: {formatCurrency(Number(entry.credit_value || 0))}</p>
                         </td>
                         <td className="px-6 py-5 text-xs font-bold text-slate-500">
-                          <p>ConcluÃ­das: {entry.completed_lessons}</p>
+                          <p>Concluídas: {entry.completed_lessons}</p>
                           <p>Canceladas: {entry.future_lessons_cancelled}</p>
                         </td>
                         <td className="px-6 py-5 text-xs font-bold text-slate-500">{formatDateTime(entry.created_at)}</td>
