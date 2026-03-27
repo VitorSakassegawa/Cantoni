@@ -696,3 +696,225 @@ export async function enviarEmailRecuperacaoSenha({
     }),
   })
 }
+
+export function getEmailTemplatePreviews() {
+  const appUrl = getAppUrl()
+  const meetLink = `${appUrl}/professor`
+  const secureLink = `${appUrl}/redefinir-senha`
+
+  return [
+    {
+      slug: 'boas-vindas',
+      name: 'Boas-vindas',
+      subject: 'Seja bem-vindo(a) à Cantoni English School',
+      html: BaseLayout({
+        eyebrow: 'Boas-vindas',
+        title: 'Olá, Gabriel!',
+        intro:
+          'É um prazer ter você conosco. Seu plano já está ativo, e reunimos abaixo os próximos passos para que sua experiência comece com clareza, organização e tranquilidade.',
+        tone: 'primary',
+        ctaLabel: 'Definir minha senha',
+        ctaHref: secureLink,
+        content: [
+          statGrid([
+            { label: 'Plano', value: 'Plano Premium | 2x por semana' },
+            { label: 'Início', value: '10/04/2026' },
+            { label: 'Fim', value: '10/10/2026' },
+          ]),
+          card(
+            'Primeiras aulas',
+            lessonList([
+              { data: 'Segunda-feira, 10/04 às 19h00', link: meetLink },
+              { data: 'Quarta-feira, 12/04 às 19h00', link: meetLink },
+            ])
+          ),
+          card(
+            'Orientações importantes',
+            bulletList([
+              '<strong>Cancelamentos:</strong> devem ser informados com, no mínimo, 2 horas de antecedência.',
+              '<strong>Remarcações:</strong> seguem o limite mensal previsto no seu plano.',
+              '<strong>Portal:</strong> aulas, materiais e pagamentos permanecem centralizados em um único ambiente.',
+            ])
+          ),
+        ].join(''),
+        note: 'Se houver qualquer dificuldade no primeiro acesso, basta responder este e-mail para receber suporte.',
+      }),
+    },
+    {
+      slug: 'cobranca',
+      name: 'Cobrança',
+      subject: 'Parcela 2/6 disponível para pagamento',
+      html: BaseLayout({
+        eyebrow: 'Financeiro',
+        title: 'Olá, Gabriel!',
+        intro:
+          'Segue abaixo a cobrança referente ao seu ciclo de aulas. Para mais agilidade na compensação, o pagamento via PIX é o formato recomendado.',
+        tone: 'warning',
+        content: [
+          statGrid([
+            { label: 'Parcela', value: '2/6' },
+            { label: 'Valor', value: 'R$ 480,00' },
+            { label: 'Vencimento', value: '15/04/2026' },
+          ]),
+          card(
+            'PIX Copia e Cola',
+            `<div style="padding:14px 16px;border-radius:16px;background:#0f172a;color:#e2e8f0;font-family:Consolas,Monaco,monospace;font-size:13px;word-break:break-all;">00020126580014BR.GOV.BCB.PIX0114+5511999999995204000053039865406480.005802BR5920Cantoni English School6009SAO PAULO62070503***6304ABCD</div>`
+          ),
+        ].join(''),
+        note: 'Assim que o pagamento for reconhecido, o portal refletirá a atualização automaticamente.',
+      }),
+    },
+    {
+      slug: 'pagamento-confirmado',
+      name: 'Pagamento confirmado',
+      subject: 'Pagamento confirmado da parcela 2/6',
+      html: BaseLayout({
+        eyebrow: 'Pagamento aprovado',
+        title: 'Pagamento confirmado',
+        intro: 'Tudo certo, Gabriel. Seu pagamento foi reconhecido e já consta no portal.',
+        tone: 'success',
+        content: statGrid([
+          { label: 'Parcela', value: '2/6' },
+          { label: 'Valor', value: 'R$ 480,00' },
+          { label: 'Data', value: '14/04/2026' },
+        ]),
+      }),
+    },
+    {
+      slug: 'lembrete-aula',
+      name: 'Lembrete de aula',
+      subject: 'Sua próxima aula é amanhã',
+      html: BaseLayout({
+        eyebrow: 'Lembrete de aula',
+        title: 'Sua aula está chegando, Gabriel',
+        intro:
+          'Abaixo está o horário da sua próxima aula, com acesso rápido para você entrar no encontro com praticidade.',
+        tone: 'accent',
+        ctaLabel: 'Entrar no Google Meet',
+        ctaHref: meetLink,
+        content: [
+          statGrid([{ label: 'Data e horário', value: 'Quarta-feira, 14/04 às 19h00' }]),
+          card(
+            'Lição de casa',
+            `<p style="margin:0 0 10px 0;">Revise o vocabulário da unidade 4 e escreva um pequeno parágrafo usando as novas estruturas.</p>
+             <p style="margin:0;font-size:13px;color:#64748b;"><strong>Prazo sugerido:</strong> até a próxima aula</p>`
+          ),
+        ].join(''),
+        note: 'Caso precise cancelar ou remarcar, o ideal é avisar com pelo menos 2 horas de antecedência.',
+      }),
+    },
+    {
+      slug: 'aula-contabilizada',
+      name: 'Aula contabilizada',
+      subject: 'Aula contabilizada como dada em 14/04/2026 às 19h00',
+      html: BaseLayout({
+        eyebrow: 'Registro de aula',
+        title: 'Aula contabilizada como dada',
+        intro:
+          'Olá, Gabriel. Como não houve cancelamento antecipado dentro da janela prevista, a aula abaixo foi registrada como realizada.',
+        tone: 'danger',
+        content: statGrid([
+          { label: 'Data da aula', value: '14/04/2026 às 19h00' },
+          { label: 'Aulas realizadas', value: '12' },
+          { label: 'Aulas restantes', value: '10' },
+        ]),
+      }),
+    },
+    {
+      slug: 'remarcacao',
+      name: 'Remarcação confirmada',
+      subject: 'Sua remarcação foi confirmada',
+      html: BaseLayout({
+        eyebrow: 'Remarcação',
+        title: 'Tudo certo, Gabriel',
+        intro: 'Sua aula foi remarcada com sucesso. A nova data abaixo já é a válida no sistema.',
+        tone: 'primary',
+        ctaLabel: 'Abrir Google Meet',
+        ctaHref: meetLink,
+        content: statGrid([
+          { label: 'Antes', value: '14/04/2026 às 19h00' },
+          { label: 'Nova data', value: '15/04/2026 às 18h30' },
+        ]),
+      }),
+    },
+    {
+      slug: 'pendencia-financeira',
+      name: 'Pendência financeira',
+      subject: 'Importante: aulas concluídas e pendência financeira',
+      html: BaseLayout({
+        eyebrow: 'Atenção financeira',
+        title: 'Olá, Gabriel',
+        intro:
+          'Seu ciclo atual chegou ao limite de aulas previstas, mas ainda existe uma pendência financeira associada a esse período.',
+        tone: 'warning',
+        content: [
+          statGrid([{ label: 'Aulas concluídas', value: '24' }]),
+          card(
+            'Próximos passos',
+            `<p style="margin:0;">Regularize a parcela em aberto para manter a agenda e o fluxo pedagógico sem interrupções.</p>`
+          ),
+        ].join(''),
+      }),
+    },
+    {
+      slug: 'resumo-ia',
+      name: 'Resumo de aula com IA',
+      subject: 'Resumo da sua aula - 14/04/2026 às 19h00',
+      html: BaseLayout({
+        eyebrow: 'Resumo da aula',
+        title: 'Hi, Gabriel!',
+        intro:
+          'Aqui está o resumo estruturado da sua aula, com os pontos mais relevantes para revisão, continuidade e prática autônoma.',
+        tone: 'accent',
+        content: [
+          statGrid([{ label: 'Aula', value: '14/04/2026 às 19h00' }]),
+          card(
+            'Resumo gerado',
+            nl2br(
+              'Topic: Travel routines\nVocabulary: boarding pass, delay, layover\nGrammar: present perfect x simple past\nPractice tip: write 5 sentences about your last trip using both structures.'
+            )
+          ),
+        ].join(''),
+      }),
+    },
+    {
+      slug: 'primeiro-acesso',
+      name: 'Primeiro acesso',
+      subject: 'Primeiro acesso ao portal da Cantoni English School',
+      html: BaseLayout({
+        eyebrow: 'Primeiro acesso',
+        title: 'Olá, Gabriel!',
+        intro:
+          'Seu cadastro no portal já está pronto. Agora falta apenas definir sua senha para começar a usar a plataforma com segurança e autonomia.',
+        tone: 'primary',
+        ctaLabel: 'Definir minha senha',
+        ctaHref: secureLink,
+        content: card(
+          'Importante',
+          bulletList([
+            'O portal <strong>não usa os 6 primeiros dígitos do CPF como senha</strong>.',
+            'Depois de definir sua senha, você poderá entrar normalmente com seu e-mail.',
+          ])
+        ),
+      }),
+    },
+    {
+      slug: 'recuperacao-senha',
+      name: 'Recuperação de senha',
+      subject: 'Recuperação de senha do portal da Cantoni English School',
+      html: BaseLayout({
+        eyebrow: 'Recuperação de senha',
+        title: 'Olá, Gabriel!',
+        intro:
+          'Recebemos uma solicitação para redefinir sua senha. Use o botão abaixo para criar uma nova senha com segurança.',
+        tone: 'primary',
+        ctaLabel: 'Redefinir minha senha',
+        ctaHref: secureLink,
+        content: card(
+          'Segurança',
+          '<p style="margin:0;">Se você não solicitou essa alteração, basta ignorar este e-mail. Nenhuma mudança será aplicada sem a sua confirmação.</p>'
+        ),
+      }),
+    },
+  ]
+}
