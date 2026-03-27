@@ -31,6 +31,7 @@ export async function getAIAnalysisV2(aulaId: number, content?: string) {
     level: student?.cefr_level || student?.nivel || 'A1',
     lessonType: student?.tipo_aula || 'General English',
     date: new Date(aula.data_hora).toLocaleDateString('pt-BR'),
+    durationMinutes: aula?.duracao_minutos || 45,
   }
 
   return generateLessonAnalysisV2(currentNotes, studentInfo)

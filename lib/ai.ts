@@ -72,7 +72,52 @@ export async function generateLessonSummary(notes: string) {
   return generateAIContent(prompt)
 }
 
-export async function generateLessonAnalysisV2(notes: string, studentInfo: { name: string, level: string, lessonType: string, date: string }) {
+type LessonAnalysisStudentInfo = {
+  name: string
+  level: string
+  lessonType: string
+  date: string
+  durationMinutes?: number | null
+}
+
+function finalizeLessonSummary(
+  summary: string,
+  studentInfo: LessonAnalysisStudentInfo,
+  locale: 'pt' | 'en'
+) {
+  const durationLabel = `${studentInfo.durationMinutes || 45} min`
+  const titleLabel =
+    locale === 'pt'
+      ? `### 📘 Resumo da Aula - ${studentInfo.name}`
+      : `### 📘 Lesson Summary - ${studentInfo.name}`
+
+  return summary
+    .replace(/###\s*📘\s*Resumo da Aula\s*[–-]\s*APRO/gi, titleLabel)
+    .replace(/###\s*📘\s*Lesson Summary\s*[–-]\s*APRO/gi, titleLabel)
+    .replace(/###\s*📘\s*Resumo da Aula\s*[–-]\s*[^\n]+/i, locale === 'pt' ? titleLabel : '$&')
+    .replace(/###\s*📘\s*Lesson Summary\s*[–-]\s*[^\n]+/i, locale === 'en' ? titleLabel : '$&')
+    .replace(/\[XX min\]/g, durationLabel)
+    .replace(/\*\*Data:\*\*\s*\[DD\/MM\/YYYY\]/g, `**Data:** ${studentInfo.date}`)
+    .replace(/\*\*Date:\*\*\s*\[DD\/MM\/YYYY\]/g, `**Date:** ${studentInfo.date}`)
+    .replace(/\*\*Duração:\*\*\s*\[[^\]]+\]/g, `**Duração:** ${durationLabel}`)
+    .replace(/\*\*Duration:\*\*\s*\[[^\]]+\]/g, `**Duration:** ${durationLabel}`)
+    .trim()
+}
+
+function normalizeHomeworkValue(value?: string | null) {
+  if (!value) {
+    return null
+  }
+
+  const trimmedValue = value.trim()
+  if (!trimmedValue || /^not observed\.?$/i.test(trimmedValue)) {
+    return null
+  }
+
+  return trimmedValue
+}
+
+export async function generateLessonAnalysisV2(notes: string, studentInfo: LessonAnalysisStudentInfo) {
   const prompt = `
     You are an expert English language assistant specialized in transforming lesson transcripts into structured learning summaries.
     Your task is to convert raw transcripts from 1:1 English lessons into a standardized lesson summary.
@@ -91,11 +136,16 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: { nam
     - Corrections must include a short explanation.
     - Do NOT skip any section of the template.
     - Use tables exactly where specified.
+    - The lesson title MUST use the actual student name provided in the context.
+    - Never use placeholders such as "APRO".
+    - The duration must use the real duration provided in the context.
+    - If the teacher assigns homework, capture it clearly.
+    - If a deadline is explicitly mentioned in natural language, convert it to YYYY-MM-DD.
 
     Student Name: ${studentInfo.name}
     Level: ${studentInfo.level}
     Lesson Type: ${studentInfo.lessonType}
-    Duration: [XX minutes]
+    Duration: ${studentInfo.durationMinutes || 45} minutes
     Date: ${studentInfo.date}
 
     Transcript:
@@ -165,7 +215,15 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: { nam
     [Goals for next time]
   `
   const response = await generateAIContent(prompt, PRIMARY_MODEL, 'application/json')
-  return extractAndParseJSON(response)
+  const parsed = extractAndParseJSON(response)
+
+  return {
+    ...parsed,
+    summary_pt: finalizeLessonSummary(parsed?.summary_pt || '', studentInfo, 'pt'),
+    summary_en: finalizeLessonSummary(parsed?.summary_en || '', studentInfo, 'en'),
+    homework: normalizeHomeworkValue(parsed?.homework),
+    due_date: parsed?.due_date || null,
+  }
 }
 
 function pcmToBase64Wav(pcmBase64: string): string {

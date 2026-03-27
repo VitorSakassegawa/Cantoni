@@ -10,7 +10,7 @@ export async function POST() {
     const result = await runMeetTranscriptImport({
       limit: 20,
       lookbackDays: 7,
-      force: false,
+      force: true,
     })
 
     revalidatePath('/professor/aulas')

@@ -31,6 +31,25 @@ export type ImportedMeetTranscript = {
   transcriptEndedAt?: string | null
 }
 
+function formatTranscriptDuration(start?: string | null, end?: string | null) {
+  if (!start || !end) {
+    return null
+  }
+
+  const startTime = new Date(start).getTime()
+  const endTime = new Date(end).getTime()
+  if (Number.isNaN(startTime) || Number.isNaN(endTime) || endTime <= startTime) {
+    return null
+  }
+
+  const totalSeconds = Math.round((endTime - startTime) / 1000)
+  const hours = Math.floor(totalSeconds / 3600)
+  const minutes = Math.floor((totalSeconds % 3600) / 60)
+  const seconds = totalSeconds % 60
+
+  return [hours, minutes, seconds].map((value) => String(value).padStart(2, '0')).join(':')
+}
+
 function getMeetClient() {
   const auth = getGoogleAuth()
   return google.meet({ version: 'v2', auth })
@@ -163,22 +182,31 @@ export function mergeTranscriptIntoLessonNotes(
   imported: ImportedMeetTranscript
 ) {
   const trimmedCurrent = currentNotes?.trim() || ''
+  const durationLine = formatTranscriptDuration(imported.transcriptStartedAt, imported.transcriptEndedAt)
   const sourceLine = imported.transcriptDocUrl
     ? `Source document: ${imported.transcriptDocUrl}`
     : `Meeting code: ${imported.meetingCode}`
   const transcriptBlock = [
     TRANSCRIPT_HEADER,
+    `Transcript record: ${imported.transcriptName}`,
     sourceLine,
+    imported.transcriptStartedAt ? `Transcript started at: ${imported.transcriptStartedAt}` : null,
+    imported.transcriptEndedAt ? `Transcript ended at: ${imported.transcriptEndedAt}` : null,
+    durationLine ? `Transcript duration: ${durationLine}` : null,
     '',
     imported.transcriptText.trim(),
-  ].join('\n')
+  ]
+    .filter(Boolean)
+    .join('\n')
 
   if (!trimmedCurrent) {
     return transcriptBlock
   }
 
   if (trimmedCurrent.includes(TRANSCRIPT_HEADER)) {
-    return trimmedCurrent
+    const [beforeTranscript] = trimmedCurrent.split(TRANSCRIPT_HEADER)
+    const preservedNotes = beforeTranscript.trim().replace(/\n+---\n*$/g, '').trim()
+    return preservedNotes ? `${preservedNotes}\n\n---\n\n${transcriptBlock}` : transcriptBlock
   }
 
   return `${trimmedCurrent}\n\n---\n\n${transcriptBlock}`
@@ -186,6 +214,11 @@ export function mergeTranscriptIntoLessonNotes(
 
 export function hasImportedTranscript(notes: string | null | undefined) {
   return (notes || '').includes(TRANSCRIPT_HEADER)
+}
+
+export function extractImportedTranscriptName(notes: string | null | undefined) {
+  const match = (notes || '').match(/Transcript record:\s*(.+)/)
+  return match?.[1]?.trim() || null
 }
 
 export function truncateTranscriptForAI(text: string, maxLength = 14000) {

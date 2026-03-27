@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { subDays } from 'date-fns'
 import { generateLessonAnalysisV2 } from '@/lib/ai'
 import {
+  extractImportedTranscriptName,
   hasImportedTranscript,
   importMeetTranscriptForLesson,
   mergeTranscriptIntoLessonNotes,
@@ -60,6 +61,23 @@ function normalizeStudentProfile(lesson: LessonRow) {
   }
 }
 
+function inferDurationMinutes(
+  transcriptStartedAt?: string | null,
+  transcriptEndedAt?: string | null,
+  fallbackMinutes = 45
+) {
+  if (transcriptStartedAt && transcriptEndedAt) {
+    const startTime = new Date(transcriptStartedAt).getTime()
+    const endTime = new Date(transcriptEndedAt).getTime()
+
+    if (!Number.isNaN(startTime) && !Number.isNaN(endTime) && endTime > startTime) {
+      return Math.max(1, Math.round((endTime - startTime) / 60000))
+    }
+  }
+
+  return fallbackMinutes
+}
+
 export async function runMeetTranscriptImport({
   limit = 20,
   lookbackDays = 7,
@@ -101,12 +119,6 @@ export async function runMeetTranscriptImport({
   for (const lesson of (lessons || []) as LessonRow[]) {
     checked += 1
 
-    if (!force && lesson.ai_summary_pt && hasImportedTranscript(lesson.class_notes)) {
-      skipped += 1
-      details.push({ lessonId: lesson.id, status: 'skipped', reason: 'already_imported' })
-      continue
-    }
-
     try {
       const importedTranscript = await importMeetTranscriptForLesson({
         meetLink: lesson.meet_link,
@@ -119,10 +131,28 @@ export async function runMeetTranscriptImport({
         continue
       }
 
+      const sameTranscriptAlreadyImported =
+        !force &&
+        lesson.ai_summary_pt &&
+        hasImportedTranscript(lesson.class_notes) &&
+        extractImportedTranscriptName(lesson.class_notes) === importedTranscript.transcriptName
+
+      if (sameTranscriptAlreadyImported) {
+        skipped += 1
+        details.push({ lessonId: lesson.id, status: 'skipped', reason: 'already_imported' })
+        continue
+      }
+
       const mergedNotes = mergeTranscriptIntoLessonNotes(lesson.class_notes, importedTranscript)
       const analysis = await generateLessonAnalysisV2(
         truncateTranscriptForAI(importedTranscript.transcriptText),
-        normalizeStudentProfile(lesson)
+        {
+          ...normalizeStudentProfile(lesson),
+          durationMinutes: inferDurationMinutes(
+            importedTranscript.transcriptStartedAt,
+            importedTranscript.transcriptEndedAt
+          ),
+        }
       )
 
       const nextHomework =
