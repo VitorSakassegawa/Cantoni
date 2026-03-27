@@ -1,37 +1,294 @@
 import 'server-only'
 import { Resend } from 'resend'
 
+type EmailPayload = Record<string, unknown>
+type EmailResponse = { data: null; error: null }
 type EmailSender = {
   emails: {
-    send: (payload: Record<string, unknown>) => Promise<{ data: null; error: null }>
+    send: (payload: EmailPayload) => Promise<EmailResponse>
   }
 }
 
-function getResendClient() {
-  const key = process.env.RESEND_API_KEY
-  if (!key || key === 're_123') {
-    // Return a dummy object for build time to avoid constructor error
-    return {
-      emails: {
-        send: async () => {
-          console.warn('RESEND_API_KEY non set. Skipping email.')
-          return { data: null, error: null }
-        }
-      }
-    } as EmailSender
-  }
-  return new Resend(key)
+type EmailTone = 'primary' | 'success' | 'warning' | 'danger' | 'accent'
+
+type EmailShellOptions = {
+  eyebrow: string
+  title: string
+  intro: string
+  tone?: EmailTone
+  ctaLabel?: string
+  ctaHref?: string
+  secondaryLabel?: string
+  secondaryHref?: string
+  content: string
+  note?: string
 }
 
 const FROM = process.env.RESEND_FROM_EMAIL || 'Cantoni English School <gabriel@cantonies.com.br>'
 
+function getAppUrl() {
+  return (process.env.NEXT_PUBLIC_APP_URL || 'https://cantonies.com.br').replace(/\/$/, '')
+}
 
-function BaseLayout(content: string) {
+function getLogoUrl() {
+  return `${getAppUrl()}/logo-cantoni.svg`
+}
+
+function getResendClient(): Resend | EmailSender {
+  const key = process.env.RESEND_API_KEY
+  if (!key || key === 're_123') {
+    return {
+      emails: {
+        send: async () => {
+          console.warn('RESEND_API_KEY not set. Skipping email.')
+          return { data: null, error: null }
+        },
+      },
+    }
+  }
+
+  return new Resend(key)
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
+function nl2br(value: string) {
+  return escapeHtml(value).replace(/\n/g, '<br />')
+}
+
+function getToneStyles(tone: EmailTone) {
+  switch (tone) {
+    case 'success':
+      return {
+        accent: '#166534',
+        accentSoft: '#dcfce7',
+        accentBorder: '#86efac',
+        badge: '#14532d',
+        button: '#166534',
+        glow: 'rgba(22, 101, 52, 0.18)',
+      }
+    case 'warning':
+      return {
+        accent: '#b45309',
+        accentSoft: '#ffedd5',
+        accentBorder: '#fdba74',
+        badge: '#9a3412',
+        button: '#c2410c',
+        glow: 'rgba(180, 83, 9, 0.18)',
+      }
+    case 'danger':
+      return {
+        accent: '#b91c1c',
+        accentSoft: '#fee2e2',
+        accentBorder: '#fca5a5',
+        badge: '#991b1b',
+        button: '#b91c1c',
+        glow: 'rgba(185, 28, 28, 0.18)',
+      }
+    case 'accent':
+      return {
+        accent: '#0f766e',
+        accentSoft: '#ccfbf1',
+        accentBorder: '#99f6e4',
+        badge: '#115e59',
+        button: '#0f766e',
+        glow: 'rgba(15, 118, 110, 0.18)',
+      }
+    case 'primary':
+    default:
+      return {
+        accent: '#1e3a5f',
+        accentSoft: '#dbeafe',
+        accentBorder: '#93c5fd',
+        badge: '#1d4ed8',
+        button: '#1e3a5f',
+        glow: 'rgba(30, 58, 95, 0.18)',
+      }
+  }
+}
+
+function card(title: string, body: string) {
   return `
-    <div style="font-family:sans-serif;max-width:600px;margin:auto;padding:20px;color:#334155;line-height:1.6">
-      ${content}
-      <hr style="border:none;border-top:1px solid #e2e8f0;margin:30px 0" />
-      <p style="color:#94a3b8;font-size:11px">Cantoni English School</p>
+    <div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:20px;padding:20px;margin:16px 0;">
+      <p style="margin:0 0 8px 0;font-size:11px;font-weight:800;letter-spacing:0.16em;text-transform:uppercase;color:#64748b;">
+        ${escapeHtml(title)}
+      </p>
+      <div style="font-size:14px;line-height:1.7;color:#334155;">
+        ${body}
+      </div>
+    </div>
+  `
+}
+
+function statGrid(items: Array<{ label: string; value: string }>) {
+  return `
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:16px 0 8px 0;">
+      <tr>
+        ${items
+          .map(
+            (item) => `
+              <td style="padding:0 8px 8px 0;vertical-align:top;">
+                <div style="min-width:140px;background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:18px;">
+                  <div style="font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:#64748b;margin-bottom:8px;">
+                    ${escapeHtml(item.label)}
+                  </div>
+                  <div style="font-size:18px;font-weight:800;color:#0f172a;">
+                    ${escapeHtml(item.value)}
+                  </div>
+                </div>
+              </td>
+            `
+          )
+          .join('')}
+      </tr>
+    </table>
+  `
+}
+
+function bulletList(items: string[]) {
+  return `
+    <ul style="margin:0;padding-left:18px;color:#334155;">
+      ${items.map((item) => `<li style="margin:0 0 8px 0;">${item}</li>`).join('')}
+    </ul>
+  `
+}
+
+function lessonList(aulas: { data: string; link: string }[]) {
+  if (!aulas.length) {
+    return '<p style="margin:0;color:#64748b;">As aulas serão adicionadas em breve no portal.</p>'
+  }
+
+  return `
+    <div style="margin-top:8px;">
+      ${aulas
+        .slice(0, 5)
+        .map(
+          (aula) => `
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:18px;padding:14px 16px;margin-bottom:10px;">
+              <div style="font-size:14px;font-weight:700;color:#0f172a;">${escapeHtml(aula.data)}</div>
+              <div style="margin-top:6px;font-size:13px;">
+                <a href="${aula.link}" style="color:#2563eb;text-decoration:none;font-weight:700;">Abrir link da aula</a>
+              </div>
+            </div>
+          `
+        )
+        .join('')}
+    </div>
+  `
+}
+
+function BaseLayout({
+  eyebrow,
+  title,
+  intro,
+  tone = 'primary',
+  ctaLabel,
+  ctaHref,
+  secondaryLabel,
+  secondaryHref,
+  content,
+  note,
+}: EmailShellOptions) {
+  const colors = getToneStyles(tone)
+  const logoUrl = getLogoUrl()
+
+  return `
+    <div style="margin:0;background:#eef2ff;padding:32px 16px;font-family:'Segoe UI',Arial,sans-serif;color:#334155;">
+      <div style="max-width:640px;margin:0 auto;">
+        <div style="margin-bottom:18px;text-align:center;">
+          <div style="display:inline-block;padding:8px 14px;border-radius:999px;background:${colors.accentSoft};border:1px solid ${colors.accentBorder};font-size:11px;font-weight:800;letter-spacing:0.14em;text-transform:uppercase;color:${colors.badge};">
+            ${escapeHtml(eyebrow)}
+          </div>
+        </div>
+
+        <div style="background:
+          radial-gradient(circle at top left, ${colors.accentSoft} 0%, rgba(255,255,255,0) 34%),
+          linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+          border:1px solid #dbe4f0;border-radius:32px;padding:36px 28px;box-shadow:0 24px 60px ${colors.glow};overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:30px;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="width:68px;height:68px;border-radius:22px;background:#ffffff;border:1px solid #dbe4f0;box-shadow:0 10px 30px rgba(15,23,42,0.08);display:flex;align-items:center;justify-content:center;padding:12px;">
+                <img src="${logoUrl}" alt="Cantoni English School" style="max-width:100%;max-height:100%;display:block;" />
+              </div>
+              <div>
+                <div style="font-size:11px;font-weight:800;letter-spacing:0.18em;text-transform:uppercase;color:${colors.badge};margin-bottom:6px;">
+                  Cantoni English School
+                </div>
+                <div style="font-size:14px;line-height:1.5;color:#475569;">
+                  Inglês com método, constância e acompanhamento próximo.
+                </div>
+              </div>
+            </div>
+            <div style="width:74px;height:74px;border-radius:24px;background:linear-gradient(135deg, ${colors.accent} 0%, #0f172a 100%);box-shadow:0 18px 34px ${colors.glow};"></div>
+          </div>
+
+          <h1 style="margin:0 0 14px 0;font-size:32px;line-height:1.15;color:#0f172a;letter-spacing:-0.03em;">
+            ${escapeHtml(title)}
+          </h1>
+          <p style="margin:0 0 24px 0;font-size:16px;line-height:1.8;color:#475569;">
+            ${intro}
+          </p>
+
+          ${
+            ctaLabel && ctaHref
+              ? `
+                <div style="margin:0 0 28px 0;">
+                  <a href="${ctaHref}" style="display:inline-block;background:linear-gradient(135deg, ${colors.button} 0%, #0f172a 100%);color:#ffffff;text-decoration:none;font-size:14px;font-weight:800;padding:14px 22px;border-radius:16px;box-shadow:0 16px 30px ${colors.glow};">
+                    ${escapeHtml(ctaLabel)}
+                  </a>
+                  ${
+                    secondaryLabel && secondaryHref
+                      ? `
+                        <a href="${secondaryHref}" style="display:inline-block;margin-left:12px;color:${colors.accent};text-decoration:none;font-size:14px;font-weight:700;">
+                          ${escapeHtml(secondaryLabel)}
+                        </a>
+                      `
+                      : ''
+                  }
+                </div>
+              `
+              : ''
+          }
+
+          ${content}
+
+          ${
+            note
+              ? `
+                <div style="margin-top:28px;padding:16px 18px;border-radius:18px;background:#fffaf0;border:1px solid #fed7aa;color:#9a3412;font-size:13px;line-height:1.7;">
+                  ${note}
+                </div>
+              `
+              : ''
+          }
+
+          <div style="margin-top:30px;padding-top:22px;border-top:1px solid #e2e8f0;display:flex;align-items:flex-start;justify-content:space-between;gap:18px;">
+            <div>
+              <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:4px;">Cantoni English School</div>
+              <div style="font-size:12px;line-height:1.7;color:#64748b;">
+                Comunicação oficial do portal acadêmico.<br />
+                Remetente: ${escapeHtml(FROM)}
+              </div>
+            </div>
+            <div style="text-align:right;font-size:11px;line-height:1.7;color:#94a3b8;">
+              Learn with structure.<br />
+              Grow with consistency.
+            </div>
+          </div>
+        </div>
+
+        <div style="padding:18px 8px 0 8px;text-align:center;color:#94a3b8;font-size:12px;line-height:1.7;">
+          Cantoni English School<br />
+          Uma comunicação mais clara, elegante e confiável para cada etapa da jornada.
+        </div>
+      </div>
     </div>
   `
 }
@@ -53,42 +310,39 @@ export async function enviarEmailBoasVindas({
   aulas: { data: string; link: string }[]
   setupPasswordLink?: string
 }) {
-  const aulasHtml = aulas
-    .slice(0, 5)
-    .map((a) => `<li>${a.data} — <a href="${a.link}">${a.link}</a></li>`)
-    .join('')
-
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
-    subject: '🎉 Bem-vindo(a) às aulas de inglês com a Cantoni English School!',
-    html: BaseLayout(`
-      <h2 style="color:#1e3a5f;margin-bottom:20px">Olá, ${nomeAluno}! 👋</h2>
-      <p>Seja muito bem-vindo(a) às aulas de inglês com <strong>Cantoni English School</strong>!</p>
-      
-      <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0">
-        <h3 style="margin-top:0;color:#1e3a5f;font-size:16px">🔑 Acesso à Plataforma</h3>
-        <p style="font-size:14px">Para acompanhar suas aulas, materiais e pagamentos, defina sua senha no botão abaixo:</p>
-        ${setupPasswordLink ? `
-        <a href="${setupPasswordLink}" style="display:inline-block;padding:14px 28px;background:#2563eb;color:white;text-decoration:none;border-radius:12px;font-weight:bold;margin:10px 0">Definir minha Senha</a>
-        ` : ''}
-      </div>
-
-      <h3 style="color:#1e3a5f">📋 Seu Plano</h3>
-      <p style="font-size:14px"><strong>${plano}</strong><br/>Período: ${dataInicio} a ${dataFim}</p>
-      
-      <h3 style="color:#1e3a5f">📅 Primeiras Aulas</h3>
-      <ul style="font-size:14px;padding-left:20px">${aulasHtml}</ul>
-
-      <h3 style="color:#1e3a5f">⚠️ Regras Importantes</h3>
-      <ul style="font-size:13px;color:#475569">
-        <li><strong>Cancelamentos:</strong> Mínimo de 2 horas de antecedência.</li>
-        <li><strong>Remarcações:</strong> Respeitam o limite mensal do seu plano.</li>
-        <li><strong>Contrato:</strong> Semestral (avisar alterações com 30 dias).</li>
-      </ul>
-      <p style="margin-top:30px;font-weight:bold">Bons estudos! 🇺🇸</p>
-    `),
+    subject: 'Seja bem-vindo(a) à Cantoni English School',
+    html: BaseLayout({
+      eyebrow: 'Boas-vindas',
+      title: `Olá, ${nomeAluno}!`,
+      intro:
+        'É um prazer ter você conosco. Seu plano já está ativo, e reunimos abaixo os próximos passos para que sua experiência comece com clareza, organização e tranquilidade.',
+      tone: 'primary',
+      ctaLabel: setupPasswordLink ? 'Definir minha senha' : undefined,
+      ctaHref: setupPasswordLink,
+      content: [
+        statGrid([
+          { label: 'Plano', value: plano || 'Plano personalizado' },
+          { label: 'Início', value: dataInicio },
+          { label: 'Fim', value: dataFim },
+        ]),
+        card('Primeiras aulas', lessonList(aulas)),
+        card(
+          'Orientações importantes',
+          bulletList([
+            '<strong>Cancelamentos:</strong> devem ser informados com, no mínimo, 2 horas de antecedência.',
+            '<strong>Remarcações:</strong> seguem o limite mensal previsto no seu plano.',
+            '<strong>Portal:</strong> aulas, materiais e pagamentos permanecem centralizados em um único ambiente.',
+          ])
+        ),
+      ].join(''),
+      note:
+        'Se houver qualquer dificuldade no primeiro acesso, basta responder este e-mail para receber suporte.',
+    }),
   })
 }
 
@@ -112,26 +366,39 @@ export async function enviarEmailCobranca({
   pixQrcode?: string
 }) {
   const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
-
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `💰 Parcela ${parcela}/${totalParcelas} — Aulas de Inglês Cantoni English School`,
-    html: BaseLayout(`
-      <h2 style="color:#1e3a5f">Olá, ${nomeAluno}!</h2>
-      <p>Segue a cobrança referente à parcela <strong>${parcela}/${totalParcelas}</strong> das suas aulas de inglês.</p>
-      <div style="background:#f0f7ff;padding:20px;border-radius:8px;margin:20px 0">
-        <p style="margin:0;font-size:24px;font-weight:bold;color:#1e3a5f">${valorFmt}</p>
-        <p style="margin:4px 0;color:#666">Vencimento: <strong>${vencimento}</strong></p>
-      </div>
-      ${pixQrcode ? `<div style="text-align:center;margin:20px 0"><img src="${pixQrcode}" alt="QR Code PIX" style="width:200px;height:200px"/></div>` : ''}
-      <h3>Código PIX Copia e Cola</h3>
-      <div style="background:#f5f5f5;padding:12px;border-radius:6px;word-break:break-all;font-family:monospace;font-size:13px">
-        ${pixCopiaCola}
-      </div>
-      <p style="margin-top:20px;color:#666;font-size:13px">Preferência: <strong>PIX</strong> (gratuito).</p>
-    `),
+    subject: `Parcela ${parcela}/${totalParcelas} disponível para pagamento`,
+    html: BaseLayout({
+      eyebrow: 'Financeiro',
+      title: `Olá, ${nomeAluno}!`,
+      intro:
+        'Segue abaixo a cobrança referente ao seu ciclo de aulas. Para mais agilidade na compensação, o pagamento via PIX é o formato recomendado.',
+      tone: 'warning',
+      content: [
+        statGrid([
+          { label: 'Parcela', value: `${parcela}/${totalParcelas}` },
+          { label: 'Valor', value: valorFmt },
+          { label: 'Vencimento', value: vencimento },
+        ]),
+        pixQrcode
+          ? card(
+              'QR Code PIX',
+              `<div style="text-align:center;"><img src="${pixQrcode}" alt="QR Code PIX" style="max-width:220px;width:100%;height:auto;border-radius:16px;" /></div>`
+            )
+          : '',
+        card(
+          'PIX Copia e Cola',
+          `<div style="padding:14px 16px;border-radius:16px;background:#0f172a;color:#e2e8f0;font-family:Consolas,Monaco,monospace;font-size:13px;word-break:break-all;">${escapeHtml(
+            pixCopiaCola
+          )}</div>`
+        ),
+      ].join(''),
+      note: 'Assim que o pagamento for reconhecido, o portal refletirá a atualização automaticamente.',
+    }),
   })
 }
 
@@ -151,22 +418,23 @@ export async function enviarConfirmacaoPagamento({
   dataPagamento: string
 }) {
   const valorFmt = new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor)
-
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `✅ Pagamento confirmado — Parcela ${parcela}/${totalParcelas}`,
-    html: BaseLayout(`
-      <h2 style="color:#16a34a">Pagamento confirmado! ✅</h2>
-      <p>Olá, ${nomeAluno}! Seu pagamento foi recebido com sucesso.</p>
-      <div style="background:#f0fdf4;padding:20px;border-radius:8px;margin:20px 0">
-        <p style="margin:0"><strong>Parcela:</strong> ${parcela}/${totalParcelas}</p>
-        <p style="margin:4px 0"><strong>Valor:</strong> ${valorFmt}</p>
-        <p style="margin:4px 0"><strong>Data:</strong> ${dataPagamento}</p>
-      </div>
-      <p>Bons estudos! 🇺🇸</p>
-    `),
+    subject: `Pagamento confirmado da parcela ${parcela}/${totalParcelas}`,
+    html: BaseLayout({
+      eyebrow: 'Pagamento aprovado',
+      title: 'Pagamento confirmado',
+      intro: `Tudo certo, ${nomeAluno}. Seu pagamento foi reconhecido e já consta no portal.`,
+      tone: 'success',
+      content: statGrid([
+        { label: 'Parcela', value: `${parcela}/${totalParcelas}` },
+        { label: 'Valor', value: valorFmt },
+        { label: 'Data', value: dataPagamento },
+      ]),
+    }),
   })
 }
 
@@ -179,7 +447,7 @@ export async function enviarLembreteAula({
   has_homework,
   homeworkType,
   homeworkLink,
-  homeworkDueDate: _homeworkDueDate,
+  homeworkDueDate,
 }: {
   to: string
   nomeAluno: string
@@ -192,40 +460,44 @@ export async function enviarLembreteAula({
   homeworkDueDate?: string
 }) {
   const resend = getResendClient()
-  void _homeworkDueDate
-  
-  let homeworkSection = ''
-  if (has_homework === false) {
-    homeworkSection = `<p style="color:#64748b;font-style:italic;font-size:13px">Nenhuma lição de casa atribuída.</p>`
-  } else if (homework) {
-    homeworkSection = `<p><strong>Lição:</strong> ${homework}</p>`
-  }
 
-  if (homeworkType === 'evolve' && homeworkLink) {
-    homeworkSection += `
-      <div style="background:#f5f3ff;padding:16px;border-radius:12px;margin:12px 0;border:1px solid #ddd6fe">
-        <p style="margin:0;color:#5b21b6;font-weight:bold;font-size:14px">📚 Cambridge Evolve</p>
-        <a href="${homeworkLink}" style="color:#6366f1;font-weight:bold;text-decoration:none">Abrir Cambridge One</a>
-      </div>
-    `
+  let homeworkHtml = card(
+    'Tarefa',
+    '<p style="margin:0;color:#64748b;">Nenhuma lição de casa foi registrada para esta aula.</p>'
+  )
+
+  if (has_homework !== false && homework) {
+    homeworkHtml = card(
+      'Lição de casa',
+      `<p style="margin:0 0 10px 0;">${nl2br(homework)}</p>${
+        homeworkDueDate
+          ? `<p style="margin:0;font-size:13px;color:#64748b;"><strong>Prazo sugerido:</strong> ${escapeHtml(homeworkDueDate)}</p>`
+          : ''
+      }${
+        homeworkType === 'evolve' && homeworkLink
+          ? `<p style="margin:14px 0 0 0;"><a href="${homeworkLink}" style="color:#4f46e5;text-decoration:none;font-weight:700;">Abrir Cambridge One</a></p>`
+          : ''
+      }`
+    )
   }
 
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `📚 Sua aula de inglês é amanhã!`,
-    html: BaseLayout(`
-      <h2 style="color:#1e3a5f">Lembrete de aula 🎓</h2>
-      <p>Olá, ${nomeAluno}! Sua aula está chegando:</p>
-      <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0">
-        <p style="margin:0;font-size:18px;font-weight:bold;color:#0f172a">${dataHora}</p>
-        <p style="margin:12px 0 0 0"><a href="${meetLink}" style="color:#2563eb;font-weight:bold;text-decoration:none">🔗 Entrar no Google Meet</a></p>
-      </div>
-      ${homeworkSection}
-      <p style="color:#dc2626;font-size:12px;margin-top:30px;padding:12px;background:#fef2f2;border-radius:8px">
-        ⚠️ Cancelamentos precisam de 2h de antecedência.
-      </p>
-    `),
+    subject: 'Sua próxima aula é amanhã',
+    html: BaseLayout({
+      eyebrow: 'Lembrete de aula',
+      title: `Sua aula está chegando, ${nomeAluno}`,
+      intro: 'Abaixo está o horário da sua próxima aula, com acesso rápido para você entrar no encontro com praticidade.',
+      tone: 'accent',
+      ctaLabel: 'Entrar no Google Meet',
+      ctaHref: meetLink,
+      content: [
+        statGrid([{ label: 'Data e horário', value: dataHora }]),
+        homeworkHtml,
+      ].join(''),
+      note: 'Caso precise cancelar ou remarcar, o ideal é avisar com pelo menos 2 horas de antecedência.',
+    }),
   })
 }
 
@@ -243,18 +515,22 @@ export async function enviarAulaContabilizadaComoDada({
   aulasRestantes: number
 }) {
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `⚠️ Aula contabilizada como dada — ${dataHora}`,
-    html: BaseLayout(`
-      <h2 style="color:#dc2626">Aula contabilizada como dada</h2>
-      <p>Olá, ${nomeAluno}. A aula do dia <strong>${dataHora}</strong> foi contabilizada pois não houve cancelamento antecipado.</p>
-      <div style="background:#fef2f2;padding:16px;border-radius:8px">
-        <p style="margin:0"><strong>Realizadas:</strong> ${aulasDadas}</p>
-        <p style="margin:4px 0"><strong>Restantes:</strong> ${aulasRestantes}</p>
-      </div>
-    `),
+    subject: `Aula contabilizada como dada em ${dataHora}`,
+    html: BaseLayout({
+      eyebrow: 'Registro de aula',
+      title: 'Aula contabilizada como dada',
+      intro: `Olá, ${nomeAluno}. Como não houve cancelamento antecipado dentro da janela prevista, a aula abaixo foi registrada como realizada.`,
+      tone: 'danger',
+      content: statGrid([
+        { label: 'Data da aula', value: dataHora },
+        { label: 'Aulas realizadas', value: String(aulasDadas) },
+        { label: 'Aulas restantes', value: String(aulasRestantes) },
+      ]),
+    }),
   })
 }
 
@@ -272,19 +548,23 @@ export async function enviarConfirmacaoRemarcacao({
   meetLink: string
 }) {
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `🔄 Aula remarcada com sucesso`,
-    html: BaseLayout(`
-      <h2 style="color:#1e3a5f">Remarcação confirmada ✅</h2>
-      <p>Olá, ${nomeAluno}! Sua aula foi remarcada:</p>
-      <div style="background:#f0f7ff;padding:20px;border-radius:8px">
-        <p style="margin:0;color:#666;text-decoration:line-through">Antes: ${dataAntiga}</p>
-        <p style="margin:8px 0;font-size:18px"><strong>Nova data: ${dataNova}</strong></p>
-        <p style="margin:0"><a href="${meetLink}">🔗 Link do Google Meet</a></p>
-      </div>
-    `),
+    subject: 'Sua remarcação foi confirmada',
+    html: BaseLayout({
+      eyebrow: 'Remarcação',
+      title: `Tudo certo, ${nomeAluno}`,
+      intro: 'Sua aula foi remarcada com sucesso. A nova data abaixo já é a válida no sistema.',
+      tone: 'primary',
+      ctaLabel: 'Abrir Google Meet',
+      ctaHref: meetLink,
+      content: statGrid([
+        { label: 'Antes', value: dataAntiga },
+        { label: 'Nova data', value: dataNova },
+      ]),
+    }),
   })
 }
 
@@ -300,20 +580,22 @@ export async function enviarAlertaPendenciaFinanceira({
   proximosPassos: string
 }) {
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
-    subject: '🔔 Importante: Conclusão de aulas e pendência financeira',
-    html: BaseLayout(`
-      <h2 style="color:#1e3a5f">Olá, ${nomeAluno}! 👋</h2>
-      <p>Você atingiu o limite de aulas do ciclo atual.</p>
-      <div style="background:#fff7ed;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #ffedd5">
-        <p style="margin:0;color:#9a3412;font-weight:bold">📊 Realizadas: ${aulasConcluidas}</p>
-        <p style="font-size:14px;margin-top:10px">Ainda não consta o pagamento correspondente no sistema.</p>
-      </div>
-      <h3 style="color:#1e3a5f">💳 Próximos Passos</h3>
-      <p style="font-size:14px">${proximosPassos}</p>
-    `),
+    subject: 'Importante: aulas concluídas e pendência financeira',
+    html: BaseLayout({
+      eyebrow: 'Atenção financeira',
+      title: `Olá, ${nomeAluno}`,
+      intro:
+        'Seu ciclo atual chegou ao limite de aulas previstas, mas ainda existe uma pendência financeira associada a esse período.',
+      tone: 'warning',
+      content: [
+        statGrid([{ label: 'Aulas concluídas', value: String(aulasConcluidas) }]),
+        card('Próximos passos', `<p style="margin:0;">${nl2br(proximosPassos)}</p>`),
+      ].join(''),
+    }),
   })
 }
 
@@ -329,17 +611,24 @@ export async function enviarResumoAulaAI({
   resumoMarkdown: string
 }) {
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
-    subject: `✨ Resumo da sua aula de inglês — ${dataHora}`,
-    html: BaseLayout(`
-      <h2 style="color:#1e3af5">Hi, ${nomeAluno}! 👋</h2>
-      <p>Resumo da aula <strong>${dataHora}</strong> (IA):</p>
-      <div style="background:#f0f4ff;padding:24px;border-radius:20px;margin:24px 0;border:1px solid #dbeafe; color:#1e40af">
-        ${resumoMarkdown.replace(/\n/g, '<br/>')}
-      </div>
-    `),
+    subject: `Resumo da sua aula - ${dataHora}`,
+    html: BaseLayout({
+      eyebrow: 'Resumo da aula',
+      title: `Hi, ${nomeAluno}!`,
+      intro: 'Aqui está o resumo estruturado da sua aula, com os pontos mais relevantes para revisão, continuidade e prática autônoma.',
+      tone: 'accent',
+      content: [
+        statGrid([{ label: 'Aula', value: dataHora }]),
+        card(
+          'Resumo gerado',
+          `<div style="font-size:14px;line-height:1.8;color:#334155;">${nl2br(resumoMarkdown)}</div>`
+        ),
+      ].join(''),
+    }),
   })
 }
 
@@ -353,29 +642,27 @@ export async function enviarEmailPrimeiroAcesso({
   setupPasswordLink: string
 }) {
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
     subject: 'Primeiro acesso ao portal da Cantoni English School',
-    html: BaseLayout(`
-      <h2 style="color:#1e3a5f;margin-bottom:20px">Olá, ${nomeAluno}!</h2>
-      <p>Seu cadastro no portal já foi criado.</p>
-      <p style="font-size:14px">
-        Para entrar pela primeira vez, você precisa definir sua senha no botão abaixo.
-        O portal <strong>não usa os 6 primeiros dígitos do CPF como senha</strong>.
-      </p>
-
-      <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0">
-        <h3 style="margin-top:0;color:#1e3a5f;font-size:16px">Primeiro acesso</h3>
-        <a href="${setupPasswordLink}" style="display:inline-block;padding:14px 28px;background:#2563eb;color:white;text-decoration:none;border-radius:12px;font-weight:bold;margin:10px 0">
-          Definir minha senha
-        </a>
-      </div>
-
-      <p style="font-size:13px;color:#64748b">
-        Depois de definir a senha, você poderá entrar normalmente com seu e-mail e a senha escolhida.
-      </p>
-    `),
+    html: BaseLayout({
+      eyebrow: 'Primeiro acesso',
+      title: `Olá, ${nomeAluno}!`,
+      intro:
+        'Seu cadastro no portal já está pronto. Agora falta apenas definir sua senha para começar a usar a plataforma com segurança e autonomia.',
+      tone: 'primary',
+      ctaLabel: 'Definir minha senha',
+      ctaHref: setupPasswordLink,
+      content: card(
+        'Importante',
+        bulletList([
+          'O portal <strong>não usa os 6 primeiros dígitos do CPF como senha</strong>.',
+          'Depois de definir sua senha, você poderá entrar normalmente com seu e-mail.',
+        ])
+      ),
+    }),
   })
 }
 
@@ -389,27 +676,23 @@ export async function enviarEmailRecuperacaoSenha({
   recoveryLink: string
 }) {
   const resend = getResendClient()
+
   return resend.emails.send({
     from: FROM,
     to,
     subject: 'Recuperação de senha do portal da Cantoni English School',
-    html: BaseLayout(`
-      <h2 style="color:#1e3a5f;margin-bottom:20px">Olá, ${nomeAluno}!</h2>
-      <p>Recebemos uma solicitação para redefinir sua senha no portal da <strong>Cantoni English School</strong>.</p>
-      <p style="font-size:14px">
-        Clique no botão abaixo para criar uma nova senha com segurança.
-      </p>
-
-      <div style="background:#f8fafc;padding:24px;border-radius:16px;margin:24px 0;border:1px solid #e2e8f0">
-        <a href="${recoveryLink}" style="display:inline-block;padding:14px 28px;background:#2563eb;color:white;text-decoration:none;border-radius:12px;font-weight:bold;margin:10px 0">
-          Redefinir minha senha
-        </a>
-      </div>
-
-      <p style="font-size:13px;color:#64748b">
-        Se você não pediu essa alteração, pode ignorar este e-mail com segurança.
-      </p>
-    `),
+    html: BaseLayout({
+      eyebrow: 'Recuperação de senha',
+      title: `Olá, ${nomeAluno}!`,
+      intro:
+        'Recebemos uma solicitação para redefinir sua senha. Use o botão abaixo para criar uma nova senha com segurança.',
+      tone: 'primary',
+      ctaLabel: 'Redefinir minha senha',
+      ctaHref: recoveryLink,
+      content: card(
+        'Segurança',
+        '<p style="margin:0;">Se você não solicitou essa alteração, basta ignorar este e-mail. Nenhuma mudança será aplicada sem a sua confirmação.</p>'
+      ),
+    }),
   })
 }
-
