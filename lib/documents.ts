@@ -48,6 +48,22 @@ type DocumentAddendum = {
   first_due_date?: string | null
 }
 
+type DocumentCancellation = {
+  id: number
+  effective_date: string
+  reason_label: string
+  reason_details?: string | null
+  notes?: string | null
+  outstanding_action: string
+  credit_action: string
+  paid_amount?: number | string | null
+  consumed_value?: number | string | null
+  outstanding_value?: number | string | null
+  credit_value?: number | string | null
+  completed_lessons?: number | null
+  future_lessons_cancelled?: number | null
+}
+
 export const LEGAL_REFERENCE_LINKS = [
   {
     label: 'CDC - Lei n.º 8.078/1990',
@@ -314,5 +330,94 @@ export function buildDeclarationSnapshot(input: {
     body: declaration.body,
     complementary: declaration.complementary,
     issueDate: declaration.issueDate,
+  }
+}
+
+export function buildCancellationNoticeSnapshot(input: {
+  student: DocumentPerson
+  teacher: DocumentPerson
+  contract: DocumentContract
+  cancellation: DocumentCancellation
+}) {
+  const { student, teacher, contract, cancellation } = input
+
+  return {
+    kind: 'cancellation_notice',
+    title: `Encerramento contratual #${contract.id}`,
+    generatedAt: new Date().toISOString(),
+    student: {
+      fullName: getPersonName(student, 'Aluno'),
+      cpf: getPersonCpf(student),
+      email: getPersonEmail(student),
+      phone: getPersonPhone(student),
+    },
+    teacher: {
+      fullName: getTeacherLegalName(teacher),
+      cpf: getPersonCpf(teacher),
+      email: getPersonEmail(teacher),
+      phone: getPersonPhone(teacher),
+      city: getTeacherCity(teacher),
+    },
+    contract: {
+      id: contract.id,
+      startDate: contract.data_inicio,
+      endDate: contract.data_fim,
+      status: contract.status,
+      lessons: contract.aulas_totais,
+      totalValue: Number(contract.valor || 0),
+    },
+    cancellation: {
+      id: cancellation.id,
+      effectiveDate: cancellation.effective_date,
+      reasonLabel: cancellation.reason_label,
+      reasonDetails: cancellation.reason_details || null,
+      notes: cancellation.notes || null,
+      outstandingAction: cancellation.outstanding_action,
+      creditAction: cancellation.credit_action,
+      paidAmount: Number(cancellation.paid_amount || 0),
+      consumedValue: Number(cancellation.consumed_value || 0),
+      outstandingValue: Number(cancellation.outstanding_value || 0),
+      creditValue: Number(cancellation.credit_value || 0),
+      completedLessons: Number(cancellation.completed_lessons || 0),
+      futureLessonsCancelled: Number(cancellation.future_lessons_cancelled || 0),
+    },
+    sections: [
+      {
+        title: '1. Encerramento registrado',
+        body: `Fica registrado o encerramento do contrato n.º ${contract.id}, com data efetiva em ${formatDateOnly(cancellation.effective_date)}, no contexto operacional da Cantoni English School.`,
+      },
+      {
+        title: '2. Motivo informado',
+        body: cancellation.reason_details
+          ? `${cancellation.reason_label}. Detalhamento complementar: ${cancellation.reason_details}`
+          : cancellation.reason_label,
+      },
+      {
+        title: '3. Tratamento financeiro',
+        items: [
+          `Valor pago até a data do encerramento: ${formatCurrency(Number(cancellation.paid_amount || 0))}.`,
+          `Valor consumido pelas aulas efetivamente ministradas: ${formatCurrency(Number(cancellation.consumed_value || 0))}.`,
+          `Saldo em aberto considerado no fechamento: ${formatCurrency(Number(cancellation.outstanding_value || 0))}.`,
+          `Crédito estimado em favor do aluno: ${formatCurrency(Number(cancellation.credit_value || 0))}.`,
+        ],
+      },
+      {
+        title: '4. Tratamento acadêmico',
+        items: [
+          `Aulas concluídas até o encerramento: ${Number(cancellation.completed_lessons || 0)}.`,
+          `Aulas futuras canceladas automaticamente: ${Number(cancellation.future_lessons_cancelled || 0)}.`,
+        ],
+      },
+      {
+        title: '5. Observações internas registradas',
+        body: cancellation.notes || 'Sem observações adicionais registradas neste encerramento.',
+      },
+    ],
+    issueDate: new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      timeZone: 'America/Sao_Paulo',
+    }).format(new Date()),
   }
 }

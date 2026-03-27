@@ -11,6 +11,8 @@ import {
 } from '@/lib/contract-cancellation'
 import { deletarEventoCalendar } from '@/lib/google-calendar'
 import { enviarEmailCancelamentoContrato } from '@/lib/resend'
+import { buildCancellationNoticeSnapshot } from '@/lib/documents'
+import { generateDocumentHash } from '@/lib/document-audit'
 
 type LessonRow = {
   id: number
@@ -21,8 +23,11 @@ type LessonRow = {
 
 type PaymentRow = {
   id: number
+  parcela_num?: number | null
   status: string
   valor: number | string | null
+  data_vencimento?: string | null
+  forma?: string | null
 }
 
 function startOfDayIso(date: string) {
@@ -92,6 +97,13 @@ export async function POST(request: NextRequest) {
     .select('full_name, email')
     .eq('id', contract.aluno_id)
     .single()
+  const { data: teacherProfile } = await serviceSupabase
+    .from('profiles')
+    .select('*')
+    .eq('role', 'professor')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
 
   const [lessonsResult, paymentsResult] = await Promise.all([
     serviceSupabase
@@ -99,7 +111,10 @@ export async function POST(request: NextRequest) {
       .select('id, status, data_hora, google_event_id')
       .eq('contrato_id', contractId)
       .order('data_hora'),
-    serviceSupabase.from('pagamentos').select('id, status, valor').eq('contrato_id', contractId),
+    serviceSupabase
+      .from('pagamentos')
+      .select('id, parcela_num, status, valor, data_vencimento, forma')
+      .eq('contrato_id', contractId),
   ])
 
   if (lessonsResult.error || paymentsResult.error) {
@@ -175,17 +190,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  if (outstandingAction === 'waive_open_balance' && openPayments.length > 0) {
-    const openPaymentIds = openPayments.map((payment) => payment.id)
-    const { error: deletePaymentsError } = await serviceSupabase.from('pagamentos').delete().in('id', openPaymentIds)
-
-    if (deletePaymentsError) {
-      return NextResponse.json({ error: deletePaymentsError.message }, { status: 500 })
-    }
-  }
-
   const reasonLabel = getCancellationReasonLabel(reasonCode)
-  const { error: cancellationError } = await serviceSupabase.from('contract_cancellations').insert({
+  const { data: cancellationRecord, error: cancellationError } = await serviceSupabase
+    .from('contract_cancellations')
+    .insert({
     contract_id: contractId,
     student_id: contract.aluno_id,
     cancelled_by: user.id,
@@ -203,10 +211,45 @@ export async function POST(request: NextRequest) {
     credit_value: summary.creditValue,
     completed_lessons: summary.completedLessons,
     future_lessons_cancelled: cancelledFutureLessons,
-  })
+    })
+    .select('*')
+    .single()
 
-  if (cancellationError) {
-    return NextResponse.json({ error: cancellationError.message }, { status: 500 })
+  if (cancellationError || !cancellationRecord) {
+    return NextResponse.json(
+      { error: cancellationError?.message || 'Falha ao registrar o cancelamento.' },
+      { status: 500 }
+    )
+  }
+
+  if (outstandingAction === 'waive_open_balance' && openPayments.length > 0) {
+    const paymentSnapshots = openPayments.map((payment) => ({
+      contract_cancellation_id: cancellationRecord.id,
+      contract_id: contractId,
+      student_id: contract.aluno_id,
+      original_payment_id: payment.id,
+      parcela_num: payment.parcela_num || null,
+      original_status: payment.status,
+      original_amount: Number(payment.valor || 0),
+      original_due_date: payment.data_vencimento || null,
+      original_payment_method: payment.forma || null,
+      cancellation_reason: 'contract_cancellation',
+    }))
+
+    const { error: snapshotError } = await serviceSupabase
+      .from('payment_cancellation_entries')
+      .insert(paymentSnapshots)
+
+    if (snapshotError) {
+      return NextResponse.json({ error: snapshotError.message }, { status: 500 })
+    }
+
+    const openPaymentIds = openPayments.map((payment) => payment.id)
+    const { error: deletePaymentsError } = await serviceSupabase.from('pagamentos').delete().in('id', openPaymentIds)
+
+    if (deletePaymentsError) {
+      return NextResponse.json({ error: deletePaymentsError.message }, { status: 500 })
+    }
   }
 
   await logActivityBestEffort({
@@ -233,6 +276,7 @@ export async function POST(request: NextRequest) {
   })
 
   let emailWarning: string | null = null
+  let issuanceId: number | null = null
   if (studentProfile?.email) {
     try {
       await enviarEmailCancelamentoContrato({
@@ -250,10 +294,57 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  const cancellationPayload = buildCancellationNoticeSnapshot({
+    student: studentProfile || {},
+    teacher: teacherProfile || {},
+    contract,
+    cancellation: cancellationRecord,
+  })
+  const contentHash = generateDocumentHash(cancellationPayload)
+
+  const { data: previousIssuances } = await serviceSupabase
+    .from('document_issuances')
+    .select('version')
+    .eq('contract_id', contractId)
+    .eq('kind', 'cancellation_notice')
+    .order('version', { ascending: false })
+    .limit(1)
+
+  const nextVersion = ((previousIssuances?.[0]?.version as number | undefined) || 0) + 1
+
+  await serviceSupabase
+    .from('document_issuances')
+    .update({ status: 'superseded' })
+    .eq('contract_id', contractId)
+    .eq('kind', 'cancellation_notice')
+    .eq('status', 'issued')
+
+  const { data: issuance, error: issuanceError } = await serviceSupabase
+    .from('document_issuances')
+    .insert({
+      contract_id: contractId,
+      student_id: contract.aluno_id,
+      kind: 'cancellation_notice',
+      version: nextVersion,
+      title: cancellationPayload.title,
+      payload: cancellationPayload,
+      content_hash: contentHash,
+      status: 'issued',
+      requires_acceptance: false,
+      issued_by: user.id,
+    })
+    .select('id')
+    .single()
+
+  if (!issuanceError && issuance) {
+    issuanceId = issuance.id
+  }
+
   return NextResponse.json({
     success: true,
     summary,
     cancelledFutureLessons,
     emailWarning,
+    issuanceId,
   })
 }

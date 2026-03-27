@@ -368,6 +368,132 @@ export default async function IssuedDocumentPage({
             </div>
           </footer>
         </div>
+      ) : issuance.kind === 'cancellation_notice' ? (
+        <div className="space-y-10 text-slate-900">
+          <header className="space-y-4 border-b border-slate-200 pb-8 text-center">
+            <div className="flex justify-center">
+              <img
+                src="/logo-cantoni.svg"
+                alt="Cantoni English School"
+                className="h-16 w-auto object-contain"
+              />
+            </div>
+            <div
+              className={`mx-auto inline-flex rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+            >
+              {statusLabel}
+            </div>
+            <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
+              Cantoni English School
+            </p>
+            <h2 className="text-3xl font-black tracking-tight">
+              {payload.title || issuance.title}
+            </h2>
+            <p className="text-sm leading-7 text-slate-600">
+              Documento emitido em {formatDateTime(issuance.created_at)} para registrar formalmente o encerramento do contrato.
+            </p>
+          </header>
+
+          <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+            <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  Comprovante de emissão
+                </p>
+                <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
+              </div>
+              <div
+                className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+              >
+                {statusLabel}
+              </div>
+            </div>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato</p>
+                <p className="mt-2 text-sm font-bold">#{payload.contract?.id}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data efetiva</p>
+                <p className="mt-2 text-sm font-bold">{formatDateOnly(payload.cancellation?.effectiveDate)}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Motivo</p>
+                <p className="mt-2 text-sm font-bold">{payload.cancellation?.reasonLabel}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash</p>
+                <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'n/a'}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="grid gap-6 md:grid-cols-2">
+            <div className="rounded-[1.5rem] border border-slate-200 p-6">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
+              <p className="mt-3 text-lg font-black">{payload.student?.fullName}</p>
+              <p className="mt-2 text-sm text-slate-600">CPF: {payload.student?.cpf}</p>
+              <p className="text-sm text-slate-600">E-mail: {payload.student?.email}</p>
+              <p className="text-sm text-slate-600">Telefone: {payload.student?.phone}</p>
+            </div>
+            <div className="rounded-[1.5rem] border border-slate-200 p-6">
+              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Escola / responsável</p>
+              <p className="mt-3 text-lg font-black">{payload.teacher?.fullName}</p>
+              <p className="mt-2 text-sm text-slate-600">CPF: {payload.teacher?.cpf}</p>
+              <p className="text-sm text-slate-600">E-mail: {payload.teacher?.email}</p>
+              <p className="text-sm text-slate-600">Telefone: {payload.teacher?.phone}</p>
+            </div>
+          </section>
+
+          <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
+            <div className="grid gap-4 md:grid-cols-4">
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pago</p>
+                <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.cancellation?.paidAmount || 0))}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Consumido</p>
+                <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.cancellation?.consumedValue || 0))}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aberto</p>
+                <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.cancellation?.outstandingValue || 0))}</p>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Crédito</p>
+                <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.cancellation?.creditValue || 0))}</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            {sections.map((section) => (
+              <div key={section.title} className="space-y-3">
+                <h3 className="text-lg font-black tracking-tight">{section.title}</h3>
+                {section.body?.split('\n').map((paragraph, index) => (
+                  <p key={`${section.title}-body-${index}`} className="text-sm leading-7 text-slate-700">
+                    {paragraph}
+                  </p>
+                ))}
+                {section.items?.length ? (
+                  <div className="space-y-3">
+                    {section.items.map((item) => (
+                      <p key={item} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-7 text-slate-700">
+                        {item}
+                      </p>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            ))}
+          </section>
+
+          <footer className="pt-10 text-right">
+            <p className="text-sm text-slate-600">
+              {payload.teacher?.city || 'Guarulhos/SP'}, {payload.issueDate}
+            </p>
+          </footer>
+        </div>
       ) : (
         <div className="space-y-12 text-slate-900">
           <header className="space-y-4 border-b border-slate-200 pb-8 text-center">

@@ -38,7 +38,7 @@ export type StudentPaymentGroup = {
 
 export type DocumentIssuanceSummary = {
   id: number
-  kind: 'contract' | 'enrollment_declaration'
+  kind: 'contract' | 'enrollment_declaration' | 'cancellation_notice'
   version: number
   status: string
   created_at: string

@@ -2,7 +2,11 @@ import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getDocumentContext } from '@/lib/document-access'
-import { buildContractSnapshot, buildDeclarationSnapshot } from '@/lib/documents'
+import {
+  buildCancellationNoticeSnapshot,
+  buildContractSnapshot,
+  buildDeclarationSnapshot,
+} from '@/lib/documents'
 import { generateDocumentHash } from '@/lib/document-audit'
 import { logActivityBestEffort } from '@/lib/activity-log'
 
@@ -13,7 +17,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    return NextResponse.json({ error: 'Nao autenticado' }, { status: 401 })
   }
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
@@ -26,21 +30,54 @@ export async function POST(request: NextRequest) {
   const parsedContractId = Number.parseInt(String(contractId), 10)
 
   if (!Number.isFinite(parsedContractId) || parsedContractId <= 0) {
-    return NextResponse.json({ error: 'Contrato inválido' }, { status: 400 })
+    return NextResponse.json({ error: 'Contrato invalido' }, { status: 400 })
   }
 
-  if (kind !== 'contract' && kind !== 'enrollment_declaration') {
-    return NextResponse.json({ error: 'Tipo de documento inválido' }, { status: 400 })
+  if (
+    kind !== 'contract' &&
+    kind !== 'enrollment_declaration' &&
+    kind !== 'cancellation_notice'
+  ) {
+    return NextResponse.json({ error: 'Tipo de documento invalido' }, { status: 400 })
   }
 
   let context
   try {
     context = await getDocumentContext(parsedContractId, { redirectOnFail: false })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Contrato não encontrado' }, { status: 404 })
+  } catch (error: unknown) {
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : 'Contrato nao encontrado' },
+      { status: 404 }
+    )
   }
 
-  const payload = kind === 'contract' ? buildContractSnapshot(context) : buildDeclarationSnapshot(context)
+  let payload
+  if (kind === 'contract') {
+    payload = buildContractSnapshot(context)
+  } else if (kind === 'enrollment_declaration') {
+    payload = buildDeclarationSnapshot(context)
+  } else {
+    const { data: cancellation } = await supabase
+      .from('contract_cancellations')
+      .select('*')
+      .eq('contract_id', parsedContractId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    if (!cancellation) {
+      return NextResponse.json(
+        { error: 'Nenhum encerramento registrado para este contrato.' },
+        { status: 400 }
+      )
+    }
+
+    payload = buildCancellationNoticeSnapshot({
+      ...context,
+      cancellation,
+    })
+  }
+
   const contentHash = generateDocumentHash(payload)
 
   const { data: previousIssuances } = await supabase
@@ -77,7 +114,10 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (issuanceError || !issuance) {
-    return NextResponse.json({ error: issuanceError?.message || 'Falha ao emitir documento' }, { status: 500 })
+    return NextResponse.json(
+      { error: issuanceError?.message || 'Falha ao emitir documento' },
+      { status: 500 }
+    )
   }
 
   await logActivityBestEffort({
@@ -85,8 +125,19 @@ export async function POST(request: NextRequest) {
     targetUserId: context.contract.aluno_id,
     contractId: parsedContractId,
     eventType: 'document.issued',
-    title: kind === 'contract' ? 'Contrato emitido' : 'Declaração emitida',
-    description: `${kind === 'contract' ? 'Contrato' : 'Declaração de matrícula'} emitido(a) na versão ${nextVersion}.`,
+    title:
+      kind === 'contract'
+        ? 'Contrato emitido'
+        : kind === 'enrollment_declaration'
+          ? 'Declaracao emitida'
+          : 'Termo de encerramento emitido',
+    description: `${
+      kind === 'contract'
+        ? 'Contrato'
+        : kind === 'enrollment_declaration'
+          ? 'Declaracao de matricula'
+          : 'Termo de encerramento'
+    } emitido(a) na versao ${nextVersion}.`,
     severity: 'info',
     metadata: {
       issuanceId: issuance.id,

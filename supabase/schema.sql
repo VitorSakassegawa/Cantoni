@@ -246,11 +246,26 @@ create table if not exists contract_cancellations (
   created_at timestamptz not null default now()
 );
 
+create table if not exists payment_cancellation_entries (
+  id bigserial primary key,
+  contract_cancellation_id bigserial references contract_cancellations(id) on delete cascade,
+  contract_id integer not null references contratos(id) on delete cascade,
+  student_id uuid not null references profiles(id) on delete cascade,
+  original_payment_id integer,
+  parcela_num integer,
+  original_status text,
+  original_amount numeric(10, 2) not null default 0,
+  original_due_date date,
+  original_payment_method text,
+  cancellation_reason text not null default 'contract_cancellation',
+  created_at timestamptz not null default now()
+);
+
 create table if not exists document_issuances (
   id bigserial primary key,
   contract_id integer not null references contratos(id) on delete cascade,
   student_id uuid not null references profiles(id) on delete cascade,
-  kind text not null check (kind in ('contract', 'enrollment_declaration')),
+  kind text not null check (kind in ('contract', 'enrollment_declaration', 'cancellation_notice')),
   version integer not null,
   title text not null,
   payload jsonb not null default '{}'::jsonb,
@@ -283,6 +298,8 @@ create index if not exists idx_aulas_contrato_id on aulas (contrato_id);
 create index if not exists idx_aulas_remarcada_de on aulas (remarcada_de);
 create index if not exists idx_contract_cancellations_contract_id on contract_cancellations (contract_id);
 create index if not exists idx_contract_cancellations_student_id on contract_cancellations (student_id);
+create index if not exists idx_payment_cancellation_entries_contract_id on payment_cancellation_entries (contract_id);
+create index if not exists idx_payment_cancellation_entries_cancellation_id on payment_cancellation_entries (contract_cancellation_id);
 create index if not exists idx_avaliacoes_habilidades_contrato_id on avaliacoes_habilidades (contrato_id);
 create index if not exists idx_activity_logs_actor_user_id on activity_logs (actor_user_id);
 create index if not exists idx_activity_logs_target_user_id on activity_logs (target_user_id);
