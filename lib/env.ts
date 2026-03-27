@@ -8,6 +8,7 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().min(1).optional(),
   GOOGLE_REDIRECT_URI: z.string().url().optional(),
   GOOGLE_REFRESH_TOKEN: z.string().min(1).optional(),
+  GOOGLE_OAUTH_SETUP_SECRET: z.string().min(1).optional(),
   GOOGLE_CALENDAR_ID: z.string().min(1).optional().default('primary'),
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_FROM_EMAIL: z.string().email().optional(),

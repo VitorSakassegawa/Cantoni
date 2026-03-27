@@ -13,6 +13,7 @@ Edit `.env.local` with your real keys:
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Settings → API → service_role key |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | Google Cloud Console → OAuth 2.0 |
 | `GOOGLE_REFRESH_TOKEN` | After step 3 below |
+| `GOOGLE_OAUTH_SETUP_SECRET` | Any long random secret used to unlock Google OAuth setup in production |
 | `INFINITEPAY_API_KEY` | InfinitePay dashboard → Developers |
 | `INFINITEPAY_WEBHOOK_SECRET` | Any secret string; configure same in InfinitePay webhook |
 | `RESEND_API_KEY` | resend.com → API Keys |
@@ -22,10 +23,18 @@ Edit `.env.local` with your real keys:
 
 1. Go to Google Cloud Console → create OAuth 2.0 credentials (Web Application)
 2. Add authorized redirect URI: `http://localhost:3000/api/auth/google/callback`
-3. Start dev server: `npm run dev`
-4. Visit: `http://localhost:3000/api/auth/google`
-5. Authorize and copy the `refresh_token` from the console logs
-6. Paste it as `GOOGLE_REFRESH_TOKEN` in `.env.local`
+3. For production setup, also add: `https://cantonies.com.br/api/auth/google/callback`
+4. Start dev server: `npm run dev`
+5. Visit: `http://localhost:3000/api/auth/google`
+6. Authorize and copy the `refresh_token` from the response
+7. Paste it as `GOOGLE_REFRESH_TOKEN` in `.env.local`
+
+Production alternative:
+1. Set `GOOGLE_OAUTH_SETUP_SECRET` in Vercel
+2. Open `https://cantonies.com.br/api/auth/google?setup=YOUR_SECRET`
+3. Authorize the Google account you want as the calendar organizer
+4. Copy the returned `refresh_token`
+5. Update `GOOGLE_REFRESH_TOKEN` in Vercel and redeploy
 
 ## 4. Create professor account in Supabase
 
