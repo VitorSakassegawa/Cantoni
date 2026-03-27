@@ -110,7 +110,15 @@ function normalizeHomeworkValue(value?: string | null) {
   }
 
   const trimmedValue = value.trim()
-  if (!trimmedValue || /^not observed\.?$/i.test(trimmedValue)) {
+  const genericHomeworkPatterns = [
+    /^not observed\.?$/i,
+    /^not defined\.?$/i,
+    /^the homework is (actually )?the next slide\.?$/i,
+    /^homework (is )?(on|in) the next slide\.?$/i,
+    /^the teacher will explain the homework\.?$/i,
+  ]
+
+  if (!trimmedValue || genericHomeworkPatterns.some((pattern) => pattern.test(trimmedValue))) {
     return null
   }
 

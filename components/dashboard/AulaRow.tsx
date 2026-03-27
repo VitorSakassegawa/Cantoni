@@ -16,6 +16,7 @@ import ReviewRescheduleModal from './ReviewRescheduleModal'
 import { uploadHomeworkImage } from '@/lib/actions/homework'
 import ReactMarkdown from 'react-markdown'
 import { Sparkles } from 'lucide-react'
+import { extractVisibleLessonNotes, hasImportedTranscript } from '@/lib/lesson-notes'
 
 import { toast } from 'sonner'
 import { cancelarAula, remarcarAula, solicitarRemarcacao } from '@/lib/actions/aulas'
@@ -131,9 +132,11 @@ export default function AulaRow({
   const [showAIModal, setShowAIModal] = useState(false)
   const [showLessonDetailsModal, setShowLessonDetailsModal] = useState(false)
   const [summaryLang, setSummaryLang] = useState<'pt' | 'en'>('pt')
+  const visibleClassNotes = extractVisibleLessonNotes(lesson.class_notes)
+  const hasTranscriptImported = hasImportedTranscript(lesson.class_notes)
   const hasLessonDetails = Boolean(
     lesson.homework ||
-      lesson.class_notes ||
+      visibleClassNotes ||
       lesson.homework_due_date ||
       (lesson.vocabulary_json && lesson.vocabulary_json.length > 0)
   )
@@ -661,8 +664,13 @@ export default function AulaRow({
             <div className="rounded-3xl border border-slate-100 bg-white px-5 py-5">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Anotacoes da aula</p>
               <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
-                {lesson.class_notes || 'Nenhuma anotacao registrada para esta aula.'}
+                {visibleClassNotes || 'Nenhuma anotacao registrada para esta aula.'}
               </div>
+              {!visibleClassNotes && hasTranscriptImported ? (
+                <p className="mt-3 text-[11px] font-medium text-slate-400">
+                  A transcricao tecnica da reuniao foi importada para uso interno, mas nao e exibida aqui como anotacao do aluno.
+                </p>
+              ) : null}
             </div>
 
             {lesson.vocabulary_json && lesson.vocabulary_json.length > 0 && (
