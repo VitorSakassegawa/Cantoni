@@ -11,7 +11,7 @@ import { Select } from '@/components/ui/select'
 import { Calendar, BookOpen, Clock, Info, Percent, DollarSign, AlertTriangle, Sparkles, BrainCircuit, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
-import { maskCurrency } from '@/lib/utils'
+import { findContractEndDateForLessons, formatDateOnly, maskCurrency } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
 
 type ContractKind = 'semestral' | 'ad-hoc'
@@ -21,6 +21,11 @@ type PlacementSummary = {
   cefr_level: string
   insights: string | null
   created_at: string
+}
+
+type RecessoSummary = {
+  data_inicio: string
+  data_fim: string
 }
 
 type ContractInitialData = {
@@ -137,6 +142,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
 
   const [placementData, setPlacementData] = useState<PlacementSummary | null>(null)
   const [loadingPlacement, setLoadingPlacement] = useState(false)
+  const [customHolidays, setCustomHolidays] = useState<string[]>([])
+  const [scheduleAdjustedEndDate, setScheduleAdjustedEndDate] = useState<string | null>(null)
 
   // Effect to handle Evolve book logic on initial load
   useEffect(() => {
@@ -158,6 +165,32 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       }
     }
     fetchPlacement()
+
+    async function fetchRecessos() {
+      try {
+        const response = await fetch('/api/recessos')
+        if (!response.ok) return
+
+        const data = (await response.json()) as RecessoSummary[]
+        const holidayDates: string[] = []
+
+        for (const recesso of data || []) {
+          const current = new Date(`${recesso.data_inicio}T12:00:00`)
+          const end = new Date(`${recesso.data_fim}T12:00:00`)
+
+          while (current <= end) {
+            holidayDates.push(current.toISOString().split('T')[0])
+            current.setDate(current.getDate() + 1)
+          }
+        }
+
+        setCustomHolidays(holidayDates)
+      } catch (error) {
+        console.error('Error fetching recessos for contract preview:', error)
+      }
+    }
+
+    fetchRecessos()
     
     if (initialData?.livro_atual) {
       const isEvolve = initialData.livro_atual.toLowerCase().includes('evolve')
@@ -170,7 +203,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         setLivroManual(initialData.livro_atual)
       }
     }
-  }, [initialData])
+  }, [initialData, alunoId])
 
   useEffect(() => {
     if (tipoContrato === 'ad-hoc') {
@@ -183,21 +216,31 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
     if (dataInicio && diasSelecionados.length > 0) {
       try {
         const start = new Date(dataInicio + 'T12:00:00')
-        const manualEnd = dataFim ? new Date(dataFim + 'T12:00:00') : undefined
+        const requestedEnd = dataFim ? new Date(dataFim + 'T12:00:00') : undefined
         
         const specs = calculateContractSpecs(
           start, 
           parseInt(planoId), 
           diasSelecionados, 
           tipoContrato,
-          manualEnd
+          requestedEnd
+        )
+
+        const targetLessons = specs.totalLessons
+        const generatedEnd = targetLessons > 0
+          ? findContractEndDateForLessons(start, diasSelecionados, targetLessons, customHolidays)
+          : specs.endDate
+        const effectiveEnd = requestedEnd && requestedEnd > generatedEnd ? requestedEnd : generatedEnd
+
+        if (!dataFim || tipoContrato === 'semestral' || effectiveEnd.toISOString().split('T')[0] !== dataFim) {
+          setDataFim(effectiveEnd.toISOString().split('T')[0])
+        }
+
+        setScheduleAdjustedEndDate(
+          requestedEnd && effectiveEnd > requestedEnd ? effectiveEnd.toISOString().split('T')[0] : null
         )
         
-        if (!dataFim || tipoContrato === 'semestral') {
-          setDataFim(specs.endDate.toISOString().split('T')[0])
-        }
-        
-        setAulasTotais(specs.totalLessons.toString())
+        setAulasTotais(targetLessons.toString())
         setBonusAulas(specs.bonusLessons)
         setBaseValue(specs.totalValue)
         setIsCrossSemester(specs.isCrossSemester)
@@ -208,7 +251,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         console.error('Calculation error:', e)
       }
     }
-  }, [dataInicio, dataFim, planoId, diasSelecionados, tipoContrato])
+  }, [dataInicio, dataFim, planoId, diasSelecionados, tipoContrato, customHolidays])
 
   // Cross-feeding Logic
   const handleDescontoValorChange = (val: string) => {
@@ -316,6 +359,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       toast.success(`Contrato ${isEdit ? 'atualizado' : 'criado'} com sucesso!`)
       if (!isEdit && responseData.emailWarning) {
         toast.warning(responseData.emailWarning)
+      }
+      if (!isEdit && responseData.calendarWarning) {
+        toast.warning(responseData.calendarWarning)
       }
       if (onSuccess) onSuccess()
       else router.push(`/professor/alunos/${alunoId}`)
@@ -433,6 +479,18 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               </div>
             </div>
           </div>
+
+          {scheduleAdjustedEndDate ? (
+            <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 px-5 py-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">
+                Data ajustada pelo calendário
+              </p>
+              <p className="mt-1 text-sm font-medium leading-relaxed text-amber-950/80">
+                Há recessos ou férias dentro do período selecionado. Para preservar as {aulasTotais} aulas contratadas,
+                o portal estendeu automaticamente o término para <strong>{formatDateOnly(scheduleAdjustedEndDate)}</strong>.
+              </p>
+            </div>
+          ) : null}
 
           <div className="space-y-4">
             <div className="flex justify-between items-end pl-1 pr-1">

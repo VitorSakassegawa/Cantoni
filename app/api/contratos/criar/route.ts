@@ -178,6 +178,8 @@ Instrucoes:
         }
       })
 
+      const calendarFailures = lessonDrafts.filter((draft) => draft && !draft.eventId).length
+
       const aulasParaInserir = lessonDrafts
         .filter((draft): draft is NonNullable<typeof draft> => Boolean(draft))
         .map((draft) => ({
@@ -235,6 +237,7 @@ Instrucoes:
 
       let setupPasswordLink: string | undefined
       let emailWarning: string | null = null
+      let calendarWarning: string | null = null
       try {
         const { data: linkData } = await serviceSupabase.auth.admin.generateLink({
           type: 'recovery',
@@ -269,6 +272,13 @@ Instrucoes:
         emailWarning = 'Contrato criado, mas houve falha ao enviar o e-mail de boas-vindas.'
       }
 
+      if (calendarFailures > 0) {
+        calendarWarning =
+          calendarFailures === datasAulas.length
+            ? 'Contrato criado, mas não foi possível sincronizar as aulas com o Google Calendar/Meet.'
+            : `Contrato criado, mas ${calendarFailures} aula(s) não puderam ser sincronizadas com o Google Calendar/Meet.`
+      }
+
       await logActivityBestEffort({
         actorUserId: professor.id,
         targetUserId: alunoId,
@@ -285,7 +295,7 @@ Instrucoes:
         },
       })
 
-      return NextResponse.json({ success: true, contrato, emailWarning })
+      return NextResponse.json({ success: true, contrato, emailWarning, calendarWarning })
     } catch (error: any) {
       console.error('Contract creation flow failed:', error)
       await cleanupContractArtifacts(serviceSupabase, contrato.id, createdEventIds)
