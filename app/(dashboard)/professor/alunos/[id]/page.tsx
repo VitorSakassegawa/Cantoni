@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import StatusContratoSelect from '@/components/dashboard/StatusContratoSelect'
+import CancelContractButton from '@/components/dashboard/CancelContractButton'
 import ContratoForm from '@/components/dashboard/ContratoForm'
 import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
@@ -87,6 +88,19 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
   const overduePaymentsCount = pagamentosComStatus.filter((payment: any) => payment.effectiveStatus === 'atrasado').length
   const totalPaymentsCount = pagamentosComStatus.length
   const nextOpenPayment = pagamentosComStatus.find((payment: any) => payment.status !== 'pago')
+  const paidAmount = pagamentosComStatus
+    .filter((payment: any) => payment.status === 'pago')
+    .reduce((sum: number, payment: any) => sum + Number(payment.valor || 0), 0)
+  const openAmount = pagamentosComStatus
+    .filter((payment: any) => payment.status !== 'pago')
+    .reduce((sum: number, payment: any) => sum + Number(payment.valor || 0), 0)
+  const completedLessonsCount = (aulas || []).filter((lesson: any) =>
+    ['dada', 'finalizado'].includes(lesson.status)
+  ).length
+  const futureLessonsCount = (aulas || []).filter((lesson: any) =>
+    ['agendada', 'confirmada', 'pendente_remarcacao'].includes(lesson.status) &&
+    new Date(lesson.data_hora).getTime() >= Date.now()
+  ).length
   const generalWhatsAppHref = buildWhatsAppUrl(aluno.phone, buildGeneralWhatsAppMessage(aluno.full_name))
   const firstAccessWhatsAppHref = buildWhatsAppUrl(aluno.phone, buildFirstAccessWhatsAppMessage(aluno.full_name))
   const paymentWhatsAppHref = nextOpenPayment
@@ -149,6 +163,15 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
   const { data: addenda } = contractIds.length
     ? await supabase
         .from('contract_addenda')
+        .select('*')
+        .in('contract_id', contractIds)
+        .order('created_at', { ascending: false })
+        .limit(10)
+    : { data: [] as any[] }
+
+  const { data: cancellationRecords } = contractIds.length
+    ? await supabase
+        .from('contract_cancellations')
         .select('*')
         .in('contract_id', contractIds)
         .order('created_at', { ascending: false })
@@ -494,11 +517,26 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                           </h4>
                           <StatusContratoSelect contrato={contrato} />
                         </div>
-                        <Link href={`/professor/alunos/${id}/contrato/editar`}>
-                          <Button variant="ghost" size="sm" className="h-9 rounded-xl px-0 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-transparent">
-                            Editar contrato
-                          </Button>
-                        </Link>
+                        <div className="flex flex-wrap items-center gap-3">
+                          <Link href={`/professor/alunos/${id}/contrato/editar`}>
+                            <Button variant="ghost" size="sm" className="h-9 rounded-xl px-0 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-transparent">
+                              Editar contrato
+                            </Button>
+                          </Link>
+                          <CancelContractButton
+                            contractId={contrato.id}
+                            studentId={id}
+                            studentName={aluno.full_name}
+                            contractStatus={contrato.status}
+                            contractValue={Number(contrato.valor || 0)}
+                            totalLessons={Number(contrato.aulas_totais || 0)}
+                            completedLessons={completedLessonsCount}
+                            futureLessons={futureLessonsCount}
+                            paidAmount={paidAmount}
+                            openAmount={openAmount}
+                            contractEndDate={contrato.data_fim}
+                          />
+                        </div>
                       </div>
 
                       <div className="space-y-3">
@@ -661,6 +699,63 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
               </CardContent>
             </Card>
           </div>
+
+          <Card className="border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
+            <CardHeader className="border-b border-slate-100 bg-slate-50/80 p-8">
+              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-rose-500">HistÃ³rico de cancelamentos</CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left">
+                  <thead>
+                    <tr className="border-b border-slate-100/50">
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Motivo</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Financeiro</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Aulas</th>
+                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Registro</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(cancellationRecords || []).map((entry: any) => (
+                      <tr key={entry.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
+                        <td className="px-6 py-5">
+                          <p className="text-sm font-black text-slate-900">#{entry.contract_id}</p>
+                          <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">
+                            efetivo em {formatDateOnly(entry.effective_date)}
+                          </p>
+                        </td>
+                        <td className="px-6 py-5">
+                          <p className="text-xs font-black text-slate-700">{entry.reason_label}</p>
+                          {entry.reason_details ? (
+                            <p className="mt-1 text-[10px] font-medium text-slate-400">{entry.reason_details}</p>
+                          ) : null}
+                        </td>
+                        <td className="px-6 py-5 text-xs font-bold text-slate-500">
+                          <p>Pago: {formatCurrency(Number(entry.paid_amount || 0))}</p>
+                          <p>Consumido: {formatCurrency(Number(entry.consumed_value || 0))}</p>
+                          <p>Aberto: {formatCurrency(Number(entry.outstanding_value || 0))}</p>
+                          <p>CrÃ©dito: {formatCurrency(Number(entry.credit_value || 0))}</p>
+                        </td>
+                        <td className="px-6 py-5 text-xs font-bold text-slate-500">
+                          <p>ConcluÃ­das: {entry.completed_lessons}</p>
+                          <p>Canceladas: {entry.future_lessons_cancelled}</p>
+                        </td>
+                        <td className="px-6 py-5 text-xs font-bold text-slate-500">{formatDateTime(entry.created_at)}</td>
+                      </tr>
+                    ))}
+                    {(!cancellationRecords || cancellationRecords.length === 0) ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-10 text-center text-xs font-medium text-slate-400">
+                          Nenhum cancelamento registrado para este aluno.
+                        </td>
+                      </tr>
+                    ) : null}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
 
           <Card className="border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
             <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 bg-slate-50/80 p-8">

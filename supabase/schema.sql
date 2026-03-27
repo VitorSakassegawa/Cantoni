@@ -224,6 +224,28 @@ create table if not exists contract_addenda (
   created_at timestamptz not null default now()
 );
 
+create table if not exists contract_cancellations (
+  id bigserial primary key,
+  contract_id integer not null references contratos(id) on delete cascade,
+  student_id uuid not null references profiles(id) on delete cascade,
+  cancelled_by uuid references profiles(id) on delete set null,
+  effective_date date not null,
+  reason_code text not null,
+  reason_label text not null,
+  reason_details text,
+  notes text,
+  lesson_action text not null check (lesson_action in ('auto_cancel_future', 'keep_future_for_review')),
+  outstanding_action text not null check (outstanding_action in ('keep_open_balance', 'waive_open_balance')),
+  credit_action text not null check (credit_action in ('no_credit', 'refund_manual', 'convert_to_credit')),
+  paid_amount numeric(10, 2) not null default 0,
+  consumed_value numeric(10, 2) not null default 0,
+  outstanding_value numeric(10, 2) not null default 0,
+  credit_value numeric(10, 2) not null default 0,
+  completed_lessons integer not null default 0,
+  future_lessons_cancelled integer not null default 0,
+  created_at timestamptz not null default now()
+);
+
 create table if not exists document_issuances (
   id bigserial primary key,
   contract_id integer not null references contratos(id) on delete cascade,
@@ -259,6 +281,8 @@ create table if not exists document_issuances (
 
 create index if not exists idx_aulas_contrato_id on aulas (contrato_id);
 create index if not exists idx_aulas_remarcada_de on aulas (remarcada_de);
+create index if not exists idx_contract_cancellations_contract_id on contract_cancellations (contract_id);
+create index if not exists idx_contract_cancellations_student_id on contract_cancellations (student_id);
 create index if not exists idx_avaliacoes_habilidades_contrato_id on avaliacoes_habilidades (contrato_id);
 create index if not exists idx_activity_logs_actor_user_id on activity_logs (actor_user_id);
 create index if not exists idx_activity_logs_target_user_id on activity_logs (target_user_id);

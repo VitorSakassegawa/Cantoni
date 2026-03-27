@@ -5,13 +5,39 @@ import { Select } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
+type ContractStatus = 'ativo' | 'inativo' | 'vencido' | 'cancelado'
+
+type ContractStatusSummary = {
+  id: number
+  status: ContractStatus
+  semestre?: string | null
+  ano?: number | null
+  livro_atual?: string | null
+  nivel_atual?: string | null
+  horario?: string | null
+  valor?: number | string | null
+  dia_vencimento?: number | string | null
+  forma_pagamento?: string | null
+}
+
 interface StatusContratoSelectProps {
-  contrato: any
+  contrato: ContractStatusSummary
 }
 
 export default function StatusContratoSelect({ contrato }: StatusContratoSelectProps) {
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  if (contrato.status === 'cancelado') {
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Status:</span>
+        <span className="inline-flex h-8 items-center rounded-xl bg-rose-500/10 px-3 text-[10px] font-black uppercase tracking-widest text-rose-600">
+          Cancelado
+        </span>
+      </div>
+    )
+  }
 
   async function handleStatusChange(newStatus: string) {
     if (newStatus === contrato.status) return
@@ -39,8 +65,8 @@ export default function StatusContratoSelect({ contrato }: StatusContratoSelectP
       
       toast.success(`Status alterado para ${newStatus}`)
       router.refresh()
-    } catch (err: any) {
-      toast.error(err.message)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar status')
     } finally {
       setLoading(false)
     }
@@ -61,7 +87,6 @@ export default function StatusContratoSelect({ contrato }: StatusContratoSelectP
       >
         <option value="ativo">Ativo</option>
         <option value="inativo">Inativo</option>
-        <option value="cancelado">Cancelado</option>
         <option value="vencido">Vencido</option>
       </Select>
     </div>

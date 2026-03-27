@@ -4,6 +4,13 @@ import { mapWithConcurrency } from '@/lib/async'
 import { logActivityBestEffort } from '@/lib/activity-log'
 import { buildPendingPaymentUpdates } from '@/lib/contract-payments'
 
+type PaymentRow = {
+  id: number
+  status: string
+  parcela_num: number
+  valor: number | string | null
+}
+
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const {
@@ -11,7 +18,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser()
 
   if (!user) {
-    return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    return NextResponse.json({ error: 'Nao autenticado' }, { status: 401 })
   }
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
@@ -20,6 +27,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Apenas professores podem editar contratos' }, { status: 403 })
   }
 
+  const payload = await request.json()
   const {
     id,
     planoId,
@@ -39,26 +47,45 @@ export async function POST(request: NextRequest) {
     descontoValor,
     descontoPercentual,
     numParcelas,
-  } = await request.json()
+  } = payload
 
   if (!id) {
-    return NextResponse.json({ error: 'ID do contrato é obrigatório' }, { status: 400 })
-  }
-
-  const vFloat = Number.parseFloat(valor)
-  const dvInt = Number.parseInt(dia_vencimento, 10)
-  if (Number.isNaN(vFloat) || Number.isNaN(dvInt)) {
-    return NextResponse.json({ error: 'Dados numéricos inválidos' }, { status: 400 })
+    return NextResponse.json({ error: 'ID do contrato e obrigatorio' }, { status: 400 })
   }
 
   const { data: existingContract, error: existingContractError } = await supabase
     .from('contratos')
-    .select('plano_id, data_inicio, data_fim, semestre, ano, livro_atual, nivel_atual, horario, valor, dia_vencimento, forma_pagamento, status, tipo_contrato, dias_da_semana, desconto_valor, desconto_percentual')
+    .select(
+      'plano_id, data_inicio, data_fim, semestre, ano, livro_atual, nivel_atual, horario, valor, dia_vencimento, forma_pagamento, status, tipo_contrato, dias_da_semana, desconto_valor, desconto_percentual'
+    )
     .eq('id', id)
     .single()
 
   if (existingContractError || !existingContract) {
-    return NextResponse.json({ error: 'Contrato não encontrado' }, { status: 404 })
+    return NextResponse.json({ error: 'Contrato nao encontrado' }, { status: 404 })
+  }
+
+  const nextStatus = status ?? existingContract.status
+  const nextValorRaw = valor ?? existingContract.valor
+  const nextDueDayRaw = dia_vencimento ?? existingContract.dia_vencimento
+  const nextPaymentMethod = forma_pagamento ?? existingContract.forma_pagamento
+  const nextStartDate = dataInicio ?? existingContract.data_inicio
+  const nextEndDate = dataFim ?? existingContract.data_fim
+  const nextSemester = semestre ?? existingContract.semestre
+  const nextYear = ano ?? existingContract.ano
+  const nextBook = livro_atual ?? existingContract.livro_atual
+  const nextLevel = nivel_atual ?? existingContract.nivel_atual
+  const nextSchedule = horario ?? existingContract.horario
+  const nextContractType = tipoContrato ?? existingContract.tipo_contrato
+  const nextWeekdays = dias_da_semana ?? existingContract.dias_da_semana
+  const nextDiscountValue = descontoValor ?? existingContract.desconto_valor ?? 0
+  const nextDiscountPercent = descontoPercentual ?? existingContract.desconto_percentual ?? 0
+
+  const nextValor = Number.parseFloat(String(nextValorRaw))
+  const nextDueDay = Number.parseInt(String(nextDueDayRaw), 10)
+
+  if (Number.isNaN(nextValor) || Number.isNaN(nextDueDay)) {
+    return NextResponse.json({ error: 'Dados numericos invalidos' }, { status: 400 })
   }
 
   const { count: paidPaymentsCount } = await supabase
@@ -69,16 +96,17 @@ export async function POST(request: NextRequest) {
 
   const hasPaidPayments = (paidPaymentsCount || 0) > 0
   const isFinancialChange =
-    Number(existingContract.valor) !== vFloat ||
-    Number(existingContract.dia_vencimento) !== dvInt ||
-    existingContract.forma_pagamento !== forma_pagamento ||
-    existingContract.data_inicio !== dataInicio ||
-    existingContract.data_fim !== dataFim
+    Number(existingContract.valor) !== nextValor ||
+    Number(existingContract.dia_vencimento) !== nextDueDay ||
+    existingContract.forma_pagamento !== nextPaymentMethod ||
+    existingContract.data_inicio !== nextStartDate ||
+    existingContract.data_fim !== nextEndDate
 
   if (hasPaidPayments && isFinancialChange) {
     return NextResponse.json(
       {
-        error: 'Este contrato já possui parcelas pagas. Alterações financeiras exigem fluxo de renegociação/aditivo.',
+        error:
+          'Este contrato ja possui parcelas pagas. Alteracoes financeiras exigem fluxo de renegociacao/aditivo.',
       },
       { status: 409 }
     )
@@ -87,22 +115,22 @@ export async function POST(request: NextRequest) {
   const { error: updateError } = await supabase
     .from('contratos')
     .update({
-      plano_id: planoId ? Number(planoId) : undefined,
-      data_inicio: dataInicio,
-      data_fim: dataFim,
-      semestre,
-      ano,
-      livro_atual,
-      nivel_atual,
-      horario,
-      valor: vFloat,
-      dia_vencimento: dvInt,
-      forma_pagamento,
-      status,
-      tipo_contrato: tipoContrato,
-      dias_da_semana,
-      desconto_valor: descontoValor || 0,
-      desconto_percentual: descontoPercentual || 0,
+      plano_id: planoId ? Number(planoId) : existingContract.plano_id,
+      data_inicio: nextStartDate,
+      data_fim: nextEndDate,
+      semestre: nextSemester,
+      ano: nextYear,
+      livro_atual: nextBook,
+      nivel_atual: nextLevel,
+      horario: nextSchedule,
+      valor: nextValor,
+      dia_vencimento: nextDueDay,
+      forma_pagamento: nextPaymentMethod,
+      status: nextStatus,
+      tipo_contrato: nextContractType,
+      dias_da_semana: nextWeekdays,
+      desconto_valor: nextDiscountValue,
+      desconto_percentual: nextDiscountPercent,
     })
     .eq('id', id)
 
@@ -116,24 +144,25 @@ export async function POST(request: NextRequest) {
     .eq('contrato_id', id)
 
   if (!hasPaidPayments) {
-    const unpaidPayments = (allPagamentos || []).filter((pagamento: any) => pagamento.status !== 'pago')
-    const paidAmount = (allPagamentos || [])
-      .filter((pagamento: any) => pagamento.status === 'pago')
-      .reduce((acc: number, pagamento: any) => acc + Number(pagamento.valor || 0), 0)
-    const remainingAmount = Math.max(0, vFloat - paidAmount)
+    const paymentRows = (allPagamentos || []) as PaymentRow[]
+    const unpaidPayments = paymentRows.filter((pagamento) => pagamento.status !== 'pago')
+    const paidAmount = paymentRows
+      .filter((pagamento) => pagamento.status === 'pago')
+      .reduce((acc, pagamento) => acc + Number(pagamento.valor || 0), 0)
+    const remainingAmount = Math.max(0, nextValor - paidAmount)
 
     let paymentUpdates
     try {
       paymentUpdates = buildPendingPaymentUpdates({
-        dataInicio,
-        diaVencimento: dvInt,
-        formaPagamento: forma_pagamento,
+        dataInicio: nextStartDate,
+        diaVencimento: nextDueDay,
+        formaPagamento: nextPaymentMethod,
         unpaidPayments,
         remainingAmount,
       })
-    } catch (error: any) {
+    } catch (error: unknown) {
       return NextResponse.json(
-        { error: error.message || 'Falha ao recalcular as parcelas pendentes' },
+        { error: error instanceof Error ? error.message : 'Falha ao recalcular as parcelas pendentes' },
         { status: 400 }
       )
     }
@@ -181,7 +210,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error: rollbackError
-            ? 'Falha ao atualizar parcelas pendentes e não foi possível restaurar o contrato automaticamente.'
+            ? 'Falha ao atualizar parcelas pendentes e nao foi possivel restaurar o contrato automaticamente.'
             : 'Falha ao atualizar uma ou mais parcelas pendentes. O contrato foi restaurado para o estado anterior.',
           details: failedUpdates.map((result) => ({
             id: result.id,
@@ -202,12 +231,12 @@ export async function POST(request: NextRequest) {
     contractId: Number(id),
     eventType: 'contract.updated',
     title: 'Contrato atualizado',
-    description: `O contrato foi atualizado com status ${status} e valor ${vFloat.toFixed(2)}.`,
+    description: `O contrato foi atualizado com status ${nextStatus} e valor ${nextValor.toFixed(2)}.`,
     severity: 'info',
     metadata: {
-      semester: semestre,
-      year: ano,
-      paymentMethod: forma_pagamento,
+      semester: nextSemester,
+      year: nextYear,
+      paymentMethod: nextPaymentMethod,
       requestedInstallments: numParcelas ?? null,
       hasPaidPayments,
     },
