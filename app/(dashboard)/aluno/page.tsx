@@ -427,6 +427,7 @@ export default async function AlunoDashboard() {
           </Card>
         ) : (
           <NotificationFeed
+            id="historico-recente"
             title="Seu Histórico Recente"
             items={activityItems}
             emptyMessage="Sem movimentações recentes no seu portal."

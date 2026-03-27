@@ -160,7 +160,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .from('activity_logs')
     .select('id, title, description, severity, target_user_id, created_at')
     .order('created_at', { ascending: false })
-    .limit(8)
+    .limit(20)
 
   const remarcacoesByAluno = new Map(
     (remarcacoesMes || []).map((item: any) => [item.aluno_id, item.quantidade])
@@ -419,6 +419,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
           {activityItems.length > 0 && (
             <NotificationFeed
+              id="feed-atividade"
               title="Feed de Atividade"
               items={activityItems}
               emptyMessage="Sem movimentações recentes."

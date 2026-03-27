@@ -48,6 +48,13 @@ export async function POST(request: NextRequest) {
 
     const contratoIds = contratos?.map((contrato: any) => contrato.id) || []
 
+    await serviceSupabase.from('activity_logs').delete().eq('target_user_id', alunoId)
+    await serviceSupabase.from('activity_logs').delete().eq('actor_user_id', alunoId)
+
+    if (contratoIds.length > 0) {
+      await serviceSupabase.from('activity_logs').delete().in('contract_id', contratoIds)
+    }
+
     if (contratoIds.length > 0) {
       const { data: aulas } = await serviceSupabase
         .from('aulas')

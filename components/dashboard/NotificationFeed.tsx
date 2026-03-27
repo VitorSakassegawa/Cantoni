@@ -1,5 +1,9 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Bell, CheckCircle2, ChevronRight, Info, TriangleAlert } from 'lucide-react'
 import { FeedItem } from '@/lib/insights'
@@ -11,14 +15,14 @@ function severityConfig(severity: FeedItem['severity']) {
         icon: TriangleAlert,
         badgeVariant: 'warning' as const,
         iconClass: 'text-amber-600',
-        label: 'Atenção',
+        label: 'Atencao',
       }
     case 'success':
       return {
         icon: CheckCircle2,
         badgeVariant: 'success' as const,
         iconClass: 'text-emerald-600',
-        label: 'Concluído',
+        label: 'Concluido',
       }
     default:
       return {
@@ -31,14 +35,28 @@ function severityConfig(severity: FeedItem['severity']) {
 }
 
 interface NotificationFeedProps {
+  id?: string
   title: string
   items: FeedItem[]
   emptyMessage: string
+  initialVisibleCount?: number
+  pageSize?: number
 }
 
-export default function NotificationFeed({ title, items, emptyMessage }: NotificationFeedProps) {
+export default function NotificationFeed({
+  id,
+  title,
+  items,
+  emptyMessage,
+  initialVisibleCount = 5,
+  pageSize = 5,
+}: NotificationFeedProps) {
+  const [visibleCount, setVisibleCount] = useState(initialVisibleCount)
+  const visibleItems = items.slice(0, visibleCount)
+  const hasMore = items.length > visibleItems.length
+
   return (
-    <Card className="glass-card overflow-hidden">
+    <Card id={id} className="glass-card overflow-hidden scroll-mt-24">
       <CardHeader className="border-b border-slate-100 pb-4">
         <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
           <Bell className="h-4 w-4 text-blue-500" /> {title}
@@ -49,7 +67,7 @@ export default function NotificationFeed({ title, items, emptyMessage }: Notific
           <div className="p-6 text-[11px] font-bold text-slate-400">{emptyMessage}</div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {items.map((item) => {
+            {visibleItems.map((item) => {
               const config = severityConfig(item.severity)
               const Icon = config.icon
 
@@ -85,6 +103,19 @@ export default function NotificationFeed({ title, items, emptyMessage }: Notific
                 </div>
               )
             })}
+
+            {hasMore ? (
+              <div className="p-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setVisibleCount((current) => current + pageSize)}
+                  className="w-full rounded-2xl border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:border-blue-200 hover:text-blue-700"
+                >
+                  Mostrar mais {Math.min(pageSize, items.length - visibleItems.length)}
+                </Button>
+              </div>
+            ) : null}
           </div>
         )}
       </CardContent>

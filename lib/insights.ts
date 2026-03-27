@@ -215,8 +215,8 @@ export function buildProfessorNotifications(input: {
       title: 'Movimentações recentes registradas',
       description: `${input.recentActivityCount} evento(s) recentes estão disponíveis no feed operacional.`,
       severity: 'success',
-      href: '/professor',
-      actionLabel: 'Acompanhar',
+      href: '/professor#feed-atividade',
+      actionLabel: 'Ver feed',
     })
   }
 
@@ -292,7 +292,7 @@ export function buildStudentNotifications(input: {
       title: 'Há atualizações recentes no seu histórico',
       description: `${input.recentActivityCount} movimentação(ões) novas foram registradas no seu portal.`,
       severity: 'info',
-      href: '/aluno',
+      href: '/aluno#historico-recente',
       actionLabel: 'Ver feed',
     })
   }
