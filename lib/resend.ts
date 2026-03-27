@@ -226,7 +226,7 @@ function BaseLayout({
                           Cantoni English School
                         </div>
                         <div style="font-size:15px;line-height:1.6;color:#475569;">
-                          Ingles com metodo, constancia e acompanhamento proximo.
+                          Formação em inglês com método, consistência e acompanhamento individual.
                         </div>
                       </td>
                     </tr>
@@ -295,7 +295,7 @@ function BaseLayout({
                 <td style="padding-top:24px;border-top:1px solid #e2e8f0;">
                   <div style="font-size:13px;font-weight:800;color:#0f172a;margin-bottom:4px;">Cantoni English School</div>
                   <div style="font-size:12px;line-height:1.7;color:#64748b;">
-                    Comunicacao oficial do portal academico.<br />
+                    Comunicação oficial do ambiente acadêmico.<br />
                     Remetente: ${escapeHtml(FROM)}
                   </div>
                 </td>
@@ -306,7 +306,7 @@ function BaseLayout({
         <tr>
           <td style="padding:16px 8px 0 8px;text-align:center;color:#94a3b8;font-size:12px;line-height:1.7;">
             Cantoni English School<br />
-            Uma comunicacao clara, confiavel e confortavel de ler em qualquer tela.
+            Comunicação institucional com clareza, discrição e padrão profissional.
           </td>
         </tr>
       </table>
@@ -543,9 +543,9 @@ export async function enviarAulaContabilizadaComoDada({
     subject: `Aula contabilizada como dada em ${dataHora}`,
     html: BaseLayout({
       eyebrow: 'Registro de aula',
-      title: 'Aula contabilizada como dada',
-      intro: `Olá, ${nomeAluno}. Como não houve cancelamento antecipado dentro da janela prevista, a aula abaixo foi registrada como realizada.`,
-      tone: 'danger',
+      title: 'Registro de aula atualizado',
+      intro: `Olá, ${nomeAluno}. A aula abaixo já foi registrada em seu histórico acadêmico e o acompanhamento do seu plano foi atualizado no portal.`,
+      tone: 'primary',
       content: statGrid([
         { label: 'Data da aula', value: dataHora },
         { label: 'Aulas realizadas', value: String(aulasDadas) },
@@ -829,10 +829,10 @@ export function getEmailTemplatePreviews() {
       subject: 'Aula contabilizada como dada em 14/04/2026 às 19h00',
       html: BaseLayout({
         eyebrow: 'Registro de aula',
-        title: 'Aula contabilizada como dada',
+        title: 'Registro de aula atualizado',
         intro:
-          'Olá, Gabriel. Como não houve cancelamento antecipado dentro da janela prevista, a aula abaixo foi registrada como realizada.',
-        tone: 'danger',
+          'Olá, Gabriel. A aula abaixo já foi registrada em seu histórico acadêmico e o acompanhamento do seu plano foi atualizado no portal.',
+        tone: 'primary',
         content: statGrid([
           { label: 'Data da aula', value: '14/04/2026 às 19h00' },
           { label: 'Aulas realizadas', value: '12' },

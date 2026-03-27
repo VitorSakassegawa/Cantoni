@@ -2,6 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
+import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -39,7 +40,7 @@ export default function LoginPage() {
       toast.success('Bem-vindo de volta!')
       router.push(profile?.role === 'professor' ? '/professor' : '/aluno')
     } catch (error: unknown) {
-      const message = getErrorMessage(error, 'Erro na autenticacao.')
+      const message = getErrorMessage(error, 'Erro na autenticação.')
       setError(message)
       toast.error(message)
     } finally {
@@ -60,11 +61,12 @@ export default function LoginPage() {
         body: JSON.stringify({ email }),
       })
       const data = await response.json()
-      if (!response.ok) throw new Error(data.error || 'Erro ao enviar o link de recuperacao.')
-      setSuccessMessage('E-mail de recuperacao enviado! Verifique sua caixa de entrada.')
-      toast.success('Link de recuperacao enviado!')
+      if (!response.ok) throw new Error(data.error || 'Erro ao enviar o link de recuperação.')
+
+      setSuccessMessage('E-mail de recuperação enviado. Verifique sua caixa de entrada.')
+      toast.success('Link de recuperação enviado!')
     } catch (error: unknown) {
-      const message = getErrorMessage(error, 'Erro ao enviar o link de recuperacao.')
+      const message = getErrorMessage(error, 'Erro ao enviar o link de recuperação.')
       setError(message)
       toast.error(message)
     } finally {
@@ -79,22 +81,30 @@ export default function LoginPage() {
 
       <div className="relative z-10 w-full max-w-md animate-fade-in">
         <div className="mb-10 text-center">
-          <div className="mb-4 inline-flex h-20 w-20 rotate-3 items-center justify-center rounded-2xl bg-[#1e3a5f] text-3xl font-black text-white shadow-xl shadow-blue-900/20 transition-transform duration-500 hover:rotate-0">
-            GC
+          <div className="mb-5 inline-flex rounded-[28px] border border-slate-200/70 bg-white/90 p-5 shadow-xl shadow-blue-900/10 backdrop-blur">
+            <Image
+              src="/logo-cantoni.svg"
+              alt="Cantoni English School"
+              width={88}
+              height={88}
+              priority
+              className="h-[88px] w-[88px]"
+            />
           </div>
-          <h1 className="text-3xl font-black tracking-tighter text-[#1e3a5f]">Cantoni English School</h1>
-          <p className="mt-2 text-sm font-medium uppercase tracking-widest text-gray-500">Portal Academico</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#1e3a5f]">
+            Learning Management System
+          </p>
         </div>
 
         <Card className="glass-card overflow-hidden border-none shadow-2xl shadow-blue-900/5">
           <CardHeader className="pb-2 text-center">
             <CardTitle className="text-xl font-bold text-gray-900">
-              {authMode === 'login' && 'Entrar no Portal'}
-              {authMode === 'forgot' && 'Recuperar Senha'}
+              {authMode === 'login' && 'Entrar no portal'}
+              {authMode === 'forgot' && 'Recuperar senha'}
             </CardTitle>
             <CardDescription className="text-xs font-semibold uppercase tracking-tight text-gray-400">
-              {authMode === 'login' && 'Acesse seus materiais e aulas'}
-              {authMode === 'forgot' && 'Enviaremos um link para seu e-mail'}
+              {authMode === 'login' && 'Acesse materiais, agenda e registros acadêmicos'}
+              {authMode === 'forgot' && 'Enviaremos um link seguro para o seu e-mail'}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -170,7 +180,7 @@ export default function LoginPage() {
                 className="w-full rounded-xl bg-[#1e3a5f] py-6 font-bold text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[#162a45] active:scale-[0.98]"
                 disabled={loading}
               >
-                {loading ? 'Processando...' : authMode === 'login' ? 'Acessar Painel' : 'Recuperar Senha'}
+                {loading ? 'Processando...' : authMode === 'login' ? 'Acessar painel' : 'Recuperar senha'}
               </Button>
 
               <div className="flex flex-col gap-3 border-t border-gray-100/50 pt-4 text-center">

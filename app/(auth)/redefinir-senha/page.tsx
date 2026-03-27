@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
@@ -126,12 +127,18 @@ export default function ResetPasswordPage() {
 
       <div className="relative z-10 w-full max-w-md">
         <div className="mb-10 text-center">
-          <div className="mb-4 inline-flex h-20 w-20 items-center justify-center rounded-2xl bg-[#1e3a5f] text-3xl font-black text-white shadow-xl shadow-blue-900/20">
-            GC
+          <div className="mb-5 inline-flex rounded-[28px] border border-slate-200/70 bg-white/90 p-5 shadow-xl shadow-blue-900/10 backdrop-blur">
+            <Image
+              src="/logo-cantoni.svg"
+              alt="Cantoni English School"
+              width={88}
+              height={88}
+              priority
+              className="h-[88px] w-[88px]"
+            />
           </div>
-          <h1 className="text-3xl font-black tracking-tighter text-[#1e3a5f]">Cantoni English School</h1>
-          <p className="mt-2 text-[9px] font-medium uppercase tracking-widest text-gray-500">
-            Redefinição de senha
+          <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#1e3a5f]">
+            Learning Management System
           </p>
         </div>
 
