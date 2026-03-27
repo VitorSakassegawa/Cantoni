@@ -78,6 +78,7 @@ export default function PaymentBrick({ amount, paymentId, email, nome, onSuccess
                   body: JSON.stringify({
                     formData,
                     paymentId,
+                    selectedPaymentMethod,
                   }),
                 })
 

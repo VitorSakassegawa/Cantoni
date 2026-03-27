@@ -20,14 +20,19 @@ function getAlunoProfile(localPayment: any) {
   return aluno
 }
 
+function normalizeCpf(value: string | null | undefined) {
+  const digits = (value || '').replace(/\D/g, '')
+  return digits.length === 11 ? digits : null
+}
+
 export async function POST(req: NextRequest) {
   try {
-    const { formData, paymentId } = await req.json()
+    const { formData, paymentId, selectedPaymentMethod } = await req.json()
     const supabase = await createClient()
 
     const { data: localPayment, error: fetchErr } = await supabase
       .from('pagamentos')
-      .select('*, contrato:contratos(aluno:profiles(id, email, full_name))')
+      .select('*, contrato:contratos(aluno:profiles(id, email, full_name, cpf))')
       .eq('id', paymentId)
       .single()
 
@@ -42,17 +47,40 @@ export async function POST(req: NextRequest) {
     const aluno = getAlunoProfile(localPayment)
     const amount = normalizePaymentAmount(localPayment.valor)
     const { firstName, lastName } = splitFullName(aluno?.full_name || '')
+    const paymentMethodId =
+      formData?.payment_method_id ||
+      formData?.paymentMethodId ||
+      selectedPaymentMethod ||
+      null
+    const identificationNumber =
+      normalizeCpf(formData?.payer?.identification?.number) || normalizeCpf(aluno?.cpf)
+
+    if (paymentMethodId === 'pix' && !identificationNumber) {
+      return NextResponse.json(
+        {
+          error: 'Para pagamentos via PIX, o CPF do aluno precisa estar preenchido no cadastro.',
+        },
+        { status: 400 }
+      )
+    }
 
     const body = {
       ...formData,
       transaction_amount: amount,
       external_reference: paymentId.toString(),
       notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
+      payment_method_id: paymentMethodId || formData?.payment_method_id,
       payer: {
         ...(typeof formData?.payer === 'object' && formData.payer ? formData.payer : {}),
         email: aluno?.email || formData?.payer?.email || '',
         first_name: firstName || formData?.payer?.first_name || '',
         last_name: lastName || formData?.payer?.last_name || '',
+        identification: identificationNumber
+          ? {
+              type: 'CPF',
+              number: identificationNumber,
+            }
+          : formData?.payer?.identification,
       },
     }
 

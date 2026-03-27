@@ -20,6 +20,7 @@ export async function POST(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const topic = searchParams.get('topic') || req.headers.get('x-mp-topic')
     const xSignature = req.headers.get('x-signature')
+    const xRequestId = req.headers.get('x-request-id')
     const body = await req.json()
     const resourceId = body.data?.id || searchParams.get('id')
     const action = body.action || topic
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!validateMPSignature(xSignature, resourceId, webhookSecret)) {
+    if (!validateMPSignature(xSignature, resourceId, webhookSecret, xRequestId)) {
       console.error('Webhook: Invalid signature detected')
       return NextResponse.json({ error: 'Forbidden: Invalid Signature' }, { status: 403 })
     }
