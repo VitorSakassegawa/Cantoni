@@ -4,6 +4,7 @@ import { clearSupabaseAuthCookies, isInvalidRefreshTokenError } from '@/lib/supa
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
+  const isAuthPath = request.nextUrl.pathname.startsWith('/login')
 
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -41,14 +42,16 @@ export async function updateSession(request: NextRequest) {
     user = authUser
   } catch (error) {
     if (isInvalidRefreshTokenError(error)) {
+      const sanitizedResponse = isAuthPath
+        ? NextResponse.next({ request })
+        : NextResponse.redirect(new URL('/login', request.url))
+
       clearSupabaseAuthCookies(
         { getAll: () => request.cookies.getAll() },
-        { set: (name, value, options) => supabaseResponse.cookies.set(name, value, options) }
+        { set: (name, value, options) => sanitizedResponse.cookies.set(name, value, options) }
       )
 
-      const url = request.nextUrl.clone()
-      url.pathname = '/login'
-      return NextResponse.redirect(url)
+      return sanitizedResponse
     }
 
     throw error
