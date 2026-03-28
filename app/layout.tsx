@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Toaster } from '@/components/ui/sonner'
 import ServiceWorkerRegister from '@/components/pwa/ServiceWorkerRegister'
+import { getSupabasePublicEnv } from '@/lib/env'
 import './globals.css'
 
 export const metadata: Metadata = {
@@ -23,9 +24,17 @@ export const viewport: Viewport = {
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const { url, anonKey } = getSupabasePublicEnv()
+  const serializedPublicEnv = JSON.stringify({ url, anonKey })
+
   return (
     <html lang="pt-BR" className="h-full">
       <body className="min-h-full">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.__SUPABASE_PUBLIC_ENV__ = ${serializedPublicEnv};`,
+          }}
+        />
         <ServiceWorkerRegister />
         {children}
         <Toaster position="top-right" richColors closeButton />
