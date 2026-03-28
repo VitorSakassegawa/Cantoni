@@ -226,10 +226,7 @@ export default function LevelTestPage() {
       await new Promise((resolve) => setTimeout(resolve, 1800))
       setFinishing(true)
       try {
-        const evaluation = (await evaluatePlacementTest(
-          finalAnswers.map((answer) => ({ correct: answer.correct })),
-          currentLevel
-        )) as PlacementEvaluationResult
+        const evaluation = (await evaluatePlacementTest(finalAnswers, currentLevel)) as PlacementEvaluationResult
         setResult(evaluation)
         setStep('result')
       } catch (error) {

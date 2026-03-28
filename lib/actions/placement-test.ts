@@ -1,6 +1,8 @@
 'use server'
 
 import { generateAIContent, generateAIAudio, extractAndParseJSON } from '@/lib/ai'
+import type { PlacementAnswerRecord } from '@/lib/dashboard-types'
+import { countPlacementCorrectAnswers, normalizePlacementAnswers } from '@/lib/placement-test-utils'
 import { createClient } from '@/lib/supabase/server'
 import { evaluatePlacementEligibility } from '@/lib/placement-eligibility'
 
@@ -103,7 +105,7 @@ async function generateAIInsights(answers: { correct: boolean }[], level: string
   }
 }
 
-export async function evaluatePlacementTest(answers: { correct: boolean }[], attemptedLevel: string) {
+export async function evaluatePlacementTest(answers: PlacementAnswerRecord[], attemptedLevel: string) {
   const supabase = await createClient()
   const {
     data: { user },
@@ -117,7 +119,8 @@ export async function evaluatePlacementTest(answers: { correct: boolean }[], att
     throw new Error(eligibility.description)
   }
 
-  const score = answers.filter((answer) => answer.correct).length
+  const normalizedAnswers = normalizePlacementAnswers(answers)
+  const score = countPlacementCorrectAnswers(normalizedAnswers)
   const total = answers.length
   const ratio = score / total
 
@@ -140,14 +143,14 @@ export async function evaluatePlacementTest(answers: { correct: boolean }[], att
     C1: 'avancado',
   }
 
-  const insights = await generateAIInsights(answers, suggestedLevel)
+  const insights = await generateAIInsights(normalizedAnswers, suggestedLevel)
 
   const { error: resultError } = await supabase.from('placement_results').insert({
     student_id: studentId,
     cefr_level: suggestedLevel,
     score,
     total_questions: total,
-    answers,
+    answers: normalizedAnswers,
     insights,
   })
 

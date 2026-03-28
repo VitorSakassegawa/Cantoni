@@ -222,6 +222,11 @@ export type PlacementAnswer = PlacementQuestion & {
   correct: boolean
 }
 
+export type PlacementAnswerRecord = Partial<PlacementQuestion> & {
+  selected?: number
+  correct?: boolean
+}
+
 export type PlacementEvaluationResult = {
   suggestedLevel: PlacementLevel
   suggestedNivel: string

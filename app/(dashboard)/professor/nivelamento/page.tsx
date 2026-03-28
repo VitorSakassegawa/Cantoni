@@ -17,6 +17,8 @@ import {
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { requestNewPlacementTest } from '@/lib/actions/placement-test'
+import type { PlacementAnswerRecord } from '@/lib/dashboard-types'
+import { hasDetailedPlacementAnswers } from '@/lib/placement-test-utils'
 import ReactMarkdown from 'react-markdown'
 
 interface PlacementStudent {
@@ -27,14 +29,6 @@ interface PlacementStudent {
   placement_test_completed: boolean | null
 }
 
-interface PlacementAnswer {
-  question?: string
-  options?: string[]
-  selected?: number
-  correct?: boolean
-  correctAnswer?: number
-}
-
 interface PlacementResult {
   id: string
   created_at: string
@@ -42,14 +36,14 @@ interface PlacementResult {
   score: number
   total_questions: number
   insights: string | null
-  answers: PlacementAnswer[] | null
+  answers: PlacementAnswerRecord[] | null
 }
 
 function getErrorMessage(error: unknown) {
   return error instanceof Error ? error.message : 'Erro inesperado'
 }
 
-function getSelectedOptionLabel(answer: PlacementAnswer) {
+function getSelectedOptionLabel(answer: PlacementAnswerRecord) {
   if (!answer.options || typeof answer.selected !== 'number') {
     return `Opção ${answer.selected ?? '-'}`
   }
@@ -263,7 +257,11 @@ export default function ProfessorNivelamentoPage() {
                   </div>
                 ) : (
                   <div className="space-y-8">
-                    {history.map((test, index) => (
+                    {history.map((test, index) => {
+                      const detailedAnswers = test.answers ?? []
+                      const hasDetailedAnswers = hasDetailedPlacementAnswers(detailedAnswers)
+
+                      return (
                       <div key={test.id} className="relative pl-10 group">
                         {/* Timeline line */}
                         {index < history.length - 1 && (
@@ -309,14 +307,14 @@ export default function ProfessorNivelamentoPage() {
                           </div>
 
                           {/* Detailed Q&A Breakdown */}
-                          {test.answers && test.answers.length > 0 && test.answers[0].question && (
+                          {hasDetailedAnswers && (
                             <div className="pt-4 space-y-4">
                               <h4 className="text-sm font-black text-slate-800 uppercase tracking-tight flex items-center gap-2">
                                 <BookOpen className="w-4 h-4 text-blue-500" />
-                                Detalhamento de Questões ({test.answers.length})
+                                Detalhamento de Questões ({detailedAnswers.length})
                               </h4>
                               <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
-                                {test.answers.map((ans, idx) => (
+                                {detailedAnswers.map((ans, idx) => (
                                   <div key={idx} className={`p-5 rounded-3xl border-2 ${ans.correct ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'} text-sm shadow-sm`}>
                                     <div className="flex items-start gap-3">
                                       <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black text-white ${ans.correct ? 'bg-emerald-500' : 'bg-rose-500'} mt-0.5`}>
@@ -343,9 +341,17 @@ export default function ProfessorNivelamentoPage() {
                               </div>
                             </div>
                           )}
+
+                          {detailedAnswers.length > 0 && !hasDetailedAnswers && (
+                            <div className="pt-4">
+                              <div className="p-5 rounded-3xl border border-slate-100 bg-slate-50 text-sm text-slate-500 font-medium">
+                                Este registro e antigo e nao possui o detalhamento completo das respostas do aluno. Os novos testes voltaram a salvar perguntas, opcoes e resposta marcada.
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
-                    ))}
+                    )})}
                   </div>
                 )}
               </div>
