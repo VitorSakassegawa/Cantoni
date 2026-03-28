@@ -61,6 +61,8 @@ type DocumentAccessContext = {
 
 type DocumentAccessOptions = {
   redirectOnFail?: boolean
+  viewerUserId?: string
+  assumeProfessor?: boolean
 }
 
 const PROFILE_SELECT = 'id, role, full_name, cpf, cpf_encrypted, email, phone, city'
@@ -116,10 +118,16 @@ export async function getDocumentContext(
   options?: DocumentAccessOptions
 ): Promise<DocumentAccessContext> {
   const redirectOnFail = options?.redirectOnFail ?? true
+  const assumeProfessor = options?.assumeProfessor ?? false
   const supabase = await createClient()
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  const serviceSupabase = assumeProfessor ? await createServiceClient() : null
+  const viewerUserId = options?.viewerUserId
+  const authUser = assumeProfessor
+    ? { id: viewerUserId || '' }
+    : (
+        await supabase.auth.getUser()
+      ).data.user
+  const user = authUser
 
   if (!user) {
     if (redirectOnFail) {
@@ -128,14 +136,15 @@ export async function getDocumentContext(
     throw new Error('Não autenticado')
   }
 
-  const { data: profile } = await supabase
+  const profileClient = assumeProfessor && serviceSupabase ? serviceSupabase : supabase
+  const { data: profile } = await profileClient
     .from('profiles')
     .select(PROFILE_SELECT)
     .eq('id', user.id)
     .single()
 
-  const isProfessor = profile?.role === 'professor'
-  const documentQueryClient = isProfessor ? await createServiceClient() : supabase
+  const isProfessor = assumeProfessor || profile?.role === 'professor'
+  const documentQueryClient = isProfessor ? (serviceSupabase ?? await createServiceClient()) : supabase
 
   const { data: contract, error: contractError } = await documentQueryClient
     .from('contratos')

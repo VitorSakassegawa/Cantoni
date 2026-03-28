@@ -44,7 +44,11 @@ export async function POST(request: NextRequest) {
 
   let context
   try {
-    context = await getDocumentContext(parsedContractId, { redirectOnFail: false })
+    context = await getDocumentContext(parsedContractId, {
+      redirectOnFail: false,
+      viewerUserId: user.id,
+      assumeProfessor: true,
+    })
   } catch (error: unknown) {
     console.error('document.issue.context_failed', {
       contractId: parsedContractId,
