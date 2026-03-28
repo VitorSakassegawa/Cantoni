@@ -1,71 +1,73 @@
-# Como implantar na Vercel (Guia do Professor Gabriel Cantoni)
+# Vercel Deploy
 
-A Vercel é a plataforma nativa para projetos Next.js, oferecendo a melhor experiência e desempenho. Siga estes passos para colocar seu site no ar:
+## 1. Import the repository
 
-## 1. Preparar o Repositório
+Create a new Vercel project and connect this repository.
 
-Certifique-se de que seu código está em um repositório Git (GitHub, GitLab ou Bitbucket).
+## 2. Configure environment variables
 
-## 2. Iniciar a Implantação na Vercel
+At minimum, configure these in the Vercel dashboard:
 
-1.  Acesse o [Dashboard da Vercel](https://vercel.com/dashboard).
-2.  Clique em **"Add New..."** e depois em **"Project"**.
-3.  Importe o seu repositório Git.
-
-## 3. Configurar Variáveis de Ambiente
-
-Antes de clicar em "Deploy", você **precisa** adicionar as variáveis de ambiente que estão no seu `.env.local`. 
-
-No painel da Vercel, abra a seção **"Environment Variables"** e adicione:
-
-| Nome da Variável | Valor |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | Sua URL do Supabase |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Sua Anon Key do Supabase |
-| `SUPABASE_SERVICE_ROLE_KEY` | Sua Service Role Key |
-| `GOOGLE_CLIENT_ID` | Seu Google Client ID |
-| `GOOGLE_CLIENT_SECRET` | Seu Google Client Secret |
-| `GOOGLE_REFRESH_TOKEN` | Seu Google Refresh Token |
-| `CRON_SECRET` | Segredo usado pelas rotas internas de cron |
-| `MERCADOPAGO_ACCESS_TOKEN` | Seu access token do Mercado Pago |
-| `NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY` | Sua public key do Mercado Pago |
-| `MERCADOPAGO_WEBHOOK_SECRET` | O segredo do webhook configurado no Mercado Pago |
-| `RESEND_API_KEY` | Sua chave da Resend |
-| `RESEND_FROM_EMAIL` | Seu e-mail de envio verificado |
-
-> [!IMPORTANT]
-> A Vercel detectará automaticamente que o projeto é Next.js e configurará os comandos de build corretamente.
-
-## 4. Atualizar Webhooks (Mercado Pago)
-
-Após o deploy, a Vercel fornecerá uma URL (ex: `https://meu-projeto.vercel.app`). Você deve atualizar o webhook no Mercado Pago:
-
-1.  Vá ao painel do Mercado Pago → Developers.
-2.  Atualize a URL do webhook para: `https://sua-url-da-vercel.vercel.app/api/webhooks/mercadopago`
-
-## 5. Configurar Cron Jobs (Opcional)
-
-Se preferir usar o Cron da Vercel em vez do `pg_cron` do Supabase:
-
-1.  Crie um arquivo `vercel.json` na raiz do projeto:
-
-```json
-{
-  "crons": [
-    {
-      "path": "/api/cron/lembretes-aula",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/marcar-atrasados",
-      "schedule": "0 11 * * *"
-    }
-  ]
-}
+```env
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+NEXT_PUBLIC_APP_URL=
+CPF_ENCRYPTION_KEY=
+CRON_SECRET=
+MERCADOPAGO_ACCESS_TOKEN=
+NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY=
+MERCADOPAGO_WEBHOOK_SECRET=
+RESEND_API_KEY=
+RESEND_FROM_EMAIL=
 ```
 
-2.  Lembre-se de configurar `CRON_SECRET` e passar o header `x-cron-secret` se suas APIs de cron exigirem.
+Add Google variables if the integration is enabled:
 
----
+```env
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REFRESH_TOKEN=
+GOOGLE_OAUTH_SETUP_SECRET=
+```
 
-**Pronto!** Seu site agora estará disponível na URL da Vercel.
+Important:
+
+- `NEXT_PUBLIC_*` variables are embedded at build time
+- after changing them, redeploy
+- the build already fails fast if critical variables are missing
+
+## 3. Webhooks
+
+Mercado Pago production webhook:
+
+```text
+https://cantonies.com.br/api/webhooks/mercadopago
+```
+
+## 4. Cron on Hobby
+
+Current `vercel.json` keeps only:
+
+- `/api/cron/marcar-atrasados`
+
+Why:
+
+- Vercel Hobby only supports cron jobs that run once per day
+- Vercel does not guarantee precise execution timing inside the target hour
+
+Because of that:
+
+- lesson reminders stay manual in `/professor/cron`
+- transcript import can be manual or scheduled by an external service
+
+## 5. Recommended production checks
+
+After each deploy, validate:
+
+1. login
+2. first access password setup
+3. Mercado Pago PIX creation
+4. webhook reconciliation
+5. document rendering
+6. transcript import flow

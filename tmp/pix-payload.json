@@ -1,8 +1,0 @@
-{
-  "transaction_amount": 1,
-  "payment_method_id": "pix",
-  "payer": {
-    "email": "test_user_999@testuser.com",
-    "first_name": "APRO"
-  }
-}
