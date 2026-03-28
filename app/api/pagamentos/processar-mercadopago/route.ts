@@ -11,6 +11,7 @@ import {
 } from '@/lib/payments'
 import { logActivityBestEffort } from '@/lib/activity-log'
 import { resolveCpf } from '@/lib/cpf-security'
+import { enviarEmailCobranca } from '@/lib/resend'
 
 type StudentProfile = {
   id?: string
@@ -23,6 +24,7 @@ type StudentProfile = {
 type LocalPaymentRecord = {
   id: number
   contrato_id: number
+  parcela_num?: number | null
   valor: number
   status: string | null
   data_vencimento?: string | null
@@ -69,6 +71,33 @@ function getAlunoProfile(localPayment: LocalPaymentRecord) {
 function normalizeCpf(value: string | null | undefined) {
   const digits = (value || '').replace(/\D/g, '')
   return digits.length === 11 ? digits : null
+}
+
+function formatDateForEmail(value: string | null | undefined) {
+  if (!value) {
+    return 'A definir'
+  }
+
+  const parsed = new Date(`${value}T12:00:00`)
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+
+  return parsed.toLocaleDateString('pt-BR')
+}
+
+async function hasPaymentEmailLog(
+  serviceSupabase: Awaited<ReturnType<typeof createServiceClient>>,
+  paymentId: number,
+  eventType: string
+) {
+  const { count } = await serviceSupabase
+    .from('activity_logs')
+    .select('id', { head: true, count: 'exact' })
+    .eq('payment_id', paymentId)
+    .eq('event_type', eventType)
+
+  return (count || 0) > 0
 }
 
 function isMercadoPagoTestMode() {
@@ -243,6 +272,11 @@ export async function POST(req: NextRequest) {
     })
 
     const serviceSupabase = await createServiceClient()
+    const pixQrCodeBase64 = mpResponse.point_of_interaction?.transaction_data?.qr_code_base64
+      ? `data:image/png;base64,${mpResponse.point_of_interaction.transaction_data.qr_code_base64}`
+      : null
+    const pixCopiaCola = mpResponse.point_of_interaction?.transaction_data?.qr_code || null
+
     const { error: updateErr } = await serviceSupabase
       .from('pagamentos')
       .update({
@@ -251,10 +285,8 @@ export async function POST(req: NextRequest) {
         mercadopago_payment_method: mpResponse.payment_method_id,
         status: localStatus,
         data_pagamento: localStatus === 'pago' ? new Date().toISOString().split('T')[0] : null,
-        pix_qrcode_base64: mpResponse.point_of_interaction?.transaction_data?.qr_code_base64
-          ? `data:image/png;base64,${mpResponse.point_of_interaction.transaction_data.qr_code_base64}`
-          : null,
-        pix_copia_cola: mpResponse.point_of_interaction?.transaction_data?.qr_code || null,
+        pix_qrcode_base64: pixQrCodeBase64,
+        pix_copia_cola: pixCopiaCola,
       })
       .eq('id', paymentId)
 
@@ -280,14 +312,81 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    const shouldSendBillingEmail =
+      paymentMethodId === 'pix' &&
+      Boolean(aluno?.email) &&
+      Boolean(pixCopiaCola) &&
+      !(await hasPaymentEmailLog(serviceSupabase, numericPaymentId, 'payment.billing_email_sent'))
+
+    if (shouldSendBillingEmail) {
+      const { count: totalParcelasCount } = await serviceSupabase
+        .from('pagamentos')
+        .select('id', { head: true, count: 'exact' })
+        .eq('contrato_id', typedLocalPayment.contrato_id)
+
+      try {
+        const emailResult = (await enviarEmailCobranca({
+          to: aluno?.email || '',
+          nomeAluno: aluno?.full_name || 'Aluno',
+          parcela: typedLocalPayment.parcela_num || 1,
+          totalParcelas: totalParcelasCount || typedLocalPayment.parcela_num || 1,
+          valor: amount,
+          vencimento: formatDateForEmail(typedLocalPayment.data_vencimento),
+          pixCopiaCola: pixCopiaCola || '',
+          pixQrcode: pixQrCodeBase64 || undefined,
+        })) as { error?: { message?: string } | null } | null
+
+        if (emailResult?.error) {
+          await logActivityBestEffort({
+            targetUserId: aluno?.id,
+            contractId: typedLocalPayment.contrato_id,
+            paymentId: numericPaymentId,
+            eventType: 'payment.billing_email_failed',
+            title: 'Falha ao enviar e-mail de cobrança',
+            description: `A cobrança do pagamento ${numericPaymentId} foi gerada, mas o e-mail não pôde ser entregue.`,
+            severity: 'warning',
+            metadata: {
+              message: emailResult.error.message || null,
+            },
+          })
+        } else {
+          await logActivityBestEffort({
+            targetUserId: aluno?.id,
+            contractId: typedLocalPayment.contrato_id,
+            paymentId: numericPaymentId,
+            eventType: 'payment.billing_email_sent',
+            title: 'E-mail de cobrança enviado',
+            description: `A cobrança do pagamento ${numericPaymentId} foi enviada por e-mail.`,
+            severity: 'success',
+            metadata: {
+              paymentMethod: paymentMethodId,
+            },
+          })
+        }
+      } catch (error) {
+        console.error('Billing email error:', error)
+        await logActivityBestEffort({
+          targetUserId: aluno?.id,
+          contractId: typedLocalPayment.contrato_id,
+          paymentId: numericPaymentId,
+          eventType: 'payment.billing_email_failed',
+          title: 'Falha ao enviar e-mail de cobrança',
+          description: `A cobrança do pagamento ${numericPaymentId} foi gerada, mas o e-mail falhou durante o envio.`,
+          severity: 'warning',
+          metadata: {
+            message: error instanceof Error ? error.message : 'unknown_error',
+          },
+        })
+      }
+    }
+
     return NextResponse.json({
       id: mpResponse.id,
       status: mpResponse.status,
       status_detail: mpResponse.status_detail,
       local_status: localStatus,
       generated_pix:
-        Boolean(mpResponse.point_of_interaction?.transaction_data?.qr_code) ||
-        Boolean(mpResponse.point_of_interaction?.transaction_data?.qr_code_base64),
+        Boolean(pixCopiaCola) || Boolean(pixQrCodeBase64),
       point_of_interaction: mpResponse.point_of_interaction,
     })
   } catch (error) {

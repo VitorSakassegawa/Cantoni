@@ -10,10 +10,12 @@ import {
 } from '@/lib/payments'
 import { getEnv } from '@/lib/env'
 import { logActivityBestEffort } from '@/lib/activity-log'
+import { enviarConfirmacaoPagamento } from '@/lib/resend'
 
 type WebhookLocalPaymentRecord = {
   id: number
   contrato_id: number | null
+  parcela_num?: number | null
   valor: number
   status: string | null
   data_vencimento?: string | null
@@ -21,12 +23,58 @@ type WebhookLocalPaymentRecord = {
   mercadopago_status?: string | null
   contrato?: {
     aluno_id?: string | null
+    aluno?: {
+      id?: string
+      email?: string | null
+      full_name?: string | null
+    } | {
+      id?: string
+      email?: string | null
+      full_name?: string | null
+    }[] | null
   } | null
 }
 
 type ActivityLogMetadata = {
   mercadoPagoStatus?: string | null
   localStatus?: string | null
+}
+
+function getAlunoProfile(localPayment: WebhookLocalPaymentRecord) {
+  const aluno = localPayment.contrato?.aluno
+
+  if (Array.isArray(aluno)) {
+    return aluno[0]
+  }
+
+  return aluno
+}
+
+function formatDateForEmail(value: string | null | undefined) {
+  if (!value) {
+    return new Date().toLocaleDateString('pt-BR')
+  }
+
+  const parsed = new Date(`${value}T12:00:00`)
+  if (Number.isNaN(parsed.getTime())) {
+    return value
+  }
+
+  return parsed.toLocaleDateString('pt-BR')
+}
+
+async function hasPaymentEmailLog(
+  serviceSupabase: Awaited<ReturnType<typeof createServiceClient>>,
+  paymentId: number,
+  eventType: string
+) {
+  const { count } = await serviceSupabase
+    .from('activity_logs')
+    .select('id', { head: true, count: 'exact' })
+    .eq('payment_id', paymentId)
+    .eq('event_type', eventType)
+
+  return (count || 0) > 0
 }
 
 export async function GET() {
@@ -68,7 +116,7 @@ export async function POST(req: NextRequest) {
       const { data: localPayment, error: paymentError } = await supabase
         .from('pagamentos')
         .select(
-          'id, contrato_id, valor, status, data_vencimento, data_pagamento, mercadopago_status, contrato:contratos(aluno_id)'
+          'id, contrato_id, parcela_num, valor, status, data_vencimento, data_pagamento, mercadopago_status, contrato:contratos(aluno_id, aluno:profiles(id, email, full_name))'
         )
         .eq('id', externalReference)
         .single()
@@ -78,6 +126,7 @@ export async function POST(req: NextRequest) {
       }
 
       const typedLocalPayment = localPayment as WebhookLocalPaymentRecord
+      const aluno = getAlunoProfile(typedLocalPayment)
 
       assertPaymentAmountMatches(typedLocalPayment.valor, mpPayment.transaction_amount)
 
@@ -147,6 +196,71 @@ export async function POST(req: NextRequest) {
             metadata: {
               mercadoPagoStatus: mpPayment.status,
               localStatus,
+            },
+          })
+        }
+      }
+
+      const shouldAttemptConfirmationEmail =
+        localStatus === 'pago' &&
+        Boolean(aluno?.email) &&
+        !(await hasPaymentEmailLog(supabase, typedLocalPayment.id, 'payment.confirmation_email_sent'))
+
+      if (shouldAttemptConfirmationEmail) {
+        const { count: totalParcelasCount } = await supabase
+          .from('pagamentos')
+          .select('id', { head: true, count: 'exact' })
+          .eq('contrato_id', typedLocalPayment.contrato_id)
+
+        try {
+          const emailResult = (await enviarConfirmacaoPagamento({
+            to: aluno?.email || '',
+            nomeAluno: aluno?.full_name || 'Aluno',
+            parcela: typedLocalPayment.parcela_num || 1,
+            totalParcelas: totalParcelasCount || typedLocalPayment.parcela_num || 1,
+            valor: typedLocalPayment.valor,
+            dataPagamento: formatDateForEmail(new Date().toISOString().split('T')[0]),
+          })) as { error?: { message?: string } | null } | null
+
+          if (emailResult?.error) {
+            await logActivityBestEffort({
+              targetUserId: typedLocalPayment.contrato?.aluno_id,
+              contractId: typedLocalPayment.contrato_id,
+              paymentId: typedLocalPayment.id,
+              eventType: 'payment.confirmation_email_failed',
+              title: 'Falha ao enviar confirmação de pagamento',
+              description: `O pagamento ${typedLocalPayment.id} foi confirmado, mas o e-mail não pôde ser entregue.`,
+              severity: 'warning',
+              metadata: {
+                message: emailResult.error.message || null,
+              },
+            })
+          } else {
+            await logActivityBestEffort({
+              targetUserId: typedLocalPayment.contrato?.aluno_id,
+              contractId: typedLocalPayment.contrato_id,
+              paymentId: typedLocalPayment.id,
+              eventType: 'payment.confirmation_email_sent',
+              title: 'Confirmação de pagamento enviada',
+              description: `O pagamento ${typedLocalPayment.id} foi confirmado por e-mail ao aluno.`,
+              severity: 'success',
+              metadata: {
+                mercadoPagoStatus: mpPayment.status,
+              },
+            })
+          }
+        } catch (error) {
+          console.error('Payment confirmation email error:', error)
+          await logActivityBestEffort({
+            targetUserId: typedLocalPayment.contrato?.aluno_id,
+            contractId: typedLocalPayment.contrato_id,
+            paymentId: typedLocalPayment.id,
+            eventType: 'payment.confirmation_email_failed',
+            title: 'Falha ao enviar confirmação de pagamento',
+            description: `O pagamento ${typedLocalPayment.id} foi confirmado, mas o envio do e-mail falhou.`,
+            severity: 'warning',
+            metadata: {
+              message: error instanceof Error ? error.message : 'unknown_error',
             },
           })
         }

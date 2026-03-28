@@ -33,7 +33,8 @@ assert.equal(getMercadoPagoStatusCopy('rejected')?.shortLabel, 'Tentativa recusa
 assert.match(getMercadoPagoStatusCopy('rejected')?.detail || '', /recusada/i)
 assert.equal(getMercadoPagoStatusCopy('refunded')?.shortLabel, 'Pagamento estornado')
 assert.match(getMercadoPagoStatusCopy('refunded')?.detail || '', /estornado/i)
-assert.equal(getMercadoPagoStatusCopy(null), null)
+assert.equal(getMercadoPagoStatusCopy(null)?.shortLabel, 'Cobrança pendente')
+assert.match(getMercadoPagoStatusCopy(null)?.detail || '', /código pix|cobranca/i)
 
 assert.equal(
   resolveLocalPaymentStatus({
