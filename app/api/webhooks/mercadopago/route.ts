@@ -92,7 +92,10 @@ export async function POST(req: NextRequest) {
     const xSignature = req.headers.get('x-signature')
     const xRequestId = req.headers.get('x-request-id')
     const body = (await req.json()) as { action?: string; data?: { id?: string } }
-    const resourceId = body.data?.id || searchParams.get('id')
+    const resourceId =
+      searchParams.get('data.id') ||
+      searchParams.get('id') ||
+      body.data?.id
     const action = body.action || topic
 
     if (!webhookSecret || !xSignature || !resourceId) {
