@@ -46,6 +46,13 @@ export async function POST(request: NextRequest) {
   try {
     context = await getDocumentContext(parsedContractId, { redirectOnFail: false })
   } catch (error: unknown) {
+    console.error('document.issue.context_failed', {
+      contractId: parsedContractId,
+      kind,
+      userId: user.id,
+      message: error instanceof Error ? error.message : 'unknown',
+    })
+
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Contrato nao encontrado' },
       { status: 404 }

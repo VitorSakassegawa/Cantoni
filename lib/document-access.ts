@@ -1,6 +1,6 @@
 import 'server-only'
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { resolveCpf } from '@/lib/cpf-security'
 
 type DocumentAccessProfile = {
@@ -134,7 +134,10 @@ export async function getDocumentContext(
     .eq('id', user.id)
     .single()
 
-  const { data: contract } = await supabase
+  const isProfessor = profile?.role === 'professor'
+  const documentQueryClient = isProfessor ? await createServiceClient() : supabase
+
+  const { data: contract } = await documentQueryClient
     .from('contratos')
     .select(CONTRACT_SELECT)
     .eq('id', contractId)
@@ -147,7 +150,6 @@ export async function getDocumentContext(
     throw new Error('Contrato não encontrado')
   }
 
-  const isProfessor = profile?.role === 'professor'
   if (!isProfessor && contract.aluno_id !== user.id) {
     if (redirectOnFail) {
       redirect('/aluno')
@@ -155,13 +157,13 @@ export async function getDocumentContext(
     throw new Error('Sem permissão para acessar este documento')
   }
 
-  const { data: payments } = await supabase
+  const { data: payments } = await documentQueryClient
     .from('pagamentos')
     .select(PAYMENT_SELECT)
     .eq('contrato_id', contractId)
     .order('parcela_num', { ascending: true })
 
-  const { data: addenda } = await supabase
+  const { data: addenda } = await documentQueryClient
     .from('contract_addenda')
     .select(ADDENDUM_SELECT)
     .eq('contract_id', contractId)
@@ -171,7 +173,7 @@ export async function getDocumentContext(
   let student = typedContract.profiles
 
   if (!student && typedContract.aluno_id) {
-    const { data: fallbackStudent } = await supabase
+    const { data: fallbackStudent } = await documentQueryClient
       .from('profiles')
       .select(PROFILE_SELECT)
       .eq('id', typedContract.aluno_id)
@@ -180,7 +182,7 @@ export async function getDocumentContext(
     student = fallbackStudent || null
   }
 
-  const { data: teacher } = await supabase
+  const { data: teacher } = await documentQueryClient
     .from('profiles')
     .select(PROFILE_SELECT)
     .eq('role', 'professor')
