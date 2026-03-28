@@ -28,18 +28,25 @@ type ReminderLesson = {
     | null
 }
 
-export async function runLessonReminders() {
+type LessonReminderOptions = {
+  windowHoursStart?: number
+  windowHoursEnd?: number
+}
+
+export async function runLessonReminders(options: LessonReminderOptions = {}) {
   const supabase = await createServiceClient()
   const now = new Date()
-  const in24h = addHours(now, 24)
-  const in25h = addHours(now, 25)
+  const windowHoursStart = options.windowHoursStart ?? 24
+  const windowHoursEnd = options.windowHoursEnd ?? 25
+  const windowStart = addHours(now, windowHoursStart)
+  const windowEnd = addHours(now, windowHoursEnd)
 
   const { data: aulas, error } = await supabase
     .from('aulas')
     .select('*, contratos(profiles(full_name, email))')
     .in('status', ['agendada', 'confirmada'])
-    .gte('data_hora', in24h.toISOString())
-    .lte('data_hora', in25h.toISOString())
+    .gte('data_hora', windowStart.toISOString())
+    .lte('data_hora', windowEnd.toISOString())
     .eq('reminder_sent', false)
 
   if (error) {

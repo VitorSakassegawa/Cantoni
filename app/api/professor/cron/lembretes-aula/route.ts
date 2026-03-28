@@ -7,7 +7,7 @@ export async function POST() {
   try {
     await requireProfessor()
 
-    const result = await runLessonReminders()
+    const result = await runLessonReminders({ windowHoursStart: 0, windowHoursEnd: 24 })
     revalidatePath('/professor/cron')
 
     return NextResponse.json(result)
