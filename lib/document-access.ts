@@ -227,7 +227,7 @@ export async function getDocumentContext(
   return {
     viewer: normalizeProfile(profile),
     student: normalizeProfile(student),
-    teacher: resolvedTeacher,
+    teacher: normalizeProfile(resolvedTeacher),
     contract: typedContract,
     payments: (payments || []) as DocumentAccessPayment[],
     addenda: (addenda || []) as DocumentAccessAddendum[],
