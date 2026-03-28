@@ -29,3 +29,7 @@ export function createClient() {
   const { url, anonKey } = readSupabasePublicEnv()
   return createBrowserClient(url, anonKey)
 }
+
+export const __internal = {
+  readSupabasePublicEnv,
+}
