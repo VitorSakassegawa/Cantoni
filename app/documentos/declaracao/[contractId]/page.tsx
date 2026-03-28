@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import Image from 'next/image'
 import DocumentShell from '@/components/documents/DocumentShell'
 import { getDocumentContext } from '@/lib/document-access'
 import { buildEnrollmentDeclaration } from '@/lib/documents'
@@ -24,11 +25,7 @@ export default async function EnrollmentDeclarationPage({
       <div className="space-y-12 text-slate-900">
         <header className="space-y-4 border-b border-slate-200 pb-8 text-center">
           <div className="flex justify-center">
-            <img
-              src="/logo-cantoni.svg"
-              alt="Cantoni English School"
-              className="h-16 w-auto object-contain"
-            />
+            <Image src="/logo-cantoni.svg" alt="Cantoni English School" width={160} height={64} className="h-16 w-auto object-contain" />
           </div>
           <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">Cantoni English School</p>
           <h2 className="text-3xl font-black tracking-tight">{declaration.title}</h2>

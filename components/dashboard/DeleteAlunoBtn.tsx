@@ -41,8 +41,8 @@ export default function DeleteAlunoBtn({ alunoId, alunoNome }: Props) {
       toast.success('Aluno deletado com sucesso!')
       router.push('/professor/alunos')
       router.refresh()
-    } catch (err: any) {
-      toast.error(err.message)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao deletar aluno')
     } finally {
       setLoading(false)
       setOpen(false)

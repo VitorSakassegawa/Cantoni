@@ -5,17 +5,21 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { registerStudentActivityBestEffort } from '@/lib/streak'
 import { getXpReward } from '@/lib/gamification'
+import {
+  buildHomeworkAttachmentPath,
+  resolveHomeworkAttachmentUrl,
+  validateHomeworkAttachment,
+} from '@/lib/homework-storage'
 
 export async function uploadHomeworkImage(aulaId: number, file: File) {
-  await requireLessonAccess(aulaId, {
+  const access = await requireLessonAccess(aulaId, {
     allowProfessor: true,
     allowStudentOwner: true,
   })
 
   const supabase = await createClient()
-  const fileExt = file.name.split('.').pop()
-  const fileName = `${aulaId}-${crypto.randomUUID()}.${fileExt}`
-  const filePath = `exercises/${fileName}`
+  validateHomeworkAttachment(file)
+  const filePath = buildHomeworkAttachmentPath(aulaId, file.name)
 
   const { error: uploadError } = await supabase.storage
     .from('homework-exercises')
@@ -25,14 +29,10 @@ export async function uploadHomeworkImage(aulaId: number, file: File) {
     throw uploadError
   }
 
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from('homework-exercises').getPublicUrl(filePath)
-
   const { error: updateError } = await supabase
     .from('aulas')
     .update({
-      homework_image_url: publicUrl,
+      homework_image_url: filePath,
       homework_completed: true,
     })
     .eq('id', aulaId)
@@ -41,20 +41,17 @@ export async function uploadHomeworkImage(aulaId: number, file: File) {
     throw updateError
   }
 
-  const { data: aula } = await supabase
-    .from('aulas')
-    .select('contratos(aluno_id)')
-    .eq('id', aulaId)
-    .single()
-
-  const alunoId = (aula as any)?.contratos?.aluno_id
+  const alunoId = access.contrato?.aluno_id
   if (alunoId) {
     await registerStudentActivityBestEffort(alunoId)
   }
 
   revalidatePath('/aluno')
+  revalidatePath('/professor/aulas')
   revalidatePath('/aluno/aulas')
-  return { success: true, url: publicUrl, xpAwarded: getXpReward('homeworkComplete') }
+  const signedUrl = await resolveHomeworkAttachmentUrl(access.serviceSupabase, filePath)
+
+  return { success: true, url: signedUrl, xpAwarded: getXpReward('homeworkComplete') }
 }
 
 export async function updateLessonHomework(

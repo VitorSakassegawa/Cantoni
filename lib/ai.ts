@@ -1,6 +1,36 @@
 import 'server-only'
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
+type GeminiAudioInlineData = {
+  data?: string | null
+}
+
+type GeminiAudioPart = {
+  inlineData?: GeminiAudioInlineData | null
+}
+
+type GeminiAudioCandidate = {
+  content?: {
+    parts?: GeminiAudioPart[] | null
+  } | null
+}
+
+type GeminiAudioResponse = {
+  candidates?: GeminiAudioCandidate[] | null
+}
+
+type LessonAnalysisParsed = {
+  summary_en?: string | null
+  summary_pt?: string | null
+  vocabulary?: Array<{
+    word: string
+    translation: string
+    example?: string
+  }>
+  homework?: string | null
+  due_date?: string | null
+}
+
 function getGenAI() {
   const apiKey = process.env.GEMINI_API_KEY || ''
   if (!apiKey) {
@@ -33,7 +63,7 @@ export async function generateAIContent(
     const result = await model.generateContent(prompt)
     const response = await result.response
     return response.text()
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error(`Error with model ${modelName}:`, error)
 
     // Check for 403 or specific preview model errors
@@ -223,7 +253,7 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: Lesso
     [Goals for next time]
   `
   const response = await generateAIContent(prompt, PRIMARY_MODEL, 'application/json')
-  const parsed = extractAndParseJSON(response)
+  const parsed = extractAndParseJSON<LessonAnalysisParsed>(response)
 
   return {
     ...parsed,
@@ -293,9 +323,11 @@ export async function generateAIAudio(text: string, modelName: string = AUDIO_MO
       setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 45000)
     )
 
-    const result: any = await Promise.race([audioPromise, timeoutPromise])
+    const result = (await Promise.race([audioPromise, timeoutPromise])) as {
+      response: Promise<GeminiAudioResponse>
+    }
     const response = await result.response
-    const part = response.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData)
+    const part = response.candidates?.[0]?.content?.parts?.find((candidatePart) => candidatePart.inlineData)
     
     if (part?.inlineData?.data) {
       console.log(`Audio generated successfully with ${modelName}. Converting PCM to WAV...`)
@@ -303,8 +335,8 @@ export async function generateAIAudio(text: string, modelName: string = AUDIO_MO
     }
 
     throw new Error('No audio data in response')
-  } catch (error: any) {
-    console.error(`Error with ${modelName}:`, error.message || error)
+  } catch (error: unknown) {
+    console.error(`Error with ${modelName}:`, error instanceof Error ? error.message : error)
 
     // Fallback logic for audio
     if (modelName === AUDIO_MODEL) {
@@ -322,7 +354,7 @@ export async function generateAIAudio(text: string, modelName: string = AUDIO_MO
  * Robustly extracts and parses JSON from an AI response string.
  * Handles markdown fences, extra text, and basic malformed JSON.
  */
-export function extractAndParseJSON(text: string): any {
+export function extractAndParseJSON<T = unknown>(text: string): T {
   let content = text.trim()
   
   // 1. Remove markdown fences if present
@@ -331,7 +363,7 @@ export function extractAndParseJSON(text: string): any {
   }
 
   try {
-    return JSON.parse(content)
+    return JSON.parse(content) as T
   } catch (e) {
     // 2. If standard parse fails, try to find the first '{' and last '}'
     const start = content.indexOf('{')
@@ -340,7 +372,7 @@ export function extractAndParseJSON(text: string): any {
     if (start !== -1 && end !== -1 && end > start) {
       const jsonBlock = content.substring(start, end + 1)
       try {
-        return JSON.parse(jsonBlock)
+        return JSON.parse(jsonBlock) as T
       } catch (innerError) {
         console.error('Failed to parse extracted JSON block:', innerError)
         // 3. Last ditch: return null or throw to be handled by caller

@@ -348,6 +348,9 @@ alter table avaliacoes_habilidades enable row level security;
 alter table placement_results enable row level security;
 alter table activity_logs enable row level security;
 alter table contract_addenda enable row level security;
+alter table contract_cancellations enable row level security;
+alter table payment_cancellation_entries enable row level security;
+alter table contract_credit_applications enable row level security;
 alter table document_issuances enable row level security;
 
 create or replace function is_professor()
@@ -495,6 +498,30 @@ create policy "contract_addenda_select_policy" on contract_addenda for select us
 create policy "contract_addenda_insert_professor_policy" on contract_addenda for insert with check (is_professor());
 create policy "contract_addenda_update_professor_policy" on contract_addenda for update using (is_professor()) with check (is_professor());
 create policy "contract_addenda_delete_professor_policy" on contract_addenda for delete using (is_professor());
+
+create policy "contract_cancellations_select_policy" on contract_cancellations for select using (
+  is_professor()
+  or student_id = (select auth.uid())
+);
+create policy "contract_cancellations_insert_professor_policy" on contract_cancellations for insert with check (is_professor());
+create policy "contract_cancellations_update_professor_policy" on contract_cancellations for update using (is_professor()) with check (is_professor());
+create policy "contract_cancellations_delete_professor_policy" on contract_cancellations for delete using (is_professor());
+
+create policy "payment_cancellation_entries_select_policy" on payment_cancellation_entries for select using (
+  is_professor()
+  or student_id = (select auth.uid())
+);
+create policy "payment_cancellation_entries_insert_professor_policy" on payment_cancellation_entries for insert with check (is_professor());
+create policy "payment_cancellation_entries_update_professor_policy" on payment_cancellation_entries for update using (is_professor()) with check (is_professor());
+create policy "payment_cancellation_entries_delete_professor_policy" on payment_cancellation_entries for delete using (is_professor());
+
+create policy "contract_credit_applications_select_policy" on contract_credit_applications for select using (
+  is_professor()
+  or student_id = (select auth.uid())
+);
+create policy "contract_credit_applications_insert_professor_policy" on contract_credit_applications for insert with check (is_professor());
+create policy "contract_credit_applications_update_professor_policy" on contract_credit_applications for update using (is_professor()) with check (is_professor());
+create policy "contract_credit_applications_delete_professor_policy" on contract_credit_applications for delete using (is_professor());
 
 create policy "document_issuances_select_policy" on document_issuances for select using (
   is_professor()
@@ -762,6 +789,350 @@ begin
     v_paid_value,
     v_previous_open_value,
     round(v_paid_value + p_new_open_value, 2);
+end;
+$$;
+
+create or replace function issue_document_issuance_v1(
+  p_contract_id integer,
+  p_student_id uuid,
+  p_kind text,
+  p_title text,
+  p_payload jsonb,
+  p_content_hash text,
+  p_requires_acceptance boolean,
+  p_issued_by uuid
+)
+returns table (
+  issuance_id bigint,
+  version integer
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_next_version integer;
+begin
+  if p_kind not in ('contract', 'enrollment_declaration', 'cancellation_notice') then
+    raise exception 'Tipo de documento inválido';
+  end if;
+
+  select coalesce(max(document_issuances.version), 0) + 1
+  into v_next_version
+  from document_issuances
+  where contract_id = p_contract_id
+    and kind = p_kind;
+
+  update document_issuances
+  set status = 'superseded'
+  where contract_id = p_contract_id
+    and kind = p_kind
+    and status = 'issued';
+
+  insert into document_issuances (
+    contract_id,
+    student_id,
+    kind,
+    version,
+    title,
+    payload,
+    content_hash,
+    status,
+    requires_acceptance,
+    issued_by
+  ) values (
+    p_contract_id,
+    p_student_id,
+    p_kind,
+    v_next_version,
+    p_title,
+    coalesce(p_payload, '{}'::jsonb),
+    coalesce(p_content_hash, ''),
+    'issued',
+    coalesce(p_requires_acceptance, false),
+    p_issued_by
+  )
+  returning id, document_issuances.version
+  into issuance_id, version;
+
+  return next;
+end;
+$$;
+
+create or replace function cancel_contract_v1(
+  p_contract_id integer,
+  p_student_id uuid,
+  p_cancelled_by uuid,
+  p_effective_date date,
+  p_status_financeiro text,
+  p_reason_code text,
+  p_reason_label text,
+  p_reason_details text default null,
+  p_notes text default null,
+  p_lesson_action text default 'auto_cancel_future',
+  p_outstanding_action text default 'keep_open_balance',
+  p_credit_action text default 'no_credit',
+  p_paid_amount numeric default 0,
+  p_consumed_value numeric default 0,
+  p_outstanding_value numeric default 0,
+  p_credit_value numeric default 0,
+  p_completed_lessons integer default 0,
+  p_future_lesson_ids integer[] default '{}',
+  p_payment_snapshots jsonb default '[]'::jsonb,
+  p_payment_ids_to_delete integer[] default '{}',
+  p_document_title text default null,
+  p_document_payload jsonb default '{}'::jsonb,
+  p_document_content_hash text default ''
+)
+returns table (
+  cancellation_id bigint,
+  issuance_id bigint,
+  cancelled_future_lessons integer
+)
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_contract contratos%rowtype;
+  v_cancelled_future_lessons integer := 0;
+  v_next_version integer;
+begin
+  select *
+  into v_contract
+  from contratos
+  where id = p_contract_id
+  for update;
+
+  if not found then
+    raise exception 'Contrato não encontrado';
+  end if;
+
+  if v_contract.status = 'cancelado' then
+    raise exception 'Este contrato já foi cancelado';
+  end if;
+
+  update contratos
+  set status = 'cancelado',
+      status_financeiro = p_status_financeiro,
+      data_fim = p_effective_date
+  where id = p_contract_id;
+
+  if p_lesson_action = 'auto_cancel_future' and coalesce(array_length(p_future_lesson_ids, 1), 0) > 0 then
+    update aulas
+    set status = 'cancelada',
+        justificativa_professor = 'Contrato cancelado',
+        motivo_remarcacao = format('Contrato cancelado em %s', p_effective_date)
+    where contrato_id = p_contract_id
+      and id = any(p_future_lesson_ids);
+
+    get diagnostics v_cancelled_future_lessons = row_count;
+  end if;
+
+  insert into contract_cancellations (
+    contract_id,
+    student_id,
+    cancelled_by,
+    effective_date,
+    reason_code,
+    reason_label,
+    reason_details,
+    notes,
+    lesson_action,
+    outstanding_action,
+    credit_action,
+    paid_amount,
+    consumed_value,
+    outstanding_value,
+    credit_value,
+    completed_lessons,
+    future_lessons_cancelled
+  ) values (
+    p_contract_id,
+    p_student_id,
+    p_cancelled_by,
+    p_effective_date,
+    p_reason_code,
+    p_reason_label,
+    nullif(trim(coalesce(p_reason_details, '')), ''),
+    nullif(trim(coalesce(p_notes, '')), ''),
+    p_lesson_action,
+    p_outstanding_action,
+    p_credit_action,
+    coalesce(p_paid_amount, 0),
+    coalesce(p_consumed_value, 0),
+    coalesce(p_outstanding_value, 0),
+    coalesce(p_credit_value, 0),
+    coalesce(p_completed_lessons, 0),
+    v_cancelled_future_lessons
+  )
+  returning id into cancellation_id;
+
+  if p_outstanding_action = 'waive_open_balance' and jsonb_typeof(coalesce(p_payment_snapshots, '[]'::jsonb)) = 'array' then
+    insert into payment_cancellation_entries (
+      contract_cancellation_id,
+      contract_id,
+      student_id,
+      original_payment_id,
+      parcela_num,
+      original_status,
+      original_amount,
+      original_due_date,
+      original_payment_method,
+      cancellation_reason
+    )
+    select
+      cancellation_id,
+      p_contract_id,
+      p_student_id,
+      entry.original_payment_id,
+      entry.parcela_num,
+      entry.original_status,
+      entry.original_amount,
+      entry.original_due_date,
+      entry.original_payment_method,
+      coalesce(entry.cancellation_reason, 'contract_cancellation')
+    from jsonb_to_recordset(coalesce(p_payment_snapshots, '[]'::jsonb)) as entry(
+      contract_id integer,
+      student_id uuid,
+      original_payment_id integer,
+      parcela_num integer,
+      original_status text,
+      original_amount numeric,
+      original_due_date date,
+      original_payment_method text,
+      cancellation_reason text
+    );
+
+    if coalesce(array_length(p_payment_ids_to_delete, 1), 0) > 0 then
+      delete from pagamentos
+      where contrato_id = p_contract_id
+        and id = any(p_payment_ids_to_delete)
+        and status <> 'pago';
+    end if;
+  end if;
+
+  select coalesce(max(document_issuances.version), 0) + 1
+  into v_next_version
+  from document_issuances
+  where contract_id = p_contract_id
+    and kind = 'cancellation_notice';
+
+  update document_issuances
+  set status = 'superseded'
+  where contract_id = p_contract_id
+    and kind = 'cancellation_notice'
+    and status = 'issued';
+
+  insert into document_issuances (
+    contract_id,
+    student_id,
+    kind,
+    version,
+    title,
+    payload,
+    content_hash,
+    status,
+    requires_acceptance,
+    issued_by
+  ) values (
+    p_contract_id,
+    p_student_id,
+    'cancellation_notice',
+    v_next_version,
+    coalesce(p_document_title, format('Encerramento contratual #%s', p_contract_id)),
+    coalesce(p_document_payload, '{}'::jsonb),
+    coalesce(p_document_content_hash, ''),
+    'issued',
+    false,
+    p_cancelled_by
+  )
+  returning id into issuance_id;
+
+  cancelled_future_lessons := v_cancelled_future_lessons;
+  return next;
+end;
+$$;
+
+create or replace function update_contract_and_pending_payments_v1(
+  p_contract_id integer,
+  p_plano_id integer,
+  p_data_inicio date,
+  p_data_fim date,
+  p_semestre text,
+  p_ano integer,
+  p_livro_atual text,
+  p_nivel_atual text,
+  p_horario text,
+  p_valor numeric,
+  p_dia_vencimento integer,
+  p_forma_pagamento text,
+  p_status text,
+  p_tipo_contrato text,
+  p_dias_da_semana integer[],
+  p_desconto_valor numeric,
+  p_desconto_percentual numeric,
+  p_payment_updates jsonb default '[]'::jsonb
+)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_contract contratos%rowtype;
+  v_payment_update record;
+begin
+  select *
+  into v_contract
+  from contratos
+  where id = p_contract_id
+  for update;
+
+  if not found then
+    raise exception 'Contrato não encontrado';
+  end if;
+
+  update contratos
+  set plano_id = p_plano_id,
+      data_inicio = p_data_inicio,
+      data_fim = p_data_fim,
+      semestre = p_semestre,
+      ano = p_ano,
+      livro_atual = p_livro_atual,
+      nivel_atual = p_nivel_atual,
+      horario = p_horario,
+      valor = p_valor,
+      dia_vencimento = p_dia_vencimento,
+      forma_pagamento = p_forma_pagamento,
+      status = p_status,
+      tipo_contrato = p_tipo_contrato,
+      dias_da_semana = p_dias_da_semana,
+      desconto_valor = coalesce(p_desconto_valor, 0),
+      desconto_percentual = coalesce(p_desconto_percentual, 0)
+  where id = p_contract_id;
+
+  for v_payment_update in
+    select *
+    from jsonb_to_recordset(coalesce(p_payment_updates, '[]'::jsonb)) as entry(
+      id integer,
+      valor numeric,
+      forma text,
+      data_vencimento date
+    )
+  loop
+    update pagamentos
+    set valor = v_payment_update.valor,
+        forma = v_payment_update.forma,
+        data_vencimento = v_payment_update.data_vencimento
+    where id = v_payment_update.id
+      and contrato_id = p_contract_id
+      and status <> 'pago';
+
+    if not found then
+      raise exception 'Pagamento pendente não encontrado para atualização: %', v_payment_update.id;
+    end if;
+  end loop;
 end;
 $$;
 

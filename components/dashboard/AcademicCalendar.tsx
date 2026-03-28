@@ -40,7 +40,7 @@ export default function AcademicCalendar({ isProfessor = false }: Props) {
       const res = await fetch('/api/recessos')
       const data = await res.json()
       setRecessos(data)
-    } catch (e) {
+    } catch {
       toast.error('Erro ao carregar dados do calendário')
     } finally {
       setLoading(false)

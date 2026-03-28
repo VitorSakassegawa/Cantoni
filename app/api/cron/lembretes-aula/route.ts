@@ -5,6 +5,27 @@ import { enviarLembreteAula } from '@/lib/resend'
 import { formatDateTime } from '@/lib/utils'
 import { getCronSecret } from '@/lib/env'
 
+type ReminderContractProfile = {
+  full_name?: string | null
+  email?: string | null
+}
+
+type ReminderLesson = {
+  id: number
+  data_hora: string
+  meet_link?: string | null
+  homework?: string | null
+  has_homework?: boolean | null
+  homework_type?: string | null
+  homework_link?: string | null
+  homework_due_date?: string | null
+  contratos?: {
+    profiles?: ReminderContractProfile | ReminderContractProfile[] | null
+  } | {
+    profiles?: ReminderContractProfile | ReminderContractProfile[] | null
+  }[] | null
+}
+
 export async function GET(request: NextRequest) {
   const token = request.headers.get('x-cron-secret')
   if (token !== getCronSecret()) {
@@ -29,22 +50,23 @@ export async function GET(request: NextRequest) {
     .eq('homework_notificado', false)
 
   let sent = 0
-  for (const aula of aulas || []) {
-    const contrato = aula.contratos as any
-    if (!contrato?.profiles) {
+  for (const aula of (aulas || []) as ReminderLesson[]) {
+    const rawContract = Array.isArray(aula.contratos) ? (aula.contratos[0] ?? null) : (aula.contratos ?? null)
+    const profile = Array.isArray(rawContract?.profiles) ? (rawContract.profiles[0] ?? null) : (rawContract?.profiles ?? null)
+    if (!profile?.email) {
       continue
     }
 
     try {
       await enviarLembreteAula({
-        to: contrato.profiles.email,
-        nomeAluno: contrato.profiles.full_name,
+        to: profile.email,
+        nomeAluno: profile.full_name || 'Aluno',
         dataHora: formatDateTime(aula.data_hora),
         meetLink: aula.meet_link || '',
         homework: aula.homework || undefined,
-        has_homework: aula.has_homework,
-        homeworkType: aula.homework_type,
-        homeworkLink: aula.homework_link,
+        has_homework: aula.has_homework ?? undefined,
+        homeworkType: aula.homework_type ?? undefined,
+        homeworkLink: aula.homework_link ?? undefined,
         homeworkDueDate: aula.homework_due_date
           ? formatDateTime(aula.homework_due_date)
           : undefined,

@@ -18,6 +18,7 @@ import {
   getAppliedCreditTotal,
   listAvailableContractCredits,
 } from '@/lib/contract-credits'
+import { splitInstallmentsExact } from '@/lib/contract-payments'
 
 const CALENDAR_CONCURRENCY = 4
 
@@ -73,6 +74,10 @@ export async function POST(request: NextRequest) {
     const serviceSupabase = await createServiceClient()
     const { data: plano } = await serviceSupabase.from('planos').select('*').eq('id', planoId).single()
     const { data: aluno } = await serviceSupabase.from('profiles').select('*').eq('id', alunoId).single()
+    const { count: existingContractsCount } = await serviceSupabase
+      .from('contratos')
+      .select('id', { count: 'exact', head: true })
+      .eq('aluno_id', alunoId)
 
     if (!plano || !aluno) {
       return NextResponse.json({ error: 'Plano ou aluno não encontrado' }, { status: 404 })
@@ -251,7 +256,7 @@ export async function POST(request: NextRequest) {
       }
 
       const nParcelas = numParcelas || (tipoContrato === 'ad-hoc' ? 1 : specs.remainingMonths)
-      const valorParcela = Number((netContractValue / nParcelas).toFixed(2))
+      const installmentPlan = splitInstallmentsExact(netContractValue, nParcelas)
       const pagamentosParaInserir = []
 
       for (let i = 1; i <= nParcelas; i += 1) {
@@ -265,7 +270,7 @@ export async function POST(request: NextRequest) {
         pagamentosParaInserir.push({
           contrato_id: contrato.id,
           parcela_num: i,
-          valor: valorParcela,
+          valor: installmentPlan[i - 1]?.amount ?? 0,
           data_vencimento: vencimento.toISOString().split('T')[0],
           status: 'pendente',
           forma: forma_pagamento || 'pix',
@@ -302,6 +307,7 @@ export async function POST(request: NextRequest) {
       let setupPasswordLink: string | undefined
       let emailWarning: string | null = null
       let calendarWarning: string | null = null
+      if ((existingContractsCount || 0) === 0) {
       try {
         const { data: linkData } = await serviceSupabase.auth.admin.generateLink({
           type: 'recovery',
@@ -334,6 +340,7 @@ export async function POST(request: NextRequest) {
       } catch (error) {
         console.error('Welcome email error:', error)
         emailWarning = 'Contrato criado, mas houve falha ao enviar o e-mail de boas-vindas.'
+      }
       }
 
       if (calendarFailures > 0) {

@@ -3,6 +3,11 @@ type PendingPaymentInput = {
   parcela_num: number | string | null
 }
 
+export type InstallmentAmount = {
+  installmentNumber: number
+  amount: number
+}
+
 export type PendingPaymentUpdate = {
   id: number
   valor: number
@@ -12,6 +17,27 @@ export type PendingPaymentUpdate = {
 
 function toIsoDate(date: Date) {
   return date.toISOString().split('T')[0]
+}
+
+export function splitInstallmentsExact(totalAmount: number, installmentCount: number): InstallmentAmount[] {
+  if (!Number.isFinite(totalAmount) || totalAmount < 0) {
+    throw new Error('Valor total inválido')
+  }
+
+  if (!Number.isInteger(installmentCount) || installmentCount <= 0) {
+    throw new Error('Número de parcelas inválido')
+  }
+
+  const totalInCents = Math.round(totalAmount * 100)
+  const baseInstallmentInCents = Math.floor(totalInCents / installmentCount)
+  const remainderInCents = totalInCents - baseInstallmentInCents * installmentCount
+
+  return Array.from({ length: installmentCount }, (_, index) => ({
+    installmentNumber: index + 1,
+    amount: Number(
+      ((baseInstallmentInCents + (index === installmentCount - 1 ? remainderInCents : 0)) / 100).toFixed(2)
+    ),
+  }))
 }
 
 export function buildPendingPaymentUpdates(input: {

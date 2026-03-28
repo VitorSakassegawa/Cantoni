@@ -97,7 +97,7 @@ export async function criarEventoMeet({
   dataHora,
   duracaoMinutos = 45,
   emailAluno,
-  emailProfessor,
+  emailProfessor: _emailProfessor,
   descricao,
 }: {
   titulo: string
@@ -107,6 +107,7 @@ export async function criarEventoMeet({
   emailProfessor: string
   descricao?: string
 }) {
+  void _emailProfessor
   try {
     const calendar = getCalendar()
     const dataFim = new Date(dataHora.getTime() + duracaoMinutos * 60 * 1000)

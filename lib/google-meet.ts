@@ -2,6 +2,8 @@ import 'server-only'
 import { google } from 'googleapis'
 import { getGoogleAuth } from '@/lib/google-calendar'
 
+export { truncateTranscriptForAI } from '@/lib/transcript-utils'
+
 const TRANSCRIPT_HEADER = '## Transcript imported from Google Meet'
 const MEETING_CODE_PATTERN = /([a-z]+-[a-z]+-[a-z]+)/i
 
@@ -219,13 +221,4 @@ export function hasImportedTranscript(notes: string | null | undefined) {
 export function extractImportedTranscriptName(notes: string | null | undefined) {
   const match = (notes || '').match(/Transcript record:\s*(.+)/)
   return match?.[1]?.trim() || null
-}
-
-export function truncateTranscriptForAI(text: string, maxLength = 14000) {
-  const normalized = text.trim()
-  if (normalized.length <= maxLength) {
-    return normalized
-  }
-
-  return `${normalized.slice(0, maxLength)}\n\n[Transcript truncated for AI processing]`
 }

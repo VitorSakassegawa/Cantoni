@@ -30,6 +30,12 @@ type PaymentRow = {
   forma?: string | null
 }
 
+type CancellationRpcResult = {
+  cancellation_id: number
+  issuance_id: number | null
+  cancelled_future_lessons: number
+}
+
 function startOfDayIso(date: string) {
   return new Date(`${date}T00:00:00`).toISOString()
 }
@@ -153,102 +159,103 @@ export async function POST(request: NextRequest) {
 
   const nextFinancialStatus =
     outstandingAction === 'keep_open_balance' && summary.openAmount > 0 ? 'pendente' : 'em_dia'
-
-  const { error: contractUpdateError } = await serviceSupabase
-    .from('contratos')
-    .update({
-      status: 'cancelado',
-      status_financeiro: nextFinancialStatus,
-      data_fim: effectiveDate,
-    })
-    .eq('id', contractId)
-
-  if (contractUpdateError) {
-    return NextResponse.json({ error: contractUpdateError.message }, { status: 500 })
-  }
-
-  let cancelledFutureLessons = 0
-
-  if (lessonAction === 'auto_cancel_future' && futureLessons.length > 0) {
-    for (const lesson of futureLessons) {
-      const { error: lessonUpdateError } = await serviceSupabase
-        .from('aulas')
-        .update({
-          status: 'cancelada',
-          justificativa_professor: 'Contrato cancelado',
-          motivo_remarcacao: `Contrato cancelado em ${effectiveDate}`,
-        })
-        .eq('id', lesson.id)
-
-      if (!lessonUpdateError) {
-        cancelledFutureLessons += 1
-      }
-
-      if (lesson.google_event_id) {
-        await deletarEventoCalendar(lesson.google_event_id)
-      }
-    }
-  }
-
   const reasonLabel = getCancellationReasonLabel(reasonCode)
-  const { data: cancellationRecord, error: cancellationError } = await serviceSupabase
-    .from('contract_cancellations')
-    .insert({
+
+  const paymentSnapshots = openPayments.map((payment) => ({
     contract_id: contractId,
     student_id: contract.aluno_id,
-    cancelled_by: user.id,
-    effective_date: effectiveDate,
-    reason_code: reasonCode,
-    reason_label: reasonLabel,
-    reason_details: reasonDetails || null,
-    notes: notes || null,
-    lesson_action: lessonAction,
-    outstanding_action: outstandingAction,
-    credit_action: creditAction,
-    paid_amount: summary.paidAmount,
-    consumed_value: summary.consumedValue,
-    outstanding_value: summary.openAmount,
-    credit_value: summary.creditValue,
-    completed_lessons: summary.completedLessons,
-    future_lessons_cancelled: cancelledFutureLessons,
-    })
-    .select('*')
-    .single()
+    original_payment_id: payment.id,
+    parcela_num: payment.parcela_num || null,
+    original_status: payment.status,
+    original_amount: Number(payment.valor || 0),
+    original_due_date: payment.data_vencimento || null,
+    original_payment_method: payment.forma || null,
+    cancellation_reason: 'contract_cancellation',
+  }))
 
-  if (cancellationError || !cancellationRecord) {
+  const contractForNotice = {
+    ...contract,
+    status: 'cancelado',
+    data_fim: effectiveDate,
+  }
+
+  const cancellationPayload = buildCancellationNoticeSnapshot({
+    student: studentProfile || {},
+    teacher: teacherProfile || {},
+    contract: contractForNotice,
+    cancellation: {
+      id: 0,
+      effective_date: effectiveDate,
+      reason_label: reasonLabel,
+      reason_details: reasonDetails || null,
+      notes: notes || null,
+      outstanding_action: outstandingAction,
+      credit_action: creditAction,
+      paid_amount: summary.paidAmount,
+      consumed_value: summary.consumedValue,
+      outstanding_value: summary.openAmount,
+      credit_value: summary.creditValue,
+      completed_lessons: summary.completedLessons,
+      future_lessons_cancelled: futureLessons.length,
+    },
+  })
+  const contentHash = generateDocumentHash(cancellationPayload)
+
+  const { data: cancellationResult, error: cancellationError } = await serviceSupabase.rpc(
+    'cancel_contract_v1',
+    {
+      p_contract_id: contractId,
+      p_student_id: contract.aluno_id,
+      p_cancelled_by: user.id,
+      p_effective_date: effectiveDate,
+      p_status_financeiro: nextFinancialStatus,
+      p_reason_code: reasonCode,
+      p_reason_label: reasonLabel,
+      p_reason_details: reasonDetails || null,
+      p_notes: notes || null,
+      p_lesson_action: lessonAction,
+      p_outstanding_action: outstandingAction,
+      p_credit_action: creditAction,
+      p_paid_amount: summary.paidAmount,
+      p_consumed_value: summary.consumedValue,
+      p_outstanding_value: summary.openAmount,
+      p_credit_value: summary.creditValue,
+      p_completed_lessons: summary.completedLessons,
+      p_future_lesson_ids: futureLessons.map((lesson) => lesson.id),
+      p_payment_snapshots: paymentSnapshots,
+      p_payment_ids_to_delete: openPayments.map((payment) => payment.id),
+      p_document_title: cancellationPayload.title,
+      p_document_payload: cancellationPayload,
+      p_document_content_hash: contentHash,
+    }
+  )
+
+  const cancellationInfo = (cancellationResult as CancellationRpcResult[] | null)?.[0]
+
+  if (cancellationError || !cancellationInfo) {
     return NextResponse.json(
       { error: cancellationError?.message || 'Falha ao registrar o cancelamento.' },
       { status: 500 }
     )
   }
 
-  if (outstandingAction === 'waive_open_balance' && openPayments.length > 0) {
-    const paymentSnapshots = openPayments.map((payment) => ({
-      contract_cancellation_id: cancellationRecord.id,
-      contract_id: contractId,
-      student_id: contract.aluno_id,
-      original_payment_id: payment.id,
-      parcela_num: payment.parcela_num || null,
-      original_status: payment.status,
-      original_amount: Number(payment.valor || 0),
-      original_due_date: payment.data_vencimento || null,
-      original_payment_method: payment.forma || null,
-      cancellation_reason: 'contract_cancellation',
-    }))
+  const cancelledFutureLessons = cancellationInfo.cancelled_future_lessons
 
-    const { error: snapshotError } = await serviceSupabase
-      .from('payment_cancellation_entries')
-      .insert(paymentSnapshots)
+  if (lessonAction === 'auto_cancel_future' && futureLessons.length > 0) {
+    let calendarFailures = 0
+    for (const lesson of futureLessons) {
+      if (!lesson.google_event_id) {
+        continue
+      }
 
-    if (snapshotError) {
-      return NextResponse.json({ error: snapshotError.message }, { status: 500 })
+      const calendarDeletion = await deletarEventoCalendar(lesson.google_event_id)
+      if (!calendarDeletion.success) {
+        calendarFailures += 1
+      }
     }
 
-    const openPaymentIds = openPayments.map((payment) => payment.id)
-    const { error: deletePaymentsError } = await serviceSupabase.from('pagamentos').delete().in('id', openPaymentIds)
-
-    if (deletePaymentsError) {
-      return NextResponse.json({ error: deletePaymentsError.message }, { status: 500 })
+    if (calendarFailures > 0) {
+      console.warn(`cancel_contract_v1: ${calendarFailures} calendar events could not be deleted.`)
     }
   }
 
@@ -272,11 +279,12 @@ export async function POST(request: NextRequest) {
       creditValue: summary.creditValue,
       completedLessons: summary.completedLessons,
       cancelledFutureLessons,
+      cancellationId: cancellationInfo.cancellation_id,
+      issuanceId: cancellationInfo.issuance_id,
     },
   })
 
   let emailWarning: string | null = null
-  let issuanceId: number | null = null
   if (studentProfile?.email) {
     try {
       await enviarEmailCancelamentoContrato({
@@ -294,57 +302,11 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const cancellationPayload = buildCancellationNoticeSnapshot({
-    student: studentProfile || {},
-    teacher: teacherProfile || {},
-    contract,
-    cancellation: cancellationRecord,
-  })
-  const contentHash = generateDocumentHash(cancellationPayload)
-
-  const { data: previousIssuances } = await serviceSupabase
-    .from('document_issuances')
-    .select('version')
-    .eq('contract_id', contractId)
-    .eq('kind', 'cancellation_notice')
-    .order('version', { ascending: false })
-    .limit(1)
-
-  const nextVersion = ((previousIssuances?.[0]?.version as number | undefined) || 0) + 1
-
-  await serviceSupabase
-    .from('document_issuances')
-    .update({ status: 'superseded' })
-    .eq('contract_id', contractId)
-    .eq('kind', 'cancellation_notice')
-    .eq('status', 'issued')
-
-  const { data: issuance, error: issuanceError } = await serviceSupabase
-    .from('document_issuances')
-    .insert({
-      contract_id: contractId,
-      student_id: contract.aluno_id,
-      kind: 'cancellation_notice',
-      version: nextVersion,
-      title: cancellationPayload.title,
-      payload: cancellationPayload,
-      content_hash: contentHash,
-      status: 'issued',
-      requires_acceptance: false,
-      issued_by: user.id,
-    })
-    .select('id')
-    .single()
-
-  if (!issuanceError && issuance) {
-    issuanceId = issuance.id
-  }
-
   return NextResponse.json({
     success: true,
     summary,
     cancelledFutureLessons,
     emailWarning,
-    issuanceId,
+    issuanceId: cancellationInfo.issuance_id,
   })
 }

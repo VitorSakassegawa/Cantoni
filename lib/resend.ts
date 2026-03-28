@@ -1,7 +1,12 @@
 import 'server-only'
 import { Resend } from 'resend'
 
-type EmailPayload = Record<string, unknown>
+type EmailPayload = {
+  from: string
+  to: string
+  subject: string
+  html: string
+}
 type EmailResponse = { data: null; error: null }
 type EmailSender = {
   emails: {

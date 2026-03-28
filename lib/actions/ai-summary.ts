@@ -6,6 +6,25 @@ import { createClient } from '@/lib/supabase/server'
 import { generateLessonAnalysisV2 } from '@/lib/ai'
 import { enviarResumoAulaAI } from '@/lib/resend'
 import { syncFlashcardsFromVocabulary } from '@/lib/flashcards-auto'
+import type { VocabularyEntry } from '@/lib/dashboard-types'
+
+type StudentSummary = {
+  id: string
+  email?: string | null
+  full_name?: string | null
+  cefr_level?: string | null
+  nivel?: string | null
+  tipo_aula?: string | null
+}
+
+function getContractStudent(contrato: { profiles?: unknown } | null | undefined) {
+  const student = contrato?.profiles
+  if (Array.isArray(student)) {
+    return (student[0] || null) as StudentSummary | null
+  }
+
+  return (student || null) as StudentSummary | null
+}
 
 export async function getAIAnalysisV2(aulaId: number, content?: string) {
   const { aula, contrato, isProfessor } = await requireLessonAccess(aulaId, {
@@ -17,11 +36,7 @@ export async function getAIAnalysisV2(aulaId: number, content?: string) {
     throw new Error('Apenas professores podem gerar resumos por IA')
   }
 
-  let student = contrato?.profiles
-  if (Array.isArray(student)) {
-    student = student[0]
-  }
-
+  const student = getContractStudent(contrato)
   const currentNotes = content || aula.class_notes
   if (!currentNotes) {
     throw new Error('Nenhuma nota encontrada')
@@ -41,7 +56,7 @@ export async function getAIAnalysisV2(aulaId: number, content?: string) {
 export async function enviarResumoAI(
   aulaId: number,
   summaries: { pt: string; en: string },
-  vocabulary?: any[]
+  vocabulary?: VocabularyEntry[]
 ) {
   const { aula, contrato, isProfessor } = await requireLessonAccess(aulaId, {
     allowProfessor: true,
@@ -53,10 +68,7 @@ export async function enviarResumoAI(
   }
 
   const supabase = await createClient()
-  let student = contrato?.profiles
-  if (Array.isArray(student)) {
-    student = student[0]
-  }
+  const student = getContractStudent(contrato)
 
   if (!student || !student.email) {
     throw new Error('E-mail do aluno não encontrado')
@@ -74,7 +86,7 @@ export async function enviarResumoAI(
 
     await enviarResumoAulaAI({
       to: student.email,
-      nomeAluno: student.full_name,
+      nomeAluno: student.full_name || 'Aluno(a)',
       dataHora: dataFmt,
       resumoMarkdown: summaryPt,
     })
@@ -105,8 +117,11 @@ export async function enviarResumoAI(
     revalidatePath('/aluno')
     revalidatePath('/aluno/flashcards')
     return { success: true }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error sending AI summary:', error)
-    return { success: false, error: error.message }
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro ao enviar resumo por IA',
+    }
   }
 }

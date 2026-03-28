@@ -18,6 +18,19 @@ import { registerStudentActivityBestEffort } from '@/lib/streak'
 import { getXpReward } from '@/lib/gamification'
 import { evaluateMonthlyRescheduleLimit } from '@/lib/lesson-reschedule'
 
+type ContractStudentProfile = {
+  email?: string | null
+  full_name?: string | null
+  nivel?: string | null
+}
+
+type CompletedLessonContractRow = {
+  contrato_id: number | null
+  contratos?: {
+    aluno_id?: string | null
+  } | null
+}
+
 export async function cancelarAula(aulaId: number) {
   const { user, aula, contrato, isProfessor, serviceSupabase } = await requireLessonAccess(aulaId, {
     allowProfessor: true,
@@ -85,7 +98,7 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
   })
 
   const plano = contrato.planos
-  const aluno = contrato.profiles
+  const aluno = (contrato.profiles || null) as ContractStudentProfile | null
   const mes = startOfMonth(new Date(aula.data_hora))
   const mesStr = mes.toISOString().split('T')[0]
 
@@ -101,7 +114,7 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
     aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
   const rescheduleCheck = evaluateMonthlyRescheduleLimit({
-    monthlyLimit: plano.remarca_max_mes,
+    monthlyLimit: plano?.remarca_max_mes ?? 0,
     currentCount: qtdAtual,
     isProfessor,
     isResolvingConflict,
@@ -109,6 +122,10 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
 
   if (!rescheduleCheck.allowed) {
     throw new Error(rescheduleCheck.message)
+  }
+
+  if (!aluno?.email || !aluno.full_name) {
+    throw new Error('Dados do aluno não encontrados para remarcação')
   }
 
   let novoEventId = ''
@@ -229,7 +246,7 @@ export async function solicitarRemarcacao(aulaId: number, novaDataHora: string) 
     aula.status === 'pendente_remarcacao' || aula.status === 'pendente_remarcacao_rejeitada'
 
   const rescheduleCheck = evaluateMonthlyRescheduleLimit({
-    monthlyLimit: plano.remarca_max_mes,
+    monthlyLimit: plano?.remarca_max_mes ?? 0,
     currentCount: qtdAtual,
     isResolvingConflict,
   })
@@ -298,11 +315,11 @@ export async function concluirAula(aulaId: number) {
       .select('contrato_id, contratos(aluno_id)')
       .eq('id', aulaId)
       .single()
-  ).data as any
+  ).data as CompletedLessonContractRow | null
 
   revalidatePath('/professor')
-  if (contrato?.aluno_id) {
-    revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
+  if (contrato?.contratos?.aluno_id) {
+    revalidatePath(`/professor/alunos/${contrato.contratos.aluno_id}`)
   }
   revalidatePath('/aluno')
 

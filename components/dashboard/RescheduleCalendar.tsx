@@ -34,7 +34,6 @@ interface RescheduleCalendarProps {
 export default function RescheduleCalendar({ selectedDate, onDateSelect }: RescheduleCalendarProps) {
   const [viewDate, setViewDate] = useState(startOfMonth(startOfToday()))
   const [recessos, setRecessos] = useState<Recesso[]>([])
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     async function loadRecessos() {
@@ -42,10 +41,8 @@ export default function RescheduleCalendar({ selectedDate, onDateSelect }: Resch
         const res = await fetch('/api/recessos')
         const data = await res.json()
         setRecessos(data)
-      } catch (e) {
+      } catch {
         toast.error('Erro ao carregar datas bloqueadas')
-      } finally {
-        setLoading(false)
       }
     }
     loadRecessos()

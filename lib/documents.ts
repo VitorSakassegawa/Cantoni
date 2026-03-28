@@ -1,3 +1,4 @@
+import { getContractCancellationClause } from '@/lib/document-text'
 import { formatCurrency, formatDateOnly } from '@/lib/utils'
 
 export type ContractSection = {
@@ -159,8 +160,8 @@ export function buildPaymentSummary(payments: DocumentPayment[]) {
 }
 
 export function buildContractSections(input: {
-  student: DocumentPerson
-  teacher: DocumentPerson
+  student: DocumentPerson | null | undefined
+  teacher: DocumentPerson | null | undefined
   contract: DocumentContract
   payments: DocumentPayment[]
   addenda: DocumentAddendum[]
@@ -202,7 +203,7 @@ export function buildContractSections(input: {
     },
     {
       title: '6. Rescisão e multa',
-      body: 'A rescisão antecipada por iniciativa do Contratante, após o início das aulas, implicará o pagamento proporcional às aulas já realizadas, acrescido de multa compensatória equivalente a 10% do valor das aulas restantes. A rescisão por iniciativa do Contratado sem justa causa obrigará à devolução proporcional dos valores recebidos pelas aulas não ministradas.',
+      body: getContractCancellationClause(),
     },
     {
       title: '7. Materiais, participação e deveres do aluno',
@@ -234,8 +235,8 @@ export function buildContractSections(input: {
 }
 
 export function buildEnrollmentDeclaration(input: {
-  student: DocumentPerson
-  teacher: DocumentPerson
+  student: DocumentPerson | null | undefined
+  teacher: DocumentPerson | null | undefined
   contract: DocumentContract
 }) {
   const { student, teacher, contract } = input
@@ -255,8 +256,8 @@ export function buildEnrollmentDeclaration(input: {
 }
 
 export function buildContractSnapshot(input: {
-  student: DocumentPerson
-  teacher: DocumentPerson
+  student: DocumentPerson | null | undefined
+  teacher: DocumentPerson | null | undefined
   contract: DocumentContract
   payments: DocumentPayment[]
   addenda: DocumentAddendum[]
@@ -304,8 +305,8 @@ export function buildContractSnapshot(input: {
 }
 
 export function buildDeclarationSnapshot(input: {
-  student: DocumentPerson
-  teacher: DocumentPerson
+  student: DocumentPerson | null | undefined
+  teacher: DocumentPerson | null | undefined
   contract: DocumentContract
 }) {
   const declaration = buildEnrollmentDeclaration(input)
@@ -334,8 +335,8 @@ export function buildDeclarationSnapshot(input: {
 }
 
 export function buildCancellationNoticeSnapshot(input: {
-  student: DocumentPerson
-  teacher: DocumentPerson
+  student: DocumentPerson | null | undefined
+  teacher: DocumentPerson | null | undefined
   contract: DocumentContract
   cancellation: DocumentCancellation
 }) {

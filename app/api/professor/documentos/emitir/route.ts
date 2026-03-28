@@ -1,6 +1,6 @@
 import { revalidatePath } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { getDocumentContext } from '@/lib/document-access'
 import {
   buildCancellationNoticeSnapshot,
@@ -9,6 +9,11 @@ import {
 } from '@/lib/documents'
 import { generateDocumentHash } from '@/lib/document-audit'
 import { logActivityBestEffort } from '@/lib/activity-log'
+
+type IssueDocumentRpcResult = {
+  issuance_id: number
+  version: number
+}
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -33,11 +38,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Contrato invalido' }, { status: 400 })
   }
 
-  if (
-    kind !== 'contract' &&
-    kind !== 'enrollment_declaration' &&
-    kind !== 'cancellation_notice'
-  ) {
+  if (kind !== 'contract' && kind !== 'enrollment_declaration' && kind !== 'cancellation_notice') {
     return NextResponse.json({ error: 'Tipo de documento invalido' }, { status: 400 })
   }
 
@@ -57,7 +58,8 @@ export async function POST(request: NextRequest) {
   } else if (kind === 'enrollment_declaration') {
     payload = buildDeclarationSnapshot(context)
   } else {
-    const { data: cancellation } = await supabase
+    const serviceSupabase = await createServiceClient()
+    const { data: cancellation } = await serviceSupabase
       .from('contract_cancellations')
       .select('*')
       .eq('contract_id', parsedContractId)
@@ -79,39 +81,22 @@ export async function POST(request: NextRequest) {
   }
 
   const contentHash = generateDocumentHash(payload)
+  const serviceSupabase = await createServiceClient()
+  const { data: issuanceResult, error: issuanceError } = await serviceSupabase.rpc(
+    'issue_document_issuance_v1',
+    {
+      p_contract_id: parsedContractId,
+      p_student_id: context.contract.aluno_id,
+      p_kind: kind,
+      p_title: payload.title,
+      p_payload: payload,
+      p_content_hash: contentHash,
+      p_requires_acceptance: kind === 'contract',
+      p_issued_by: user.id,
+    }
+  )
 
-  const { data: previousIssuances } = await supabase
-    .from('document_issuances')
-    .select('id, version, status')
-    .eq('contract_id', parsedContractId)
-    .eq('kind', kind)
-    .order('version', { ascending: false })
-
-  const nextVersion = ((previousIssuances?.[0]?.version as number | undefined) || 0) + 1
-
-  await supabase
-    .from('document_issuances')
-    .update({ status: 'superseded' })
-    .eq('contract_id', parsedContractId)
-    .eq('kind', kind)
-    .eq('status', 'issued')
-
-  const { data: issuance, error: issuanceError } = await supabase
-    .from('document_issuances')
-    .insert({
-      contract_id: parsedContractId,
-      student_id: context.contract.aluno_id,
-      kind,
-      version: nextVersion,
-      title: payload.title,
-      payload,
-      content_hash: contentHash,
-      status: 'issued',
-      requires_acceptance: kind === 'contract',
-      issued_by: user.id,
-    })
-    .select('id')
-    .single()
+  const issuance = (issuanceResult as IssueDocumentRpcResult[] | null)?.[0]
 
   if (issuanceError || !issuance) {
     return NextResponse.json(
@@ -137,22 +122,22 @@ export async function POST(request: NextRequest) {
         : kind === 'enrollment_declaration'
           ? 'Declaracao de matricula'
           : 'Termo de encerramento'
-    } emitido(a) na versao ${nextVersion}.`,
+    } emitido(a) na versao ${issuance.version}.`,
     severity: 'info',
     metadata: {
-      issuanceId: issuance.id,
+      issuanceId: issuance.issuance_id,
       kind,
-      version: nextVersion,
+      version: issuance.version,
       contentHash,
     },
   })
 
   revalidatePath(`/professor/alunos/${context.contract.aluno_id}`)
   revalidatePath('/aluno/documentos')
-  revalidatePath(`/documentos/emitidos/${issuance.id}`)
+  revalidatePath(`/documentos/emitidos/${issuance.issuance_id}`)
 
   return NextResponse.json({
     success: true,
-    issuanceId: issuance.id,
+    issuanceId: issuance.issuance_id,
   })
 }

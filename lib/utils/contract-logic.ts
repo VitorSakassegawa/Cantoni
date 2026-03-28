@@ -3,12 +3,7 @@ import {
   startOfMonth, 
   endOfMonth, 
   differenceInMonths, 
-  addMonths, 
-  eachDayOfInterval, 
-  isSameDay,
-  isBefore,
-  addDays,
-  parseISO
+  eachDayOfInterval
 } from 'date-fns'
 
 export const SEMESTERS = {
@@ -105,5 +100,4 @@ export function calculateContractSpecs(
     isCrossSemester: tipoContrato === 'semestral' && (startDate.getMonth() <= 6 && endDate.getMonth() > 6)
   }
 }
-
 

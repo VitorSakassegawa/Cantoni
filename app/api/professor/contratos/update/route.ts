@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
-import { mapWithConcurrency } from '@/lib/async'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { logActivityBestEffort } from '@/lib/activity-log'
 import { buildPendingPaymentUpdates } from '@/lib/contract-payments'
 
@@ -53,7 +52,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'ID do contrato e obrigatorio' }, { status: 400 })
   }
 
-  const { data: existingContract, error: existingContractError } = await supabase
+  const serviceSupabase = await createServiceClient()
+
+  const { data: existingContract, error: existingContractError } = await serviceSupabase
     .from('contratos')
     .select(
       'plano_id, data_inicio, data_fim, semestre, ano, livro_atual, nivel_atual, horario, valor, dia_vencimento, forma_pagamento, status, tipo_contrato, dias_da_semana, desconto_valor, desconto_percentual'
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Dados numericos invalidos' }, { status: 400 })
   }
 
-  const { count: paidPaymentsCount } = await supabase
+  const { count: paidPaymentsCount } = await serviceSupabase
     .from('pagamentos')
     .select('id', { count: 'exact', head: true })
     .eq('contrato_id', id)
@@ -112,46 +113,20 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { error: updateError } = await supabase
-    .from('contratos')
-    .update({
-      plano_id: planoId ? Number(planoId) : existingContract.plano_id,
-      data_inicio: nextStartDate,
-      data_fim: nextEndDate,
-      semestre: nextSemester,
-      ano: nextYear,
-      livro_atual: nextBook,
-      nivel_atual: nextLevel,
-      horario: nextSchedule,
-      valor: nextValor,
-      dia_vencimento: nextDueDay,
-      forma_pagamento: nextPaymentMethod,
-      status: nextStatus,
-      tipo_contrato: nextContractType,
-      dias_da_semana: nextWeekdays,
-      desconto_valor: nextDiscountValue,
-      desconto_percentual: nextDiscountPercent,
-    })
-    .eq('id', id)
-
-  if (updateError) {
-    return NextResponse.json({ error: updateError.message }, { status: 500 })
-  }
-
-  const { data: allPagamentos } = await supabase
+  const { data: allPagamentos } = await serviceSupabase
     .from('pagamentos')
     .select('id, status, parcela_num, valor')
     .eq('contrato_id', id)
 
-  if (!hasPaidPayments) {
-    const paymentRows = (allPagamentos || []) as PaymentRow[]
-    const unpaidPayments = paymentRows.filter((pagamento) => pagamento.status !== 'pago')
-    const paidAmount = paymentRows
-      .filter((pagamento) => pagamento.status === 'pago')
-      .reduce((acc, pagamento) => acc + Number(pagamento.valor || 0), 0)
-    const remainingAmount = Math.max(0, nextValor - paidAmount)
+  const paymentRows = (allPagamentos || []) as PaymentRow[]
+  const unpaidPayments = paymentRows.filter((pagamento) => pagamento.status !== 'pago')
+  const paidAmount = paymentRows
+    .filter((pagamento) => pagamento.status === 'pago')
+    .reduce((acc, pagamento) => acc + Number(pagamento.valor || 0), 0)
+  const remainingAmount = Math.max(0, nextValor - paidAmount)
 
-    let paymentUpdates
+  let paymentUpdates: ReturnType<typeof buildPendingPaymentUpdates> = []
+  if (!hasPaidPayments) {
     try {
       paymentUpdates = buildPendingPaymentUpdates({
         dataInicio: nextStartDate,
@@ -166,64 +141,38 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
-    const updateResults = await mapWithConcurrency(paymentUpdates, 5, async (paymentUpdate) => {
-      const { error } = await supabase
-        .from('pagamentos')
-        .update({
-          valor: paymentUpdate.valor,
-          forma: paymentUpdate.forma,
-          data_vencimento: paymentUpdate.data_vencimento,
-        })
-        .eq('id', paymentUpdate.id)
-
-      return {
-        id: paymentUpdate.id,
-        error,
-      }
-    })
-
-    const failedUpdates = updateResults.filter((result) => result.error)
-    if (failedUpdates.length > 0) {
-      const { error: rollbackError } = await supabase
-        .from('contratos')
-        .update({
-          plano_id: existingContract.plano_id,
-          data_inicio: existingContract.data_inicio,
-          data_fim: existingContract.data_fim,
-          semestre: existingContract.semestre,
-          ano: existingContract.ano,
-          livro_atual: existingContract.livro_atual,
-          nivel_atual: existingContract.nivel_atual,
-          horario: existingContract.horario,
-          valor: existingContract.valor,
-          dia_vencimento: existingContract.dia_vencimento,
-          forma_pagamento: existingContract.forma_pagamento,
-          status: existingContract.status,
-          tipo_contrato: existingContract.tipo_contrato,
-          dias_da_semana: existingContract.dias_da_semana,
-          desconto_valor: existingContract.desconto_valor || 0,
-          desconto_percentual: existingContract.desconto_percentual || 0,
-        })
-        .eq('id', id)
-
-      return NextResponse.json(
-        {
-          error: rollbackError
-            ? 'Falha ao atualizar parcelas pendentes e nao foi possivel restaurar o contrato automaticamente.'
-            : 'Falha ao atualizar uma ou mais parcelas pendentes. O contrato foi restaurado para o estado anterior.',
-          details: failedUpdates.map((result) => ({
-            id: result.id,
-            message: result.error?.message || 'Erro desconhecido',
-          })),
-          rollbackError: rollbackError?.message || null,
-        },
-        { status: 502 }
-      )
-    }
   }
 
-  const { data: contrato } = await supabase.from('contratos').select('id, aluno_id').eq('id', id).single()
+  const { error: updateError } = await serviceSupabase.rpc('update_contract_and_pending_payments_v1', {
+    p_contract_id: Number(id),
+    p_plano_id: planoId ? Number(planoId) : existingContract.plano_id,
+    p_data_inicio: nextStartDate,
+    p_data_fim: nextEndDate,
+    p_semestre: nextSemester,
+    p_ano: nextYear,
+    p_livro_atual: nextBook,
+    p_nivel_atual: nextLevel,
+    p_horario: nextSchedule,
+    p_valor: nextValor,
+    p_dia_vencimento: nextDueDay,
+    p_forma_pagamento: nextPaymentMethod,
+    p_status: nextStatus,
+    p_tipo_contrato: nextContractType,
+    p_dias_da_semana: nextWeekdays,
+    p_desconto_valor: nextDiscountValue,
+    p_desconto_percentual: nextDiscountPercent,
+    p_payment_updates: paymentUpdates,
+  })
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 })
+  }
+
+  const { data: contrato } = await serviceSupabase
+    .from('contratos')
+    .select('id, aluno_id')
+    .eq('id', id)
+    .single()
 
   await logActivityBestEffort({
     actorUserId: user.id,

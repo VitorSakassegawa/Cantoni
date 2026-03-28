@@ -1,11 +1,20 @@
 export const dynamic = 'force-dynamic'
 
+import Image from 'next/image'
 import DocumentShell from '@/components/documents/DocumentShell'
 import { getDocumentContext } from '@/lib/document-access'
 import { buildContractSections, LEGAL_REFERENCE_LINKS } from '@/lib/documents'
 import { formatCurrency, formatDateOnly } from '@/lib/utils'
 
 const LEGAL_TEACHER_NAME = 'Gabriel de Oliveira Cantoni'
+
+type ContractAddendumView = {
+  id: number
+  new_open_value?: number | string | null
+  previous_open_installments?: number | null
+  new_open_installments?: number | null
+  first_due_date?: string | null
+}
 
 export default async function ContractDocumentPage({
   params,
@@ -25,11 +34,7 @@ export default async function ContractDocumentPage({
       <div className="space-y-10 text-slate-900">
         <header className="document-header space-y-4 border-b border-slate-200 pb-8">
           <div className="flex justify-center">
-            <img
-              src="/logo-cantoni.svg"
-              alt="Cantoni English School"
-              className="h-16 w-auto object-contain"
-            />
+            <Image src="/logo-cantoni.svg" alt="Cantoni English School" width={160} height={64} className="h-16 w-auto object-contain" />
           </div>
           <p className="text-center text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
             Cantoni English School
@@ -116,7 +121,7 @@ export default async function ContractDocumentPage({
           <section className="document-section space-y-4 border-t border-slate-200 pt-8">
             <h3 className="text-lg font-black tracking-tight">Historico de aditivos</h3>
             <div className="space-y-3">
-              {context.addenda.map((entry: any) => (
+              {(context.addenda as ContractAddendumView[]).map((entry) => (
                 <div key={entry.id} className="document-card rounded-[1.25rem] border border-slate-200 p-4">
                   <p className="text-sm font-black text-slate-900">
                     Aditivo #{entry.id} – novo saldo {formatCurrency(Number(entry.new_open_value || 0))}

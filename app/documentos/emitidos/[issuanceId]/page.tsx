@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import Image from 'next/image'
 import DocumentAcceptanceForm from '@/components/documents/DocumentAcceptanceForm'
 import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
 import ExternalSignatureStatusBadge from '@/components/documents/ExternalSignatureStatusBadge'
@@ -13,6 +14,14 @@ type SnapshotSection = {
   title: string
   body?: string
   items?: string[]
+}
+
+type IssuanceAddendumSnapshot = {
+  id: number
+  newOpenValue?: number | string | null
+  previousOpenInstallments?: number | null
+  newOpenInstallments?: number | null
+  firstDueDate?: string | null
 }
 
 function getStatusLabel(status: string) {
@@ -84,11 +93,7 @@ export default async function IssuedDocumentPage({
         <div className="space-y-10 text-slate-900">
           <header className="document-header space-y-4 border-b border-slate-200 pb-8">
             <div className="flex flex-col items-center gap-4">
-              <img
-                src="/logo-cantoni.svg"
-                alt="Cantoni English School"
-                className="h-16 w-auto object-contain"
-              />
+              <Image src="/logo-cantoni.svg" alt="Cantoni English School" width={160} height={64} className="h-16 w-auto object-contain" />
               <div
                 className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
               >
@@ -251,7 +256,7 @@ export default async function IssuedDocumentPage({
             <section className="document-section space-y-4 border-t border-slate-200 pt-8">
               <h3 className="text-lg font-black tracking-tight">Histórico de aditivos considerados</h3>
               <div className="space-y-3">
-                {payload.addenda.map((entry: any) => (
+                {(payload.addenda as IssuanceAddendumSnapshot[]).map((entry) => (
                   <div
                     key={entry.id}
                     className="document-card rounded-[1.25rem] border border-slate-200 p-4"
@@ -372,11 +377,7 @@ export default async function IssuedDocumentPage({
         <div className="space-y-10 text-slate-900">
           <header className="space-y-4 border-b border-slate-200 pb-8 text-center">
             <div className="flex justify-center">
-              <img
-                src="/logo-cantoni.svg"
-                alt="Cantoni English School"
-                className="h-16 w-auto object-contain"
-              />
+              <Image src="/logo-cantoni.svg" alt="Cantoni English School" width={160} height={64} className="h-16 w-auto object-contain" />
             </div>
             <div
               className={`mx-auto inline-flex rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
@@ -498,11 +499,7 @@ export default async function IssuedDocumentPage({
         <div className="space-y-12 text-slate-900">
           <header className="space-y-4 border-b border-slate-200 pb-8 text-center">
             <div className="flex justify-center">
-              <img
-                src="/logo-cantoni.svg"
-                alt="Cantoni English School"
-                className="h-16 w-auto object-contain"
-              />
+              <Image src="/logo-cantoni.svg" alt="Cantoni English School" width={160} height={64} className="h-16 w-auto object-contain" />
             </div>
             <p className="text-[11px] font-black uppercase tracking-[0.3em] text-slate-400">
               Cantoni English School

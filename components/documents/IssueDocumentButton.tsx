@@ -39,20 +39,15 @@ export default function IssueDocumentButton({
       toast.success(successMessage || 'Documento emitido com sucesso.')
       router.push(`/documentos/emitidos/${data.issuanceId}`)
       router.refresh()
-    } catch (error: any) {
-      toast.error(error.message || 'Falha ao emitir documento.')
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Falha ao emitir documento.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <button
-      type="button"
-      onClick={handleClick}
-      disabled={loading}
-      className={className}
-    >
+    <button type="button" onClick={handleClick} disabled={loading} className={className}>
       {loading ? (loadingLabel || 'Emitindo...') : label}
     </button>
   )
