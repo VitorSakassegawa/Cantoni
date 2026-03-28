@@ -25,20 +25,20 @@ export default async function ProfessorCronPage() {
           <h1 className="text-4xl font-black tracking-tighter text-slate-900">Central de Cron</h1>
           <p className="text-sm font-medium leading-7 text-slate-600">
             Esta área concentra as rotinas administrativas que antes poderiam rodar automaticamente.
-            No plano Hobby da Vercel, cron jobs automáticos frequentes ficam limitados, então mantivemos
-            automático apenas o financeiro diário e trouxemos os demais gatilhos para execução manual segura pelo professor.
+            No plano Hobby da Vercel, cron jobs só podem executar uma vez por dia e ainda sem precisão fina de horário.
+            Por isso, mantivemos automático apenas o financeiro diário e trouxemos os demais gatilhos para execução manual segura pelo professor.
           </p>
           <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">Como ficou a operação</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">Limitações do plano Hobby</p>
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-amber-100 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700">
-                Financeiro atrasado permanece automático 1x por dia na Vercel.
+                A Vercel Hobby só aceita cron automático com execução diária.
               </div>
               <div className="rounded-2xl border border-amber-100 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700">
-                Lembretes de aula passam a ser disparados manualmente quando necessário.
+                A invocação não tem precisão garantida: um horário configurado pode rodar em qualquer momento daquela hora.
               </div>
               <div className="rounded-2xl border border-amber-100 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700">
-                Importação de transcripts segue disponível manualmente, sem depender do plano pago.
+                Por isso, lembretes e transcripts ficam manuais, e só o financeiro atrasado segue automático.
               </div>
             </div>
           </div>
@@ -66,7 +66,7 @@ export default async function ProfessorCronPage() {
           details={[
             'Uso recomendado: 1x por dia, quando quiser disparar os lembretes do dia seguinte.',
             'Efeito esperado: envia e marca reminder_sent para não repetir indevidamente.',
-            'Limitação Vercel Hobby: não mantemos esse agendamento automático por hora.',
+            'Limitação Vercel Hobby: expressões horárias falham no deploy.',
           ]}
           endpoint="/api/professor/cron/lembretes-aula"
           badge="Manual"
@@ -79,7 +79,7 @@ export default async function ProfessorCronPage() {
           details={[
             'Uso recomendado: após concluir aulas e aguardar a transcript aparecer no Google Meet.',
             'Efeito esperado: preenche class_notes, resumo da IA, homework e vocabulário.',
-            'Limitação Vercel Hobby: a frequência ideal seria recorrente, então deixamos manual.',
+            'Limitação Vercel Hobby: execuções a cada 30 minutos não podem ficar automáticas.',
           ]}
           endpoint="/api/professor/aulas/importar-transcricoes"
           actionLabel="Importar agora"

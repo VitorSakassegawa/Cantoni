@@ -32,8 +32,9 @@ Current operating model:
 
 Reason:
 
-- On Vercel Hobby, frequent automatic schedules are limited, so hourly reminders and transcript polling
-  should not stay in `vercel.json`
+- On Vercel Hobby, cron jobs can only run once per day
+- Vercel does not guarantee precise invocation timing inside the target hour
+- Because of that, hourly reminders and transcript polling should not stay in `vercel.json`
 - The professor dashboard now exposes these routines as authenticated manual operations
 
 Authentication:
