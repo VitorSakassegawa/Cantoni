@@ -13,22 +13,25 @@ type ManualCronCardProps = {
   details: string[]
   endpoint?: string
   actionLabel?: string
-  resultFormatter?: (payload: Record<string, unknown>) => string
+  resultKind?: 'default' | 'transcript'
   badge?: string
   disabled?: boolean
 }
 
-function getDefaultResult(payload: Record<string, unknown>) {
+function getResultMessage(
+  payload: Record<string, unknown>,
+  resultKind: 'default' | 'transcript'
+) {
   const sent = typeof payload.sent === 'number' ? payload.sent : null
   const updated = typeof payload.updated === 'number' ? payload.updated : null
   const imported = typeof payload.imported === 'number' ? payload.imported : null
 
   if (sent !== null) return `${sent} lembrete(s) enviados.`
   if (updated !== null) return `${updated} pagamento(s) atualizado(s) para atrasado.`
-  if (imported !== null) {
+  if (imported !== null || resultKind === 'transcript') {
     const skipped = typeof payload.skipped === 'number' ? payload.skipped : 0
     const failed = typeof payload.failed === 'number' ? payload.failed : 0
-    return `${imported} transcript(s) importada(s), ${skipped} pulada(s), ${failed} com falha.`
+    return `${imported || 0} transcript(s) importada(s), ${skipped} pulada(s), ${failed} com falha.`
   }
 
   return 'Rotina executada com sucesso.'
@@ -41,7 +44,7 @@ export default function ManualCronCard({
   details,
   endpoint,
   actionLabel = 'Rodar agora',
-  resultFormatter,
+  resultKind = 'default',
   badge,
   disabled = false,
 }: ManualCronCardProps) {
@@ -60,7 +63,7 @@ export default function ManualCronCard({
         throw new Error(payload.error || 'Falha ao executar a rotina manual.')
       }
 
-      toast.success(resultFormatter ? resultFormatter(payload) : getDefaultResult(payload))
+      toast.success(getResultMessage(payload, resultKind))
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Falha ao executar a rotina manual.')

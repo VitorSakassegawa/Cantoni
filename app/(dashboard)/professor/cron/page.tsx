@@ -84,12 +84,7 @@ export default async function ProfessorCronPage() {
           endpoint="/api/professor/aulas/importar-transcricoes"
           actionLabel="Importar agora"
           badge="Manual"
-          resultFormatter={(payload) => {
-            const imported = typeof payload.imported === 'number' ? payload.imported : 0
-            const skipped = typeof payload.skipped === 'number' ? payload.skipped : 0
-            const failed = typeof payload.failed === 'number' ? payload.failed : 0
-            return `${imported} transcript(s) importada(s), ${skipped} pulada(s), ${failed} com falha.`
-          }}
+          resultKind="transcript"
         />
       </div>
     </div>
