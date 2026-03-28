@@ -5,9 +5,10 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { formatCurrency, formatDateOnly } from '@/lib/utils'
-import { UserPlus, Search, Filter, MoreHorizontal, GraduationCap, Calendar, Mail, Phone, ExternalLink, BookOpen } from 'lucide-react'
+import { formatDateOnly } from '@/lib/utils'
+import { UserPlus, Search, Filter, GraduationCap, Calendar, Mail, Phone, ExternalLink, BookOpen } from 'lucide-react'
 import { withEffectivePaymentStatus } from '@/lib/payments'
+import type { ProfessorContractSummary, StudentListProfile } from '@/lib/dashboard-types'
 
 export default async function AlunosPage() {
   const supabase = await createClient()
@@ -24,6 +25,8 @@ export default async function AlunosPage() {
     .from('contratos')
     .select('*, planos(*), pagamentos(*)')
     .eq('status', 'ativo')
+  const studentList = (alunos as StudentListProfile[] | null | undefined) || []
+  const activeContracts = (contratos as ProfessorContractSummary[] | null | undefined) || []
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -59,10 +62,10 @@ export default async function AlunosPage() {
 
       {/* Alunos Grid */}
       <div className="grid gap-6">
-        {alunos?.map((aluno: any) => {
-          const contrato = contratos?.find((c: any) => c.aluno_id === aluno.id)
+        {studentList.map((aluno) => {
+          const contrato = activeContracts.find((item) => item.aluno_id === aluno.id)
           const pagAtrasado = contrato?.pagamentos?.find(
-            (p: any) => withEffectivePaymentStatus(p).effectiveStatus === 'atrasado'
+            (payment) => withEffectivePaymentStatus(payment).effectiveStatus === 'atrasado'
           )
           
           return (
@@ -153,7 +156,7 @@ export default async function AlunosPage() {
           )
         })}
 
-        {(!alunos || alunos.length === 0) && (
+        {studentList.length === 0 && (
           <div className="text-center py-20 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[2.5rem]">
             <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center text-slate-300 mx-auto mb-6">
               <GraduationCap className="w-10 h-10" />

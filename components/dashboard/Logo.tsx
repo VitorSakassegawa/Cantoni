@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 
 interface LogoProps {
   src: string
@@ -19,9 +20,12 @@ export function Logo({ src, fallbackAvatar }: LogoProps) {
   }
 
   return (
-    <img 
-      src={src} 
-      alt="Logo" 
+    <Image
+      src={src}
+      alt="Logo"
+      width={192}
+      height={192}
+      unoptimized
       className="w-full h-auto object-contain max-h-48"
       onError={() => setError(true)}
     />

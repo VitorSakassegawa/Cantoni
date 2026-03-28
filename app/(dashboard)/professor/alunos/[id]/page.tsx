@@ -35,7 +35,16 @@ import WhatsAppLinkButton from '@/components/dashboard/WhatsAppLinkButton'
 import IssueDocumentButton from '@/components/documents/IssueDocumentButton'
 import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
 import ExternalSignatureStatusBadge from '@/components/documents/ExternalSignatureStatusBadge'
-import { buildAttentionCandidate, buildRenewalCandidate } from '@/lib/insights'
+import type {
+  ActivityLogSummary,
+  ContractAddendumSummary,
+  ContractCancellationSummary,
+  DocumentIssuanceSummary,
+  PaymentWithEffectiveStatus,
+  StudentContractSummary,
+  TimelineAula,
+} from '@/lib/dashboard-types'
+import { buildAttentionCandidate, buildRenewalCandidate, type FeedItem } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 import { formatCurrency, formatDate, formatDateOnly, formatDateTime } from '@/lib/utils'
 import {
@@ -68,7 +77,8 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
     .eq('aluno_id', id)
     .order('created_at', { ascending: false })
 
-  const contrato = contratos?.find((entry: any) => entry.status === 'ativo') || contratos?.[0]
+  const contractList = (contratos as StudentContractSummary[] | null | undefined) || []
+  const contrato = contractList.find((entry) => entry.status === 'ativo') || contractList[0]
 
   const { data: aulas } = await supabase
     .from('aulas')
@@ -82,24 +92,26 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
     .eq('contrato_id', contrato?.id || 0)
     .order('parcela_num')
 
-  const pagamentosComStatus = (pagamentos || []).map((payment: any) => withEffectivePaymentStatus(payment))
-  const paidPaymentsCount = pagamentosComStatus.filter((payment: any) => payment.status === 'pago').length
-  const openPaymentsCount = pagamentosComStatus.filter((payment: any) => payment.status !== 'pago').length
-  const overduePaymentsCount = pagamentosComStatus.filter((payment: any) => payment.effectiveStatus === 'atrasado').length
+  const lessonList = (aulas as TimelineAula[] | null | undefined) || []
+  const pagamentosComStatus: PaymentWithEffectiveStatus[] = (
+    (pagamentos as PaymentWithEffectiveStatus[] | null | undefined) || []
+  ).map((payment) => withEffectivePaymentStatus(payment))
+  const paidPaymentsCount = pagamentosComStatus.filter((payment) => payment.status === 'pago').length
+  const openPaymentsCount = pagamentosComStatus.filter((payment) => payment.status !== 'pago').length
+  const overduePaymentsCount = pagamentosComStatus.filter((payment) => payment.effectiveStatus === 'atrasado').length
   const totalPaymentsCount = pagamentosComStatus.length
-  const nextOpenPayment = pagamentosComStatus.find((payment: any) => payment.status !== 'pago')
+  const nextOpenPayment = pagamentosComStatus.find((payment) => payment.status !== 'pago')
   const paidAmount = pagamentosComStatus
-    .filter((payment: any) => payment.status === 'pago')
-    .reduce((sum: number, payment: any) => sum + Number(payment.valor || 0), 0)
+    .filter((payment) => payment.status === 'pago')
+    .reduce((sum, payment) => sum + Number(payment.valor || 0), 0)
   const openAmount = pagamentosComStatus
-    .filter((payment: any) => payment.status !== 'pago')
-    .reduce((sum: number, payment: any) => sum + Number(payment.valor || 0), 0)
-  const completedLessonsCount = (aulas || []).filter((lesson: any) =>
+    .filter((payment) => payment.status !== 'pago')
+    .reduce((sum, payment) => sum + Number(payment.valor || 0), 0)
+  const completedLessonsCount = lessonList.filter((lesson) =>
     ['dada', 'finalizado'].includes(lesson.status)
   ).length
-  const futureLessonsCount = (aulas || []).filter((lesson: any) =>
-    ['agendada', 'confirmada', 'pendente_remarcacao'].includes(lesson.status) &&
-    new Date(lesson.data_hora).getTime() >= Date.now()
+  const futureLessonsCount = lessonList.filter((lesson) =>
+    ['agendada', 'confirmada', 'pendente_remarcacao'].includes(lesson.status)
   ).length
   const generalWhatsAppHref = buildWhatsAppUrl(aluno.phone, buildGeneralWhatsAppMessage(aluno.full_name))
   const firstAccessWhatsAppHref = buildWhatsAppUrl(aluno.phone, buildFirstAccessWhatsAppMessage(aluno.full_name))
@@ -151,15 +163,15 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
     .order('created_at', { ascending: false })
     .limit(6)
 
-  const activityItems = (activityLogs || []).map((entry: any) => ({
+  const activityItems: FeedItem[] = (((activityLogs as ActivityLogSummary[] | null | undefined) || []).map((entry) => ({
     id: `prof-student-activity-${entry.id}`,
     title: entry.title,
     description: entry.description,
-    severity: entry.severity || 'info',
+    severity: entry.severity === 'warning' || entry.severity === 'success' ? entry.severity : 'info',
     meta: formatDateTime(entry.created_at),
-  }))
+  })))
 
-  const contractIds = (contratos || []).map((entry: any) => entry.id)
+  const contractIds = contractList.map((entry) => entry.id)
   const { data: addenda } = contractIds.length
     ? await supabase
         .from('contract_addenda')
@@ -167,7 +179,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
         .in('contract_id', contractIds)
         .order('created_at', { ascending: false })
         .limit(10)
-    : { data: [] as any[] }
+    : { data: [] as ContractAddendumSummary[] }
 
   const { data: cancellationRecords } = contractIds.length
     ? await supabase
@@ -176,7 +188,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
         .in('contract_id', contractIds)
         .order('created_at', { ascending: false })
         .limit(10)
-    : { data: [] as any[] }
+    : { data: [] as ContractCancellationSummary[] }
 
   const { data: documentIssuances } = contrato
     ? await supabase
@@ -184,16 +196,23 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
         .select('id, kind, version, status, created_at, external_signature_status')
         .eq('contract_id', contrato.id)
         .order('version', { ascending: false })
-    : { data: [] as any[] }
+    : { data: [] as DocumentIssuanceSummary[] }
 
-  const latestContractIssuance = (documentIssuances || []).find((entry: any) => entry.kind === 'contract')
-  const latestDeclarationIssuance = (documentIssuances || []).find(
-    (entry: any) => entry.kind === 'enrollment_declaration'
+  const addendaList = (addenda as ContractAddendumSummary[] | null | undefined) || []
+  const cancellationRecordList =
+    (cancellationRecords as ContractCancellationSummary[] | null | undefined) || []
+  const documentIssuanceList = (documentIssuances as DocumentIssuanceSummary[] | null | undefined) || []
+
+  const latestContractIssuance = documentIssuanceList.find(
+    (entry) => entry.kind === 'contract'
   )
+  const latestDeclarationIssuance = documentIssuanceList.find((entry) => entry.kind === 'enrollment_declaration')
   const hasIssuedContract = Boolean(latestContractIssuance)
   const hasIssuedDeclaration = Boolean(latestDeclarationIssuance)
 
-  const progresso = contrato ? (contrato.aulas_dadas / contrato.aulas_totais) * 100 : 0
+  const progresso = contrato
+    ? ((contrato.aulas_dadas || 0) / Math.max(1, contrato.aulas_totais || 0)) * 100
+    : 0
   const currentPlanLabel = contrato?.planos?.freq_semana
     ? `${contrato.planos.freq_semana}x por semana`
     : 'Plano não definido'
@@ -671,7 +690,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                       </tr>
                     </thead>
                     <tbody>
-                      {(addenda || []).map((entry: any) => (
+                      {addendaList.map((entry) => (
                         <tr key={entry.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
                           <td className="px-6 py-5">
                             <p className="text-sm font-black text-slate-900">#{entry.contract_id}</p>
@@ -686,7 +705,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                           <td className="px-6 py-5 text-xs font-bold text-slate-500">{formatDateTime(entry.created_at)}</td>
                         </tr>
                       ))}
-                      {(!addenda || addenda.length === 0) ? (
+                      {addendaList.length === 0 ? (
                         <tr>
                           <td colSpan={6} className="px-6 py-10 text-center text-xs font-medium text-slate-400">
                             Nenhum aditivo registrado para este aluno.
@@ -717,7 +736,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                     </tr>
                   </thead>
                   <tbody>
-                    {(cancellationRecords || []).map((entry: any) => (
+                    {cancellationRecordList.map((entry) => (
                       <tr key={entry.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
                         <td className="px-6 py-5">
                           <p className="text-sm font-black text-slate-900">#{entry.contract_id}</p>
@@ -744,7 +763,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                         <td className="px-6 py-5 text-xs font-bold text-slate-500">{formatDateTime(entry.created_at)}</td>
                       </tr>
                     ))}
-                    {(!cancellationRecords || cancellationRecords.length === 0) ? (
+                    {cancellationRecordList.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="px-6 py-10 text-center text-xs font-medium text-slate-400">
                           Nenhum cancelamento registrado para este aluno.
@@ -779,7 +798,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                     </tr>
                   </thead>
                   <tbody>
-                    {pagamentosComStatus.map((p: any) => (
+                    {pagamentosComStatus.map((p) => (
                       <tr key={p.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
                         <td className="px-6 py-5">
                           <span className="text-sm font-black text-slate-900">{p.parcela_num}</span>
@@ -854,7 +873,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                     </tr>
                   </thead>
                   <tbody>
-                    {contratos?.map((entry: any) => (
+                    {contractList.map((entry) => (
                       <tr
                         key={entry.id}
                         className={`border-b border-slate-50 transition-colors hover:bg-slate-50/50 ${
@@ -903,7 +922,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                         </td>
                       </tr>
                     ))}
-                    {(!contratos || contratos.length === 0) ? (
+                    {contractList.length === 0 ? (
                       <tr>
                         <td colSpan={5} className="px-6 py-10 text-center text-xs font-medium text-slate-400">
                           Nenhum contrato encontrado para este aluno.

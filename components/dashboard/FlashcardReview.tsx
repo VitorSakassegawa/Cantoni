@@ -158,7 +158,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
                 {currentCard.example && (
                   <div>
                     <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Exemplo</p>
-                    <p className="text-sm font-semibold italic text-slate-600">"{currentCard.example}"</p>
+                    <p className="text-sm font-semibold italic text-slate-600">&quot;{currentCard.example}&quot;</p>
                   </div>
                 )}
               </div>

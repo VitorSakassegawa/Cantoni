@@ -17,13 +17,18 @@ import {
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 
+type ActiveContractSummary = {
+  id: number
+  data_fim?: string | null
+}
+
 export default function NovoContratoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id: alunoId } = use(params)
   const router = useRouter()
   const supabase = createClient()
   
   const [loading, setLoading] = useState(true)
-  const [activeContrato, setActiveContrato] = useState<any>(null)
+  const [activeContrato, setActiveContrato] = useState<ActiveContractSummary | null>(null)
   const [showWarning, setShowWarning] = useState(false)
   const [proceeded, setProceeded] = useState(false)
 
@@ -37,7 +42,7 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
         .maybeSingle()
       
       if (data) {
-        setActiveContrato(data)
+        setActiveContrato(data as ActiveContractSummary)
         setShowWarning(true)
       }
       setLoading(false)

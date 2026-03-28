@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { createClient } from '@/lib/supabase/client'
 import { evaluatePlacementEligibility, type PlacementEligibilityResult } from '@/lib/placement-eligibility'
@@ -588,7 +588,7 @@ export default function LevelTestPage() {
 
               {module === 'reading' ? (
                 <div className="p-8 rounded-[3.5rem] bg-indigo-50/50 border border-indigo-100/50 text-slate-700 font-medium leading-relaxed text-sm italic shadow-inner">
-                  "{currentModuleData.text}"
+                  &quot;{currentModuleData.text}&quot;
                 </div>
               ) : (
                 <div className="p-12 rounded-[3.5rem] bg-slate-900 text-white flex flex-col items-center justify-center gap-6 text-center border-none shadow-2xl relative overflow-hidden group">

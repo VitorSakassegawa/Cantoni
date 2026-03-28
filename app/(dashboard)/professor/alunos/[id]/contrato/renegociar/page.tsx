@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import ContratoRenegociacaoForm from '@/components/dashboard/ContratoRenegociacaoForm'
 import { createClient } from '@/lib/supabase/server'
+import type { RenegotiationPaymentSummary } from '@/lib/dashboard-types'
 
 export default async function ProfessorRenegociarContratoPage({
   params,
@@ -66,8 +67,9 @@ export default async function ProfessorRenegociarContratoPage({
     .eq('contrato_id', contract.id)
     .order('parcela_num')
 
-  const paidPayments = (payments || []).filter((payment: any) => payment.status === 'pago')
-  const openPayments = (payments || []).filter((payment: any) => payment.status !== 'pago')
+  const paymentList = (payments as RenegotiationPaymentSummary[] | null | undefined) || []
+  const paidPayments = paymentList.filter((payment) => payment.status === 'pago')
+  const openPayments = paymentList.filter((payment) => payment.status !== 'pago')
 
   if (paidPayments.length === 0 || openPayments.length === 0) {
     return (
@@ -82,9 +84,9 @@ export default async function ProfessorRenegociarContratoPage({
     )
   }
 
-  const paidValue = paidPayments.reduce((total: number, payment: any) => total + Number(payment.valor || 0), 0)
-  const currentOpenValue = openPayments.reduce((total: number, payment: any) => total + Number(payment.valor || 0), 0)
-  const firstOpenDueDate = openPayments[0]?.data_vencimento
+  const paidValue = paidPayments.reduce((total, payment) => total + Number(payment.valor || 0), 0)
+  const currentOpenValue = openPayments.reduce((total, payment) => total + Number(payment.valor || 0), 0)
+  const firstOpenDueDate = openPayments[0]?.data_vencimento || ''
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-20 animate-fade-in">

@@ -24,25 +24,19 @@ export default function ResendAccessButton({
 
       const data = await response.json()
       if (!response.ok) {
-        throw new Error(data.error || 'Não foi possível reenviar o acesso.')
+        throw new Error(data.error || 'Nao foi possivel reenviar o acesso.')
       }
 
       toast.success('Link de primeiro acesso reenviado por e-mail.')
-    } catch (error: any) {
-      toast.error(error.message || 'Não foi possível reenviar o acesso.')
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Nao foi possivel reenviar o acesso.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <Button
-      type="button"
-      variant="outline"
-      onClick={handleClick}
-      disabled={loading}
-      className={className}
-    >
+    <Button type="button" variant="outline" onClick={handleClick} disabled={loading} className={className}>
       {loading ? 'Reenviando...' : 'Reenviar primeiro acesso'}
     </Button>
   )

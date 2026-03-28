@@ -1,5 +1,6 @@
 import { differenceInCalendarDays, isBefore, parseISO } from 'date-fns'
 import { getEffectivePaymentStatus } from '@/lib/payments'
+import type { StudentContractSummary } from '@/lib/dashboard-types'
 
 export type InsightSeverity = 'info' | 'warning' | 'success'
 
@@ -70,7 +71,14 @@ export function getDaysRemaining(dateValue?: string | null, now: Date = new Date
   return differenceInCalendarDays(parsed, now)
 }
 
-export function buildRenewalCandidate(contract: any, now: Date = new Date()): RenewalCandidate | null {
+export function buildRenewalCandidate(
+  contract: StudentContractSummary,
+  now: Date = new Date()
+): RenewalCandidate | null {
+  if (!contract.aluno_id) {
+    return null
+  }
+
   const daysRemaining = getDaysRemaining(contract?.data_fim, now)
   if (daysRemaining === null || daysRemaining < 0 || daysRemaining > 30) {
     return null
@@ -91,18 +99,29 @@ export function buildRenewalCandidate(contract: any, now: Date = new Date()): Re
 }
 
 export function buildAttentionCandidate(
-  contract: any,
+  contract: StudentContractSummary & {
+    pagamentos?: Array<{
+      status?: string | null
+      data_vencimento?: string | null
+      data_pagamento?: string | null
+      mercadopago_status?: string | null
+    }> | null
+  },
   options?: {
     remarcacoesNoMes?: number
     now?: Date
   }
 ): AttentionCandidate | null {
+  if (!contract.aluno_id) {
+    return null
+  }
+
   const now = options?.now ?? new Date()
   const reasons: string[] = []
   let score = 0
 
   const overduePayments =
-    contract.pagamentos?.filter((payment: any) => getEffectivePaymentStatus(payment) === 'atrasado')
+    contract.pagamentos?.filter((payment) => getEffectivePaymentStatus(payment) === 'atrasado')
       .length || 0
   if (overduePayments > 0) {
     reasons.push(`${overduePayments} pagamento(s) em atraso`)

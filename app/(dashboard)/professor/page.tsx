@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
@@ -17,11 +16,22 @@ import { addMonths, startOfMonth as startOfMonthDate, endOfMonth as endOfMonthDa
 import { BrainCircuit, Sparkles } from 'lucide-react'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import {
+  type AttentionCandidate,
   buildAttentionCandidate,
   buildProfessorNotifications,
+  type FeedItem,
+  type RenewalCandidate,
   buildRenewalCandidate,
 } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
+import type {
+  ActivityLogSummary,
+  MonthlyRescheduleSummary,
+  PaymentWithEffectiveStatus,
+  ProfessorContractSummary,
+  ProfessorLessonScheduleItem,
+  ProfessorRescheduleRequest,
+} from '@/lib/dashboard-types'
 
 
 interface PageProps {
@@ -70,9 +80,10 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     return day
   })
 
+  const lessonSchedule = (aulasSemana as ProfessorLessonScheduleItem[] | null | undefined) || []
   const aulasPorDia = daysOfWeek.map(day => ({
     day,
-    aulas: aulasSemana?.filter((aula: any) => isSameDay(new Date(aula.data_hora), day)) || []
+    aulas: lessonSchedule.filter((aula) => isSameDay(new Date(aula.data_hora), day))
   }))
 
   // Rest of the data
@@ -84,16 +95,18 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .select('*, contratos(profiles(full_name, email))')
     .in('status', ['pago', 'pendente', 'atrasado'])
     .order('data_vencimento', { ascending: false })
-  const allPaymentsWithStatus = (allPayments || []).map((payment: any) => withEffectivePaymentStatus(payment))
+  const allPaymentsWithStatus: PaymentWithEffectiveStatus[] = (
+    (allPayments as PaymentWithEffectiveStatus[] | null | undefined) || []
+  ).map((payment) => withEffectivePaymentStatus(payment))
 
-  const pagamentosPagos = allPaymentsWithStatus.filter((p: any) => p.effectiveStatus === 'pago')
-  const pagamentosAtrasados = allPaymentsWithStatus.filter((p: any) => p.effectiveStatus === 'atrasado')
+  const pagamentosPagos = allPaymentsWithStatus.filter((payment) => payment.effectiveStatus === 'pago')
+  const pagamentosAtrasados = allPaymentsWithStatus.filter((payment) => payment.effectiveStatus === 'atrasado')
 
   // Calculate monthly total (collected)
   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1).toISOString()
   const totalArrecadadoMes = pagamentosPagos
-    .filter((p: any) => p.data_pagamento && p.data_pagamento >= startOfMonth)
-    .reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0)
+    .filter((payment) => payment.data_pagamento && payment.data_pagamento >= startOfMonth)
+    .reduce((acc, payment) => acc + Number(payment.valor || 0), 0)
 
   const { data: alunosAtivos } = await supabase
     .from('contratos')
@@ -106,7 +119,8 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .select('*, contratos!inner(aluno_id, profiles(full_name))')
     .eq('status', 'pendente_remarcacao')
   
-  const solicitacoesRemarcacao = rawSolicitacoes?.sort((a: any, b: any) => {
+  const activeContracts = (alunosAtivos as ProfessorContractSummary[] | null | undefined) || []
+  const solicitacoesRemarcacao = ((rawSolicitacoes as ProfessorRescheduleRequest[] | null | undefined) || []).sort((a, b) => {
     // Priority: with date first
     if (a.data_hora_solicitada && !b.data_hora_solicitada) return -1
     if (!a.data_hora_solicitada && b.data_hora_solicitada) return 1
@@ -118,24 +132,23 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
   }) || []
 
   // --- FINANCE DATA CALCULATION ---
-  const mrr = alunosAtivos?.reduce((acc: number, curr: any) => {
-    const activePayment = curr.pagamentos?.find((p: any) => p.status !== 'pago') || curr.pagamentos?.[0]
-    return acc + (activePayment?.valor || 0)
+  const mrr = activeContracts.reduce((acc, contrato) => {
+    const activePayment = contrato.pagamentos?.find((payment) => payment.status !== 'pago') || contrato.pagamentos?.[0]
+    return acc + Number(activePayment?.valor || 0)
   }, 0) || 0
 
   const pendenteTotal = allPaymentsWithStatus
-    ?.filter((p: any) => p.effectiveStatus === 'pendente' || p.effectiveStatus === 'atrasado')
-    .reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0) || 0
+    .filter((payment) => payment.effectiveStatus === 'pendente' || payment.effectiveStatus === 'atrasado')
+    .reduce((acc, payment) => acc + Number(payment.valor || 0), 0) || 0
 
   const projectionData = Array.from({ length: 6 }, (_, i) => {
     const targetMonth = addMonths(today, i)
     const targetMonthStr = format(targetMonth, 'yyyy-MM')
     
     // Sum all payments (paid or pending) scheduled for this month
-    const monthValue = allPaymentsWithStatus?.filter((p: any) => {
-      if (!p.data_vencimento) return false
-      return p.data_vencimento.startsWith(targetMonthStr)
-    }).reduce((acc: number, curr: any) => acc + (curr.valor || 0), 0) || 0
+    const monthValue = allPaymentsWithStatus
+      .filter((payment) => payment.data_vencimento?.startsWith(targetMonthStr))
+      .reduce((acc, payment) => acc + Number(payment.valor || 0), 0) || 0
 
     return {
       month: format(targetMonth, 'MMM', { locale: ptBR }),
@@ -145,7 +158,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
   const currentMonthStart = startOfMonthDate(today).toISOString().split('T')[0]
   const currentMonthEnd = endOfMonthDate(today).toISOString().split('T')[0]
-  const activeStudentIds = (alunosAtivos || []).map((contrato: any) => contrato.aluno_id)
+  const activeStudentIds = activeContracts.map((contrato) => contrato.aluno_id).filter(Boolean) as string[]
 
   const { data: remarcacoesMes } = activeStudentIds.length
     ? await serviceSupabase
@@ -154,7 +167,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
         .in('aluno_id', activeStudentIds)
         .gte('mes', currentMonthStart)
         .lte('mes', currentMonthEnd)
-    : { data: [] as any[] }
+    : { data: [] as MonthlyRescheduleSummary[] }
 
   const { data: recentActivity } = await serviceSupabase
     .from('activity_logs')
@@ -163,40 +176,40 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
     .limit(20)
 
   const remarcacoesByAluno = new Map(
-    (remarcacoesMes || []).map((item: any) => [item.aluno_id, item.quantidade])
+    ((remarcacoesMes as MonthlyRescheduleSummary[] | null | undefined) || []).map((item) => [item.aluno_id, item.quantidade])
   )
 
-  const renewalCandidates = (alunosAtivos || [])
-    .map((contrato: any) => buildRenewalCandidate(contrato))
-    .filter(Boolean)
-    .sort((a: any, b: any) => a.daysRemaining - b.daysRemaining)
+  const renewalCandidates = activeContracts
+    .map((contrato) => buildRenewalCandidate(contrato))
+    .filter((candidate): candidate is RenewalCandidate => Boolean(candidate))
+    .sort((a, b) => a.daysRemaining - b.daysRemaining)
 
-  const attentionCandidates = (alunosAtivos || [])
-    .map((contrato: any) =>
+  const attentionCandidates = activeContracts
+    .map((contrato) =>
       buildAttentionCandidate(contrato, {
         remarcacoesNoMes: remarcacoesByAluno.get(contrato.aluno_id) || 0,
       })
     )
-    .filter(Boolean)
-    .sort((a: any, b: any) => b.score - a.score)
+    .filter((candidate): candidate is AttentionCandidate => Boolean(candidate))
+    .sort((a, b) => b.score - a.score)
 
   const professorNotifications = buildProfessorNotifications({
     pendingReschedules: solicitacoesRemarcacao.length,
     overduePayments: pagamentosAtrasados.length,
-    renewalsSoon: renewalCandidates as any,
-    attentionStudents: attentionCandidates as any,
+    renewalsSoon: renewalCandidates,
+    attentionStudents: attentionCandidates,
     recentActivityCount: recentActivity?.length || 0,
   })
 
-  const activityItems = (recentActivity || []).map((entry: any) => ({
+  const activityItems: FeedItem[] = (((recentActivity as ActivityLogSummary[] | null | undefined) || []).map((entry) => ({
     id: `activity-${entry.id}`,
     title: entry.title,
     description: entry.description,
-    severity: entry.severity || 'info',
+    severity: entry.severity === 'warning' || entry.severity === 'success' ? entry.severity : 'info',
     meta: formatDateTime(entry.created_at),
     href: entry.target_user_id ? `/professor/alunos/${entry.target_user_id}` : '/professor',
     actionLabel: 'Abrir',
-  }))
+  })))
 
 
   return (
@@ -262,7 +275,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             <div className="space-y-3">
               <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-400">Sugestões Prioritárias</h4>
               <div className="space-y-2">
-                {attentionCandidates.slice(0, 3).map((candidate: any) => (
+                {attentionCandidates.slice(0, 3).map((candidate) => (
                   <Link
                     key={candidate.studentId}
                     href={`/professor/alunos/${candidate.studentId}`}
@@ -343,7 +356,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
                   <div className="flex-1 space-y-3 min-h-[100px] flex flex-col">
                     {aulas.length > 0 ? (
-                      aulas.map((aula: any) => {
+                      aulas.map((aula) => {
                         const isDada = aula.status === 'dada'
                         return (
                           <div key={aula.id} className={`p-4 rounded-2xl border transition-all relative overflow-hidden group ${isDada ? 'bg-slate-50 border-slate-100 opacity-60' : 'bg-white border-blue-100 shadow-sm hover:shadow-md hover:border-blue-300'}`}>
@@ -353,7 +366,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                               </div>
                             )}
                             <p className={`text-[10px] font-black leading-tight ${isDada ? 'text-slate-400 line-through' : 'text-slate-900 group-hover:text-blue-900'}`}>
-                              {(aula.contratos as any)?.profiles?.full_name?.split(' ')[0]}
+                              {aula.contratos?.profiles?.full_name?.split(' ')[0]}
                             </p>
                             <p className="text-[9px] font-bold text-slate-400 mt-1">
                               {format(new Date(aula.data_hora), 'HH:mm')}
@@ -395,7 +408,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-slate-100">
-                  {renewalCandidates.slice(0, 4).map((candidate: any) => (
+                  {renewalCandidates.slice(0, 4).map((candidate) => (
                     <Link
                       key={candidate.contractId}
                       href={`/professor/alunos/${candidate.studentId}`}
@@ -427,7 +440,10 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           )}
 
           {/* Alertas Financeiros */}
-          {alunosAtivos?.some((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => withEffectivePaymentStatus(p).effectiveStatus === 'atrasado')) && (
+          {activeContracts.some((contrato) =>
+            contrato.status_financeiro === 'pendente' ||
+            contrato.pagamentos?.some((payment) => withEffectivePaymentStatus(payment).effectiveStatus === 'atrasado')
+          ) && (
             <Card className="glass-card bg-rose-50/80 border-rose-200/50 ring-4 ring-rose-500/5 hover:scale-[1.01]">
               <CardHeader className="pb-4 bg-rose-100/50 border-b border-rose-200/50">
                 <CardTitle className="text-xs font-black text-red-600 flex items-center gap-2 uppercase tracking-[0.2em]">
@@ -436,8 +452,15 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               </CardHeader>
               <CardContent className="p-0">
                 <div className="divide-y divide-red-100/50">
-                  {alunosAtivos?.filter((c: any) => c.status_financeiro === 'pendente' || c.pagamentos?.some((p: any) => withEffectivePaymentStatus(p).effectiveStatus === 'atrasado')).map((contrato: any) => {
-                    const isAtrasado = contrato.pagamentos?.some((p: any) => withEffectivePaymentStatus(p).effectiveStatus === 'atrasado')
+                  {activeContracts
+                    .filter((contrato) =>
+                      contrato.status_financeiro === 'pendente' ||
+                      contrato.pagamentos?.some((payment) => withEffectivePaymentStatus(payment).effectiveStatus === 'atrasado')
+                    )
+                    .map((contrato) => {
+                    const isAtrasado = contrato.pagamentos?.some(
+                      (payment) => withEffectivePaymentStatus(payment).effectiveStatus === 'atrasado'
+                    )
                     return (
                       <div key={contrato.id} className="p-5 flex items-center justify-between group">
                         <div className="flex items-center gap-3">
@@ -497,7 +520,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             </CardHeader>
             <CardContent className="p-0">
               <div className="divide-y divide-slate-100">
-                {alunosAtivos?.slice(0, 8).map((contrato: any) => (
+                {activeContracts.slice(0, 8).map((contrato) => (
                   <Link key={contrato.id} href={`/professor/alunos/${contrato.aluno_id}`} className="p-5 flex items-center justify-between group hover:bg-slate-50/80 transition-all">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-xs group-hover:bg-blue-600 group-hover:text-white transition-all shadow-sm">

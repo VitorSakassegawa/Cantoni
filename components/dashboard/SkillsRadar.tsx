@@ -1,7 +1,7 @@
 'use client'
 
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip } from 'recharts'
-import { Trophy, Target, Sparkles, TrendingUp, CheckCircle2 } from 'lucide-react'
+import { Trophy, Sparkles, TrendingUp, CheckCircle2 } from 'lucide-react'
 import { useState } from 'react'
 
 interface SkillData {
@@ -12,7 +12,10 @@ interface SkillData {
   mes_referencia: string
 }
 
-const CEFR_BENCHMARKS: Record<string, any> = {
+type SkillMetricKey = 'speaking' | 'listening' | 'reading' | 'writing'
+type CefrBenchmark = Record<SkillMetricKey, number> & { desc: string }
+
+const CEFR_BENCHMARKS: Record<string, CefrBenchmark> = {
   'A1': { speaking: 2, listening: 2, reading: 2, writing: 2, desc: "Compreende e usa expressões cotidianas para necessidades básicas." },
   'A2': { speaking: 4, listening: 4, reading: 4, writing: 4, desc: "Comunica tarefas simples e troca informações sobre temas familiares." },
   'B1': { speaking: 6, listening: 6, reading: 6, writing: 6, desc: "Lida com situações de viagem e produz textos simples sobre interesses." },
@@ -206,7 +209,8 @@ export default function SkillsRadar({ data }: { data: SkillData[] }) {
                     { key: 'reading', label: 'Competência Pragmática (Leitura)' },
                     { key: 'writing', label: 'Expressão Escrita Estruturada' }
                   ].map((skill) => {
-                    const reached = (currentData as any)[skill.key] >= (CEFR_BENCHMARKS[selectedCefr] as any)[skill.key]
+                    const metricKey = skill.key as SkillMetricKey
+                    const reached = currentData[metricKey] >= CEFR_BENCHMARKS[selectedCefr][metricKey]
                     return (
                       <li key={skill.key} className="flex flex-col gap-1">
                         <div className="flex items-center gap-2">

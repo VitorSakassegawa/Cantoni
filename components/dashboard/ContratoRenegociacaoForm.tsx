@@ -83,8 +83,8 @@ export default function ContratoRenegociacaoForm({
       toast.success('Renegociação registrada com sucesso.')
       router.push(`/professor/alunos/${alunoId}`)
       router.refresh()
-    } catch (error: any) {
-      toast.error(error.message || 'Falha ao renegociar saldo.')
+    } catch (error: unknown) {
+      toast.error(error instanceof Error ? error.message : 'Falha ao renegociar saldo.')
     } finally {
       setLoading(false)
     }

@@ -8,6 +8,9 @@ import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import ManualTranscriptImportButton from '@/components/dashboard/ManualTranscriptImportButton'
+import { createServiceClient } from '@/lib/supabase/server'
+import { hydrateHomeworkAttachmentUrls } from '@/lib/homework-storage'
+import type { TimelineAula } from '@/lib/dashboard-types'
 
 interface PageProps {
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>
@@ -16,6 +19,7 @@ interface PageProps {
 export default async function ProfessorAulasPage({ searchParams }: PageProps) {
   const resolvedParams = await searchParams
   const supabase = await createClient()
+  const serviceSupabase = await createServiceClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -41,6 +45,10 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
   }
 
   const { data: aulas } = await query
+  const aulasComAnexosAssinados = await hydrateHomeworkAttachmentUrls(
+    serviceSupabase,
+    (aulas as TimelineAula[] | null | undefined) || []
+  )
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
@@ -100,11 +108,11 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
           <div className="border-b border-slate-100 px-6 py-6">
             <ManualTranscriptImportButton />
           </div>
-          <AulasTimeline aulas={aulas || []} isProfessor={true} />
+          <AulasTimeline aulas={aulasComAnexosAssinados || []} isProfessor={true} />
         </CardContent>
       </Card>
       
-      {(!aulas || aulas.length === 0) && (
+      {(!aulasComAnexosAssinados || aulasComAnexosAssinados.length === 0) && (
         <div className="text-center py-20">
           <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <Search className="w-8 h-8 text-slate-300" />

@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { salvarAvaliacao } from '@/lib/actions/avaliacoes'
@@ -33,7 +32,7 @@ export default function SkillEvaluationForm({ alunoId, initialData }: SkillEvalu
     try {
       await salvarAvaliacao(alunoId, speaking, listening, reading, writing)
       toast.success('Avaliação salva com sucesso!')
-    } catch (err) {
+    } catch {
       toast.error('Erro ao salvar avaliação')
     } finally {
       setLoading(false)

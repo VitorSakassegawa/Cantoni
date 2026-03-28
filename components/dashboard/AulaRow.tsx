@@ -17,7 +17,7 @@ import { uploadHomeworkImage } from '@/lib/actions/homework'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Sparkles } from 'lucide-react'
-import { extractVisibleLessonNotes, hasImportedTranscript } from '@/lib/lesson-notes'
+import { extractVisibleLessonNotes } from '@/lib/lesson-notes'
 
 import { toast } from 'sonner'
 import { cancelarAula, remarcarAula, solicitarRemarcacao } from '@/lib/actions/aulas'
@@ -55,7 +55,7 @@ function VocabularyCard({ word, translation, example }: { word: string, translat
         <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Significado</span>
         {revealed ? (
           <div className="animate-in fade-in slide-in-from-top-1 duration-300">
-            <span className="text-sm font-medium text-emerald-600 italic">"{translation}"</span>
+            <span className="text-sm font-medium text-emerald-600 italic">&quot;{translation}&quot;</span>
             {example && (
               <p className="text-[10px] text-slate-500 mt-2 leading-relaxed bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
                 {example}
@@ -134,7 +134,6 @@ export default function AulaRow({
   const [showLessonDetailsModal, setShowLessonDetailsModal] = useState(false)
   const [summaryLang, setSummaryLang] = useState<'pt' | 'en'>('pt')
   const visibleClassNotes = extractVisibleLessonNotes(lesson.class_notes)
-  const hasTranscriptImported = hasImportedTranscript(lesson.class_notes)
   const hasLessonDetails = Boolean(
     lesson.homework ||
       visibleClassNotes ||
@@ -276,7 +275,7 @@ export default function AulaRow({
                 </span>
                 {aula.justificativa_professor && (
                   <span className="text-[10px] font-medium text-slate-500 bg-red-50/50 p-1 rounded-md border border-red-100/30 mt-0.5">
-                    " {aula.justificativa_professor} "
+                    &quot;{aula.justificativa_professor}&quot;
                   </span>
                 )}
               </div>

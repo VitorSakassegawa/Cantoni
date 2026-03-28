@@ -1,22 +1,32 @@
 'use client'
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { useEffect, useState } from 'react'
+import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
+import { createClient } from '@/lib/supabase/client'
+import { formatDateOnly, maskCPF, maskDate, maskPhone } from '@/lib/utils'
 import { toast } from 'sonner'
-import { maskCPF, maskPhone, maskDate, formatDateOnly } from '@/lib/utils'
-import { User, Mail, Phone, Fingerprint, Calendar, AlertCircle } from 'lucide-react'
+import { AlertCircle, Calendar, Fingerprint, Mail, Phone, User } from 'lucide-react'
+
+type StudentProfile = {
+  id: string
+  role?: string | null
+  full_name?: string | null
+  email?: string | null
+  phone?: string | null
+  cpf?: string | null
+  birth_date?: string | null
+}
 
 export default function PerfilPage() {
-  const supabase = createClient()
+  const [supabase] = useState(() => createClient())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [profile, setProfile] = useState<any>(null)
+  const [profile, setProfile] = useState<StudentProfile | null>(null)
   const [birthDateDisplay, setBirthDateDisplay] = useState('')
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -25,7 +35,7 @@ export default function PerfilPage() {
   async function handleUpdatePassword(e: React.FormEvent) {
     e.preventDefault()
     if (newPassword !== confirmPassword) {
-      toast.error('As senhas não coincidem.')
+      toast.error('As senhas nao coincidem.')
       return
     }
     if (newPassword.length < 6) {
@@ -38,7 +48,7 @@ export default function PerfilPage() {
     setUpdatingPassword(false)
 
     if (error) {
-      toast.error('Erro ao atualizar senha: ' + error.message)
+      toast.error(`Erro ao atualizar senha: ${error.message}`)
     } else {
       toast.success('Senha atualizada com sucesso!')
       setNewPassword('')
@@ -48,28 +58,27 @@ export default function PerfilPage() {
 
   useEffect(() => {
     async function loadProfile() {
-      const { data: { user } } = await supabase.auth.getUser()
+      const {
+        data: { user },
+      } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
-      
-      setProfile(data)
+      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+
+      setProfile((data as StudentProfile | null) ?? null)
       if (data?.birth_date) {
         setBirthDateDisplay(formatDateOnly(data.birth_date))
       }
       setLoading(false)
     }
-    loadProfile()
-  }, [])
+
+    void loadProfile()
+  }, [supabase])
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
-    // Convert DD/MM/YYYY back to YYYY-MM-DD
+
     let isoBirthDate = null
     if (birthDateDisplay.length === 10) {
       const [d, m, y] = birthDateDisplay.split('/')
@@ -81,17 +90,17 @@ export default function PerfilPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          full_name: profile.full_name,
-          phone: profile.phone,
-          cpf: profile.cpf,
+          full_name: profile?.full_name,
+          phone: profile?.phone,
+          cpf: profile?.cpf,
           birth_date: isoBirthDate,
         }),
       })
 
       if (!res.ok) throw new Error('Erro ao atualizar perfil')
       toast.success('Perfil atualizado com sucesso!')
-    } catch (err: any) {
-      toast.error(err.message)
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Erro ao atualizar perfil')
     } finally {
       setSaving(false)
     }
@@ -101,7 +110,6 @@ export default function PerfilPage() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-10 pb-20 animate-fade-in">
-      {/* Header / Avatar Section */}
       <div className="flex flex-col md:flex-row items-center gap-8 pb-10 border-b border-blue-100/50">
         <div className="relative group">
           <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000 group-hover:duration-200" />
@@ -121,7 +129,7 @@ export default function PerfilPage() {
       <Card className="glass-card border-none overflow-hidden hover:translate-y-0 hover:shadow-2xl">
         <CardHeader className="pb-6 bg-slate-50/50 border-b border-slate-100/50">
           <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-            Configurações da Conta
+            Configuracoes da Conta
           </CardTitle>
         </CardHeader>
         <CardContent className="pt-10">
@@ -131,12 +139,7 @@ export default function PerfilPage() {
                 <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nome Completo</Label>
                 <div className="relative group/input">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
-                    value={profile?.full_name || ''}
-                    onChange={e => setProfile({ ...profile, full_name: e.target.value })}
-                    required
-                  />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" value={profile?.full_name || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), full_name: e.target.value }))} required />
                 </div>
               </div>
 
@@ -144,11 +147,7 @@ export default function PerfilPage() {
                 <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">E-mail (Permanente)</Label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
-                  <Input
-                    className="pl-12 h-14 rounded-2xl bg-slate-100 border-slate-100 cursor-not-allowed font-bold text-slate-500"
-                    value={profile?.email || ''}
-                    disabled
-                  />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-100 border-slate-100 cursor-not-allowed font-bold text-slate-500" value={profile?.email || ''} disabled />
                 </div>
               </div>
 
@@ -156,12 +155,7 @@ export default function PerfilPage() {
                 <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">CPF para Contrato</Label>
                 <div className="relative group/input">
                   <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
-                    placeholder="000.000.000-00"
-                    value={profile?.cpf || ''}
-                    onChange={e => setProfile({ ...profile, cpf: maskCPF(e.target.value) })}
-                  />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="000.000.000-00" value={profile?.cpf || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), cpf: maskCPF(e.target.value) }))} />
                 </div>
               </div>
 
@@ -169,12 +163,7 @@ export default function PerfilPage() {
                 <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">WhatsApp Celular</Label>
                 <div className="relative group/input">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
-                    placeholder="(00) 00000-0000"
-                    value={profile?.phone || ''}
-                    onChange={e => setProfile({ ...profile, phone: maskPhone(e.target.value) })}
-                  />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="(00) 00000-0000" value={profile?.phone || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), phone: maskPhone(e.target.value) }))} />
                 </div>
               </div>
 
@@ -182,27 +171,17 @@ export default function PerfilPage() {
                 <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Nascimento</Label>
                 <div className="relative group/input">
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input
-                    type="text"
-                    className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
-                    placeholder="DD/MM/AAAA"
-                    value={birthDateDisplay}
-                    onChange={e => setBirthDateDisplay(maskDate(e.target.value))}
-                  />
+                  <Input type="text" className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="DD/MM/AAAA" value={birthDateDisplay} onChange={(e) => setBirthDateDisplay(maskDate(e.target.value))} />
                 </div>
               </div>
             </div>
 
             <div className="pt-6 flex justify-end items-center gap-6">
               <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest max-w-[200px] text-right">
-                Suas alterações serão salvas imediatamente no banco de dados.
+                Suas alteracoes serao salvas imediatamente no banco de dados.
               </span>
-              <Button
-                type="submit"
-                disabled={saving}
-                className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-              >
-                {saving ? 'PROCESSANDO...' : 'SALVAR ALTERAÇÕES'}
+              <Button type="submit" disabled={saving} className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
+                {saving ? 'PROCESSANDO...' : 'SALVAR ALTERACOES'}
               </Button>
             </div>
           </form>
@@ -217,17 +196,14 @@ export default function PerfilPage() {
         <div className="space-y-1">
           <p className="font-black text-amber-900 text-sm uppercase tracking-tight">Privacidade e Dados</p>
           <p className="text-xs text-amber-800/70 font-medium leading-relaxed">
-            Garantimos a proteção dos seus dados cadastrais (CPF e Nascimento) conforme a LGPD. 
-            Estas informações são necessárias para a emissão de contratos e controle acadêmico.
+            Garantimos a protecao dos seus dados cadastrais (CPF e Nascimento) conforme a LGPD. Estas informacoes sao necessarias para a emissao de contratos e controle academico.
           </p>
         </div>
       </div>
 
       <Card className="glass-card border-none overflow-hidden hover:translate-y-0 hover:shadow-2xl">
         <CardHeader className="pb-6 bg-slate-50/50 border-b border-slate-100/50">
-          <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">
-            Segurança
-          </CardTitle>
+          <CardTitle className="text-xs font-black text-blue-400 flex items-center gap-2 uppercase tracking-[0.2em]">Seguranca</CardTitle>
         </CardHeader>
         <CardContent className="pt-10">
           <form onSubmit={handleUpdatePassword} className="space-y-6">
@@ -235,40 +211,20 @@ export default function PerfilPage() {
               <div className="space-y-2.5">
                 <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nova Senha</Label>
                 <div className="relative">
-                  <Input
-                    type="password"
-                    className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4"
-                    value={newPassword}
-                    onChange={e => setNewPassword(e.target.value)}
-                    placeholder="Mínimo 6 caracteres"
-                    minLength={6}
-                    required
-                  />
+                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimo 6 caracteres" minLength={6} required />
                 </div>
               </div>
 
               <div className="space-y-2.5">
                 <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Confirmar Nova Senha</Label>
                 <div className="relative">
-                  <Input
-                    type="password"
-                    className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4"
-                    value={confirmPassword}
-                    onChange={e => setConfirmPassword(e.target.value)}
-                    placeholder="Repita a nova senha"
-                    minLength={6}
-                    required
-                  />
+                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a nova senha" minLength={6} required />
                 </div>
               </div>
             </div>
 
             <div className="pt-2 flex justify-end">
-              <Button
-                type="submit"
-                disabled={updatingPassword}
-                className="h-12 px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-widest shadow-md transition-all disabled:opacity-50"
-              >
+              <Button type="submit" disabled={updatingPassword} className="h-12 px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-black text-xs uppercase tracking-widest shadow-md transition-all disabled:opacity-50">
                 {updatingPassword ? 'ALTERANDO...' : 'ALTERAR SENHA'}
               </Button>
             </div>

@@ -27,6 +27,15 @@ type PlacementAnswerEntry = {
   correctAnswer?: number
 }
 
+type PlacementHistoryEntry = {
+  id: number
+  created_at: string
+  cefr_level?: string | null
+  score?: number | null
+  total_questions?: number | null
+  answers?: PlacementAnswerEntry[] | null
+}
+
 const CEFR_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2']
 
 export const dynamic = 'force-dynamic'
@@ -273,7 +282,7 @@ export default async function AlunoNivelamentoPage() {
             </div>
           ) : (
             <div className="space-y-8">
-              {history.map((test: any) => {
+              {(history as PlacementHistoryEntry[]).map((test) => {
                 const answers = (test.answers as PlacementAnswerEntry[]) || []
                 const correctAnswers = answers.filter((answer) => answer.correct).length
                 const wrongAnswers = answers.filter((answer) => answer.correct === false).length

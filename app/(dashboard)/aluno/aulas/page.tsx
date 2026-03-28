@@ -6,9 +6,32 @@ import { ChevronLeft, BookOpen, Layers } from 'lucide-react'
 import Link from 'next/link'
 import AulasTimeline from '@/components/dashboard/AulasTimeline'
 import { getStudentRemarkBlockReason } from '@/lib/insights'
+import { createServiceClient } from '@/lib/supabase/server'
+import { hydrateHomeworkAttachmentUrls } from '@/lib/homework-storage'
+import type { TimelineAula } from '@/lib/dashboard-types'
+
+type StudentContractSummary = {
+  id: number
+  status: string
+  aulas_dadas: number | null
+  aulas_totais: number | null
+  aulas_restantes: number | null
+  data_inicio: string
+  data_fim: string
+  planos?: {
+    remarca_max_mes?: number | null
+    descricao?: string | null
+  } | null
+}
+
+type MonthlyRescheduleSummary = {
+  mes: string
+  quantidade: number
+}
 
 export default async function AlunoAulasPage() {
   const supabase = await createClient()
+  const serviceSupabase = await createServiceClient()
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -22,11 +45,14 @@ export default async function AlunoAulasPage() {
     .eq('aluno_id', user.id)
     .neq('status', 'cancelado')
 
-  const contratosList = (contratos as any[]) || []
+  const contratosList: StudentContractSummary[] = (contratos || []).map((contrato) => ({
+    ...contrato,
+    planos: Array.isArray(contrato.planos) ? contrato.planos[0] || null : contrato.planos || null,
+  }))
   const contratosAtivos = contratosList.filter((contrato) => contrato.status === 'ativo')
   const contratoAtual = contratosAtivos[0] || contratosList[0] || null
   const contratoIds = contratosList.map((contrato) => contrato.id)
-  const remarcacaoLimitByContratoId = contratosList.reduce((acc: Record<number, number | null>, contrato: any) => {
+  const remarcacaoLimitByContratoId = contratosList.reduce((acc: Record<number, number | null>, contrato) => {
     acc[contrato.id] = contrato?.planos?.remarca_max_mes ?? null
     return acc
   }, {})
@@ -40,10 +66,11 @@ export default async function AlunoAulasPage() {
     .select('mes, quantidade')
     .eq('aluno_id', user.id)
     .order('mes', { ascending: false })
+  const monthlyReschedules: MonthlyRescheduleSummary[] = remarcacoesMes || []
 
   const currentMonth = new Date().toISOString().split('T')[0].slice(0, 8) + '01'
   const currentMonthlyReschedules =
-    remarcacoesMes?.find((entry: any) => entry.mes === currentMonth)?.quantidade || 0
+    monthlyReschedules.find((entry) => entry.mes === currentMonth)?.quantidade || 0
   const currentMonthlyLimit = contratoAtual?.planos?.remarca_max_mes ?? 0
   const currentMonthlyAvailable =
     typeof currentMonthlyLimit === 'number' ? Math.max(0, currentMonthlyLimit - currentMonthlyReschedules) : 0
@@ -54,13 +81,13 @@ export default async function AlunoAulasPage() {
     .in('contrato_id', contratoIds)
     .order('data_hora', { ascending: true })
 
-  const aulasComRegras = (aulas || []).map((lesson: any) => ({
+  const aulasComRegras: TimelineAula[] = (aulas as TimelineAula[] | null | undefined || []).map((lesson) => ({
     ...lesson,
     remarkBlockReason: getStudentRemarkBlockReason({
       status: lesson.status,
       hasRequestedDate: Boolean(lesson.data_hora_solicitada),
       monthlyRescheduleCount:
-        remarcacoesMes?.find((entry: any) => {
+        monthlyReschedules.find((entry) => {
           const lessonDate = new Date(lesson.data_hora)
           const lessonMonth = new Date(lessonDate.getFullYear(), lessonDate.getMonth(), 1)
             .toISOString()
@@ -70,6 +97,7 @@ export default async function AlunoAulasPage() {
       monthlyRescheduleLimit: remarcacaoLimitByContratoId[lesson.contrato_id] ?? null,
     }),
   }))
+  const aulasComAnexosAssinados = await hydrateHomeworkAttachmentUrls(serviceSupabase, aulasComRegras)
 
   return (
     <div className="mx-auto max-w-6xl space-y-10 animate-fade-in pb-20">
@@ -183,7 +211,7 @@ export default async function AlunoAulasPage() {
           </CardHeader>
           <CardContent className="p-0">
             <AulasTimeline
-              aulas={aulasComRegras || []}
+              aulas={aulasComAnexosAssinados || []}
               isProfessor={false}
               showStudentName={false}
               showContractType={false}

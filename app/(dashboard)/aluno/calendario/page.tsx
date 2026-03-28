@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import AcademicCalendar from '@/components/dashboard/AcademicCalendar'
 import { Calendar as CalendarIcon, Info } from 'lucide-react'
 
