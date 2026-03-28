@@ -4,14 +4,57 @@ import { payment } from '@/lib/mercadopago'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import {
   assertPaymentAmountMatches,
-  mapMercadoPagoStatus,
+  classifyMercadoPagoStatus,
   normalizePaymentAmount,
+  resolveLocalPaymentStatus,
   splitFullName,
 } from '@/lib/payments'
 import { logActivityBestEffort } from '@/lib/activity-log'
 
-function getAlunoProfile(localPayment: any) {
-  const contrato = localPayment?.contrato
+type StudentProfile = {
+  id?: string
+  email?: string | null
+  full_name?: string | null
+  cpf?: string | null
+}
+
+type LocalPaymentRecord = {
+  id: number
+  contrato_id: number
+  valor: number
+  status: string | null
+  data_vencimento?: string | null
+  data_pagamento?: string | null
+  mercadopago_id?: string | null
+  mercadopago_status?: string | null
+  mercadopago_payment_method?: string | null
+  pix_qrcode_base64?: string | null
+  pix_copia_cola?: string | null
+  contrato?: {
+    aluno?: StudentProfile | StudentProfile[] | null
+  } | null
+}
+
+type RequestPayload = {
+  formData?: {
+    payment_method_id?: string
+    paymentMethodId?: string
+    payer?: {
+      email?: string
+      first_name?: string
+      last_name?: string
+      identification?: {
+        number?: string
+      }
+    }
+    [key: string]: unknown
+  }
+  paymentId: number | string
+  selectedPaymentMethod?: string | null
+}
+
+function getAlunoProfile(localPayment: LocalPaymentRecord) {
+  const contrato = localPayment.contrato
   const aluno = contrato?.aluno
 
   if (Array.isArray(aluno)) {
@@ -30,9 +73,34 @@ function isMercadoPagoTestMode() {
   return (process.env.MERCADOPAGO_ACCESS_TOKEN || '').startsWith('TEST-')
 }
 
-function getMercadoPagoErrorMessage(error: any) {
-  const message = error?.message || ''
-  const errorCode = error?.error || ''
+function buildMercadoPagoIdempotencyKey(input: {
+  paymentId: number
+  paymentMethodId: string | null
+  amount: number
+  previousMercadoPagoId?: string | null
+}) {
+  const fingerprint = [
+    input.paymentId,
+    input.paymentMethodId || 'unknown',
+    input.amount.toFixed(2),
+    input.previousMercadoPagoId || 'initial',
+  ].join(':')
+
+  return crypto.createHash('sha256').update(fingerprint).digest('hex')
+}
+
+function getMercadoPagoErrorMessage(error: unknown) {
+  const message =
+    error instanceof Error
+      ? error.message
+      : typeof error === 'object' && error && 'message' in error
+        ? String((error as { message?: unknown }).message || '')
+        : ''
+
+  const errorCode =
+    typeof error === 'object' && error && 'error' in error
+      ? String((error as { error?: unknown }).error || '')
+      : ''
 
   if (
     isMercadoPagoTestMode() &&
@@ -55,7 +123,7 @@ function getMercadoPagoErrorMessage(error: any) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { formData, paymentId, selectedPaymentMethod } = await req.json()
+    const { formData, paymentId, selectedPaymentMethod } = (await req.json()) as RequestPayload
     const supabase = await createClient()
 
     const { data: localPayment, error: fetchErr } = await supabase
@@ -68,39 +136,56 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Pagamento não encontrado' }, { status: 404 })
     }
 
-    if (localPayment.status === 'pago') {
+    const typedLocalPayment = localPayment as LocalPaymentRecord
+
+    if (typedLocalPayment.status === 'pago') {
       return NextResponse.json({ error: 'Pagamento já foi liquidado' }, { status: 409 })
     }
 
-    const aluno = getAlunoProfile(localPayment)
-    const amount = normalizePaymentAmount(localPayment.valor)
+    const aluno = getAlunoProfile(typedLocalPayment)
+    const amount = normalizePaymentAmount(typedLocalPayment.valor)
+    const numericPaymentId = Number(paymentId)
     const { firstName, lastName } = splitFullName(aluno?.full_name || '')
     const paymentMethodId =
-      formData?.payment_method_id ||
-      formData?.paymentMethodId ||
-      selectedPaymentMethod ||
-      null
+      formData?.payment_method_id || formData?.paymentMethodId || selectedPaymentMethod || null
     const identificationNumber =
       normalizeCpf(formData?.payer?.identification?.number) || normalizeCpf(aluno?.cpf)
 
+    const currentAttemptState = classifyMercadoPagoStatus(typedLocalPayment.mercadopago_status)
     const hasOpenPixAlready =
       paymentMethodId === 'pix' &&
-      localPayment.mercadopago_id &&
-      localPayment.mercadopago_status === 'pending' &&
-      (localPayment.pix_copia_cola || localPayment.pix_qrcode_base64)
+      typedLocalPayment.mercadopago_id &&
+      currentAttemptState === 'pending' &&
+      (typedLocalPayment.pix_copia_cola || typedLocalPayment.pix_qrcode_base64)
 
     if (hasOpenPixAlready) {
       return NextResponse.json({
-        id: localPayment.mercadopago_id,
-        status: localPayment.mercadopago_status,
+        id: typedLocalPayment.mercadopago_id,
+        status: typedLocalPayment.mercadopago_status,
         status_detail: 'pending_waiting_transfer',
         reused_existing_pix: true,
         point_of_interaction: {
           transaction_data: {
-            qr_code: localPayment.pix_copia_cola,
-            qr_code_base64: localPayment.pix_qrcode_base64?.replace(/^data:image\/png;base64,/, '') || null,
+            qr_code: typedLocalPayment.pix_copia_cola,
+            qr_code_base64:
+              typedLocalPayment.pix_qrcode_base64?.replace(/^data:image\/png;base64,/, '') ||
+              null,
           },
         },
+      })
+    }
+
+    const hasOpenAttemptAlready =
+      paymentMethodId !== 'pix' &&
+      typedLocalPayment.mercadopago_id &&
+      currentAttemptState === 'pending' &&
+      typedLocalPayment.mercadopago_payment_method === paymentMethodId
+
+    if (hasOpenAttemptAlready) {
+      return NextResponse.json({
+        id: typedLocalPayment.mercadopago_id,
+        status: typedLocalPayment.mercadopago_status,
+        reused_existing_attempt: true,
       })
     }
 
@@ -116,7 +201,7 @@ export async function POST(req: NextRequest) {
     const body = {
       ...formData,
       transaction_amount: amount,
-      external_reference: paymentId.toString(),
+      external_reference: String(paymentId),
       notification_url: `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/mercadopago`,
       payment_method_id: paymentMethodId || formData?.payment_method_id,
       payer: {
@@ -136,12 +221,25 @@ export async function POST(req: NextRequest) {
     const mpResponse = await payment.create({
       body,
       requestOptions: {
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: buildMercadoPagoIdempotencyKey({
+          paymentId: numericPaymentId,
+          paymentMethodId,
+          amount,
+          previousMercadoPagoId:
+            currentAttemptState === 'pending' ? null : typedLocalPayment.mercadopago_id,
+        }),
       },
     })
+
     assertPaymentAmountMatches(amount, mpResponse.transaction_amount ?? body.transaction_amount)
 
-    const localStatus = mapMercadoPagoStatus(mpResponse.status)
+    const localStatus = resolveLocalPaymentStatus({
+      mercadoPagoStatus: mpResponse.status,
+      currentStatus: typedLocalPayment.status,
+      dueDate: typedLocalPayment.data_vencimento,
+      paidAt: typedLocalPayment.data_pagamento,
+    })
+
     const serviceSupabase = await createServiceClient()
     const { error: updateErr } = await serviceSupabase
       .from('pagamentos')
@@ -168,11 +266,11 @@ export async function POST(req: NextRequest) {
 
     await logActivityBestEffort({
       targetUserId: aluno?.id,
-      contractId: localPayment.contrato_id,
-      paymentId,
+      contractId: typedLocalPayment.contrato_id,
+      paymentId: numericPaymentId,
       eventType: 'payment.processed',
       title: 'Pagamento processado via Mercado Pago',
-      description: `Pagamento ${paymentId} processado com status ${mpResponse.status}.`,
+      description: `Pagamento ${numericPaymentId} processado com status ${mpResponse.status}.`,
       severity: localStatus === 'pago' ? 'success' : 'info',
       metadata: {
         mercadopagoId: mpResponse.id,
@@ -190,7 +288,7 @@ export async function POST(req: NextRequest) {
         Boolean(mpResponse.point_of_interaction?.transaction_data?.qr_code_base64),
       point_of_interaction: mpResponse.point_of_interaction,
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('Mercado Pago API error:', error)
     const normalizedError = getMercadoPagoErrorMessage(error)
     return NextResponse.json(

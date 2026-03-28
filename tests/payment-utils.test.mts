@@ -1,26 +1,76 @@
 import assert from 'node:assert/strict'
 import {
   assertPaymentAmountMatches,
-  mapMercadoPagoStatus,
+  classifyMercadoPagoStatus,
+  getMercadoPagoStatusCopy,
   normalizePaymentAmount,
+  resolveLocalPaymentStatus,
   splitFullName,
 } from '../lib/payments.ts'
 import { calculateNextStreak } from '../lib/streak-utils.ts'
 import { evaluatePlacementEligibility } from '../lib/placement-eligibility.ts'
-import { buildPendingPaymentUpdates } from '../lib/contract-payments.ts'
+import { buildPendingPaymentUpdates, splitInstallmentsExact } from '../lib/contract-payments.ts'
 import { evaluateMonthlyRescheduleLimit } from '../lib/lesson-reschedule.ts'
 import {
   getExternalSignatureStatusLabel,
   getExternalSignatureStatusTone,
 } from '../lib/document-issuances.ts'
+import { getContractCancellationClause } from '../lib/document-text.ts'
 
 assert.equal(normalizePaymentAmount('120.456'), 120.46)
 
 assert.throws(() => assertPaymentAmountMatches(100, 99.5), /Payment amount mismatch/)
 
-assert.equal(mapMercadoPagoStatus('approved'), 'pago')
-assert.equal(mapMercadoPagoStatus('pending'), 'pendente')
-assert.equal(mapMercadoPagoStatus('rejected'), 'pendente')
+assert.equal(classifyMercadoPagoStatus('approved'), 'approved')
+assert.equal(classifyMercadoPagoStatus('pending'), 'pending')
+assert.equal(classifyMercadoPagoStatus('rejected'), 'failed')
+assert.equal(classifyMercadoPagoStatus('cancelled'), 'cancelled')
+assert.equal(classifyMercadoPagoStatus('refunded'), 'refunded')
+assert.equal(classifyMercadoPagoStatus('charged_back'), 'charged_back')
+assert.equal(classifyMercadoPagoStatus(null), 'unknown')
+
+assert.equal(getMercadoPagoStatusCopy('rejected')?.shortLabel, 'Tentativa recusada')
+assert.match(getMercadoPagoStatusCopy('rejected')?.detail || '', /recusada/i)
+assert.equal(getMercadoPagoStatusCopy('refunded')?.shortLabel, 'Pagamento estornado')
+assert.match(getMercadoPagoStatusCopy('refunded')?.detail || '', /estornado/i)
+assert.equal(getMercadoPagoStatusCopy(null), null)
+
+assert.equal(
+  resolveLocalPaymentStatus({
+    mercadoPagoStatus: 'approved',
+    currentStatus: 'pendente',
+    dueDate: '2099-01-01',
+    paidAt: null,
+  }),
+  'pago'
+)
+assert.equal(
+  resolveLocalPaymentStatus({
+    mercadoPagoStatus: 'refunded',
+    currentStatus: 'pago',
+    dueDate: '2099-01-01',
+    paidAt: '2026-03-27',
+  }),
+  'pendente'
+)
+assert.equal(
+  resolveLocalPaymentStatus({
+    mercadoPagoStatus: 'pending',
+    currentStatus: 'pago',
+    dueDate: '2099-01-01',
+    paidAt: '2026-03-27',
+  }),
+  'pago'
+)
+assert.equal(
+  resolveLocalPaymentStatus({
+    mercadoPagoStatus: 'rejected',
+    currentStatus: 'pendente',
+    dueDate: '2020-01-01',
+    paidAt: null,
+  }),
+  'atrasado'
+)
 
 assert.deepEqual(splitFullName('Gabriel Cantoni Silva'), {
   firstName: 'Gabriel',
@@ -154,6 +204,15 @@ assert.throws(
   /Parcela inválida/
 )
 
+assert.deepEqual(splitInstallmentsExact(100, 3), [
+  { installmentNumber: 1, amount: 33.33 },
+  { installmentNumber: 2, amount: 33.33 },
+  { installmentNumber: 3, amount: 33.34 },
+])
+
+assert.throws(() => splitInstallmentsExact(-1, 2), /Valor total inv/)
+assert.throws(() => splitInstallmentsExact(100, 0), /N[úu]mero de parcelas inv/)
+
 assert.deepEqual(
   evaluateMonthlyRescheduleLimit({
     monthlyLimit: 1,
@@ -183,7 +242,10 @@ assert.deepEqual(
   { allowed: true }
 )
 
-assert.equal(getExternalSignatureStatusLabel('pending_external_signature'), 'Pendente de assinatura externa')
+assert.equal(
+  getExternalSignatureStatusLabel('pending_external_signature'),
+  'Pendente de assinatura externa'
+)
 assert.equal(getExternalSignatureStatusLabel('sent_to_provider'), 'Enviado ao ZapSign')
 assert.equal(getExternalSignatureStatusLabel('signed_externally'), 'Assinado externamente')
 assert.equal(getExternalSignatureStatusLabel('internal_only'), 'Somente no portal')
@@ -204,5 +266,9 @@ assert.equal(
   getExternalSignatureStatusTone('internal_only'),
   'border-slate-200 bg-slate-100 text-slate-600'
 )
+
+const cancellationClause = getContractCancellationClause()
+assert.match(cancellationClause, /apura/)
+assert.doesNotMatch(cancellationClause, /10%/)
 
 console.log('payment-utils tests passed')

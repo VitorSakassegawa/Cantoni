@@ -23,8 +23,8 @@ export default async function PagamentosPage() {
     .select('*, contratos(id, aluno_id, profiles(full_name, email, phone))')
     .order('data_vencimento')
 
-  const pagamentosComStatus = ((pagamentos || []) as Array<any>).map((payment) =>
-    withEffectivePaymentStatus(payment)
+  const pagamentosComStatus = ((pagamentos || []) as PaymentWithEffectiveStatus[]).map((payment) =>
+    withEffectivePaymentStatus(payment as PaymentWithEffectiveStatus)
   ) as PaymentWithEffectiveStatus[]
 
   const atrasados = pagamentosComStatus.filter((payment) => payment.effectiveStatus === 'atrasado')
@@ -69,6 +69,7 @@ export default async function PagamentosPage() {
       valor: payment.valor,
       data_vencimento: payment.data_vencimento,
       status: payment.effectiveStatus,
+      mercadopago_status: payment.mercadopago_status,
     })
 
     return acc

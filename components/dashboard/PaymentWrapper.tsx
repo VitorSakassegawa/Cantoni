@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -69,9 +70,12 @@ export default function PaymentWrapper({
               <div className="space-y-6">
                 <div className="flex flex-col items-center gap-6 rounded-[2rem] border border-slate-100 bg-slate-50/70 p-6 sm:flex-row sm:items-center sm:justify-center">
                   {pixImageSrc ? (
-                    <img
+                    <Image
                       src={pixImageSrc}
                       alt="QR Code PIX"
+                      width={176}
+                      height={176}
+                      unoptimized
                       className="h-44 w-44 rounded-2xl border-4 border-white bg-white shadow-xl"
                     />
                   ) : null}

@@ -3,6 +3,19 @@ import { createServiceClient } from '@/lib/supabase/server'
 
 export type ActivitySeverity = 'info' | 'warning' | 'success'
 
+type ActivityMetadataValue =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | ActivityMetadata
+  | ActivityMetadataValue[]
+
+export type ActivityMetadata = {
+  [key: string]: ActivityMetadataValue
+}
+
 export interface ActivityLogEntry {
   actorUserId?: string | null
   targetUserId?: string | null
@@ -13,7 +26,7 @@ export interface ActivityLogEntry {
   title: string
   description: string
   severity?: ActivitySeverity
-  metadata?: Record<string, unknown>
+  metadata?: ActivityMetadata
 }
 
 export async function logActivity(entry: ActivityLogEntry) {

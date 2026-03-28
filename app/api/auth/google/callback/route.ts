@@ -51,7 +51,10 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json({
-    message: 'Token obtido com sucesso. Salve o refresh_token na configuracao segura do servidor e atualize o Vercel.',
-    refresh_token: tokens.refresh_token,
+    success: true,
+    message:
+      'Autorizacao concluida com sucesso. Por seguranca, o refresh token nao e exibido nesta resposta HTTP.',
+    nextStep:
+      'Armazene o refresh token diretamente no ambiente seguro do servidor usando um fluxo administrativo fora do navegador.',
   })
 }

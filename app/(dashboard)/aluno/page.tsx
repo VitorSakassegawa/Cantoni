@@ -2,14 +2,21 @@ import { createClient } from '@/lib/supabase/server'
 export const dynamic = 'force-dynamic'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
-import { buildStudentNotifications, getDaysRemaining } from '@/lib/insights'
-import { withEffectivePaymentStatus } from '@/lib/payments'
+import { buildStudentNotifications, getDaysRemaining, type FeedItem } from '@/lib/insights'
+import { getMercadoPagoStatusCopy, withEffectivePaymentStatus } from '@/lib/payments'
 import { getStreakSummary } from '@/lib/streak-utils'
 import { formatCurrency, formatDate, formatDateOnly, formatDateTime } from '@/lib/utils'
+import type {
+  ActivityLogSummary,
+  PaymentWithEffectiveStatus,
+  StudentContractSummary,
+  TimelineAula,
+} from '@/lib/dashboard-types'
 import {
   ArrowRight,
   BookOpen,
@@ -56,9 +63,9 @@ export default async function AlunoDashboard() {
     .neq('status', 'cancelado')
     .order('data_inicio', { ascending: false })
 
-  const contratosVigentes = contratos || []
-  const contrato = contratosVigentes.find((item: any) => item.status === 'ativo') || contratosVigentes[0] || null
-  const contratoIds = contratosVigentes.map((item: any) => item.id)
+  const contratosVigentes = (contratos as StudentContractSummary[] | null | undefined) || []
+  const contrato = contratosVigentes.find((item) => item.status === 'ativo') || contratosVigentes[0] || null
+  const contratoIds = contratosVigentes.map((item) => item.id)
   const now = new Date().toISOString()
 
   const [
@@ -99,20 +106,25 @@ export default async function AlunoDashboard() {
       .limit(5),
   ])
 
-  const pagamentosComStatus = ((pagamentos || []) as any[]).map((payment) => withEffectivePaymentStatus(payment))
+  const pagamentosComStatus: PaymentWithEffectiveStatus[] = (
+    (pagamentos as PaymentWithEffectiveStatus[] | null | undefined) || []
+  ).map((payment) => withEffectivePaymentStatus(payment))
   const pagamentosPendentes = pagamentosComStatus.filter((payment) => payment.effectiveStatus !== 'pago')
   const pagamentoPendenteComStatus = pagamentosPendentes[0] || null
-  const totalParcelasPorContrato = pagamentosComStatus.reduce((acc: Record<number, number>, payment: any) => {
+  const totalParcelasPorContrato = pagamentosComStatus.reduce((acc: Record<number, number>, payment) => {
     acc[payment.contrato_id] = (acc[payment.contrato_id] || 0) + 1
     return acc
   }, {})
 
-  const temRemarcacaoPendente = (aulasPendentes || []).some(
-    (aula: any) => aula.status === 'pendente_remarcacao' && !aula.data_hora_solicitada
-  )
+  const temRemarcacaoPendente = (((aulasPendentes as TimelineAula[] | null | undefined) || []).some(
+    (aula) => aula.status === 'pendente_remarcacao' && !aula.data_hora_solicitada
+  ))
   const homeworkPendenteProximaAula = Boolean(proximaAula?.homework && !proximaAula?.homework_completed)
   const homeworkPreview = proximaAula?.homework
     ? `${String(proximaAula.homework).trim().slice(0, 90)}${String(proximaAula.homework).trim().length > 90 ? '...' : ''}`
+    : null
+  const pendingPaymentProcessorCopy = pagamentoPendenteComStatus
+    ? getMercadoPagoStatusCopy(pagamentoPendenteComStatus.mercadopago_status)
     : null
 
   const daysRemaining = getDaysRemaining(contrato?.data_fim)
@@ -127,13 +139,13 @@ export default async function AlunoDashboard() {
     recentActivityCount: activityLogs?.length || 0,
   })
 
-  const activityItems = (activityLogs || []).map((entry: any) => ({
+  const activityItems: FeedItem[] = (((activityLogs as ActivityLogSummary[] | null | undefined) || []).map((entry) => ({
     id: `student-activity-${entry.id}`,
     title: entry.title,
     description: entry.description,
-    severity: entry.severity || 'info',
+    severity: entry.severity === 'warning' || entry.severity === 'success' ? entry.severity : 'info',
     meta: formatDateTime(entry.created_at),
-  }))
+  })))
 
   const streakSummary = getStreakSummary({
     streakCount: profile?.streak_count || 0,
@@ -365,13 +377,16 @@ export default async function AlunoDashboard() {
                   <div className="flex flex-col items-center gap-8 rounded-3xl border border-slate-100 bg-slate-50/50 p-6 shadow-inner sm:flex-row">
                     <div className="group/qr relative">
                       <div className="absolute -inset-1 rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-500 opacity-20 blur transition group-hover/qr:opacity-40" />
-                      <img
+                      <Image
                         src={
                           pagamentoPendenteComStatus.pix_qrcode_base64.startsWith('data:')
                             ? pagamentoPendenteComStatus.pix_qrcode_base64
                             : `data:image/png;base64,${pagamentoPendenteComStatus.pix_qrcode_base64}`
                         }
                         alt="QR Code PIX"
+                        width={144}
+                        height={144}
+                        unoptimized
                         className="relative h-36 w-36 rounded-2xl border-4 border-white bg-white shadow-xl"
                       />
                     </div>
@@ -387,7 +402,7 @@ export default async function AlunoDashboard() {
                       ) : null}
                       {pagamentoPendenteComStatus.mercadopago_status ? (
                         <p className="text-center text-[10px] font-black uppercase tracking-widest text-blue-500 sm:text-left">
-                          Mercado Pago: {pagamentoPendenteComStatus.mercadopago_status}
+                          Mercado Pago: {pendingPaymentProcessorCopy?.shortLabel || pagamentoPendenteComStatus.mercadopago_status}
                         </p>
                       ) : null}
                     </div>
@@ -398,7 +413,7 @@ export default async function AlunoDashboard() {
                       <CreditCard className="h-5 w-5" />
                     </div>
                     <p className="text-xs font-bold uppercase leading-tight tracking-tight text-amber-700">
-                      O código PIX será enviado para seu e-mail em breve.
+                      {pendingPaymentProcessorCopy?.detail || 'O código PIX será enviado para seu e-mail em breve.'}
                     </p>
                   </div>
                 )}

@@ -1,5 +1,15 @@
+type CookieOptions = {
+  path?: string
+  maxAge?: number
+  expires?: Date
+  domain?: string
+  secure?: boolean
+  httpOnly?: boolean
+  sameSite?: 'lax' | 'strict' | 'none' | boolean
+}
+
 type CookieWriter = {
-  set: (name: string, value: string, options?: Record<string, unknown>) => unknown
+  set: (name: string, value: string, options?: CookieOptions) => unknown
 }
 
 type CookieReader = {

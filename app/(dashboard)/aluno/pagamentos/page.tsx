@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import PaymentWrapper from '@/components/dashboard/PaymentWrapper'
-import { withEffectivePaymentStatus } from '@/lib/payments'
+import { getMercadoPagoStatusCopy, withEffectivePaymentStatus } from '@/lib/payments'
 import type { PaymentContractSummary, PaymentWithEffectiveStatus } from '@/lib/dashboard-types'
 
 type ProfileSummary = {
@@ -270,7 +270,10 @@ export default async function AlunoPagamentosPage() {
                   </thead>
 
                   <tbody className="divide-y divide-slate-100">
-                    {pagamentos.map((payment) => (
+                    {pagamentos.map((payment) => {
+                      const processorCopy = getMercadoPagoStatusCopy(payment.mercadopago_status)
+
+                      return (
                       <tr
                         key={payment.id}
                         className={`group transition-all duration-300 hover:bg-slate-50/50 ${
@@ -324,6 +327,15 @@ export default async function AlunoPagamentosPage() {
                                   Aguardando compensação do Mercado Pago.
                                 </p>
                               </>
+                            ) : payment.effectiveStatus !== 'pago' && processorCopy ? (
+                              <>
+                                <p className="pl-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                  {processorCopy.shortLabel}
+                                </p>
+                                <p className="max-w-[220px] pl-1 text-[10px] font-bold leading-relaxed text-slate-400">
+                                  {processorCopy.detail}
+                                </p>
+                              </>
                             ) : null}
                           </div>
                         </td>
@@ -361,7 +373,8 @@ export default async function AlunoPagamentosPage() {
                           )}
                         </td>
                       </tr>
-                    ))}
+                      )
+                    })}
                   </tbody>
                 </table>
               </div>

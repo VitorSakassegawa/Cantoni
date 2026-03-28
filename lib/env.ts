@@ -61,4 +61,30 @@ export function getCronSecret() {
   return secret
 }
 
+export function getSupabasePublicEnv() {
+  const currentEnv = getEnv({ allowPartial: false })
+
+  if (!currentEnv.NEXT_PUBLIC_SUPABASE_URL || !currentEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    throw new Error('Supabase public environment variables are required')
+  }
+
+  return {
+    url: currentEnv.NEXT_PUBLIC_SUPABASE_URL,
+    anonKey: currentEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+  }
+}
+
+export function getSupabaseServiceEnv() {
+  const currentEnv = getEnv({ allowPartial: false })
+
+  if (!currentEnv.NEXT_PUBLIC_SUPABASE_URL || !currentEnv.SUPABASE_SERVICE_ROLE_KEY) {
+    throw new Error('Supabase service environment variables are required')
+  }
+
+  return {
+    url: currentEnv.NEXT_PUBLIC_SUPABASE_URL,
+    serviceRoleKey: currentEnv.SUPABASE_SERVICE_ROLE_KEY,
+  }
+}
+
 export const env = getEnv({ allowPartial: true })
