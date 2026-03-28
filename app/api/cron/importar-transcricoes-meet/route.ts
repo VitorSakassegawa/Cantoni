@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getCronSecret } from '@/lib/env'
+import { isValidCronRequest } from '@/lib/cron-security'
 import { runMeetTranscriptImport } from '@/lib/meet-transcript-import'
 
 function parseBoolean(value: string | null) {
@@ -7,8 +7,7 @@ function parseBoolean(value: string | null) {
 }
 
 export async function GET(request: NextRequest) {
-  const token = request.headers.get('x-cron-secret')
-  if (token !== getCronSecret()) {
+  if (!isValidCronRequest(request.headers)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 

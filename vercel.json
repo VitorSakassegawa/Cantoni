@@ -1,0 +1,16 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/lembretes-aula",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/marcar-atrasados",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/importar-transcricoes-meet",
+      "schedule": "*/30 * * * *"
+    }
+  ]
+}

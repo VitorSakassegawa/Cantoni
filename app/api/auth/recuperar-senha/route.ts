@@ -3,13 +3,14 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { enviarEmailRecuperacaoSenha } from '@/lib/resend'
 import {
   buildPasswordRecoveryRateLimitKey,
-  evaluatePasswordRecoveryRateLimit,
   extractRequestIp,
   normalizeRecoveryEmail,
+  normalizePasswordRecoveryRateLimitResult,
+  PASSWORD_RECOVERY_MAX_ATTEMPTS,
   PASSWORD_RECOVERY_GENERIC_MESSAGE,
+  PASSWORD_RECOVERY_RATE_LIMIT_SCOPE,
+  PASSWORD_RECOVERY_WINDOW_MS,
 } from '@/lib/auth-security'
-
-const passwordRecoveryAttempts = new Map<string, number[]>()
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,9 +23,26 @@ export async function POST(request: NextRequest) {
 
     const requestIp = extractRequestIp(request.headers)
     const rateLimitKey = buildPasswordRecoveryRateLimitKey(requestIp, normalizedEmail)
-    const rateLimit = evaluatePasswordRecoveryRateLimit(
-      passwordRecoveryAttempts.get(rateLimitKey) || []
+    const serviceSupabase = await createServiceClient()
+    const { data: rateLimitData, error: rateLimitError } = await serviceSupabase.rpc(
+      'consume_rate_limit',
+      {
+        p_scope: PASSWORD_RECOVERY_RATE_LIMIT_SCOPE,
+        p_identifier: rateLimitKey,
+        p_max_attempts: PASSWORD_RECOVERY_MAX_ATTEMPTS,
+        p_window_seconds: Math.floor(PASSWORD_RECOVERY_WINDOW_MS / 1000),
+      }
     )
+
+    if (rateLimitError) {
+      console.error('Password recovery rate limit error:', rateLimitError)
+      return NextResponse.json(
+        { error: 'Não foi possível processar sua solicitação agora.' },
+        { status: 503 }
+      )
+    }
+
+    const rateLimit = normalizePasswordRecoveryRateLimitResult(rateLimitData)
 
     if (!rateLimit.allowed) {
       return NextResponse.json(
@@ -39,10 +57,6 @@ export async function POST(request: NextRequest) {
         }
       )
     }
-
-    passwordRecoveryAttempts.set(rateLimitKey, [...rateLimit.recentAttempts, Date.now()])
-
-    const serviceSupabase = await createServiceClient()
 
     const { data: profile } = await serviceSupabase
       .from('profiles')

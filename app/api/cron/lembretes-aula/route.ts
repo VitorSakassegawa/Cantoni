@@ -3,7 +3,7 @@ import { createClient as createSupabaseAdmin } from '@supabase/supabase-js'
 import { addHours } from 'date-fns'
 import { enviarLembreteAula } from '@/lib/resend'
 import { formatDateTime } from '@/lib/utils'
-import { getCronSecret } from '@/lib/env'
+import { isValidCronRequest } from '@/lib/cron-security'
 
 type ReminderContractProfile = {
   full_name?: string | null
@@ -27,8 +27,7 @@ type ReminderLesson = {
 }
 
 export async function GET(request: NextRequest) {
-  const token = request.headers.get('x-cron-secret')
-  if (token !== getCronSecret()) {
+  if (!isValidCronRequest(request.headers)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
@@ -47,7 +46,7 @@ export async function GET(request: NextRequest) {
     .in('status', ['agendada', 'confirmada'])
     .gte('data_hora', in24h.toISOString())
     .lte('data_hora', in25h.toISOString())
-    .eq('homework_notificado', false)
+    .eq('reminder_sent', false)
 
   let sent = 0
   for (const aula of (aulas || []) as ReminderLesson[]) {
@@ -72,7 +71,7 @@ export async function GET(request: NextRequest) {
           : undefined,
       })
 
-      await supabase.from('aulas').update({ homework_notificado: true }).eq('id', aula.id)
+      await supabase.from('aulas').update({ reminder_sent: true }).eq('id', aula.id)
       sent += 1
     } catch (error) {
       console.error('Error sending reminder for aula', aula.id, error)

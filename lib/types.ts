@@ -72,7 +72,7 @@ export interface Aula {
   homework?: string
   has_homework: boolean;
   homework_completed: boolean;
-  homework_notificado: boolean;
+  reminder_sent: boolean;
   data_hora_solicitada?: string;
   justificativa_professor?: string;
   motivo_remarcacao?: string;

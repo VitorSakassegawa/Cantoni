@@ -4,9 +4,11 @@ import {
   evaluatePasswordRecoveryRateLimit,
   extractRequestIp,
   normalizeRecoveryEmail,
+  normalizePasswordRecoveryRateLimitResult,
   PASSWORD_RECOVERY_GENERIC_MESSAGE,
   PASSWORD_RECOVERY_MAX_ATTEMPTS,
   PASSWORD_RECOVERY_WINDOW_MS,
+  secureCompareSecret,
 } from '../lib/auth-security.ts'
 
 assert.equal(normalizeRecoveryEmail('  STUDENT@Email.com '), 'student@email.com')
@@ -40,6 +42,27 @@ const limited = evaluatePasswordRecoveryRateLimit(
 )
 assert.equal(limited.allowed, false)
 assert.ok(limited.retryAfterSeconds > 0)
+
+assert.equal(secureCompareSecret('secret-value', 'secret-value'), true)
+assert.equal(secureCompareSecret('secret-value', 'other-value'), false)
+assert.equal(secureCompareSecret(null, 'secret-value'), false)
+
+const normalizedAllowed = normalizePasswordRecoveryRateLimitResult([
+  { allowed: true, retry_after_seconds: 0 },
+])
+assert.deepEqual(normalizedAllowed, {
+  allowed: true,
+  retryAfterSeconds: 0,
+})
+
+const normalizedBlocked = normalizePasswordRecoveryRateLimitResult({
+  allowed: false,
+  retry_after_seconds: '42',
+})
+assert.deepEqual(normalizedBlocked, {
+  allowed: false,
+  retryAfterSeconds: 42,
+})
 
 assert.match(PASSWORD_RECOVERY_GENERIC_MESSAGE, /Se existir uma conta/i)
 
