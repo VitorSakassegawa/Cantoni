@@ -5,7 +5,6 @@ export const dynamic = 'force-dynamic'
 import Image from 'next/image'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -24,16 +23,6 @@ export default function LoginPage() {
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
-  const supabaseErrorMessage =
-    'O portal está temporariamente indisponível por configuração de ambiente. Tente novamente em instantes.'
-
-  let supabase: ReturnType<typeof createClient> | null = null
-
-  try {
-    supabase = createClient()
-  } catch (error: unknown) {
-    console.error('Login page: failed to initialize Supabase client', error)
-  }
 
   async function handleAuth(e: React.FormEvent) {
     e.preventDefault()
@@ -41,17 +30,19 @@ export default function LoginPage() {
     setError('')
 
     try {
-      if (!supabase) {
-        throw new Error(supabaseErrorMessage)
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = (await response.json()) as { error?: string; redirectTo?: string }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro na autenticação.')
       }
 
-      const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
-      if (authError) throw authError
-
-      const { data: profile } = await supabase.from('profiles').select('role').eq('id', data.user.id).single()
-
       toast.success('Bem-vindo de volta!')
-      router.push(profile?.role === 'professor' ? '/professor' : '/aluno')
+      router.push(data.redirectTo || '/aluno')
     } catch (error: unknown) {
       const message = getErrorMessage(error, 'Erro na autenticação.')
       setError(message)
@@ -122,12 +113,6 @@ export default function LoginPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={authMode === 'forgot' ? handleResetPassword : handleAuth} className="space-y-5">
-              {!supabase ? (
-                <div className="rounded-lg border border-amber-100 bg-amber-50 p-3">
-                  <p className="text-[10px] font-bold uppercase text-amber-700">{supabaseErrorMessage}</p>
-                </div>
-              ) : null}
-
               <div className="space-y-1.5">
                 <Label htmlFor="email" className="ml-1 text-[10px] font-black uppercase text-gray-400">
                   E-mail
@@ -197,7 +182,7 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 className="w-full rounded-xl bg-[#1e3a5f] py-6 font-bold text-white shadow-lg shadow-blue-900/20 transition-all hover:bg-[#162a45] active:scale-[0.98]"
-                disabled={loading || !supabase}
+                disabled={loading}
               >
                 {loading ? 'Processando...' : authMode === 'login' ? 'Acessar painel' : 'Recuperar senha'}
               </Button>
