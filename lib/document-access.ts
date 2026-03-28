@@ -65,7 +65,7 @@ type DocumentAccessOptions = {
   assumeProfessor?: boolean
 }
 
-const PROFILE_SELECT = 'id, role, full_name, cpf, cpf_encrypted, email, phone, city'
+const PROFILE_SELECT = 'id, role, full_name, cpf, cpf_encrypted, email, phone'
 const CONTRACT_SELECT = `
   id,
   aluno_id,
