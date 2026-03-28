@@ -10,12 +10,14 @@ import {
   splitFullName,
 } from '@/lib/payments'
 import { logActivityBestEffort } from '@/lib/activity-log'
+import { resolveCpf } from '@/lib/cpf-security'
 
 type StudentProfile = {
   id?: string
   email?: string | null
   full_name?: string | null
   cpf?: string | null
+  cpf_encrypted?: string | null
 }
 
 type LocalPaymentRecord = {
@@ -128,7 +130,7 @@ export async function POST(req: NextRequest) {
 
     const { data: localPayment, error: fetchErr } = await supabase
       .from('pagamentos')
-      .select('*, contrato:contratos(aluno:profiles(id, email, full_name, cpf))')
+      .select('*, contrato:contratos(aluno:profiles(id, email, full_name, cpf, cpf_encrypted))')
       .eq('id', paymentId)
       .single()
 
@@ -149,7 +151,7 @@ export async function POST(req: NextRequest) {
     const paymentMethodId =
       formData?.payment_method_id || formData?.paymentMethodId || selectedPaymentMethod || null
     const identificationNumber =
-      normalizeCpf(formData?.payer?.identification?.number) || normalizeCpf(aluno?.cpf)
+      normalizeCpf(formData?.payer?.identification?.number) || normalizeCpf(resolveCpf(aluno))
 
     const currentAttemptState = classifyMercadoPagoStatus(typedLocalPayment.mercadopago_status)
     const hasOpenPixAlready =

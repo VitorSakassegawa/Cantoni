@@ -9,7 +9,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/supabase/client'
 import { formatDateOnly, maskCPF, maskDate, maskPhone } from '@/lib/utils'
 import { toast } from 'sonner'
 import { AlertCircle, Calendar, ChevronLeft, Fingerprint, GraduationCap, Phone, User } from 'lucide-react'
@@ -27,7 +26,6 @@ type StudentEditableProfile = {
 export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const router = useRouter()
-  const [supabase] = useState(() => createClient())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<StudentEditableProfile | null>(null)
@@ -36,9 +34,15 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
 
   useEffect(() => {
     async function loadProfile() {
-      const { data } = await supabase.from('profiles').select('*').eq('id', id).single()
+      const response = await fetch(`/api/professor/alunos/perfil?id=${id}`)
+      if (!response.ok) {
+        setLoading(false)
+        return
+      }
 
-      const typedProfile = (data as StudentEditableProfile | null) ?? null
+      const data = (await response.json()) as StudentEditableProfile
+
+      const typedProfile = data ?? null
       setProfile(typedProfile)
       if (typedProfile?.birth_date) {
         setBirthDateDisplay(formatDateOnly(typedProfile.birth_date))
@@ -50,7 +54,7 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
     }
 
     void loadProfile()
-  }, [id, supabase])
+  }, [id])
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault()

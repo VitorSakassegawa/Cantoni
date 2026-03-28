@@ -12,6 +12,8 @@ create table if not exists profiles (
   email text unique not null,
   phone text,
   cpf text,
+  cpf_encrypted text,
+  cpf_last4 text,
   birth_date date,
   data_inscricao date,
   nivel text check (nivel in ('iniciante', 'basico', 'intermediario', 'avancado', 'conversacao', 'certificado')),

@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { createClient } from '@/lib/supabase/client'
 import { formatDateOnly, maskCPF, maskDate, maskPhone } from '@/lib/utils'
 import { toast } from 'sonner'
 import { AlertCircle, Calendar, Fingerprint, Mail, Phone, User } from 'lucide-react'
@@ -23,7 +22,6 @@ type StudentProfile = {
 }
 
 export default function PerfilPage() {
-  const [supabase] = useState(() => createClient())
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [profile, setProfile] = useState<StudentProfile | null>(null)
@@ -44,28 +42,34 @@ export default function PerfilPage() {
     }
 
     setUpdatingPassword(true)
-    const { error } = await supabase.auth.updateUser({ password: newPassword })
-    setUpdatingPassword(false)
+    try {
+      const { createClient } = await import('@/lib/supabase/client')
+      const supabase = createClient()
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
 
-    if (error) {
-      toast.error(`Erro ao atualizar senha: ${error.message}`)
-    } else {
-      toast.success('Senha atualizada com sucesso!')
-      setNewPassword('')
-      setConfirmPassword('')
+      if (error) {
+        toast.error(`Erro ao atualizar senha: ${error.message}`)
+      } else {
+        toast.success('Senha atualizada com sucesso!')
+        setNewPassword('')
+        setConfirmPassword('')
+      }
+    } finally {
+      setUpdatingPassword(false)
     }
   }
 
   useEffect(() => {
     async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser()
-      if (!user) return
+      const response = await fetch('/api/perfil')
+      if (!response.ok) {
+        setLoading(false)
+        return
+      }
 
-      const { data } = await supabase.from('profiles').select('*').eq('id', user.id).single()
+      const data = (await response.json()) as StudentProfile
 
-      setProfile((data as StudentProfile | null) ?? null)
+      setProfile(data ?? null)
       if (data?.birth_date) {
         setBirthDateDisplay(formatDateOnly(data.birth_date))
       }
@@ -73,7 +77,7 @@ export default function PerfilPage() {
     }
 
     void loadProfile()
-  }, [supabase])
+  }, [])
 
   async function handleUpdate(e: React.FormEvent) {
     e.preventDefault()

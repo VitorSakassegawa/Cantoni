@@ -31,6 +31,7 @@ const REQUIRED_ENV = [
   'NEXT_PUBLIC_SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
   'NEXT_PUBLIC_APP_URL',
+  'CPF_ENCRYPTION_KEY',
 ]
 
 const missing = REQUIRED_ENV.filter((name) => !process.env[name]?.trim())

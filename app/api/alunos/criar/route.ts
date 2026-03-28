@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { enviarEmailPrimeiroAcesso } from '@/lib/resend'
+import { buildEncryptedCpfColumns, normalizeCpf } from '@/lib/cpf-security'
 
 function generateTemporaryPassword() {
   return crypto.randomBytes(18).toString('base64url')
@@ -31,8 +32,8 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const cleanCPF = cpf.replace(/\D/g, '')
-  if (cleanCPF.length !== 11) {
+  const cleanCPF = normalizeCpf(cpf)
+  if (!cleanCPF || cleanCPF.length !== 11) {
     return NextResponse.json(
       { error: 'CPF invalido. Ele deve conter 11 digitos numericos.' },
       { status: 400 }
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
       phone: telefone || null,
       nivel: nivel || null,
       tipo_aula: tipoAula || null,
-      cpf: cpf || null,
+      ...buildEncryptedCpfColumns(cpf),
       birth_date: birthDate || null,
     },
     {

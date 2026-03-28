@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { buildEncryptedCpfColumns } from '@/lib/cpf-security'
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -13,7 +14,7 @@ export async function POST(request: NextRequest) {
     .update({
       full_name,
       phone,
-      cpf,
+      ...buildEncryptedCpfColumns(cpf),
       birth_date,
     })
     .eq('id', user.id)

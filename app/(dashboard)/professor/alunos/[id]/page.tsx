@@ -46,6 +46,7 @@ import type {
 } from '@/lib/dashboard-types'
 import { buildAttentionCandidate, buildRenewalCandidate, type FeedItem } from '@/lib/insights'
 import { withEffectivePaymentStatus } from '@/lib/payments'
+import { resolveCpf } from '@/lib/cpf-security'
 import { formatCurrency, formatDate, formatDateOnly, formatDateTime } from '@/lib/utils'
 import {
   buildFirstAccessWhatsAppMessage,
@@ -68,7 +69,17 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'professor') redirect('/aluno')
 
-  const { data: aluno } = await supabase.from('profiles').select('*').eq('id', id).single()
+  const { data: alunoRow } = await supabase
+    .from('profiles')
+    .select('*, cpf_encrypted')
+    .eq('id', id)
+    .single()
+  const aluno = alunoRow
+    ? {
+        ...alunoRow,
+        cpf: resolveCpf(alunoRow),
+      }
+    : null
   if (!aluno) notFound()
 
   const { data: contratos } = await supabase

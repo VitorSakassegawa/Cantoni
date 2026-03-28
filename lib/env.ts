@@ -12,6 +12,7 @@ const envSchema = z.object({
   GOOGLE_CALENDAR_ID: z.string().min(1).optional().default('primary'),
   RESEND_API_KEY: z.string().min(1).optional(),
   RESEND_FROM_EMAIL: z.string().email().optional(),
+  CPF_ENCRYPTION_KEY: z.string().min(32).optional(),
   MERCADOPAGO_ACCESS_TOKEN: z.string().min(1).optional(),
   MERCADOPAGO_WEBHOOK_SECRET: z.string().min(1).optional(),
   NEXT_PUBLIC_APP_URL: z.string().url().default('http://localhost:3000'),

@@ -1,12 +1,14 @@
 import 'server-only'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { resolveCpf } from '@/lib/cpf-security'
 
 type DocumentAccessProfile = {
   id?: string
   role?: string | null
   full_name?: string | null
   cpf?: string | null
+  cpf_encrypted?: string | null
   email?: string | null
   phone?: string | null
   city?: string | null
@@ -60,7 +62,7 @@ type DocumentAccessOptions = {
   redirectOnFail?: boolean
 }
 
-const PROFILE_SELECT = 'id, role, full_name, cpf, email, phone, city'
+const PROFILE_SELECT = 'id, role, full_name, cpf, cpf_encrypted, email, phone, city'
 const CONTRACT_SELECT = `
   id,
   aluno_id,
@@ -81,7 +83,13 @@ const ADDENDUM_SELECT =
   'id, previous_open_value, new_open_value, previous_open_installments, new_open_installments, first_due_date'
 
 function normalizeProfile(profile: DocumentAccessProfile | null | undefined): DocumentAccessProfile | null {
-  return profile ?? null
+  if (!profile) return null
+
+  return {
+    ...profile,
+    cpf: resolveCpf(profile),
+    cpf_encrypted: null,
+  }
 }
 
 function mergeTeacherProfile(

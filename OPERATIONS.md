@@ -39,5 +39,6 @@ Builds now fail fast when these core variables are missing:
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_APP_URL`
+- `CPF_ENCRYPTION_KEY`
 
 This prevents partially configured deployments from shipping a broken login flow.
