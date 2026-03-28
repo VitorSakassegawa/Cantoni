@@ -17,6 +17,7 @@ type DocumentAccessProfile = {
 type DocumentAccessContract = {
   id: number
   aluno_id?: string | null
+  plano_id?: number | null
   aulas_totais: number
   data_inicio: string
   data_fim: string
@@ -66,6 +67,7 @@ const PROFILE_SELECT = 'id, role, full_name, cpf, cpf_encrypted, email, phone, c
 const CONTRACT_SELECT = `
   id,
   aluno_id,
+  plano_id,
   aulas_totais,
   data_inicio,
   data_fim,
@@ -74,9 +76,7 @@ const CONTRACT_SELECT = `
   valor,
   forma_pagamento,
   status,
-  dias_da_semana,
-  planos(freq_semana, remarca_max_mes),
-  profiles(${PROFILE_SELECT})
+  dias_da_semana
 `
 const PAYMENT_SELECT = 'parcela_num, valor, data_vencimento'
 const ADDENDUM_SELECT =
@@ -137,11 +137,15 @@ export async function getDocumentContext(
   const isProfessor = profile?.role === 'professor'
   const documentQueryClient = isProfessor ? await createServiceClient() : supabase
 
-  const { data: contract } = await documentQueryClient
+  const { data: contract, error: contractError } = await documentQueryClient
     .from('contratos')
     .select(CONTRACT_SELECT)
     .eq('id', contractId)
     .single()
+
+  if (contractError) {
+    throw new Error(`Falha ao carregar contrato: ${contractError.message}`)
+  }
 
   if (!contract) {
     if (redirectOnFail) {
@@ -170,14 +174,32 @@ export async function getDocumentContext(
     .order('created_at', { ascending: false })
 
   const typedContract = contract as DocumentAccessContract
-  let student = typedContract.profiles
+  let student: DocumentAccessProfile | null = null
 
-  if (!student && typedContract.aluno_id) {
-    const { data: fallbackStudent } = await documentQueryClient
+  if (typedContract.plano_id) {
+    const { data: plan, error: planError } = await documentQueryClient
+      .from('planos')
+      .select('freq_semana, remarca_max_mes')
+      .eq('id', typedContract.plano_id)
+      .maybeSingle()
+
+    if (planError) {
+      throw new Error(`Falha ao carregar plano do contrato: ${planError.message}`)
+    }
+
+    typedContract.planos = plan || null
+  }
+
+  if (typedContract.aluno_id) {
+    const { data: fallbackStudent, error: studentError } = await documentQueryClient
       .from('profiles')
       .select(PROFILE_SELECT)
       .eq('id', typedContract.aluno_id)
       .maybeSingle()
+
+    if (studentError) {
+      throw new Error(`Falha ao carregar aluno do contrato: ${studentError.message}`)
+    }
 
     student = fallbackStudent || null
   }
