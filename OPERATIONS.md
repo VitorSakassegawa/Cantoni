@@ -22,9 +22,19 @@ The codebase already logs critical payment and contract events, but it still nee
 
 Cron configuration lives in `vercel.json`:
 
-- `/api/cron/lembretes-aula` hourly
 - `/api/cron/marcar-atrasados` daily at 06:00 UTC
-- `/api/cron/importar-transcricoes-meet` every 30 minutes
+
+Current operating model:
+
+- Keep only `/api/cron/marcar-atrasados` as automatic cron on Vercel
+- Run lesson reminders manually from `/professor/cron`
+- Run Google Meet transcript imports manually from `/professor/cron` or `/professor/aulas`
+
+Reason:
+
+- On Vercel Hobby, frequent automatic schedules are limited, so hourly reminders and transcript polling
+  should not stay in `vercel.json`
+- The professor dashboard now exposes these routines as authenticated manual operations
 
 Authentication:
 

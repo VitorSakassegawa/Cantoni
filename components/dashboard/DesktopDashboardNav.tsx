@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   BookOpen,
   Calendar,
+  Clock3,
   CreditCard,
   FileText,
   Flame,
@@ -30,6 +31,7 @@ const iconMap = {
   nivelamento: Sparkles,
   target: Target,
   calendario: Calendar,
+  cron: Clock3,
   emails: Mail,
   documentos: FileText,
   jornada: Flame,
