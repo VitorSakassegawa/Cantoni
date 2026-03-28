@@ -24,6 +24,11 @@ type WebhookLocalPaymentRecord = {
   } | null
 }
 
+type ActivityLogMetadata = {
+  mercadoPagoStatus?: string | null
+  localStatus?: string | null
+}
+
 export async function GET() {
   return NextResponse.json({
     status: 'ok',
@@ -76,6 +81,13 @@ export async function POST(req: NextRequest) {
 
       assertPaymentAmountMatches(typedLocalPayment.valor, mpPayment.transaction_amount)
 
+      const previousResolvedStatus = resolveLocalPaymentStatus({
+        mercadoPagoStatus: typedLocalPayment.mercadopago_status,
+        currentStatus: typedLocalPayment.status,
+        dueDate: typedLocalPayment.data_vencimento,
+        paidAt: typedLocalPayment.data_pagamento,
+      })
+
       const localStatus = resolveLocalPaymentStatus({
         mercadoPagoStatus: mpPayment.status,
         currentStatus: typedLocalPayment.status,
@@ -104,15 +116,41 @@ export async function POST(req: NextRequest) {
         await ContractService.syncFinancialStatus(String(typedLocalPayment.contrato_id))
       }
 
-      await logActivityBestEffort({
-        targetUserId: typedLocalPayment.contrato?.aluno_id,
-        contractId: typedLocalPayment.contrato_id,
-        paymentId: typedLocalPayment.id,
-        eventType: 'payment.webhook_synced',
-        title: 'Pagamento conciliado pelo webhook',
-        description: `O webhook confirmou o pagamento ${typedLocalPayment.id} com status ${mpPayment.status}.`,
-        severity: localStatus === 'pago' ? 'success' : 'info',
-      })
+      const webhookMeaningfullyChanged =
+        typedLocalPayment.mercadopago_status !== mpPayment.status ||
+        previousResolvedStatus !== localStatus
+
+      if (webhookMeaningfullyChanged) {
+        const { data: latestActivity } = await supabase
+          .from('activity_logs')
+          .select('metadata')
+          .eq('payment_id', typedLocalPayment.id)
+          .eq('event_type', 'payment.webhook_synced')
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        const latestMetadata = (latestActivity?.metadata || null) as ActivityLogMetadata | null
+        const alreadyLoggedCurrentStatus =
+          latestMetadata?.mercadoPagoStatus === mpPayment.status &&
+          latestMetadata?.localStatus === localStatus
+
+        if (!alreadyLoggedCurrentStatus) {
+          await logActivityBestEffort({
+            targetUserId: typedLocalPayment.contrato?.aluno_id,
+            contractId: typedLocalPayment.contrato_id,
+            paymentId: typedLocalPayment.id,
+            eventType: 'payment.webhook_synced',
+            title: 'Pagamento conciliado pelo webhook',
+            description: `O webhook confirmou o pagamento ${typedLocalPayment.id} com status ${mpPayment.status}.`,
+            severity: localStatus === 'pago' ? 'success' : 'info',
+            metadata: {
+              mercadoPagoStatus: mpPayment.status,
+              localStatus,
+            },
+          })
+        }
+      }
     }
 
     return NextResponse.json({ received: true })

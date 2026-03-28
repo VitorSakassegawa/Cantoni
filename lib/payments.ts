@@ -107,7 +107,11 @@ export function getMercadoPagoStatusCopy(status: string | null | undefined) {
         detail: 'O pagamento foi contestado ou revertido. A parcela requer revisão manual.',
       }
     default:
-      return null
+      return {
+        shortLabel: 'Cobrança pendente',
+        detail:
+          'O código PIX ainda não foi gerado neste portal. Abra a área de pagamentos para gerar uma nova cobrança.',
+      }
   }
 }
 
