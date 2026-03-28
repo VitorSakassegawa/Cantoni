@@ -94,6 +94,58 @@ const WEEKDAY_LABELS: Record<number, string> = {
 
 const LEGAL_TEACHER_NAME = 'Gabriel de Oliveira Cantoni'
 
+const PT_BR_UNITS = [
+  'zero',
+  'um',
+  'dois',
+  'três',
+  'quatro',
+  'cinco',
+  'seis',
+  'sete',
+  'oito',
+  'nove',
+]
+
+const PT_BR_TEENS = [
+  'dez',
+  'onze',
+  'doze',
+  'treze',
+  'quatorze',
+  'quinze',
+  'dezesseis',
+  'dezessete',
+  'dezoito',
+  'dezenove',
+]
+
+const PT_BR_TENS = [
+  '',
+  '',
+  'vinte',
+  'trinta',
+  'quarenta',
+  'cinquenta',
+  'sessenta',
+  'setenta',
+  'oitenta',
+  'noventa',
+]
+
+const PT_BR_HUNDREDS = [
+  '',
+  'cento',
+  'duzentos',
+  'trezentos',
+  'quatrocentos',
+  'quinhentos',
+  'seiscentos',
+  'setecentos',
+  'oitocentos',
+  'novecentos',
+]
+
 function getPersonName(person: DocumentPerson | null | undefined, fallback: string) {
   return person?.full_name || fallback
 }
@@ -118,6 +170,41 @@ function getTeacherLegalName(teacher: DocumentPerson | null | undefined) {
   return teacher?.cpf ? LEGAL_TEACHER_NAME : getPersonName(teacher, 'o professor')
 }
 
+function pluralize(count: number, singular: string, plural = `${singular}s`) {
+  return count === 1 ? singular : plural
+}
+
+function numberToPortugueseWords(value: number): string {
+  if (!Number.isFinite(value)) return String(value)
+
+  const normalized = Math.trunc(Math.abs(value))
+
+  if (normalized < 10) return PT_BR_UNITS[normalized]
+  if (normalized < 20) return PT_BR_TEENS[normalized - 10]
+
+  if (normalized < 100) {
+    const tens = Math.floor(normalized / 10)
+    const units = normalized % 10
+    return units === 0 ? PT_BR_TENS[tens] : `${PT_BR_TENS[tens]} e ${PT_BR_UNITS[units]}`
+  }
+
+  if (normalized === 100) return 'cem'
+
+  if (normalized < 1000) {
+    const hundreds = Math.floor(normalized / 100)
+    const remainder = normalized % 100
+    return remainder === 0
+      ? PT_BR_HUNDREDS[hundreds]
+      : `${PT_BR_HUNDREDS[hundreds]} e ${numberToPortugueseWords(remainder)}`
+  }
+
+  return String(normalized)
+}
+
+function formatCountWithWords(count: number) {
+  return `${count} (${numberToPortugueseWords(count)})`
+}
+
 function getWeeklyFrequency(contract: DocumentContract) {
   return Number(contract.planos?.freq_semana || 1)
 }
@@ -136,6 +223,15 @@ function getPaymentMethodLabel(method?: string | null) {
   if (normalized === 'cartao') return 'Cartão'
   if (normalized === 'boleto') return 'Boleto'
   return method || 'a combinar'
+}
+
+function getContractFormatLabel(contract: DocumentContract) {
+  if (contract.tipo_contrato === 'ad-hoc') {
+    return 'personalizado'
+  }
+
+  const weeklyFrequency = getWeeklyFrequency(contract)
+  return `personalizado (${formatCountWithWords(weeklyFrequency)} ${pluralize(weeklyFrequency, 'aula')} por semana)`
 }
 
 export function formatContractDays(days?: number[] | null) {
@@ -171,7 +267,6 @@ export function buildContractSections(input: {
   const startDate = formatDateOnly(contract.data_inicio)
   const endDate = formatDateOnly(contract.data_fim)
   const daysLabel = formatContractDays(contract.dias_da_semana)
-  const weeklyFrequency = getWeeklyFrequency(contract)
   const rescheduleLimit = getRescheduleLimit(contract)
   const firstDueDate = getFirstDueDate(payments)
   const hasAddenda = addenda.length > 0
@@ -183,17 +278,17 @@ export function buildContractSections(input: {
     },
     {
       title: '2. Objeto e formato das aulas',
-      body: `O objeto do contrato é a ministração de ${contract.aulas_totais} (${String(contract.aulas_totais)}) aulas de inglês na modalidade on-line, no período de ${startDate} a ${endDate}, preferencialmente às ${contract.horario || '18h00'}, nos dias ${daysLabel}, em regime ${contract.tipo_contrato === 'ad-hoc' ? 'personalizado' : `personalizado (${weeklyFrequency} aula(s) por semana)`}. A plataforma de videoconferência será acordada entre as partes antes do início das atividades.`,
+      body: `O objeto do contrato é a ministração de ${formatCountWithWords(contract.aulas_totais)} aulas de inglês na modalidade on-line, no período de ${startDate} a ${endDate}, preferencialmente às ${contract.horario || '18h00'}, nos dias ${daysLabel}, em regime ${getContractFormatLabel(contract)}. A plataforma de videoconferência será acordada entre as partes antes do início das atividades.`,
     },
     {
       title: '3. Valor e forma de pagamento',
-      body: `O valor global contratado é de ${formatCurrency(Number(contract.valor || 0))}, a ser pago em ${paymentCount} parcela(s) via ${getPaymentMethodLabel(contract.forma_pagamento)}, com vencimento inicial em ${firstDueDate}. O não pagamento na data acordada poderá ensejar suspensão das aulas até regularização, sem prejuízo dos demais direitos do Contratado.\n\nResumo atual das parcelas: ${buildPaymentSummary(payments)}.`,
+      body: `O valor global contratado é de ${formatCurrency(Number(contract.valor || 0))}, a ser pago em ${formatCountWithWords(paymentCount)} ${pluralize(paymentCount, 'parcela')} via ${getPaymentMethodLabel(contract.forma_pagamento)}, com vencimento inicial em ${firstDueDate}. O não pagamento na data acordada poderá ensejar suspensão das aulas até regularização, sem prejuízo dos demais direitos do Contratado.\n\nResumo atual das parcelas: ${buildPaymentSummary(payments)}.`,
     },
     {
       title: '4. Cancelamento, remarcação e reposição',
       items: [
         '4.1 Cancelamento pelo Contratante: cancelamentos comunicados com antecedência mínima de 2 (duas) horas antes do horário de início da aula não serão contabilizados como aula dada. Após esse prazo, a aula será considerada realizada para todos os fins contratuais, sem direito a reembolso ou reposição.',
-        `4.2 Limite mensal: para este contrato, o Contratante terá direito a até ${rescheduleLimit} cancelamento(s) mensal(is) sem prejuízo. Cancelamentos além do limite serão contabilizados como aulas dadas.`,
+        `4.2 Limite mensal: para este contrato, o Contratante terá direito a até ${formatCountWithWords(rescheduleLimit)} ${pluralize(rescheduleLimit, 'cancelamento')} mensal${rescheduleLimit === 1 ? '' : 'es'} sem prejuízo. Cancelamentos além do limite serão contabilizados como aulas dadas.`,
         '4.3 Cancelamento pelo Contratado: se a iniciativa for do Contratado, a aula será reposta em data e horário acordados entre as partes, conforme disponibilidade mútua, sem qualquer ônus adicional ao Contratante.',
       ],
     },
@@ -212,7 +307,7 @@ export function buildContractSections(input: {
     {
       title: '8. Alterações contratuais e aditivos',
       body: hasAddenda
-        ? `Alterações financeiras posteriores à emissão do contrato, especialmente após parcelas pagas, devem ocorrer por aditivo expresso. O portal já registra ${addenda.length} aditivo(s), preservando o histórico de pagamentos realizados e reorganizando apenas o saldo em aberto.`
+        ? `Alterações financeiras posteriores à emissão do contrato, especialmente após parcelas pagas, devem ocorrer por aditivo expresso. O portal já registra ${formatCountWithWords(addenda.length)} ${pluralize(addenda.length, 'aditivo')}, preservando o histórico de pagamentos realizados e reorganizando apenas o saldo em aberto.`
         : 'Alterações de valor, parcelamento, vencimento ou condições financeiras posteriores à emissão do contrato devem ser formalizadas por aditivo expresso, preservando o histórico já consolidado no portal.',
     },
     {
@@ -249,7 +344,7 @@ export function buildEnrollmentDeclaration(input: {
 
   return {
     title: 'Declaração de Matrícula',
-    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de língua estrangeira conduzido por ${getTeacherLegalName(teacher)}, no período de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${contract.aulas_totais} aula(s).`,
+    body: `Declaro, para os devidos fins, que ${getPersonName(student, 'o aluno')}, CPF ${getPersonCpf(student)}, encontra-se matriculado(a) no programa de aulas de língua estrangeira conduzido por ${getTeacherLegalName(teacher)}, no período de ${formatDateOnly(contract.data_inicio)} a ${formatDateOnly(contract.data_fim)}, com carga contratada de ${formatCountWithWords(contract.aulas_totais)} ${pluralize(contract.aulas_totais, 'aula')}.`,
     complementary: `O contrato atualmente vinculado ao portal é o de n.º ${contract.id}, em status ${contract.status}, com organização pedagógica registrada no ambiente digital da escola.`,
     issueDate,
   }
