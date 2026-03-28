@@ -3,7 +3,6 @@
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,7 +19,6 @@ export default function ResetPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [validatingLink, setValidatingLink] = useState(true)
   const router = useRouter()
-  const supabase = createClient()
 
   useEffect(() => {
     let active = true
@@ -34,23 +32,24 @@ export default function ResetPasswordPage() {
         const type = params.get('type')
 
         if (type === 'recovery' && accessToken && refreshToken) {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken,
+          const response = await fetch('/api/auth/recovery-session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ accessToken, refreshToken }),
           })
+          const data = (await response.json()) as { error?: string }
 
-          if (error) {
-            throw error
+          if (!response.ok) {
+            throw new Error(data.error || 'Não foi possível validar o link de recuperação.')
           }
 
           window.history.replaceState({}, document.title, window.location.pathname)
         }
 
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
+        const sessionResponse = await fetch('/api/auth/recovery-session')
+        const sessionData = (await sessionResponse.json()) as { valid?: boolean }
 
-        if (!session) {
+        if (!sessionResponse.ok || !sessionData.valid) {
           toast.error('Link de redefinição inválido ou expirado. Solicite um novo e-mail.')
           router.replace('/login')
           return
@@ -71,7 +70,7 @@ export default function ResetPasswordPage() {
     return () => {
       active = false
     }
-  }, [router, supabase])
+  }, [router])
 
   async function handleReset(e: React.FormEvent) {
     e.preventDefault()
@@ -83,8 +82,16 @@ export default function ResetPasswordPage() {
 
     setLoading(true)
     try {
-      const { error } = await supabase.auth.updateUser({ password })
-      if (error) throw error
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password }),
+      })
+      const data = (await response.json()) as { error?: string }
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao redefinir senha.')
+      }
 
       toast.success('Senha redefinida com sucesso!')
       router.push('/login')
