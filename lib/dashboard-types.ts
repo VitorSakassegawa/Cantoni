@@ -204,7 +204,9 @@ export type PlacementQuestion = {
   id: number
   question: string
   options: string[]
-  correctAnswer: number
+  // O gabarito NÃO é mais enviado ao cliente (vai encriptado no keyToken). Opcional
+  // apenas para compatibilidade de tipos no servidor.
+  correctAnswer?: number
 }
 
 export type PlacementModule = 'grammar' | 'reading' | 'listening'
@@ -214,7 +216,17 @@ export type PlacementQuestionSet = {
   module: PlacementModule
   text: string | null
   questions: PlacementQuestion[]
+  // Token opaco/encriptado com o gabarito; o cliente o devolve para correção server-side.
+  keyToken?: string
   error?: string
+}
+
+export type PlacementSelection = { id: number; selected: number }
+
+export type PlacementModuleSubmission = {
+  keyToken: string
+  selections: PlacementSelection[]
+  meta: Array<{ id: number; question: string; options: string[] }>
 }
 
 export type PlacementAnswer = PlacementQuestion & {

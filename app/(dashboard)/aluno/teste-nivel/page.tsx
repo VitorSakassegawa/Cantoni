@@ -27,13 +27,15 @@ import {
   evaluatePlacementTest,
   generatePlacementQuestions,
   getPlacementAudio,
+  gradePlacementModule,
 } from '@/lib/actions/placement-test'
 import type {
-  PlacementAnswer,
   PlacementEvaluationResult,
   PlacementLevel,
   PlacementModule,
+  PlacementModuleSubmission,
   PlacementQuestionSet,
+  PlacementSelection,
 } from '@/lib/dashboard-types'
 
 type PlacementStep = 'intro' | 'auto-eval' | 'quiz' | 'result'
@@ -69,7 +71,8 @@ export default function LevelTestPage() {
   const [questions, setQuestions] = useState<PlacementQuestionSet['questions']>([])
   const [currentModuleData, setCurrentModuleData] = useState<PlacementQuestionSet | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [answers, setAnswers] = useState<PlacementAnswer[]>([])
+  const [currentSelections, setCurrentSelections] = useState<PlacementSelection[]>([])
+  const [moduleSubmissions, setModuleSubmissions] = useState<PlacementModuleSubmission[]>([])
   const [loading, setLoading] = useState(false)
   const [finishing, setFinishing] = useState(false)
   const [result, setResult] = useState<PlacementEvaluationResult | null>(null)
@@ -170,6 +173,7 @@ export default function LevelTestPage() {
       setQuestions(data.questions)
       setCurrentModuleData(data)
       setCurrentQuestionIndex(0)
+      setCurrentSelections([])
       setStep('quiz')
       return true
     } catch (error) {
@@ -186,6 +190,9 @@ export default function LevelTestPage() {
       toast.error(eligibility?.description || 'Novo teste ainda não liberado.')
       return
     }
+    setModuleSubmissions([])
+    setCurrentSelections([])
+    setResult(null)
     await loadModule(startLevel || currentLevel, 'grammar')
   }
 
@@ -196,15 +203,11 @@ export default function LevelTestPage() {
   function handleAnswer(optionIndex: number) {
     if (!currentQuestion) return
 
-    const newAnswers: PlacementAnswer[] = [
-      ...answers,
-      {
-        ...currentQuestion,
-        selected: optionIndex,
-        correct: optionIndex === currentQuestion.correctAnswer,
-      },
+    const newSelections: PlacementSelection[] = [
+      ...currentSelections,
+      { id: currentQuestion.id, selected: optionIndex },
     ]
-    setAnswers(newAnswers)
+    setCurrentSelections(newSelections)
 
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((value) => value + 1)
@@ -216,30 +219,33 @@ export default function LevelTestPage() {
       return
     }
 
-    void finishQuiz(newAnswers)
+    void finishModule(newSelections)
   }
 
-  async function finishQuiz(finalAnswers: PlacementAnswer[]) {
-    if (module === 'listening') {
-      setIsLastConfirmation(false)
-      setShowProcessing(true)
-      await new Promise((resolve) => setTimeout(resolve, 1800))
-      setFinishing(true)
-      try {
-        const evaluation = (await evaluatePlacementTest(finalAnswers, currentLevel)) as PlacementEvaluationResult
-        setResult(evaluation)
-        setStep('result')
-      } catch (error) {
-        toast.error(getReadableError(error, 'Erro ao salvar resultado.'))
-      } finally {
-        setFinishing(false)
-      }
-      return
+  function buildSubmission(selections: PlacementSelection[]): PlacementModuleSubmission {
+    return {
+      keyToken: currentModuleData?.keyToken || '',
+      selections,
+      meta: questions.map((q) => ({ id: q.id, question: q.question, options: q.options })),
     }
+  }
 
-    const latestModuleAnswers = finalAnswers.slice(-questions.length)
-    const moduleScore = latestModuleAnswers.filter((answer) => answer.correct).length
-    const ratio = moduleScore / questions.length
+  async function finishModule(selections: PlacementSelection[]) {
+    setLoading(true)
+    const submission = buildSubmission(selections)
+    setModuleSubmissions((previous) => [...previous, submission])
+
+    // Placar do módulo vem do SERVIDOR (correção via token), não do cliente.
+    let ratio = 0
+    try {
+      const { score, total } = await gradePlacementModule({
+        keyToken: submission.keyToken,
+        selections,
+      })
+      ratio = total > 0 ? score / total : 0
+    } catch (error) {
+      toast.error(getReadableError(error, 'Erro ao corrigir o módulo.'))
+    }
 
     let nextLevel = currentLevel
     const levelIndex = LEVEL_SEQUENCE.indexOf(currentLevel)
@@ -259,6 +265,26 @@ export default function LevelTestPage() {
     const loaded = await loadModule(nextLevel, nextModule)
     if (!loaded) {
       toast.error('Erro ao carregar o próximo módulo.')
+    }
+  }
+
+  async function finishTest(selections: PlacementSelection[]) {
+    setIsLastConfirmation(false)
+    setShowProcessing(true)
+    await new Promise((resolve) => setTimeout(resolve, 1800))
+    setFinishing(true)
+    try {
+      const allModules = [...moduleSubmissions, buildSubmission(selections)]
+      const evaluation = (await evaluatePlacementTest({
+        modules: allModules,
+        attemptedLevel: currentLevel,
+      })) as PlacementEvaluationResult
+      setResult(evaluation)
+      setStep('result')
+    } catch (error) {
+      toast.error(getReadableError(error, 'Erro ao salvar resultado.'))
+    } finally {
+      setFinishing(false)
     }
   }
 
@@ -308,7 +334,8 @@ export default function LevelTestPage() {
     setQuestions([])
     setCurrentModuleData(null)
     setCurrentQuestionIndex(0)
-    setAnswers([])
+    setCurrentSelections([])
+    setModuleSubmissions([])
     setLoading(false)
     setFinishing(false)
     setResult(null)
@@ -375,7 +402,7 @@ export default function LevelTestPage() {
 
         <div className="pt-8 space-y-4">
           <Button
-            onClick={() => void finishQuiz(answers)}
+            onClick={() => void finishTest(currentSelections)}
             className="w-full h-20 rounded-[2.5rem] lms-gradient text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all group overflow-hidden"
           >
             <div className="relative z-10 flex items-center justify-center gap-4">
@@ -692,7 +719,7 @@ export default function LevelTestPage() {
         <div className="space-y-4">
           <h1 className="text-4xl font-black text-slate-900 leading-tight">Mapeamento concluído</h1>
           <p className="text-slate-500 text-lg font-medium">
-            Processamos {answers.length} respostas com base nos critérios Cambridge/CEFR.
+            Processamos {result?.total ?? 0} respostas com base nos critérios Cambridge/CEFR.
           </p>
         </div>
 
