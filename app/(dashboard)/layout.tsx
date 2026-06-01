@@ -66,14 +66,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       ]
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden bg-[var(--background)] lg:flex">
-      <div
-        className="pointer-events-none absolute top-[-10%] right-[-10%] h-[36%] w-[36%] rounded-full bg-blue-500/10 blur-[72px]"
-      />
-      <div
-        className="pointer-events-none absolute bottom-[-10%] left-[-10%] h-[32%] w-[32%] rounded-full bg-indigo-600/8 blur-[64px]"
-      />
-      <div className="pointer-events-none absolute top-[20%] left-[20%] h-[20%] w-[20%] rounded-full bg-sky-400/6 blur-[56px]" />
+    <div className="app-bg-decor relative min-h-screen overflow-x-hidden bg-[var(--background)] lg:flex">
 
       <div className="sticky top-0 z-30 overflow-x-hidden border-b border-white/40 bg-white/70 px-4 py-4 shadow-lg shadow-blue-900/5 backdrop-blur-2xl lg:hidden">
         <div className="flex items-center justify-between gap-4">
