@@ -15,13 +15,16 @@ export default function CopiarPixBtn({ codigo }: { codigo: string }) {
 
   return (
     <Button
-      variant={copied ? 'secondary' : 'outline'}
-      size="sm"
       onClick={handleCopy}
-      className="flex items-center gap-2"
+      aria-live="polite"
+      className={`h-14 w-full gap-2.5 rounded-2xl text-sm font-black uppercase tracking-wide shadow-lg transition-colors ${
+        copied
+          ? 'bg-emerald-600 text-white shadow-emerald-500/20 hover:bg-emerald-600'
+          : 'bg-blue-600 text-white shadow-blue-500/25 hover:bg-blue-700'
+      }`}
     >
-      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
-      {copied ? 'Copiado!' : 'Copiar código PIX'}
+      {copied ? <Check className="h-5 w-5" /> : <Copy className="h-5 w-5" />}
+      {copied ? 'Código PIX copiado!' : 'Copiar código PIX'}
     </Button>
   )
 }
