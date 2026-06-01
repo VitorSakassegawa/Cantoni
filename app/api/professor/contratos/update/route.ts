@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { logActivityBestEffort } from '@/lib/activity-log'
 import { buildPendingPaymentUpdates } from '@/lib/contract-payments'
+import { calculateContractSpecs } from '@/lib/utils/contract-logic'
+import { getPricingSettings } from '@/lib/pricing'
 
 type PaymentRow = {
   id: number
@@ -46,6 +48,7 @@ export async function POST(request: NextRequest) {
     descontoValor,
     descontoPercentual,
     numParcelas,
+    motivoAjuste,
   } = payload
 
   if (!id) {
@@ -53,6 +56,7 @@ export async function POST(request: NextRequest) {
   }
 
   const serviceSupabase = await createServiceClient()
+  const pricing = await getPricingSettings(serviceSupabase)
 
   const { data: existingContract, error: existingContractError } = await serviceSupabase
     .from('contratos')
@@ -81,6 +85,33 @@ export async function POST(request: NextRequest) {
   const nextWeekdays = dias_da_semana ?? existingContract.dias_da_semana
   const nextDiscountValue = descontoValor ?? existingContract.desconto_valor ?? 0
   const nextDiscountPercent = descontoPercentual ?? existingContract.desconto_percentual ?? 0
+
+  // Desvio de valor: se há desconto sobre o preço-padrão, a justificativa é obrigatória.
+  const overrideReason = typeof motivoAjuste === 'string' ? motivoAjuste.trim() : ''
+  if (Number(nextDiscountValue || 0) > 0.005 && !overrideReason) {
+    return NextResponse.json(
+      { error: 'Justificativa obrigatória: o valor do contrato está abaixo do preço-padrão.' },
+      { status: 400 }
+    )
+  }
+
+  let standardValue: number | null = null
+  try {
+    const specs = calculateContractSpecs(
+      new Date(`${nextStartDate}T12:00:00`),
+      planoId ? Number(planoId) : existingContract.plano_id,
+      (nextWeekdays || []) as number[],
+      nextContractType,
+      nextEndDate ? new Date(`${nextEndDate}T12:00:00`) : undefined,
+      pricing
+    )
+    standardValue =
+      nextContractType === 'ad-hoc'
+        ? Number((specs.totalLessons * pricing.avulsa).toFixed(2))
+        : specs.totalValue
+  } catch (error) {
+    console.error('Standard value calc error (update):', error)
+  }
 
   const nextValor = Number.parseFloat(String(nextValorRaw))
   const nextDueDay = Number.parseInt(String(nextDueDayRaw), 10)
@@ -167,6 +198,11 @@ export async function POST(request: NextRequest) {
   if (updateError) {
     return NextResponse.json({ error: updateError.message }, { status: 500 })
   }
+
+  await serviceSupabase
+    .from('contratos')
+    .update({ valor_padrao: standardValue, pricing_override_reason: overrideReason || null })
+    .eq('id', id)
 
   const { data: contrato } = await serviceSupabase
     .from('contratos')
