@@ -1,8 +1,9 @@
 import { FERIADOS_NACIONAIS } from '../constants/holidays'
-import { 
-  startOfMonth, 
-  endOfMonth, 
-  differenceInMonths, 
+import { DEFAULT_PRICING, type ContractPricing } from '../pricing'
+import {
+  startOfMonth,
+  endOfMonth,
+  differenceInMonths,
   eachDayOfInterval
 } from 'date-fns'
 
@@ -37,16 +38,13 @@ export function getSemesterInfo(date: Date) {
   }
 }
 
-const UNIT_RATE_1X = 1920 / 20 // 96
-const UNIT_RATE_2X = 2880 / 40 // 72
-const UNIT_RATE_ADHOC = 90
-
 export function calculateContractSpecs(
-  startDate: Date, 
-  planoId: number, 
-  diasDaSemana: number[], 
+  startDate: Date,
+  planoId: number,
+  diasDaSemana: number[],
   tipoContrato: string = 'semestral',
-  manualEndDate?: Date
+  manualEndDate?: Date,
+  pricing: ContractPricing = DEFAULT_PRICING
 ) {
   const sem = getSemesterInfo(startDate)
   const endDate = tipoContrato === 'semestral' ? sem.end : (manualEndDate || sem.end)
@@ -59,14 +57,14 @@ export function calculateContractSpecs(
 
   const freq = planoId === 1 ? '1x' : '2x'
   const maxRegular = freq === '1x' ? sem.maxRegular1x : sem.maxRegular2x
-  const fullPrice = freq === '1x' ? sem.price1x : sem.price2x
+  const fullPrice = freq === '1x' ? pricing.semestral1x : pricing.semestral2x
   
   let regularLessons = 0
   let bonusLessons = 0
   let totalValue = 0
 
   if (tipoContrato === 'semestral') {
-    const unitRate = freq === '1x' ? UNIT_RATE_1X : UNIT_RATE_2X
+    const unitRate = freq === '1x' ? pricing.semestral1x / sem.maxRegular1x : pricing.semestral2x / sem.maxRegular2x
     if (lessonDates.length >= maxRegular) {
       regularLessons = maxRegular
       bonusLessons = lessonDates.length - maxRegular
@@ -80,7 +78,7 @@ export function calculateContractSpecs(
     // Ad-hoc / Personalizado (Hora/Aula)
     regularLessons = lessonDates.length
     bonusLessons = 0
-    totalValue = regularLessons * UNIT_RATE_ADHOC
+    totalValue = regularLessons * pricing.avulsa
   }
 
   // Monthly installments calculation

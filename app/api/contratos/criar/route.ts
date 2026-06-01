@@ -19,6 +19,7 @@ import {
   listAvailableContractCredits,
 } from '@/lib/contract-credits'
 import { splitInstallmentsExact } from '@/lib/contract-payments'
+import { getPricingSettings } from '@/lib/pricing'
 
 const CALENDAR_CONCURRENCY = 4
 
@@ -69,9 +70,11 @@ export async function POST(request: NextRequest) {
         aulasTotais,
         numParcelas,
         creditToApply,
+        motivoAjuste,
       } = await request.json()
 
     const serviceSupabase = await createServiceClient()
+    const pricing = await getPricingSettings(serviceSupabase)
     const { data: plano } = await serviceSupabase.from('planos').select('*').eq('id', planoId).single()
     const { data: aluno } = await serviceSupabase.from('profiles').select('*').eq('id', alunoId).single()
     const { count: existingContractsCount } = await serviceSupabase
@@ -96,8 +99,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Crédito aplicado inválido' }, { status: 400 })
     }
 
-    const specs = calculateContractSpecs(startObj, planoId, diasDaSemana, tipoContrato, requestedEndObj)
+    const specs = calculateContractSpecs(startObj, planoId, diasDaSemana, tipoContrato, requestedEndObj, pricing)
     const totalLessons = normalizeLessonTotal(aulasTotais, specs.totalLessons)
+
+    // Desvio de valor: quando há desconto sobre o preço-padrão, a justificativa é obrigatória.
+    const standardValue =
+      tipoContrato === 'ad-hoc' ? Number((totalLessons * pricing.avulsa).toFixed(2)) : specs.totalValue
+    const overrideReason = typeof motivoAjuste === 'string' ? motivoAjuste.trim() : ''
+    if (Number(descontoValor || 0) > 0.005 && !overrideReason) {
+      return NextResponse.json(
+        { error: 'Justificativa obrigatória: o valor do contrato está abaixo do preço-padrão.' },
+        { status: 400 }
+      )
+    }
     const availableCreditSources = await listAvailableContractCredits(serviceSupabase, alunoId)
     const totalAvailableCredit = Number(
       availableCreditSources.reduce((total, source) => total + source.availableValue, 0).toFixed(2)
@@ -164,6 +178,8 @@ export async function POST(request: NextRequest) {
         desconto_valor: descontoValor || 0,
         desconto_percentual: descontoPercentual || 0,
         dias_da_semana: diasDaSemana,
+        valor_padrao: standardValue,
+        pricing_override_reason: overrideReason || null,
       })
       .select()
       .single()
