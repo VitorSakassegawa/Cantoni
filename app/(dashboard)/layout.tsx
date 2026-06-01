@@ -103,7 +103,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         <MobileDashboardNav items={navItems.map(({ href, label, iconKey }) => ({ href, label, icon: iconKey }))} />
       </div>
 
-      <aside className="z-10 m-6 mr-0 hidden w-72 flex-col lg:flex">
+      <aside className="z-10 m-6 mr-0 hidden w-72 flex-col lg:flex lg:sticky lg:top-6 lg:self-start lg:h-[calc(100vh-3rem)]">
         <div className="glass-panel flex flex-1 flex-col overflow-hidden rounded-[2.5rem] border-white/30 shadow-2xl shadow-blue-900/10">
           <div className="p-8 pb-4">
             <div className="flex flex-col items-center space-y-4 text-center">
