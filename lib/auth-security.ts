@@ -7,6 +7,16 @@ export const PASSWORD_RECOVERY_RATE_LIMIT_SCOPE = 'password_recovery'
 export const PASSWORD_RECOVERY_GENERIC_MESSAGE =
   'Se existir uma conta com este e-mail, enviaremos um link de recuperação em instantes.'
 
+// Login brute-force / credential-stuffing protection (MITRE ATT&CK T1110).
+// Reuses the same `consume_rate_limit` RPC + auth_rate_limits table as recovery.
+export const LOGIN_RATE_LIMIT_SCOPE = 'login'
+export const LOGIN_MAX_ATTEMPTS = 8
+export const LOGIN_WINDOW_MS = 15 * 60 * 1000
+
+export function buildLoginRateLimitKey(ip: string, email: string) {
+  return `${ip}:${email}`
+}
+
 export function normalizeRecoveryEmail(value: unknown) {
   if (typeof value !== 'string') {
     return null
@@ -113,3 +123,6 @@ export function normalizePasswordRecoveryRateLimitResult(
     retryAfterSeconds: Math.max(0, Number(typedRow.retry_after_seconds ?? 0) || 0),
   }
 }
+
+// Scope-agnostic alias: the parser above is generic to any consume_rate_limit row.
+export const normalizeRateLimitResult = normalizePasswordRecoveryRateLimitResult

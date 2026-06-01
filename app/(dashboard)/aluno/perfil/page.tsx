@@ -36,8 +36,8 @@ export default function PerfilPage() {
       toast.error('As senhas nao coincidem.')
       return
     }
-    if (newPassword.length < 6) {
-      toast.error('A senha deve ter pelo menos 6 caracteres.')
+    if (newPassword.length < 8) {
+      toast.error('A senha deve ter pelo menos 8 caracteres.')
       return
     }
 
@@ -215,14 +215,14 @@ export default function PerfilPage() {
               <div className="space-y-2.5">
                 <Label htmlFor="aluno-newpass" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nova Senha</Label>
                 <div className="relative">
-                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" id="aluno-newpass" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimo 6 caracteres" minLength={6} required />
+                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" id="aluno-newpass" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimo 8 caracteres" minLength={8} required />
                 </div>
               </div>
 
               <div className="space-y-2.5">
                 <Label htmlFor="aluno-confpass" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Confirmar Nova Senha</Label>
                 <div className="relative">
-                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" id="aluno-confpass" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a nova senha" minLength={6} required />
+                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" id="aluno-confpass" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a nova senha" minLength={8} required />
                 </div>
               </div>
             </div>
