@@ -1241,108 +1241,57 @@ begin
 end;
 $$;
 
-create or replace function accept_document_issuance(
-  p_issuance_id bigint,
-  p_student_id uuid,
-  p_acceptance_name text,
-  p_acceptance_ip text default null,
-  p_acceptance_user_agent text default null
-)
-returns void
+
+
+-- ============================================================
+-- Reconciliacao com o banco de producao (2026-05-31)
+-- Objetos que existiam em producao mas faltavam neste snapshot.
+-- Capturados via pg_get_functiondef / information_schema.triggers.
+-- ============================================================
+
+-- Cria automaticamente a linha em profiles quando um usuario nasce em auth.users.
+-- (A funcao estava ausente do snapshot; e ela que torna desnecessario o INSERT
+--  manual de profile no signup.)
+create or replace function handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public, auth
+as $$
+begin
+  insert into public.profiles (id, full_name, email, role)
+  values (new.id, coalesce(new.raw_user_meta_data->>'full_name', new.email), new.email, 'aluno');
+  return new;
+end;
+$$;
+
+-- NOTA: a trigger fica em auth.users (schema auth). O nome abaixo segue a convencao
+-- padrao do Supabase ('on_auth_user_created'); confirmar com pg_get_triggerdef se difere.
+drop trigger if exists on_auth_user_created on auth.users;
+create trigger on_auth_user_created
+after insert on auth.users
+for each row execute function handle_new_user();
+
+-- Trava de seguranca: impede que um nao-professor altere a propria coluna `role`
+-- (escalonamento de privilegio). Aplicada via migracao 20260531_lock_profile_role.sql.
+create or replace function prevent_role_self_escalation()
+returns trigger
 language plpgsql
 security definer
 set search_path = public
 as $$
-declare
-  v_issuance document_issuances%rowtype;
 begin
-  select *
-  into v_issuance
-  from document_issuances
-  where id = p_issuance_id
-  for update;
-
-  if not found then
-    raise exception 'Documento não encontrado';
+  if new.role is distinct from old.role
+     and (select auth.uid()) is not null
+     and not is_professor()
+  then
+    raise exception 'Alteração de papel (role) não permitida' using errcode = '42501';
   end if;
-
-  if v_issuance.student_id <> p_student_id then
-    raise exception 'Sem permissão para aceitar este documento';
-  end if;
-
-  if not v_issuance.requires_acceptance then
-    raise exception 'Este documento não exige aceite';
-  end if;
-
-  if v_issuance.status = 'accepted' then
-    return;
-  end if;
-
-  update document_issuances
-  set status = 'accepted',
-      accepted_by = p_student_id,
-      accepted_name = coalesce(nullif(trim(p_acceptance_name), ''), accepted_name),
-      accepted_version = version,
-      acceptance_ip = coalesce(nullif(trim(p_acceptance_ip), ''), acceptance_ip),
-      acceptance_user_agent = coalesce(nullif(trim(p_acceptance_user_agent), ''), acceptance_user_agent),
-      accepted_at = now()
-  where id = p_issuance_id;
+  return new;
 end;
 $$;
 
-create or replace function accept_document_issuance(
-  p_issuance_id bigint,
-  p_student_id uuid,
-  p_acceptance_name text,
-  p_acceptance_ip text default null,
-  p_acceptance_user_agent text default null
-)
-returns void
-language plpgsql
-security definer
-set search_path = public
-as $$
-declare
-  v_issuance document_issuances%rowtype;
-begin
-  select *
-  into v_issuance
-  from document_issuances
-  where id = p_issuance_id
-  for update;
-
-  if not found then
-    raise exception 'Documento não encontrado';
-  end if;
-
-  if v_issuance.student_id <> p_student_id then
-    raise exception 'Sem permissão para aceitar este documento';
-  end if;
-
-  if not v_issuance.requires_acceptance then
-    raise exception 'Este documento não exige aceite';
-  end if;
-
-  if v_issuance.status = 'accepted' then
-    return;
-  end if;
-
-  update document_issuances
-  set status = 'accepted',
-      accepted_by = p_student_id,
-      accepted_name = coalesce(nullif(trim(p_acceptance_name), ''), accepted_name),
-      accepted_version = version,
-      acceptance_ip = coalesce(nullif(trim(p_acceptance_ip), ''), acceptance_ip),
-      acceptance_user_agent = coalesce(nullif(trim(p_acceptance_user_agent), ''), acceptance_user_agent),
-      accepted_at = now()
-  where id = p_issuance_id;
-
-  update document_issuances
-  set status = 'superseded'
-  where contract_id = v_issuance.contract_id
-    and kind = v_issuance.kind
-    and id <> p_issuance_id
-    and status = 'accepted';
-end;
-$$;
-
+drop trigger if exists trg_lock_profile_role on profiles;
+create trigger trg_lock_profile_role
+before update on profiles
+for each row execute function prevent_role_self_escalation();
