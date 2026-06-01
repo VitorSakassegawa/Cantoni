@@ -27,13 +27,15 @@ import {
   evaluatePlacementTest,
   generatePlacementQuestions,
   getPlacementAudio,
+  gradePlacementModule,
 } from '@/lib/actions/placement-test'
 import type {
-  PlacementAnswer,
   PlacementEvaluationResult,
   PlacementLevel,
   PlacementModule,
+  PlacementModuleSubmission,
   PlacementQuestionSet,
+  PlacementSelection,
 } from '@/lib/dashboard-types'
 
 type PlacementStep = 'intro' | 'auto-eval' | 'quiz' | 'result'
@@ -69,7 +71,8 @@ export default function LevelTestPage() {
   const [questions, setQuestions] = useState<PlacementQuestionSet['questions']>([])
   const [currentModuleData, setCurrentModuleData] = useState<PlacementQuestionSet | null>(null)
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
-  const [answers, setAnswers] = useState<PlacementAnswer[]>([])
+  const [currentSelections, setCurrentSelections] = useState<PlacementSelection[]>([])
+  const [moduleSubmissions, setModuleSubmissions] = useState<PlacementModuleSubmission[]>([])
   const [loading, setLoading] = useState(false)
   const [finishing, setFinishing] = useState(false)
   const [result, setResult] = useState<PlacementEvaluationResult | null>(null)
@@ -170,6 +173,7 @@ export default function LevelTestPage() {
       setQuestions(data.questions)
       setCurrentModuleData(data)
       setCurrentQuestionIndex(0)
+      setCurrentSelections([])
       setStep('quiz')
       return true
     } catch (error) {
@@ -186,6 +190,9 @@ export default function LevelTestPage() {
       toast.error(eligibility?.description || 'Novo teste ainda não liberado.')
       return
     }
+    setModuleSubmissions([])
+    setCurrentSelections([])
+    setResult(null)
     await loadModule(startLevel || currentLevel, 'grammar')
   }
 
@@ -196,15 +203,11 @@ export default function LevelTestPage() {
   function handleAnswer(optionIndex: number) {
     if (!currentQuestion) return
 
-    const newAnswers: PlacementAnswer[] = [
-      ...answers,
-      {
-        ...currentQuestion,
-        selected: optionIndex,
-        correct: optionIndex === currentQuestion.correctAnswer,
-      },
+    const newSelections: PlacementSelection[] = [
+      ...currentSelections,
+      { id: currentQuestion.id, selected: optionIndex },
     ]
-    setAnswers(newAnswers)
+    setCurrentSelections(newSelections)
 
     if (currentQuestionIndex < questions.length - 1) {
       setCurrentQuestionIndex((value) => value + 1)
@@ -216,30 +219,33 @@ export default function LevelTestPage() {
       return
     }
 
-    void finishQuiz(newAnswers)
+    void finishModule(newSelections)
   }
 
-  async function finishQuiz(finalAnswers: PlacementAnswer[]) {
-    if (module === 'listening') {
-      setIsLastConfirmation(false)
-      setShowProcessing(true)
-      await new Promise((resolve) => setTimeout(resolve, 1800))
-      setFinishing(true)
-      try {
-        const evaluation = (await evaluatePlacementTest(finalAnswers, currentLevel)) as PlacementEvaluationResult
-        setResult(evaluation)
-        setStep('result')
-      } catch (error) {
-        toast.error(getReadableError(error, 'Erro ao salvar resultado.'))
-      } finally {
-        setFinishing(false)
-      }
-      return
+  function buildSubmission(selections: PlacementSelection[]): PlacementModuleSubmission {
+    return {
+      keyToken: currentModuleData?.keyToken || '',
+      selections,
+      meta: questions.map((q) => ({ id: q.id, question: q.question, options: q.options })),
     }
+  }
 
-    const latestModuleAnswers = finalAnswers.slice(-questions.length)
-    const moduleScore = latestModuleAnswers.filter((answer) => answer.correct).length
-    const ratio = moduleScore / questions.length
+  async function finishModule(selections: PlacementSelection[]) {
+    setLoading(true)
+    const submission = buildSubmission(selections)
+    setModuleSubmissions((previous) => [...previous, submission])
+
+    // Placar do módulo vem do SERVIDOR (correção via token), não do cliente.
+    let ratio = 0
+    try {
+      const { score, total } = await gradePlacementModule({
+        keyToken: submission.keyToken,
+        selections,
+      })
+      ratio = total > 0 ? score / total : 0
+    } catch (error) {
+      toast.error(getReadableError(error, 'Erro ao corrigir o módulo.'))
+    }
 
     let nextLevel = currentLevel
     const levelIndex = LEVEL_SEQUENCE.indexOf(currentLevel)
@@ -259,6 +265,26 @@ export default function LevelTestPage() {
     const loaded = await loadModule(nextLevel, nextModule)
     if (!loaded) {
       toast.error('Erro ao carregar o próximo módulo.')
+    }
+  }
+
+  async function finishTest(selections: PlacementSelection[]) {
+    setIsLastConfirmation(false)
+    setShowProcessing(true)
+    await new Promise((resolve) => setTimeout(resolve, 1800))
+    setFinishing(true)
+    try {
+      const allModules = [...moduleSubmissions, buildSubmission(selections)]
+      const evaluation = (await evaluatePlacementTest({
+        modules: allModules,
+        attemptedLevel: currentLevel,
+      })) as PlacementEvaluationResult
+      setResult(evaluation)
+      setStep('result')
+    } catch (error) {
+      toast.error(getReadableError(error, 'Erro ao salvar resultado.'))
+    } finally {
+      setFinishing(false)
     }
   }
 
@@ -308,7 +334,8 @@ export default function LevelTestPage() {
     setQuestions([])
     setCurrentModuleData(null)
     setCurrentQuestionIndex(0)
-    setAnswers([])
+    setCurrentSelections([])
+    setModuleSubmissions([])
     setLoading(false)
     setFinishing(false)
     setResult(null)
@@ -332,7 +359,7 @@ export default function LevelTestPage() {
         </div>
 
         <div className="space-y-6">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border border-indigo-100">
             <Loader2 className="w-3 h-3 animate-spin" /> Analisando seu desempenho
           </div>
           <h1 className="text-3xl font-black text-slate-900 tracking-tight">Processando seu mapeamento</h1>
@@ -350,7 +377,7 @@ export default function LevelTestPage() {
               <div className="h-1 bg-slate-100 rounded-full overflow-hidden">
                 <div className="h-full bg-indigo-600 transition-all duration-1000" style={{ width: '100%' }} />
               </div>
-              <p className="text-[8px] font-black text-slate-400 uppercase mt-2">{skill}</p>
+              <p className="text-[11px] font-black text-slate-400 uppercase mt-2">{skill}</p>
             </div>
           ))}
         </div>
@@ -375,7 +402,7 @@ export default function LevelTestPage() {
 
         <div className="pt-8 space-y-4">
           <Button
-            onClick={() => void finishQuiz(answers)}
+            onClick={() => void finishTest(currentSelections)}
             className="w-full h-20 rounded-[2.5rem] lms-gradient text-white font-black text-sm uppercase tracking-[0.3em] shadow-2xl shadow-blue-500/30 hover:scale-[1.02] active:scale-95 transition-all group overflow-hidden"
           >
             <div className="relative z-10 flex items-center justify-center gap-4">
@@ -385,7 +412,7 @@ export default function LevelTestPage() {
           </Button>
           <Button
             variant="ghost"
-            className="w-full h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400"
+            className="w-full h-12 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400"
             onClick={() => setIsLastConfirmation(false)}
           >
             Voltar ao último módulo
@@ -399,7 +426,7 @@ export default function LevelTestPage() {
     return (
       <div className="max-w-3xl mx-auto py-12 px-4 space-y-12 animate-in fade-in slide-in-from-bottom-4 duration-700">
         <div className="text-center space-y-6">
-          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest border border-indigo-100 mb-2">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 px-6 py-2.5 rounded-full text-xs font-black uppercase tracking-widest border border-indigo-100 mb-2">
             <Sparkles className="w-4 h-4 text-indigo-500 animate-pulse" /> IA + Cambridge CEFR
           </div>
           <h1 className="text-5xl font-black text-slate-900 tracking-tight leading-[1.1]">
@@ -411,7 +438,7 @@ export default function LevelTestPage() {
         </div>
 
         <div className={`rounded-[2rem] border px-6 py-5 ${eligibility?.allowed ? 'border-emerald-100 bg-emerald-50/70' : 'border-amber-100 bg-amber-50/70'}`}>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Liberação do teste</p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Liberação do teste</p>
           <p className="mt-2 text-xl font-black tracking-tight text-slate-900">
             {eligibilityLoading ? 'Verificando regras do portal...' : eligibility?.title}
           </p>
@@ -535,7 +562,7 @@ export default function LevelTestPage() {
 
         <Button
           variant="ghost"
-          className="text-[10px] font-black uppercase tracking-widest text-slate-400"
+          className="text-xs font-black uppercase tracking-widest text-slate-400"
           onClick={() => setStep('intro')}
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
@@ -559,7 +586,7 @@ export default function LevelTestPage() {
       <div className="max-w-4xl mx-auto py-12 px-4 space-y-8">
         <div className="space-y-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div className="flex flex-wrap items-center gap-2 text-[10px] font-black uppercase tracking-widest">
+            <div className="flex flex-wrap items-center gap-2 text-xs font-black uppercase tracking-widest">
               <span className="rounded-full bg-indigo-50 px-3 py-1 text-indigo-600">
                 Módulo {modulePosition} de 3
               </span>
@@ -568,7 +595,7 @@ export default function LevelTestPage() {
               </span>
               <span className="rounded-full bg-slate-50 px-3 py-1 text-slate-500">Nível {currentLevel}</span>
             </div>
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <span className="text-xs font-black uppercase tracking-widest text-slate-400">
               Questão {currentQuestionIndex + 1} de {questions.length}
             </span>
           </div>
@@ -578,7 +605,7 @@ export default function LevelTestPage() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
           {currentModuleData?.text ? (
             <div className="lg:col-span-5 animate-in slide-in-from-left-4 duration-500">
-              <h3 className="text-[10px] font-black text-indigo-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
+              <h3 className="text-xs font-black text-indigo-600 uppercase tracking-[0.2em] mb-4 flex items-center gap-2">
                 {module === 'reading' ? <BookOpen className="w-3.5 h-3.5" /> : <Video className="w-3.5 h-3.5" />}
                 {module === 'reading' ? 'Contexto de leitura' : 'Áudio da questão'}
               </h3>
@@ -619,7 +646,7 @@ export default function LevelTestPage() {
                       )}
                     </button>
                     <div className="space-y-2">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+                      <p className="text-xs font-black uppercase tracking-widest text-indigo-400">
                         {loadingAudio
                           ? 'Gerando áudio com IA...'
                           : audioCurrentTime > 0
@@ -692,14 +719,14 @@ export default function LevelTestPage() {
         <div className="space-y-4">
           <h1 className="text-4xl font-black text-slate-900 leading-tight">Mapeamento concluído</h1>
           <p className="text-slate-500 text-lg font-medium">
-            Processamos {answers.length} respostas com base nos critérios Cambridge/CEFR.
+            Processamos {result?.total ?? 0} respostas com base nos critérios Cambridge/CEFR.
           </p>
         </div>
 
         <div className="bg-white p-12 rounded-[3.5rem] shadow-2xl border-indigo-50 border relative overflow-hidden">
           <div className="relative z-10 space-y-6">
             <div className="space-y-1">
-              <p className="text-[10px] font-black uppercase tracking-widest text-indigo-400">
+              <p className="text-xs font-black uppercase tracking-widest text-indigo-400">
                 Nível sugerido
               </p>
               <div className="text-8xl font-black text-indigo-600 tracking-tighter">
@@ -713,7 +740,7 @@ export default function LevelTestPage() {
             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left space-y-4">
               <div className="flex items-center gap-3 text-indigo-600">
                 <Sparkles className="w-4 h-4" />
-                <p className="text-[10px] font-black uppercase tracking-widest">Validação técnica</p>
+                <p className="text-xs font-black uppercase tracking-widest">Validação técnica</p>
               </div>
               <p className="text-[11px] text-slate-500 font-medium leading-relaxed whitespace-pre-wrap">
                 {result?.insights ||
@@ -731,7 +758,7 @@ export default function LevelTestPage() {
               </Link>
               <Button
                 variant="ghost"
-                className="h-12 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400"
+                className="h-12 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400"
                 onClick={restartFlow}
               >
                 <RotateCcw className="w-4 h-4 mr-2" />

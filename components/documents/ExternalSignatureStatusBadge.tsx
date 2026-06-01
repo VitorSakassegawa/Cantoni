@@ -7,7 +7,7 @@ export default function ExternalSignatureStatusBadge({
 }) {
   return (
     <span
-      className={`inline-flex rounded-full border px-3 py-1 text-[10px] font-black uppercase tracking-[0.2em] ${getExternalSignatureStatusTone(status)}`}
+      className={`inline-flex rounded-full border px-3 py-1 text-xs font-black uppercase tracking-[0.2em] ${getExternalSignatureStatusTone(status)}`}
     >
       {getExternalSignatureStatusLabel(status)}
     </span>

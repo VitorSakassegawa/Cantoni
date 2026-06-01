@@ -29,7 +29,7 @@ export default async function FlashcardsPage() {
     <div className="space-y-10 animate-fade-in pb-16">
       <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
         <div>
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-600">
+          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-black uppercase tracking-widest text-indigo-600">
             <BrainCircuit className="h-3 w-3" />
             Spaced Repetition System
           </div>
@@ -45,11 +45,11 @@ export default async function FlashcardsPage() {
         <div className="flex rounded-3xl border border-slate-100 bg-white p-2 shadow-xl shadow-slate-200/50">
           <div className="border-r border-slate-100 px-6 py-3 text-center">
             <p className="text-2xl font-black leading-tight text-slate-900">{totalCards?.length || 0}</p>
-            <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Total</p>
+            <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Total</p>
           </div>
           <div className="px-6 py-3 text-center">
             <p className="text-2xl font-black leading-tight text-indigo-600">{dueCards?.length || 0}</p>
-            <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400">Para revisar</p>
+            <p className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Para revisar</p>
           </div>
         </div>
       </div>
@@ -75,7 +75,7 @@ export default async function FlashcardsPage() {
               <div className="flex max-w-md items-start gap-4 rounded-2xl border border-slate-100 bg-slate-50 p-6 text-left">
                 <Info className="mt-0.5 h-5 w-5 shrink-0 text-indigo-400" />
                 <p className="text-xs leading-relaxed text-slate-500">
-                  <span className="mb-1 block text-[9px] font-black uppercase tracking-widest text-indigo-600">
+                  <span className="mb-1 block text-[11px] font-black uppercase tracking-widest text-indigo-600">
                     Dica de Estudo
                   </span>
                   Adicione palavras que você teve dificuldade na aula para que o sistema te lembre

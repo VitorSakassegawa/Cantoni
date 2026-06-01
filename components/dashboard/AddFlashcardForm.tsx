@@ -35,7 +35,7 @@ export default function AddFlashcardForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
-        <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">
           Palavra ou Expressão
         </label>
         <div className="relative">
@@ -52,7 +52,7 @@ export default function AddFlashcardForm() {
       </div>
 
       <div className="space-y-2">
-        <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">
           Tradução
         </label>
         <div className="relative">
@@ -69,7 +69,7 @@ export default function AddFlashcardForm() {
       </div>
 
       <div className="space-y-2">
-        <label className="ml-1 text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <label className="ml-1 text-xs font-black uppercase tracking-widest text-slate-400">
           Exemplo de Uso (Opcional)
         </label>
         <Input
@@ -84,7 +84,7 @@ export default function AddFlashcardForm() {
       <Button
         type="submit"
         disabled={loading}
-        className="mt-4 flex h-14 w-full items-center gap-2 rounded-2xl bg-indigo-600 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 hover:shadow-xl"
+        className="mt-4 flex h-14 w-full items-center gap-2 rounded-2xl bg-indigo-600 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-700 hover:shadow-xl"
       >
         <Plus className="h-4 w-4" />
         {loading ? 'SALVANDO...' : 'SALVAR NO BANCO'}

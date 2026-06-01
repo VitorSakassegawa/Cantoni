@@ -45,7 +45,7 @@ export default function PaymentWrapper({
       <Button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="h-10 min-w-[156px] justify-center rounded-xl bg-blue-600 px-6 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+        className="h-10 min-w-[156px] justify-center rounded-xl bg-blue-600 px-6 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
       >
         <CreditCard className="mr-2 h-4 w-4" />
         {hasPixGenerated ? 'Ver PIX' : 'Pagar Agora'}
@@ -81,7 +81,7 @@ export default function PaymentWrapper({
                   ) : null}
 
                   <div className="w-full max-w-sm space-y-4 text-center sm:text-left">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                       Escaneie para pagar com PIX
                     </p>
                     <p className="text-sm font-medium leading-relaxed text-slate-500">

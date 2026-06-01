@@ -21,7 +21,7 @@ export default async function ProfessorCronPage() {
     <div className="space-y-8">
       <section className="rounded-[2.5rem] border border-white/30 bg-white/80 p-8 shadow-2xl shadow-blue-900/5 backdrop-blur">
         <div className="max-w-4xl space-y-4">
-          <p className="text-[10px] font-black uppercase tracking-[0.24em] text-blue-500">Operacoes manuais</p>
+          <p className="text-xs font-black uppercase tracking-[0.24em] text-blue-500">Operacoes manuais</p>
           <h1 className="text-4xl font-black tracking-tighter text-slate-900">Central de Cron</h1>
           <p className="text-sm font-medium leading-7 text-slate-600">
             Esta area concentra as rotinas administrativas que antes poderiam rodar automaticamente.
@@ -30,7 +30,7 @@ export default async function ProfessorCronPage() {
             demais gatilhos para execucao manual segura pelo professor.
           </p>
           <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50/90 p-5">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">Limitacoes do plano Hobby</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">Limitacoes do plano Hobby</p>
             <div className="mt-3 grid gap-3 md:grid-cols-3">
               <div className="rounded-2xl border border-amber-100 bg-white/70 px-4 py-3 text-sm font-semibold text-slate-700">
                 A Vercel Hobby so aceita cron automatico com execucao diaria.

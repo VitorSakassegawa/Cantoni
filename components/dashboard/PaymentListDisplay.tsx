@@ -54,7 +54,7 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
         <div className="flex gap-2">
           <button
             onClick={() => setFilter('todos')}
-            className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] transition-all ${
+            className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.1em] transition-all ${
               filter === 'todos'
                 ? 'bg-white text-blue-600 shadow-sm'
                 : 'text-slate-400 hover:text-slate-600'
@@ -64,7 +64,7 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
           </button>
           <button
             onClick={() => setFilter('em_dia')}
-            className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] transition-all ${
+            className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.1em] transition-all ${
               filter === 'em_dia'
                 ? 'bg-white text-emerald-600 shadow-sm'
                 : 'text-slate-400 hover:text-slate-600'
@@ -74,7 +74,7 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
           </button>
           <button
             onClick={() => setFilter('atrasado')}
-            className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-[0.1em] transition-all ${
+            className={`rounded-xl px-4 py-2 text-xs font-black uppercase tracking-[0.1em] transition-all ${
               filter === 'atrasado'
                 ? 'bg-white text-rose-600 shadow-sm'
                 : 'text-slate-400 hover:text-slate-600'
@@ -121,13 +121,13 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
                       <div className="mt-1 flex flex-wrap items-center gap-2">
                         <Badge
                           variant="outline"
-                          className="border-slate-200 text-[8px] font-black uppercase tracking-widest text-slate-400"
+                          className="border-slate-200 text-[11px] font-black uppercase tracking-widest text-slate-400"
                         >
                           {group.paidCount}/{group.totalCount} parcelas pagas
                         </Badge>
                         <Badge
                           variant="outline"
-                          className={`text-[8px] font-black uppercase tracking-widest ${
+                          className={`text-[11px] font-black uppercase tracking-widest ${
                             group.status === 'Atrasado'
                               ? 'border-rose-200 bg-rose-50 text-rose-600'
                               : 'border-emerald-200 bg-emerald-50 text-emerald-600'
@@ -148,7 +148,7 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
 
                   <div className="grid grid-cols-2 gap-4 lg:min-w-[340px] lg:grid-cols-3">
                     <div className="rounded-2xl bg-slate-50 px-4 py-3">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                         Total
                       </p>
                       <p className="mt-1 text-sm font-black text-slate-900">
@@ -156,7 +156,7 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
                       </p>
                     </div>
                     <div className="rounded-2xl bg-amber-50 px-4 py-3">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+                      <p className="text-xs font-black uppercase tracking-widest text-amber-500">
                         Em aberto
                       </p>
                       <p className="mt-1 text-sm font-black text-amber-700">
@@ -164,7 +164,7 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
                       </p>
                     </div>
                     <div className="col-span-2 rounded-2xl bg-blue-50 px-4 py-3 lg:col-span-1">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                      <p className="text-xs font-black uppercase tracking-widest text-blue-500">
                         Contrato
                       </p>
                       <p className="mt-1 text-sm font-black text-blue-700">#{group.contratoId}</p>
@@ -187,7 +187,7 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
                           className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm transition-all hover:shadow-md"
                         >
                           <div className="mb-4 flex items-start justify-between">
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <span className="text-xs font-black uppercase tracking-widest text-slate-400">
                               Parcela {installment.parcela_num}/{group.totalCount}
                             </span>
                             <div
@@ -214,15 +214,15 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
                           </p>
                           <div className="mt-4 flex items-center justify-between border-t border-slate-50 pt-4">
                             <div>
-                              <p className="text-[8px] font-black uppercase tracking-tight text-slate-400">
+                              <p className="text-[11px] font-black uppercase tracking-tight text-slate-400">
                                 Vencimento
                               </p>
-                              <p className="text-[10px] font-bold text-slate-700">
+                              <p className="text-xs font-bold text-slate-700">
                                 {formatDateOnly(installment.data_vencimento)}
                               </p>
                             </div>
                             <Badge
-                              className={`border-none px-2 py-0.5 text-[8px] font-black uppercase tracking-widest ${
+                              className={`border-none px-2 py-0.5 text-[11px] font-black uppercase tracking-widest ${
                                 installment.status === 'pago'
                                   ? 'bg-emerald-500 text-white'
                                   : installment.status === 'atrasado'
@@ -234,7 +234,7 @@ export default function PaymentListDisplay({ groups }: PaymentListDisplayProps) 
                             </Badge>
                           </div>
                           {processorCopy && installment.status !== 'pago' ? (
-                            <p className="mt-3 text-[10px] font-bold leading-relaxed text-slate-400">
+                            <p className="mt-3 text-xs font-bold leading-relaxed text-slate-400">
                               {processorCopy.shortLabel}. {processorCopy.detail}
                             </p>
                           ) : null}

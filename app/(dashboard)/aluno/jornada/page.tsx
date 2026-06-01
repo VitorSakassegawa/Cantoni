@@ -297,7 +297,7 @@ export default async function AlunoJornadaPage() {
 
         <div className="relative z-10 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-100">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-100">
               <Flame className="h-3.5 w-3.5 text-amber-300" />
               Jornada do aluno
             </div>
@@ -312,11 +312,11 @@ export default async function AlunoJornadaPage() {
 
           <div className="grid grid-cols-2 gap-4 md:min-w-[360px]">
             <div className="rounded-[1.75rem] border border-white/10 bg-white/10 px-5 py-4 backdrop-blur-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-100">Streak atual</p>
+              <p className="text-xs font-black uppercase tracking-widest text-blue-100">Streak atual</p>
               <p className="mt-2 text-3xl font-black tracking-tight">{snapshot.streakCount} dias</p>
             </div>
             <div className="rounded-[1.75rem] border border-white/10 bg-white/10 px-5 py-4 backdrop-blur-sm">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-100">XP total</p>
+              <p className="text-xs font-black uppercase tracking-widest text-blue-100">XP total</p>
               <p className="mt-2 text-3xl font-black tracking-tight">{levelSummary.xp}</p>
             </div>
           </div>
@@ -331,7 +331,7 @@ export default async function AlunoJornadaPage() {
                 <Trophy className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Ranking pessoal</p>
+                <p className="text-xs font-black uppercase tracking-widest text-amber-500">Ranking pessoal</p>
                 <p className="mt-1 text-xl font-black tracking-tight text-slate-900">
                   Sua semana atual já é sua melhor semana pessoal
                 </p>
@@ -340,7 +340,7 @@ export default async function AlunoJornadaPage() {
                 </p>
               </div>
             </div>
-            <Badge variant="warning" className="self-start text-[9px] font-black uppercase tracking-widest md:self-center">
+            <Badge variant="warning" className="self-start text-[11px] font-black uppercase tracking-widest md:self-center">
               Recorde em andamento
             </Badge>
           </div>
@@ -355,7 +355,7 @@ export default async function AlunoJornadaPage() {
                 <WandSparkles className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Semana fechada</p>
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-500">Semana fechada</p>
                 <p className="mt-1 text-xl font-black tracking-tight text-slate-900">
                   Você concluiu todas as missões semanais
                 </p>
@@ -364,7 +364,7 @@ export default async function AlunoJornadaPage() {
                 </p>
               </div>
             </div>
-            <Badge variant="success" className="self-start text-[9px] font-black uppercase tracking-widest md:self-center">
+            <Badge variant="success" className="self-start text-[11px] font-black uppercase tracking-widest md:self-center">
               Missões completas
             </Badge>
           </div>
@@ -381,17 +381,17 @@ export default async function AlunoJornadaPage() {
           <CardContent className="space-y-6 pt-6">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl border border-amber-200 bg-amber-50/80 px-5 py-5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Nível atual</p>
+                <p className="text-xs font-black uppercase tracking-widest text-amber-500">Nível atual</p>
                 <p className="mt-2 text-4xl font-black tracking-tight text-slate-900">{levelSummary.level}</p>
                 <p className="text-[11px] font-medium text-slate-500">{levelSummary.title}</p>
               </div>
               <div className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Melhor recorde</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Melhor recorde</p>
                 <p className="mt-2 text-4xl font-black tracking-tight text-slate-900">{streakSummary.bestStreak}</p>
                 <p className="text-[11px] font-medium text-slate-500">dias de streak</p>
               </div>
               <div className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Próximo nível</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Próximo nível</p>
                 <p className="mt-2 text-4xl font-black tracking-tight text-slate-900">
                   {Math.max(0, levelSummary.nextLevelXp - levelSummary.xp)}
                 </p>
@@ -402,12 +402,12 @@ export default async function AlunoJornadaPage() {
             <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Barra de progresso</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-blue-500">Barra de progresso</p>
                   <p className="mt-2 text-lg font-black tracking-tight text-blue-900">
                     {levelSummary.currentLevelXp} XP dentro do nível {levelSummary.level}
                   </p>
                 </div>
-                <Badge className="border-none bg-blue-600 text-[9px] font-black uppercase tracking-widest text-white">
+                <Badge className="border-none bg-blue-600 text-[11px] font-black uppercase tracking-widest text-white">
                   {levelSummary.progressPct}%
                 </Badge>
               </div>
@@ -425,12 +425,12 @@ export default async function AlunoJornadaPage() {
                 >
                   <div className="flex items-center justify-between gap-4">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Como ganhar XP</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">Como ganhar XP</p>
                       <p className="mt-2 text-lg font-black tracking-tight text-slate-900">{rule.title}</p>
                       <p className="mt-1 text-sm font-medium leading-relaxed text-slate-500">{rule.description}</p>
                     </div>
                     <div className="rounded-2xl bg-blue-600 px-3 py-2 text-center text-white shadow-lg shadow-blue-500/20">
-                      <p className="text-[9px] font-black uppercase tracking-widest">+ XP</p>
+                      <p className="text-[11px] font-black uppercase tracking-widest">+ XP</p>
                       <p className="text-2xl font-black tracking-tight">{rule.xp}</p>
                     </div>
                   </div>
@@ -448,27 +448,27 @@ export default async function AlunoJornadaPage() {
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
             <div className="rounded-3xl border border-blue-100 bg-blue-50/70 px-5 py-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Resumo</p>
+              <p className="text-xs font-black uppercase tracking-widest text-blue-500">Resumo</p>
               <p className="mt-2 text-lg font-black tracking-tight text-blue-900">{streakSummary.headline}</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="rounded-3xl border border-slate-100 bg-slate-50 px-4 py-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Flashcards</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Flashcards</p>
                 <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{snapshot.totalFlashcards}</p>
                 <p className="text-[11px] font-medium text-slate-500">{snapshot.flashcardsDue} para revisar</p>
               </div>
               <div className="rounded-3xl border border-slate-100 bg-slate-50 px-4 py-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Homework</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Homework</p>
                 <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{snapshot.completedHomework}</p>
                 <p className="text-[11px] font-medium text-slate-500">{snapshot.pendingHomework} pendente(s)</p>
               </div>
             </div>
 
             <div className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Regras do streak</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Regras do streak</p>
               <div className="mt-4 rounded-3xl border border-white/70 bg-white px-4 py-4 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Como funciona</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Como funciona</p>
                 <p className="mt-2 text-sm font-medium leading-relaxed text-slate-600">
                   Seu streak mede constância diária. O objetivo é registrar pelo menos uma ação válida por dia
                   para manter a sequência viva e avançar na sua jornada.
@@ -488,7 +488,7 @@ export default async function AlunoJornadaPage() {
                           <Icon className="h-5 w-5" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[10px] font-black uppercase tracking-widest opacity-80">{rule.eyebrow}</p>
+                          <p className="text-xs font-black uppercase tracking-widest opacity-80">{rule.eyebrow}</p>
                           <p className="text-sm font-black leading-tight">{rule.title}</p>
                           <p className="text-sm font-medium leading-relaxed opacity-90">{rule.description}</p>
                         </div>
@@ -524,7 +524,7 @@ export default async function AlunoJornadaPage() {
                     <div className="space-y-2">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-black tracking-tight text-slate-900">{mission.title}</p>
-                        <Badge variant={mission.status === 'done' ? 'success' : 'warning'} className="text-[8px] font-black uppercase tracking-widest">
+                        <Badge variant={mission.status === 'done' ? 'success' : 'warning'} className="text-[11px] font-black uppercase tracking-widest">
                           {mission.status === 'done' ? 'Concluída' : 'Pendente'}
                         </Badge>
                       </div>
@@ -532,14 +532,14 @@ export default async function AlunoJornadaPage() {
                     </div>
                     <Link
                       href={mission.href}
-                      className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+                      className="inline-flex h-11 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
                     >
                       {mission.actionLabel}
                       <ArrowRight className="h-4 w-4" />
                     </Link>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest text-slate-400">
                       <span>
                         {mission.current}/{mission.target} {mission.unitLabel}
                       </span>
@@ -563,13 +563,13 @@ export default async function AlunoJornadaPage() {
           </CardHeader>
           <CardContent className="space-y-5 pt-6">
             <div className="rounded-3xl border border-amber-200 bg-amber-50/80 px-5 py-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">Melhor semana</p>
+              <p className="text-xs font-black uppercase tracking-widest text-amber-500">Melhor semana</p>
               <p className="mt-2 text-lg font-black tracking-tight text-slate-900">{personalBest.bestWeek.label}</p>
               <p className="text-sm font-medium text-slate-500">{personalBest.bestWeek.score} XP acumulados</p>
             </div>
 
             <div className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Semana atual</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Semana atual</p>
               <p className="mt-2 text-lg font-black tracking-tight text-slate-900">{personalBest.currentWeek.label}</p>
               <p className="text-sm font-medium text-slate-500">{personalBest.rankLabel}</p>
             </div>
@@ -584,7 +584,7 @@ export default async function AlunoJornadaPage() {
                         {week.lessons} aula(s) • {week.homework} homework • {week.flashcards} flashcard(s)
                       </p>
                     </div>
-                    <Badge variant={week.score === personalBest.bestWeek.score ? 'warning' : 'secondary'} className="text-[9px] font-black uppercase tracking-widest">
+                    <Badge variant={week.score === personalBest.bestWeek.score ? 'warning' : 'secondary'} className="text-[11px] font-black uppercase tracking-widest">
                       {week.score} XP
                     </Badge>
                   </div>
@@ -616,14 +616,14 @@ export default async function AlunoJornadaPage() {
                     <div className={`flex h-14 w-14 items-center justify-center rounded-2xl ${ui.icon}`}>
                       <Icon className="h-6 w-6" />
                     </div>
-                    <Badge variant={ui.badge} className="text-[8px] font-black uppercase tracking-widest">
+                    <Badge variant={ui.badge} className="text-[11px] font-black uppercase tracking-widest">
                       {achievement.unlocked ? achievement.rarity : 'bloqueada'}
                     </Badge>
                   </div>
                   <div className="mt-5 space-y-2">
                     <p className="text-base font-black tracking-tight text-slate-900">{achievement.title}</p>
                     <p className="text-[11px] font-medium leading-relaxed text-slate-500">{achievement.description}</p>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                       {achievement.progressLabel}
                     </p>
                   </div>
@@ -636,17 +636,17 @@ export default async function AlunoJornadaPage() {
 
       <div className="grid gap-6 md:grid-cols-3">
         <Link href="/aluno/flashcards" className="group rounded-[2rem] border border-indigo-100 bg-indigo-50 px-6 py-6 shadow-xl shadow-indigo-100/40 transition-all hover:-translate-y-1">
-          <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Banco de palavras</p>
+          <p className="text-xs font-black uppercase tracking-widest text-indigo-500">Banco de palavras</p>
           <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{snapshot.totalFlashcards}</p>
           <p className="mt-2 text-sm font-medium text-slate-500">Expanda seu vocabulário e mantenha a memória ativa.</p>
         </Link>
         <Link href="/aluno/aulas" className="group rounded-[2rem] border border-blue-100 bg-blue-50 px-6 py-6 shadow-xl shadow-blue-100/40 transition-all hover:-translate-y-1">
-          <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Homework</p>
+          <p className="text-xs font-black uppercase tracking-widest text-blue-500">Homework</p>
           <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{snapshot.pendingHomework}</p>
           <p className="mt-2 text-sm font-medium text-slate-500">Veja tarefas pendentes e mantenha sua consistência.</p>
         </Link>
         <Link href="/aluno" className="group rounded-[2rem] border border-emerald-100 bg-emerald-50 px-6 py-6 shadow-xl shadow-emerald-100/40 transition-all hover:-translate-y-1">
-          <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Aulas concluídas</p>
+          <p className="text-xs font-black uppercase tracking-widest text-emerald-500">Aulas concluídas</p>
           <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">{snapshot.completedLessons}</p>
           <p className="mt-2 text-sm font-medium text-slate-500">Seu progresso real aparece quando você mantém o ritmo.</p>
         </Link>

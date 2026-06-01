@@ -106,7 +106,7 @@ export default async function AlunoPagamentosPage() {
     <div className="mx-auto max-w-6xl space-y-10 animate-fade-in pb-20">
       <Link
         href="/aluno"
-        className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
+        className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
       >
         <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
         Voltar para Dashboard
@@ -124,7 +124,7 @@ export default async function AlunoPagamentosPage() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Em aberto
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-tight text-slate-900">
@@ -142,7 +142,7 @@ export default async function AlunoPagamentosPage() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-500">
+                <p className="text-xs font-black uppercase tracking-widest text-amber-500">
                   Pendentes
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-tight text-amber-700">
@@ -160,7 +160,7 @@ export default async function AlunoPagamentosPage() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-rose-500">
+                <p className="text-xs font-black uppercase tracking-widest text-rose-500">
                   Atrasados
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-tight text-rose-700">
@@ -178,7 +178,7 @@ export default async function AlunoPagamentosPage() {
           <CardContent className="p-6">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-500">
                   Pagas
                 </p>
                 <p className="mt-2 text-2xl font-black tracking-tight text-emerald-700">
@@ -217,7 +217,7 @@ export default async function AlunoPagamentosPage() {
                     Vencida em {formatDate(item.dataVencimento)} • valor {formatCurrency(item.valor)}
                   </p>
                 </div>
-                <Badge className="w-fit border-none bg-rose-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white">
+                <Badge className="w-fit border-none bg-rose-500 px-3 py-1 text-xs font-black uppercase tracking-widest text-white">
                   Em atraso
                 </Badge>
               </div>
@@ -237,7 +237,7 @@ export default async function AlunoPagamentosPage() {
                   </div>
                   <span>Contrato #{contrato.id}</span>
                 </div>
-                <span className="text-[10px] tracking-normal normal-case text-slate-400">
+                <span className="text-xs tracking-normal normal-case text-slate-400">
                   {formatDateOnly(contrato.data_inicio)} - {formatDateOnly(contrato.data_fim)}
                 </span>
               </CardTitle>
@@ -248,22 +248,22 @@ export default async function AlunoPagamentosPage() {
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50/50 text-slate-500">
-                      <th className="px-8 py-6 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-8 py-6 text-xs font-black uppercase tracking-widest">
                         Parcela
                       </th>
-                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-4 py-6 text-xs font-black uppercase tracking-widest">
                         Valor
                       </th>
-                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-4 py-6 text-xs font-black uppercase tracking-widest">
                         Vencimento
                       </th>
-                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-4 py-6 text-xs font-black uppercase tracking-widest">
                         Situação
                       </th>
-                      <th className="px-4 py-6 text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-4 py-6 text-xs font-black uppercase tracking-widest">
                         Data de pagamento
                       </th>
-                      <th className="px-8 py-6 text-right text-[10px] font-black uppercase tracking-widest">
+                      <th className="px-8 py-6 text-right text-xs font-black uppercase tracking-widest">
                         Ação / Status
                       </th>
                     </tr>
@@ -286,7 +286,7 @@ export default async function AlunoPagamentosPage() {
                       >
                         <td className="px-8 py-6">
                           <span className="text-sm font-black text-slate-900">{payment.parcela_num}</span>
-                          <span className="text-[10px] font-bold uppercase tracking-tighter text-slate-400">
+                          <span className="text-xs font-bold uppercase tracking-tighter text-slate-400">
                             {' '}
                             /{String(totalPorContrato[payment.contrato_id] || pagamentos.length).padStart(2, '0')}
                           </span>
@@ -303,7 +303,7 @@ export default async function AlunoPagamentosPage() {
                         <td className="px-4 py-6">
                           <div className="flex flex-col items-start gap-2">
                             <Badge
-                              className={`border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest ${
+                              className={`border-none px-3 py-1 text-xs font-black uppercase tracking-widest ${
                                 payment.effectiveStatus === 'pago'
                                   ? 'bg-emerald-500 text-white'
                                   : payment.effectiveStatus === 'atrasado'
@@ -320,19 +320,19 @@ export default async function AlunoPagamentosPage() {
 
                             {payment.effectiveStatus !== 'pago' && payment.pix_copia_cola ? (
                               <>
-                                <p className="pl-1 text-[10px] font-black uppercase tracking-widest text-blue-600">
+                                <p className="pl-1 text-xs font-black uppercase tracking-widest text-blue-600">
                                   PIX gerado
                                 </p>
-                                <p className="max-w-[190px] pl-1 text-[10px] font-bold leading-relaxed text-slate-400">
+                                <p className="max-w-[190px] pl-1 text-xs font-bold leading-relaxed text-slate-400">
                                   Aguardando compensação do Mercado Pago.
                                 </p>
                               </>
                             ) : payment.effectiveStatus !== 'pago' && processorCopy ? (
                               <>
-                                <p className="pl-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                                <p className="pl-1 text-xs font-black uppercase tracking-widest text-slate-500">
                                   {processorCopy.shortLabel}
                                 </p>
-                                <p className="max-w-[220px] pl-1 text-[10px] font-bold leading-relaxed text-slate-400">
+                                <p className="max-w-[220px] pl-1 text-xs font-bold leading-relaxed text-slate-400">
                                   {processorCopy.detail}
                                 </p>
                               </>
@@ -366,7 +366,7 @@ export default async function AlunoPagamentosPage() {
                           ) : (
                             <Badge
                               variant="success"
-                              className="rounded-lg px-3 py-1 text-[10px] font-black uppercase tracking-widest"
+                              className="rounded-lg px-3 py-1 text-xs font-black uppercase tracking-widest"
                             >
                               Pago
                             </Badge>

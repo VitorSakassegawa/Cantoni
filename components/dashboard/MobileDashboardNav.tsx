@@ -57,7 +57,7 @@ export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
             key={item.href}
             href={item.href}
             aria-current={isActive ? 'page' : undefined}
-            className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-2xl border px-4 py-2.5 text-[10px] font-black uppercase tracking-widest shadow-sm transition-all ${
+            className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-black uppercase tracking-widest shadow-sm transition-all ${
               isActive
                 ? 'border-blue-600 bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                 : 'border-slate-200 bg-white text-slate-600'

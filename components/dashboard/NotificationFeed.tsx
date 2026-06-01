@@ -80,13 +80,13 @@ export default function NotificationFeed({
                     <div className="min-w-0 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="text-[11px] font-black tracking-tight text-slate-900">{item.title}</p>
-                        <Badge variant={config.badgeVariant} className="text-[8px] font-black uppercase tracking-widest">
+                        <Badge variant={config.badgeVariant} className="text-[11px] font-black uppercase tracking-widest">
                           {config.label}
                         </Badge>
                       </div>
-                      <p className="text-[10px] font-bold leading-relaxed text-slate-500">{item.description}</p>
+                      <p className="text-xs font-bold leading-relaxed text-slate-500">{item.description}</p>
                       {item.meta ? (
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-300">{item.meta}</p>
+                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-300">{item.meta}</p>
                       ) : null}
                     </div>
                   </div>
@@ -94,7 +94,7 @@ export default function NotificationFeed({
                   {item.href ? (
                     <Link
                       href={item.href}
-                      className="inline-flex shrink-0 items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-600 transition-colors hover:text-blue-800"
+                      className="inline-flex shrink-0 items-center gap-1 text-[11px] font-black uppercase tracking-widest text-blue-600 transition-colors hover:text-blue-800"
                     >
                       {item.actionLabel || 'Abrir'}
                       <ChevronRight className="h-3 w-3" />
@@ -110,7 +110,7 @@ export default function NotificationFeed({
                   type="button"
                   variant="outline"
                   onClick={() => setVisibleCount((current) => current + pageSize)}
-                  className="w-full rounded-2xl border-slate-200 text-[10px] font-black uppercase tracking-widest text-slate-600 hover:border-blue-200 hover:text-blue-700"
+                  className="w-full rounded-2xl border-slate-200 text-xs font-black uppercase tracking-widest text-slate-600 hover:border-blue-200 hover:text-blue-700"
                 >
                   Mostrar mais {Math.min(pageSize, items.length - visibleItems.length)}
                 </Button>

@@ -60,7 +60,7 @@ export default function ExternalSignatureStatusForm({
   return (
     <div className="space-y-4 rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 print:hidden">
       <div className="space-y-1">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">Assinatura externa</p>
+        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">Assinatura externa</p>
         <p className="text-sm font-medium text-slate-600">
           Use este controle para acompanhar o andamento manual do contrato no ZapSign.
         </p>
@@ -76,7 +76,7 @@ export default function ExternalSignatureStatusForm({
 
       <textarea rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Ex.: enviado ao ZapSign em 25/03, aguardando assinatura do aluno." className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none" />
 
-      <button type="button" onClick={handleSave} disabled={loading} className="inline-flex h-11 items-center justify-center rounded-2xl bg-slate-900 px-5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-slate-800 disabled:opacity-50">
+      <button type="button" onClick={handleSave} disabled={loading} className="inline-flex h-11 items-center justify-center rounded-2xl bg-slate-900 px-5 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-slate-800 disabled:opacity-50">
         {loading ? 'Salvando...' : 'Salvar status'}
       </button>
     </div>

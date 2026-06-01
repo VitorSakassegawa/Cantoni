@@ -114,7 +114,7 @@ export default function LoginPage() {
           <CardContent>
             <form onSubmit={authMode === 'forgot' ? handleResetPassword : handleAuth} className="space-y-5">
               <div className="space-y-1.5">
-                <Label htmlFor="email" className="ml-1 text-[10px] font-black uppercase text-gray-400">
+                <Label htmlFor="email" className="ml-1 text-xs font-black uppercase text-gray-400">
                   E-mail
                 </Label>
                 <Input
@@ -131,7 +131,7 @@ export default function LoginPage() {
               {authMode === 'login' ? (
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="ml-1 text-[10px] font-black uppercase text-gray-400">
+                    <Label htmlFor="password" className="ml-1 text-xs font-black uppercase text-gray-400">
                       Senha
                     </Label>
                     <button
@@ -141,7 +141,7 @@ export default function LoginPage() {
                         setError('')
                         setSuccessMessage('')
                       }}
-                      className="text-[9px] font-black uppercase tracking-widest text-blue-500 hover:underline"
+                      className="text-[11px] font-black uppercase tracking-widest text-blue-500 hover:underline"
                     >
                       Esqueci a senha
                     </button>
@@ -158,7 +158,7 @@ export default function LoginPage() {
                 </div>
               ) : (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
+                  <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
                     Primeiro acesso
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
@@ -169,13 +169,13 @@ export default function LoginPage() {
 
               {error ? (
                 <div className="rounded-lg border border-red-100 bg-red-50 p-3">
-                  <p className="text-[10px] font-bold uppercase text-red-600">{error}</p>
+                  <p className="text-xs font-bold uppercase text-red-600">{error}</p>
                 </div>
               ) : null}
 
               {successMessage ? (
                 <div className="rounded-lg border border-emerald-100 bg-emerald-50 p-3">
-                  <p className="text-[10px] font-bold uppercase text-emerald-600">{successMessage}</p>
+                  <p className="text-xs font-bold uppercase text-emerald-600">{successMessage}</p>
                 </div>
               ) : null}
 
@@ -192,7 +192,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setAuthMode('login')}
-                    className="text-[10px] font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-slate-900"
+                    className="text-xs font-black uppercase tracking-widest text-gray-400 transition-colors hover:text-slate-900"
                   >
                     Voltar para o login
                   </button>

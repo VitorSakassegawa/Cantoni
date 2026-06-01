@@ -64,6 +64,7 @@ function getReadableError(error: unknown, fallback: string) {
 export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }: Props) {
   const [loading, setLoading] = useState(false)
   const [completing, setCompleting] = useState(false)
+  const [confirmConcluir, setConfirmConcluir] = useState(false)
   const [summarizing, setSummarizing] = useState(false)
   const [formData, setFormData] = useState<LessonFormData>({
     homework: aula.homework || '',
@@ -101,11 +102,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     }
   }
 
-  async function handleConcluir() {
-    if (!window.confirm('Deseja marcar esta aula como concluída? Isso descontará 1 crédito do plano do aluno.')) {
-      return
-    }
-
+  async function doConcluir() {
     setCompleting(true)
     try {
       const { success, xpAwarded } = await concluirAula(aula.id)
@@ -118,6 +115,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
       toast.error(getReadableError(error, 'Erro ao concluir aula.'))
     } finally {
       setCompleting(false)
+      setConfirmConcluir(false)
     }
   }
 
@@ -177,6 +175,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] rounded-[2.5rem] border-none shadow-2xl p-0 overflow-hidden flex flex-col max-h-[85vh] bg-white/95 backdrop-blur-xl">
         <div className="bg-blue-600 h-2 w-full shrink-0" />
@@ -200,7 +199,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                   <CheckCircle2 className="w-6 h-6" />
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                  <p className="text-xs font-black uppercase tracking-widest text-emerald-700">
                     A aula já aconteceu?
                   </p>
                   <p className="text-xs font-bold text-emerald-800/70">
@@ -209,9 +208,9 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                 </div>
               </div>
               <Button
-                onClick={() => void handleConcluir()}
+                onClick={() => setConfirmConcluir(true)}
                 disabled={completing}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] uppercase tracking-widest px-6 h-12 rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest px-6 h-12 rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
               >
                 {completing ? 'Processando...' : 'Concluir aula'}
               </Button>
@@ -220,12 +219,13 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
 
           <div className="grid grid-cols-1 gap-6 py-2">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">
+              <Label htmlFor="meet-link" className="text-xs font-black uppercase tracking-widest text-slate-400 pl-1">
                 Link do Google Meet
               </Label>
               <div className="relative group">
                 <Video className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-hover:text-blue-500 transition-colors" />
                 <Input
+                  id="meet-link"
                   className="h-12 pl-12 rounded-xl border-slate-100 bg-slate-50/50 focus:ring-blue-500 font-bold"
                   value={formData.meet_link}
                   onChange={(event) =>
@@ -238,14 +238,15 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
 
             <div className="space-y-3 p-6 bg-indigo-50/30 rounded-[2rem] border border-indigo-100/50">
               <div className="flex items-center justify-between mb-2">
-                <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-600 pl-1">
+                <Label htmlFor="class-notes" className="text-xs font-black uppercase tracking-widest text-indigo-600 pl-1">
                   Notas da aula / pontos-chave
                 </Label>
-                <Badge className="bg-indigo-600 text-white border-none text-[8px] font-black uppercase tracking-widest px-2 py-0.5 flex items-center gap-1">
+                <Badge className="bg-indigo-600 text-white border-none text-[11px] font-black uppercase tracking-widest px-2 py-0.5 flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" /> IA pronta
                 </Badge>
               </div>
               <Textarea
+                id="class-notes"
                 className="min-h-[120px] rounded-xl border-indigo-100 bg-white focus:ring-indigo-500 font-medium text-sm placeholder:text-slate-300"
                 value={formData.class_notes}
                 onChange={(event) =>
@@ -258,20 +259,22 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                   <div className="w-full space-y-4 animate-in fade-in slide-in-from-top-4 duration-500">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase tracking-widest text-indigo-400">
+                        <Label htmlFor="summary-pt" className="text-[11px] font-black uppercase tracking-widest text-indigo-400">
                           Resumo em português
                         </Label>
                         <Textarea
+                          id="summary-pt"
                           className="min-h-[200px] text-xs font-medium leading-relaxed rounded-xl border-indigo-100"
                           value={editedSummaryPt}
                           onChange={(event) => setEditedSummaryPt(event.target.value)}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label className="text-[9px] font-black uppercase tracking-widest text-indigo-400">
+                        <Label htmlFor="summary-en" className="text-[11px] font-black uppercase tracking-widest text-indigo-400">
                           English summary
                         </Label>
                         <Textarea
+                          id="summary-en"
                           className="min-h-[200px] text-xs font-medium leading-relaxed rounded-xl border-indigo-100"
                           value={editedSummaryEn}
                           onChange={(event) => setEditedSummaryEn(event.target.value)}
@@ -281,7 +284,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
 
                     {aiResult.vocabulary.length > 0 ? (
                       <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                        <Label className="mb-2 block text-[9px] font-black uppercase tracking-widest text-slate-400">
+                        <Label className="mb-2 block text-[11px] font-black uppercase tracking-widest text-slate-400">
                           Vocabulário extraído
                         </Label>
                         <div className="flex flex-wrap gap-2">
@@ -289,7 +292,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                             <Badge
                               key={`${entry.word}-${entry.translation}`}
                               variant="outline"
-                              className="bg-white text-slate-600 border-slate-200 font-bold text-[10px] py-1"
+                              className="bg-white text-slate-600 border-slate-200 font-bold text-xs py-1"
                             >
                               {entry.word} <span className="mx-1 opacity-40">→</span> {entry.translation}
                             </Badge>
@@ -302,14 +305,14 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                       <Button
                         variant="outline"
                         onClick={() => setAiResult(null)}
-                        className="text-[9px] font-black uppercase tracking-widest h-9 rounded-lg"
+                        className="text-[11px] font-black uppercase tracking-widest h-9 rounded-lg"
                       >
                         Descartar
                       </Button>
                       <Button
                         onClick={() => void handleSendSummary()}
                         disabled={summarizing || loading}
-                        className="bg-emerald-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-emerald-600/10 hover:bg-emerald-700 transition-all"
+                        className="bg-emerald-600 text-white font-black text-[11px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-emerald-600/10 hover:bg-emerald-700 transition-all"
                       >
                         {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
                         {summarizing ? 'Enviando...' : 'Revisado: enviar resumo'}
@@ -320,7 +323,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                   <Button
                     onClick={() => void handleAI()}
                     disabled={!formData.class_notes.trim() || summarizing || loading}
-                    className="bg-indigo-600 text-white font-black text-[9px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-indigo-600/10 hover:bg-indigo-700 transition-all"
+                    className="bg-indigo-600 text-white font-black text-[11px] uppercase tracking-widest h-9 rounded-lg gap-2 shadow-md shadow-indigo-600/10 hover:bg-indigo-700 transition-all"
                   >
                     {summarizing ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
                     Analisar aula com IA
@@ -332,17 +335,17 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
             <div className="space-y-4 bg-slate-50/50 p-6 rounded-[2rem] border border-slate-100/50">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">
+                  <Label className="text-xs font-black uppercase tracking-widest text-slate-400 pl-1">
                     Tarefa / homework
                   </Label>
-                  <p className="text-[10px] font-bold text-slate-400/70 pl-1 uppercase tracking-tight">
+                  <p className="text-xs font-bold text-slate-400/70 pl-1 uppercase tracking-tight">
                     Esta aula terá tarefa de casa?
                   </p>
                 </div>
                 <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-100">
                   <button
                     onClick={() => setFormData((previous) => ({ ...previous, has_homework: true }))}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
                       formData.has_homework
                         ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
                         : 'text-slate-400 hover:text-slate-600'
@@ -352,7 +355,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                   </button>
                   <button
                     onClick={() => setFormData((previous) => ({ ...previous, has_homework: false }))}
-                    className={`px-4 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all ${
+                    className={`px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${
                       !formData.has_homework
                         ? 'bg-slate-200 text-slate-700'
                         : 'text-slate-400 hover:text-slate-600'
@@ -381,10 +384,11 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">
+                      <Label htmlFor="homework-type" className="text-xs font-black uppercase tracking-widest text-slate-400 pl-1">
                         Tipo de tarefa
                       </Label>
                       <select
+                        id="homework-type"
                         value={formData.homework_type}
                         onChange={(event) =>
                           setFormData((previous) => ({
@@ -401,10 +405,11 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                     </div>
 
                     <div className="space-y-3">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 pl-1">
+                      <Label htmlFor="homework-due-date" className="text-xs font-black uppercase tracking-widest text-slate-400 pl-1">
                         Data de entrega
                       </Label>
                       <Input
+                        id="homework-due-date"
                         type="date"
                         className="h-12 rounded-xl border-slate-100 bg-white font-bold text-xs"
                         value={formData.homework_due_date}
@@ -420,12 +425,13 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
 
                   {formData.homework_type === 'evolve' ? (
                     <div className="space-y-3 animate-in fade-in slide-in-from-top-1 duration-300">
-                      <Label className="text-[10px] font-black uppercase tracking-widest text-blue-600 pl-1">
+                      <Label htmlFor="homework-link" className="text-xs font-black uppercase tracking-widest text-blue-600 pl-1">
                         Link do Cambridge workbook
                       </Label>
                       <div className="relative group">
                         <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-blue-400" />
                         <Input
+                          id="homework-link"
                           className="h-12 pl-12 rounded-xl border-blue-100 bg-blue-50/30 focus:ring-blue-500 font-bold text-xs"
                           value={formData.homework_link}
                           onChange={(event) =>
@@ -447,13 +453,13 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
           <DialogFooter className="flex-col sm:flex-row gap-3 pt-6 border-t border-slate-100">
             <Button
               variant="ghost"
-              className="h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all flex-1"
+              className="h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all flex-1"
               onClick={() => onOpenChange(false)}
             >
               Cancelar
             </Button>
             <Button
-              className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]"
+              className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]"
               onClick={() => void handleSave()}
               disabled={loading}
             >
@@ -463,5 +469,35 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
         </div>
       </DialogContent>
     </Dialog>
+
+    <Dialog open={confirmConcluir} onOpenChange={setConfirmConcluir}>
+      <DialogContent className="sm:max-w-[440px] rounded-3xl border-none shadow-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-black text-slate-900">Concluir esta aula?</DialogTitle>
+          <DialogDescription className="text-sm text-slate-500">
+            Isso marcará a aula como dada e descontará 1 crédito do plano do aluno. Esta ação não pode ser desfeita.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-3 sm:gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => setConfirmConcluir(false)}
+            disabled={completing}
+            className="rounded-xl font-bold text-slate-500 hover:bg-slate-50"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => void doConcluir()}
+            disabled={completing}
+            className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-2"
+          >
+            {completing ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <CheckCircle2 className="h-4 w-4" aria-hidden="true" />}
+            {completing ? 'Processando...' : 'Confirmar conclusão'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   )
 }

@@ -124,8 +124,8 @@ export default function PerfilPage() {
         <div className="text-center md:text-left space-y-2">
           <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter">{profile?.full_name}</h1>
           <div className="flex flex-wrap justify-center md:justify-start gap-3">
-            <Badge className="bg-blue-900 text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest">{profile?.role}</Badge>
-            <Badge variant="outline" className="border-blue-100 text-blue-600 px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-blue-50/50">ID: {profile?.id?.slice(0, 8)}</Badge>
+            <Badge className="bg-blue-900 text-white border-none px-3 py-1 text-xs font-black uppercase tracking-widest">{profile?.role}</Badge>
+            <Badge variant="outline" className="border-blue-100 text-blue-600 px-3 py-1 text-xs font-black uppercase tracking-widest bg-blue-50/50">ID: {profile?.id?.slice(0, 8)}</Badge>
           </div>
         </div>
       </div>
@@ -140,48 +140,48 @@ export default function PerfilPage() {
           <form onSubmit={handleUpdate} className="space-y-10">
             <div className="grid gap-8 sm:grid-cols-2">
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nome Completo</Label>
+                <Label htmlFor="aluno-nome" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nome Completo</Label>
                 <div className="relative group/input">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" value={profile?.full_name || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), full_name: e.target.value }))} required />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" id="aluno-nome" value={profile?.full_name || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), full_name: e.target.value }))} required />
                 </div>
               </div>
 
               <div className="space-y-2.5 opacity-60">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">E-mail (Permanente)</Label>
+                <Label htmlFor="aluno-email" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">E-mail (Permanente)</Label>
                 <div className="relative">
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
-                  <Input className="pl-12 h-14 rounded-2xl bg-slate-100 border-slate-100 cursor-not-allowed font-bold text-slate-500" value={profile?.email || ''} disabled />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-100 border-slate-100 cursor-not-allowed font-bold text-slate-500" id="aluno-email" value={profile?.email || ''} disabled />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">CPF para Contrato</Label>
+                <Label htmlFor="aluno-cpf" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">CPF para Contrato</Label>
                 <div className="relative group/input">
                   <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="000.000.000-00" value={profile?.cpf || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), cpf: maskCPF(e.target.value) }))} />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="000.000.000-00" id="aluno-cpf" value={profile?.cpf || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), cpf: maskCPF(e.target.value) }))} />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">WhatsApp Celular</Label>
+                <Label htmlFor="aluno-phone" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">WhatsApp Celular</Label>
                 <div className="relative group/input">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="(00) 00000-0000" value={profile?.phone || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), phone: maskPhone(e.target.value) }))} />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="(00) 00000-0000" id="aluno-phone" value={profile?.phone || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id: '' }), phone: maskPhone(e.target.value) }))} />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Nascimento</Label>
+                <Label htmlFor="aluno-birth" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Nascimento</Label>
                 <div className="relative group/input">
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input type="text" className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="DD/MM/AAAA" value={birthDateDisplay} onChange={(e) => setBirthDateDisplay(maskDate(e.target.value))} />
+                  <Input type="text" className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="DD/MM/AAAA" id="aluno-birth" value={birthDateDisplay} onChange={(e) => setBirthDateDisplay(maskDate(e.target.value))} />
                 </div>
               </div>
             </div>
 
             <div className="pt-6 flex justify-end items-center gap-6">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest max-w-[200px] text-right">
+              <span className="text-[11px] font-black text-slate-400 uppercase tracking-widest max-w-[200px] text-right">
                 Suas alteracoes serao salvas imediatamente no banco de dados.
               </span>
               <Button type="submit" disabled={saving} className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50">
@@ -213,16 +213,16 @@ export default function PerfilPage() {
           <form onSubmit={handleUpdatePassword} className="space-y-6">
             <div className="grid gap-8 sm:grid-cols-2">
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nova Senha</Label>
+                <Label htmlFor="aluno-newpass" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nova Senha</Label>
                 <div className="relative">
-                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimo 6 caracteres" minLength={6} required />
+                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" id="aluno-newpass" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Minimo 6 caracteres" minLength={6} required />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Confirmar Nova Senha</Label>
+                <Label htmlFor="aluno-confpass" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Confirmar Nova Senha</Label>
                 <div className="relative">
-                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a nova senha" minLength={6} required />
+                  <Input type="password" className="h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 px-4" id="aluno-confpass" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repita a nova senha" minLength={6} required />
                 </div>
               </div>
             </div>

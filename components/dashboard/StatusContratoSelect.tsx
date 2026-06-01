@@ -31,8 +31,8 @@ export default function StatusContratoSelect({ contrato }: StatusContratoSelectP
   if (contrato.status === 'cancelado') {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Status:</span>
-        <span className="inline-flex h-8 items-center rounded-xl bg-rose-500/10 px-3 text-[10px] font-black uppercase tracking-widest text-rose-600">
+        <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Status:</span>
+        <span className="inline-flex h-8 items-center rounded-xl bg-rose-500/10 px-3 text-xs font-black uppercase tracking-widest text-rose-600">
           Cancelado
         </span>
       </div>
@@ -74,12 +74,12 @@ export default function StatusContratoSelect({ contrato }: StatusContratoSelectP
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Status:</span>
+      <span className="text-xs font-black uppercase text-slate-400 tracking-widest">Status:</span>
       <Select
         value={contrato.status}
         onChange={(e) => handleStatusChange((e.target as HTMLSelectElement).value)}
         disabled={loading}
-        className={`h-8 text-[10px] font-black uppercase tracking-widest border-none ring-0 focus:ring-0 w-32 rounded-xl ${
+        className={`h-8 text-xs font-black uppercase tracking-widest border-none ring-0 focus:ring-0 w-32 rounded-xl ${
           contrato.status === 'ativo' ? 'bg-emerald-500/10 text-emerald-600' : 
           contrato.status === 'inativo' ? 'bg-amber-500/10 text-amber-600' :
           'bg-rose-500/10 text-rose-600'

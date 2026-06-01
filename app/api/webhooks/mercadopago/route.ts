@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { payment } from '@/lib/mercadopago'
 import { createServiceClient } from '@/lib/supabase/server'
-import { validateMPSignature } from '@/lib/mercadopago-auth'
+import { validateMPSignature, isWebhookTimestampFresh } from '@/lib/mercadopago-auth'
 import { ContractService } from '@/lib/services/contract-service'
 import {
   assertPaymentAmountMatches,
@@ -105,6 +105,14 @@ export async function POST(req: NextRequest) {
     if (!validateMPSignature(xSignature, resourceId, webhookSecret, xRequestId)) {
       console.error('Webhook: Invalid signature detected')
       return NextResponse.json({ error: 'Forbidden: Invalid Signature' }, { status: 403 })
+    }
+
+    // Anti-replay: rejeita notificações antigas. Janela generosa (24h por padrão) para
+    // não descartar retries legítimos do Mercado Pago; configurável via env, 0 desabilita.
+    const toleranceSeconds = Number(process.env.MERCADOPAGO_WEBHOOK_TOLERANCE_SECONDS ?? '86400')
+    if (!isWebhookTimestampFresh(xSignature, toleranceSeconds)) {
+      console.error('Webhook: stale timestamp (possível replay)')
+      return NextResponse.json({ error: 'Forbidden: Stale Timestamp' }, { status: 403 })
     }
 
     if (action === 'payment.updated' || action === 'payment.created' || topic === 'payment') {

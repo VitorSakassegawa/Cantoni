@@ -38,7 +38,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
         </div>
         <Button
           onClick={() => window.location.reload()}
-          className="rounded-2xl bg-blue-600 px-8 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20"
+          className="rounded-2xl bg-blue-600 px-8 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20"
         >
           RECARREGAR
         </Button>
@@ -95,7 +95,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
       <div className="flex items-center justify-between px-4">
         <div className="flex items-center gap-2">
           <BrainCircuit className="h-4 w-4 text-indigo-500" />
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+          <span className="text-xs font-black uppercase tracking-widest text-slate-400">
             Sessão de estudo: {currentIdx + 1} de {cards.length}
           </span>
         </div>
@@ -114,7 +114,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
         <div className={`relative h-full w-full preserve-3d transition-all duration-700 ${isFlipped ? 'rotate-y-180' : ''}`}>
           <div className="absolute inset-0 backface-hidden">
             <Card className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden border-none p-10 text-center shadow-2xl glass-card">
-              <Badge className="absolute top-6 left-6 border-none bg-slate-100 text-[9px] font-black uppercase tracking-widest text-slate-400">
+              <Badge className="absolute top-6 left-6 border-none bg-slate-100 text-[11px] font-black uppercase tracking-widest text-slate-400">
                 FRENTE
               </Badge>
               <button
@@ -130,14 +130,14 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
               <p className="text-4xl font-black leading-tight tracking-tighter text-blue-900">{currentCard.word}</p>
               <div className="mt-8 flex items-center justify-center gap-2 text-indigo-400 transition-colors group-hover:text-indigo-600 animate-bounce">
                 <RotateCcw className="h-4 w-4" />
-                <span className="text-[10px] font-black uppercase tracking-widest">Clique para ver</span>
+                <span className="text-xs font-black uppercase tracking-widest">Clique para ver</span>
               </div>
             </Card>
           </div>
 
           <div className="absolute inset-0 backface-hidden rotate-y-180">
             <Card className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden border-none bg-indigo-50 p-10 text-center shadow-2xl">
-              <Badge className="absolute top-6 left-6 border-none bg-indigo-600 text-[9px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-600/20">
+              <Badge className="absolute top-6 left-6 border-none bg-indigo-600 text-[11px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-600/20">
                 VERSO
               </Badge>
               <button
@@ -152,12 +152,12 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
               </button>
               <div className="space-y-6">
                 <div>
-                  <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-indigo-400">Tradução</p>
+                  <p className="mb-1 text-xs font-black uppercase tracking-widest text-indigo-400">Tradução</p>
                   <p className="text-3xl font-black tracking-tighter text-indigo-900">{currentCard.translation}</p>
                 </div>
                 {currentCard.example && (
                   <div>
-                    <p className="mb-1 text-[10px] font-black uppercase tracking-widest text-slate-400 italic">Exemplo</p>
+                    <p className="mb-1 text-xs font-black uppercase tracking-widest text-slate-400 italic">Exemplo</p>
                     <p className="text-sm font-semibold italic text-slate-600">&quot;{currentCard.example}&quot;</p>
                   </div>
                 )}
@@ -168,7 +168,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
       </div>
 
       <div className={`transition-all duration-500 ${isFlipped ? 'translate-y-0 opacity-100' : 'pointer-events-none translate-y-4 opacity-0'}`}>
-        <p className="mb-6 text-center text-[10px] font-black uppercase tracking-widest text-slate-400">
+        <p className="mb-6 text-center text-xs font-black uppercase tracking-widest text-slate-400">
           Qual foi o nível de dificuldade?
         </p>
         <div className="grid grid-cols-5 gap-3">
@@ -191,7 +191,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
             </button>
           ))}
         </div>
-        <div className="mt-4 flex justify-between px-2 text-[9px] font-black uppercase tracking-widest text-slate-500">
+        <div className="mt-4 flex justify-between px-2 text-[11px] font-black uppercase tracking-widest text-slate-500">
           <span>ERREI COMPLETAMENTE</span>
           <span>DOMINADO</span>
         </div>

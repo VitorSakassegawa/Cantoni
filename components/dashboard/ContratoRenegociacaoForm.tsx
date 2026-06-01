@@ -105,7 +105,7 @@ export default function ContratoRenegociacaoForm({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card className="border-none bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
           <CardHeader className="pb-3">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-400">Já pago</CardTitle>
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Já pago</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(paidValue)}</p>
@@ -115,7 +115,7 @@ export default function ContratoRenegociacaoForm({
 
         <Card className="border-none bg-white shadow-xl shadow-slate-200/40 rounded-[2rem]">
           <CardHeader className="pb-3">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-slate-400">Saldo atual em aberto</CardTitle>
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-slate-400">Saldo atual em aberto</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-black text-slate-900 tracking-tight">{formatCurrency(currentOpenValue)}</p>
@@ -127,7 +127,7 @@ export default function ContratoRenegociacaoForm({
 
         <Card className="border-none bg-blue-50 shadow-xl shadow-blue-100/40 rounded-[2rem]">
           <CardHeader className="pb-3">
-            <CardTitle className="text-[10px] font-black uppercase tracking-widest text-blue-500">Novo cenário</CardTitle>
+            <CardTitle className="text-xs font-black uppercase tracking-widest text-blue-500">Novo cenário</CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-black text-blue-700 tracking-tight">{formatCurrency(parsedOpenValue)}</p>
@@ -152,23 +152,23 @@ export default function ContratoRenegociacaoForm({
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 pl-1">
+                <Label htmlFor="reneg-saldo" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400 pl-1">
                   Novo saldo em aberto
                 </Label>
                 <Input
                   className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold"
-                  value={newOpenValue}
+                  id="reneg-saldo" value={newOpenValue}
                   onChange={(e) => setNewOpenValue(maskCurrency(e.target.value))}
                   required
                 />
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 pl-1">
+                <Label htmlFor="reneg-parcelas" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400 pl-1">
                   Novo número de parcelas
                 </Label>
                 <Select
-                  value={newInstallments}
+                  id="reneg-parcelas" value={newInstallments}
                   onChange={(e) => setNewInstallments(e.target.value)}
                   className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold"
                 >
@@ -181,24 +181,24 @@ export default function ContratoRenegociacaoForm({
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 pl-1 flex items-center gap-2">
+                <Label htmlFor="reneg-data" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400 pl-1 flex items-center gap-2">
                   <Calendar className="w-3.5 h-3.5" /> Primeira nova parcela
                 </Label>
                 <Input
                   type="date"
                   className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold"
-                  value={dueDate}
+                  id="reneg-data" value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
                   required
                 />
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 pl-1 flex items-center gap-2">
+                <Label htmlFor="reneg-pagamento" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400 pl-1 flex items-center gap-2">
                   <CreditCard className="w-3.5 h-3.5" /> Forma de pagamento
                 </Label>
                 <Select
-                  value={paymentMethod}
+                  id="reneg-pagamento" value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
                   className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold"
                 >
@@ -211,10 +211,11 @@ export default function ContratoRenegociacaoForm({
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 pl-1 flex items-center gap-2">
+              <Label htmlFor="reneg-obs" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400 pl-1 flex items-center gap-2">
                 <FileText className="w-3.5 h-3.5" /> Observações do aditivo
               </Label>
               <textarea
+                id="reneg-obs"
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
                 rows={4}

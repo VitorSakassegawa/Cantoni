@@ -61,7 +61,7 @@ export default async function ProfessorEditContratoPage({
       <div className="flex flex-col gap-6">
         <Link
           href={`/professor/alunos/${aluno_id}`}
-          className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-[10px] uppercase tracking-widest group w-fit"
+          className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-xs uppercase tracking-widest group w-fit"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Voltar para Aluno
@@ -72,13 +72,13 @@ export default async function ProfessorEditContratoPage({
         </div>
         {contractWithFlags.has_paid_payments && (openPaymentsCount || 0) > 0 && (
           <div className="rounded-[2rem] border border-amber-100 bg-amber-50 p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">Fluxo recomendado</p>
+            <p className="text-xs font-black uppercase tracking-widest text-amber-700">Fluxo recomendado</p>
             <p className="mt-2 text-sm font-medium text-amber-800/80">
               Este contrato já tem parcelas pagas. Para mudar valor, vencimento ou forma de pagamento do saldo restante, use o aditivo de renegociação.
             </p>
             <Link
               href={`/professor/alunos/${aluno_id}/contrato/renegociar?id=${contrato.id}`}
-              className="mt-4 inline-flex h-11 items-center justify-center rounded-2xl bg-amber-500 px-5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-amber-600"
+              className="mt-4 inline-flex h-11 items-center justify-center rounded-2xl bg-amber-500 px-5 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-amber-600"
             >
               Abrir renegociação
             </Link>

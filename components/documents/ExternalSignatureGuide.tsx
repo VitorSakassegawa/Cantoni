@@ -19,7 +19,7 @@ export default function ExternalSignatureGuide({
         </div>
         <div className="space-y-3">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">
               Fluxo de assinatura
             </p>
             <h3 className="mt-1 text-sm font-black text-amber-950">
@@ -39,7 +39,7 @@ export default function ExternalSignatureGuide({
               <div className={`grid gap-3 ${compact ? 'md:grid-cols-2' : 'md:grid-cols-4'}`}>
                 <div className="rounded-2xl bg-white/80 p-3">
                   <FileCheck2 className="mb-2 h-4 w-4 text-amber-700" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  <p className="text-xs font-black uppercase tracking-widest text-amber-700">
                     1. Emitir
                   </p>
                   <p className="mt-1 text-xs font-medium text-amber-900/80">
@@ -48,7 +48,7 @@ export default function ExternalSignatureGuide({
                 </div>
                 <div className="rounded-2xl bg-white/80 p-3">
                   <FileDown className="mb-2 h-4 w-4 text-amber-700" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  <p className="text-xs font-black uppercase tracking-widest text-amber-700">
                     2. Baixar PDF
                   </p>
                   <p className="mt-1 text-xs font-medium text-amber-900/80">
@@ -57,7 +57,7 @@ export default function ExternalSignatureGuide({
                 </div>
                 <div className="rounded-2xl bg-white/80 p-3">
                   <Signature className="mb-2 h-4 w-4 text-amber-700" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  <p className="text-xs font-black uppercase tracking-widest text-amber-700">
                     3. Enviar no ZapSign
                   </p>
                   <p className="mt-1 text-xs font-medium text-amber-900/80">
@@ -66,7 +66,7 @@ export default function ExternalSignatureGuide({
                 </div>
                 <div className="rounded-2xl bg-white/80 p-3">
                   <ShieldCheck className="mb-2 h-4 w-4 text-amber-700" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
+                  <p className="text-xs font-black uppercase tracking-widest text-amber-700">
                     4. Validade externa
                   </p>
                   <p className="mt-1 text-xs font-medium text-amber-900/80">

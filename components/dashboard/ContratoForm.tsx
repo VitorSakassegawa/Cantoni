@@ -481,8 +481,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           {/* Section 1: Tipo e Plano */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Tipo de Contrato</Label>
-              <Select value={tipoContrato} onChange={e => {
+              <Label htmlFor="contrato-tipo" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Tipo de Contrato</Label>
+              <Select id="contrato-tipo" value={tipoContrato} onChange={e => {
                 setTipoContrato(e.target.value as ContractKind)
                 if (e.target.value === 'semestral') setIsCrossSemester(false)
               }} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
@@ -492,9 +492,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             </div>
 
             <div className="space-y-3">
-              <Label className={`text-[10px] font-black uppercase pl-1 tracking-[0.15em] ${tipoContrato === 'ad-hoc' ? 'text-slate-300' : 'text-slate-400'}`}>Plano (Periodicidade)</Label>
+              <Label className={`text-xs font-black uppercase pl-1 tracking-[0.15em] ${tipoContrato === 'ad-hoc' ? 'text-slate-300' : 'text-slate-400'}`} htmlFor="contrato-plano">Plano (Periodicidade)</Label>
               <Select 
-                value={planoId} 
+                id="contrato-plano" value={planoId}
                 onChange={e => {
                   setPlanoId(e.target.value)
                   setDiasSelecionados([]) 
@@ -513,35 +513,35 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           {/* Section 2: Horários e Datas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Início</Label>
+              <Label htmlFor="contrato-data-inicio" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Início</Label>
               <Input 
                 type="date" 
                 className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
-                value={dataInicio} 
+                id="contrato-data-inicio" value={dataInicio}
                 onChange={e => setDataInicio(e.target.value)} 
                 disabled={hasPaidPayments}
                 required
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Término</Label>
+              <Label htmlFor="contrato-data-fim" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Término</Label>
               <Input 
                 type="date" 
                 className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
-                value={dataFim} 
+                id="contrato-data-fim" value={dataFim}
                 onChange={e => setDataFim(e.target.value)} 
                 disabled={tipoContrato === 'semestral' || hasPaidPayments}
                 required
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Horário Base</Label>
+              <Label htmlFor="contrato-horario" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Horário Base</Label>
               <div className="relative">
                 <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
                   type="time" 
                   className="h-14 rounded-2xl bg-slate-50 border-slate-100 pl-11 font-bold" 
-                  value={horario} 
+                  id="contrato-horario" value={horario}
                   onChange={e => setHorario(e.target.value)} 
                   required
                 />
@@ -551,7 +551,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
 
           {scheduleAdjustedEndDate ? (
             <div className="rounded-[1.75rem] border border-amber-200 bg-amber-50 px-5 py-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">
                 Data ajustada pelo calendário
               </p>
               <p className="mt-1 text-sm font-medium leading-relaxed text-amber-950/80">
@@ -563,10 +563,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
 
           <div className="space-y-4">
             <div className="flex justify-between items-end pl-1 pr-1">
-              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-[0.15em]">
+              <Label className="text-xs font-black uppercase text-slate-400 tracking-[0.15em]">
                 {tipoContrato === 'semestral' ? `Escolha o(s) ${planoId} dia(s) da semana` : 'Escolha os dias da semana'}
               </Label>
-              <Badge variant="outline" className="text-[8px] font-black uppercase border-slate-200 text-slate-400">
+              <Badge variant="outline" className="text-[11px] font-black uppercase border-slate-200 text-slate-400">
                 {diasSelecionados.length} SELECIONADOS
               </Badge>
             </div>
@@ -576,7 +576,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                   key={dia.value}
                   type="button"
                   onClick={() => toggleDia(dia.value)}
-                  className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  className={`px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
                     diasSelecionados.includes(dia.value)
                       ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20 scale-105'
                       : 'bg-slate-50 text-slate-400 hover:bg-slate-100 border border-slate-100'
@@ -593,31 +593,31 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           {/* Section 3: Investimento */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Investimento Final (Total)</Label>
+              <Label htmlFor="contrato-investimento" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Investimento Final (Total)</Label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-500" />
                 <Input 
                   className="h-14 rounded-2xl bg-emerald-50 border-emerald-100 text-emerald-700 font-black text-lg pl-11 focus:ring-emerald-500" 
-                  value={valorFinalComMascara} 
+                  id="contrato-investimento" value={valorFinalComMascara}
                   readOnly
                 />
               </div>
-              <p className="text-[9px] text-slate-400 font-bold pl-1 uppercase tracking-widest italic">
+              <p className="text-[11px] text-slate-400 font-bold pl-1 uppercase tracking-widest italic">
                 {tipoContrato === 'semestral' ? 'Base Semestral' : 'Base R$ 90,00/aula'} x {aulasTotais} aulas
               </p>
             </div>
 
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Total de Aulas Planejadas</Label>
+              <Label htmlFor="contrato-aulas" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Total de Aulas Planejadas</Label>
               <div className="relative">
                 <Input 
                   type="number" 
                   className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" 
-                  value={aulasTotais} 
+                  id="contrato-aulas" value={aulasTotais}
                   readOnly
                 />
                 {bonusAulas > 0 && tipoContrato === 'semestral' && (
-                  <Badge className="absolute right-3 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-700 border-none text-[8px] font-black uppercase">
+                  <Badge className="absolute right-3 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-700 border-none text-[11px] font-black uppercase">
                     {bonusAulas} BÔNUS INCLUSAS
                   </Badge>
                 )}
@@ -629,13 +629,13 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             <div className="rounded-[2rem] border border-blue-100 bg-blue-50/70 p-6 space-y-5">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-1">
-                  <p className="text-[10px] font-black uppercase tracking-[0.18em] text-blue-600">Crédito disponível</p>
+                  <p className="text-xs font-black uppercase tracking-[0.18em] text-blue-600">Crédito disponível</p>
                   <p className="text-sm font-medium leading-relaxed text-blue-900/80">
                     Créditos administrativos oriundos de cancelamentos podem ser abatidos deste novo contrato.
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Disponível</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-blue-500">Disponível</p>
                   <p className="text-2xl font-black text-blue-700">
                     {loadingCredits ? '...' : formatCurrency(availableCreditTotal)}
                   </p>
@@ -667,22 +667,22 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                   {useCredit && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-3">
-                        <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500">
+                        <Label htmlFor="contrato-credito" className="text-xs font-black uppercase tracking-[0.15em] text-blue-500">
                           Crédito a aplicar
                         </Label>
                         <Input
                           className="h-14 rounded-2xl bg-white border-blue-100 font-bold"
-                          value={creditToApplyMasked}
+                          id="contrato-credito" value={creditToApplyMasked}
                           onChange={(e) => setCreditToApplyMasked(maskCurrency(e.target.value))}
                           placeholder="R$ 0,00"
                         />
-                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        <p className="text-xs font-bold uppercase tracking-widest text-slate-400">
                           Máximo aplicável agora: {formatCurrency(Math.min(availableCreditTotal, grossFinalValue))}
                         </p>
                       </div>
 
                       <div className="rounded-[1.5rem] bg-white border border-blue-100 px-5 py-4 space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Cobrança após crédito</p>
+                        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Cobrança após crédito</p>
                         <p className="text-3xl font-black tracking-tight text-slate-900">{formatCurrency(netFinalValue)}</p>
                         <p className="text-xs font-medium text-slate-500">
                           {parseInt(numParcelas || '1', 10) || 1} parcela(s) de aproximadamente {formatCurrency(installmentPreview || 0)}.
@@ -693,7 +693,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
 
                   {availableCreditSources.length > 0 ? (
                     <div className="rounded-[1.5rem] bg-white/70 border border-blue-100 px-5 py-4">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Origem do crédito</p>
+                      <p className="text-xs font-black uppercase tracking-widest text-slate-400">Origem do crédito</p>
                       <div className="mt-3 space-y-2">
                         {availableCreditSources.map((source) => (
                           <div key={source.cancellationId} className="flex items-center justify-between gap-3 text-sm">
@@ -720,12 +720,12 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           {/* Section 4: Descontos Cross-feeding */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500">Desconto Fixo (R$)</Label>
+              <Label htmlFor="contrato-desconto-fixo" className="text-xs font-black uppercase tracking-[0.15em] text-blue-500">Desconto Fixo (R$)</Label>
               <div className="relative">
                 <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
                   className={`h-14 rounded-2xl border-slate-100 font-bold pl-11 ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
-                  value={descontoValor} 
+                  id="contrato-desconto-fixo" value={descontoValor}
                   disabled={hasPaidPayments}
                   onChange={e => handleDescontoValorChange(maskCurrency(e.target.value))} 
                   placeholder="R$ 0,00"
@@ -733,13 +733,13 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               </div>
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-blue-500">Desconto Percentual (%)</Label>
+              <Label htmlFor="contrato-desconto-pct" className="text-xs font-black uppercase tracking-[0.15em] text-blue-500">Desconto Percentual (%)</Label>
               <div className="relative">
                 <Percent className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <Input 
                   type="number"
                   className={`h-14 rounded-2xl border-slate-100 font-bold pl-11 ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
-                  value={descontoPercentual} 
+                  id="contrato-desconto-pct" value={descontoPercentual}
                   disabled={hasPaidPayments}
                   onChange={e => handleDescontoPercentualChange(e.target.value)} 
                   placeholder="0"
@@ -757,7 +757,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             <div className="animate-in fade-in slide-in-from-bottom-2 duration-700">
               <div className="flex items-center gap-2 mb-4 text-blue-600">
                 <BrainCircuit className="w-4 h-4" />
-                <p className="text-[10px] font-black uppercase tracking-widest">Indicadores Pedagógicos</p>
+                <p className="text-xs font-black uppercase tracking-widest">Indicadores Pedagógicos</p>
               </div>
               
               {loadingPlacement ? (
@@ -767,19 +767,19 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               ) : placementData ? (
                 <div className="bg-blue-50/50 p-6 rounded-[2.5rem] border border-blue-100 flex flex-col md:flex-row gap-6 items-center">
                   <div className="text-center md:border-r border-blue-100 md:pr-8 space-y-1">
-                    <p className="text-[9px] font-black text-blue-400 uppercase tracking-widest">Nível Sugerido</p>
+                    <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Nível Sugerido</p>
                     <div className="text-4xl font-black text-blue-600">{placementData.cefr_level}</div>
                     <Button 
                       onClick={() => setNivel(placementData.cefr_level.toLowerCase())}
                       variant="ghost" 
                       size="sm"
-                      className="text-[9px] h-6 px-2 text-blue-500 hover:text-blue-600 font-black uppercase hover:bg-blue-100"
+                      className="text-[11px] h-6 px-2 text-blue-500 hover:text-blue-600 font-black uppercase hover:bg-blue-100"
                     >
                       Aplicar Nível
                     </Button>
                   </div>
                   <div className="flex-1 space-y-2">
-                    <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-wider">
+                    <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-wider">
                        Insights Recentes ({new Date(placementData.created_at).toLocaleDateString('pt-BR')})
                     </div>
                     <div className="markdown-insights opacity-90 mt-2">
@@ -796,7 +796,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                 <div className="p-6 rounded-[2.5rem] bg-amber-50 border border-amber-100 flex items-center gap-4">
                   <AlertTriangle className="w-5 h-5 text-amber-500" />
                   <p className="text-[11px] text-amber-700 font-medium leading-tight">
-                    <strong className="font-black italic uppercase text-[9px]">Atenção:</strong> Aluno ainda não realizou o mapeamento técnico. Recomenda-se aguardar os indicadores para um planejamento assertivo.
+                    <strong className="font-black italic uppercase text-[11px]">Atenção:</strong> Aluno ainda não realizou o mapeamento técnico. Recomenda-se aguardar os indicadores para um planejamento assertivo.
                   </p>
                 </div>
               )}
@@ -808,9 +808,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           {/* Section 5: Detalhes Acadêmicos */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Livro / Material de Apoio</Label>
+              <Label htmlFor="contrato-livro" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Livro / Material de Apoio</Label>
               <Select 
-                value={livroSelect} 
+                id="contrato-livro" value={livroSelect}
                 onChange={e => setLivroSelect(e.target.value)} 
                 className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold"
               >
@@ -826,8 +826,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               )}
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nível CEFR (Cambridge)</Label>
-              <Select value={nivel} onChange={e => setNivel(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
+              <Label htmlFor="contrato-nivel" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nível CEFR (Cambridge)</Label>
+              <Select id="contrato-nivel" value={nivel} onChange={e => setNivel(e.target.value)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
                 {NIVEIS_CAMBRIDGE.map(n => <option key={n.value} value={n.value}>{n.label}</option>)}
               </Select>
             </div>
@@ -835,19 +835,19 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Vencimento (Dia)</Label>
+              <Label htmlFor="contrato-vencimento" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Vencimento (Dia)</Label>
               <Input 
                 type="number" 
                 className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
-                value={diaVencimento} 
+                id="contrato-vencimento" value={diaVencimento}
                 disabled={hasPaidPayments}
                 onChange={e => setDiaVencimento(e.target.value)} 
               />
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nº de Parcelas</Label>
+              <Label htmlFor="contrato-parcelas" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nº de Parcelas</Label>
               <Select
-                value={numParcelas}
+                id="contrato-parcelas" value={numParcelas}
                 onChange={e => setNumParcelas(e.target.value)}
                 disabled={isEdit || hasPaidPayments}
                 className={`h-14 rounded-2xl border-slate-100 font-bold ${(isEdit || hasPaidPayments) ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50 text-slate-900'}`}
@@ -857,19 +857,19 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                 ))}
               </Select>
               {(isEdit || hasPaidPayments) && (
-                <p className="text-[9px] text-slate-400 font-bold pl-1 uppercase tracking-tight italic">
+                <p className="text-[11px] text-slate-400 font-bold pl-1 uppercase tracking-tight italic">
                   O parcelamento atual é mantido em edições para evitar inconsistência com parcelas já emitidas.
                 </p>
               )}
             </div>
             <div className="space-y-3">
-              <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Pagamento</Label>
-              <Select value={formaPagamento} onChange={e => setFormaPagamento(e.target.value as PaymentMethod)} disabled={hasPaidPayments} className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`}>
+              <Label htmlFor="contrato-pagamento" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Pagamento</Label>
+              <Select id="contrato-pagamento" value={formaPagamento} onChange={e => setFormaPagamento(e.target.value as PaymentMethod)} disabled={hasPaidPayments} className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`}>
                 <option value="pix">PIX</option>
                 <option value="cartao">Cartão</option>
                 <option value="dinheiro">Dinheiro</option>
               </Select>
-              <p className="text-[9px] text-slate-400 font-bold pl-1 uppercase tracking-tight italic">
+              <p className="text-[11px] text-slate-400 font-bold pl-1 uppercase tracking-tight italic">
                 O aluno poderá trocar a forma de pagamento (PIX/Cartão) no checkout final.
               </p>
             </div>
@@ -880,24 +880,24 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       <div className="p-8 bg-blue-50 rounded-[2.5rem] border border-blue-100 space-y-4">
         <div className="flex items-center gap-3">
           <Info className="w-5 h-5 text-blue-500" />
-          <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-900">Resumo de Regras Aplicadas</h4>
+          <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-900">Resumo de Regras Aplicadas</h4>
         </div>
         <ul className="grid md:grid-cols-2 gap-4">
           <li className="flex gap-3 items-start">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-            <p className="text-[10px] text-blue-800 font-medium">Semestral: Jan-Jul / Ago-Dez. Travado por semestre.</p>
+            <p className="text-xs text-blue-800 font-medium">Semestral: Jan-Jul / Ago-Dez. Travado por semestre.</p>
           </li>
           <li className="flex gap-3 items-start">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-            <p className="text-[10px] text-blue-800 font-medium">Personalizado: R$ 90,00 por aula. Sem trava de data.</p>
+            <p className="text-xs text-blue-800 font-medium">Personalizado: R$ 90,00 por aula. Sem trava de data.</p>
           </li>
           <li className="flex gap-3 items-start">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-            <p className="text-[10px] text-blue-800 font-medium">Feriados ANBIMA são pulados automaticamente.</p>
+            <p className="text-xs text-blue-800 font-medium">Feriados ANBIMA são pulados automaticamente.</p>
           </li>
           <li className="flex gap-3 items-start">
             <div className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-1.5 shrink-0" />
-            <p className="text-[10px] text-blue-800 font-medium">Material principal e níveis alinhados ao CEFR.</p>
+            <p className="text-xs text-blue-800 font-medium">Material principal e níveis alinhados ao CEFR.</p>
           </li>
         </ul>
       </div>

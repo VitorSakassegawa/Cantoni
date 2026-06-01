@@ -6,20 +6,29 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { formatDateOnly } from '@/lib/utils'
-import { UserPlus, Search, Filter, GraduationCap, Calendar, Mail, Phone, ExternalLink, BookOpen } from 'lucide-react'
+import { UserPlus, Search, GraduationCap, Calendar, Mail, Phone, ExternalLink, BookOpen } from 'lucide-react'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 import type { ProfessorContractSummary, StudentListProfile } from '@/lib/dashboard-types'
 
-export default async function AlunosPage() {
+export default async function AlunosPage({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: alunos } = await supabase
+  const { q } = await searchParams
+  const query = (q || '').trim()
+  // sanitiza para o parser de .or() do PostgREST (vírgula e parênteses são separadores)
+  const safeQuery = query.replace(/[,()]/g, ' ').trim()
+
+  let alunosQuery = supabase
     .from('profiles')
     .select('*')
     .eq('role', 'aluno')
     .order('full_name')
+  if (safeQuery) {
+    alunosQuery = alunosQuery.or(`full_name.ilike.%${safeQuery}%,email.ilike.%${safeQuery}%`)
+  }
+  const { data: alunos } = await alunosQuery
 
   const { data: contratos } = await supabase
     .from('contratos')
@@ -44,24 +53,44 @@ export default async function AlunosPage() {
         </Link>
       </div>
 
-      {/* Search & Filter Bar */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Search Bar */}
+      <form method="GET" className="flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1 group">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-blue-500 transition-colors" />
-          <input 
-            type="text" 
-            placeholder="Buscar por nome ou e-mail..." 
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-blue-500 transition-colors" aria-hidden="true" />
+          <input
+            name="q"
+            type="text"
+            defaultValue={query}
+            placeholder="Buscar por nome ou e-mail..."
+            aria-label="Buscar alunos por nome ou e-mail"
             className="w-full h-14 pl-12 pr-4 rounded-2xl bg-white border-2 border-slate-100 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900 outline-none"
           />
         </div>
-        <Button variant="outline" className="h-14 px-6 rounded-2xl border-2 border-slate-100 font-black text-[10px] uppercase tracking-widest text-slate-500 hover:bg-slate-50">
-          <Filter className="w-4 h-4 mr-2" />
-          Filtros
+        <Button type="submit" variant="outline" className="h-14 px-6 rounded-2xl border-2 border-slate-100 font-black text-xs uppercase tracking-widest text-slate-600 hover:bg-slate-50">
+          <Search className="w-4 h-4 mr-2" aria-hidden="true" />
+          Buscar
         </Button>
-      </div>
+        {query ? (
+          <Link
+            href="/professor/alunos"
+            className="h-14 px-6 rounded-2xl border-2 border-slate-100 font-black text-xs uppercase tracking-widest text-slate-500 hover:bg-slate-50 flex items-center justify-center"
+          >
+            Limpar
+          </Link>
+        ) : null}
+      </form>
 
       {/* Alunos Grid */}
       <div className="grid gap-6">
+        {studentList.length === 0 ? (
+          <Card className="glass-card border-none">
+            <CardContent className="p-10 text-center text-sm font-semibold text-slate-500">
+              {query
+                ? `Nenhum aluno encontrado para "${query}".`
+                : 'Nenhum aluno matriculado ainda. Use "Matricular Aluno" para começar.'}
+            </CardContent>
+          </Card>
+        ) : null}
         {studentList.map((aluno) => {
           const contrato = activeContracts.find((item) => item.aluno_id === aluno.id)
           const pagAtrasado = contrato?.pagamentos?.find(
@@ -83,18 +112,18 @@ export default async function AlunosPage() {
                     <div>
                       <h3 className="text-xl font-black text-slate-900 tracking-tight leading-none mb-1 group-hover:text-blue-600 transition-colors">{aluno.full_name}</h3>
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
-                        <span className="flex items-center gap-1.5 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                        <span className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-400 tracking-widest">
                           <Mail className="w-3 h-3" />
                           {aluno.email}
                         </span>
                         {aluno.phone && (
-                          <span className="flex items-center gap-1.5 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                          <span className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-400 tracking-widest">
                             <Phone className="w-3 h-3" />
                             {aluno.phone}
                           </span>
                         )}
                         {aluno.birth_date && (
-                          <span className="flex items-center gap-1.5 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                          <span className="flex items-center gap-1.5 text-xs font-black uppercase text-slate-400 tracking-widest">
                             <Calendar className="w-3 h-3" />
                             {formatDateOnly(aluno.birth_date)}
                           </span>
@@ -108,36 +137,36 @@ export default async function AlunosPage() {
                     <div className="flex flex-col items-end gap-2 pr-4 border-r border-slate-100 hidden sm:flex">
                       {contrato ? (
                         <>
-                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none px-3 py-1 text-xs font-black uppercase tracking-widest">
                             {contrato.planos?.freq_semana}x / SEM
                           </Badge>
-                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-tighter">
                             {contrato.aulas_restantes} / {contrato.aulas_totais} AULAS RESTANTES
                           </p>
                         </>
                       ) : (
-                        <Badge variant="outline" className="border-slate-200 text-slate-400 px-3 py-1 text-[10px] font-black uppercase tracking-widest">SEM CONTRATO</Badge>
+                        <Badge variant="outline" className="border-slate-200 text-slate-400 px-3 py-1 text-xs font-black uppercase tracking-widest">SEM CONTRATO</Badge>
                       )}
                     </div>
 
                     <div className="flex items-center gap-3 min-w-[140px] justify-end">
                       {pagAtrasado ? (
-                        <Badge variant="destructive" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-red-500/10">
+                        <Badge variant="destructive" className="px-3 py-1 text-xs font-black uppercase tracking-widest shadow-lg shadow-red-500/10">
                           ATRASADO
                         </Badge>
                       ) : contrato?.status_financeiro === 'pendente' ? (
-                        <Badge variant="warning" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-amber-500/10">
+                        <Badge variant="warning" className="bg-amber-100 text-amber-700 hover:bg-amber-100 border-none px-3 py-1 text-xs font-black uppercase tracking-widest shadow-lg shadow-amber-500/10">
                           PENDENTE
                         </Badge>
                       ) : contrato && (
-                        <Badge className="bg-emerald-500 text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/10">
+                        <Badge className="bg-emerald-500 text-white border-none px-3 py-1 text-xs font-black uppercase tracking-widest shadow-lg shadow-emerald-500/10">
                           EM DIA
                         </Badge>
                       )}
                       
-                      <Link href={`/professor/alunos/${aluno.id}`}>
+                      <Link href={`/professor/alunos/${aluno.id}`} aria-label={`Abrir detalhes de ${aluno.full_name}`}>
                         <Button variant="ghost" size="icon" className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 hover:bg-blue-50 hover:text-blue-600 transition-all shadow-sm">
-                          <ExternalLink className="w-5 h-5" />
+                          <ExternalLink className="w-5 h-5" aria-hidden="true" />
                         </Button>
                       </Link>
                     </div>
@@ -146,7 +175,7 @@ export default async function AlunosPage() {
                 
                 {/* Secondary Info Bar (Progress) */}
                 {contrato && (
-                  <div className="bg-slate-50/50 px-6 py-3 border-t border-slate-100/50 flex flex-wrap gap-4 text-[9px] font-black uppercase tracking-widest text-slate-400">
+                  <div className="bg-slate-50/50 px-6 py-3 border-t border-slate-100/50 flex flex-wrap gap-4 text-[11px] font-black uppercase tracking-widest text-slate-400">
                     <span className="flex items-center gap-1.5"><GraduationCap className="w-3 h-3 text-blue-400" /> Nível: <span className="text-slate-600">{contrato.nivel_atual}</span></span>
                     <span className="flex items-center gap-1.5"><BookOpen className="w-3 h-3 text-blue-400" /> Material: <span className="text-slate-600">{contrato.livro_atual}</span></span>
                   </div>

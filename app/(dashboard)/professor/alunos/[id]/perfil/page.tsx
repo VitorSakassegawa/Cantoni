@@ -101,7 +101,7 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
 
   return (
     <div className="max-w-3xl mx-auto space-y-10 pb-20 animate-fade-in">
-      <Link href={`/professor/alunos/${id}`} className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-[10px] uppercase tracking-widest group">
+      <Link href={`/professor/alunos/${id}`} className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-xs uppercase tracking-widest group">
         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         Voltar para Detalhes
       </Link>
@@ -116,8 +116,8 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
         <div className="text-center md:text-left space-y-2">
           <h1 className="text-3xl md:text-4xl font-black text-slate-900 tracking-tighter">{profile?.full_name}</h1>
           <div className="flex flex-wrap justify-center md:justify-start gap-3">
-            <Badge className="bg-blue-900 text-white border-none px-3 py-1 text-[10px] font-black uppercase tracking-widest">Aluno</Badge>
-            <Badge variant="outline" className="border-blue-100 text-blue-600 px-3 py-1 text-[10px] font-black uppercase tracking-widest bg-blue-50/50">Editando Perfil</Badge>
+            <Badge className="bg-blue-900 text-white border-none px-3 py-1 text-xs font-black uppercase tracking-widest">Aluno</Badge>
+            <Badge variant="outline" className="border-blue-100 text-blue-600 px-3 py-1 text-xs font-black uppercase tracking-widest bg-blue-50/50">Editando Perfil</Badge>
           </div>
         </div>
       </div>
@@ -132,50 +132,50 @@ export default function ProfessorEditAlunoPage({ params }: { params: Promise<{ i
           <form onSubmit={handleUpdate} className="space-y-10">
             <div className="grid gap-8 sm:grid-cols-2">
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nome Completo</Label>
+                <Label htmlFor="idp-nome" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nome Completo</Label>
                 <div className="relative group/input">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" value={profile?.full_name || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id }), full_name: e.target.value }))} required />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" id="idp-nome" value={profile?.full_name || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id }), full_name: e.target.value }))} required />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nivel de Ingles</Label>
+                <Label htmlFor="idp-nivel" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nivel de Ingles</Label>
                 <div className="relative group/input">
                   <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" value={profile?.nivel || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id }), nivel: e.target.value }))} />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" id="idp-nivel" value={profile?.nivel || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id }), nivel: e.target.value }))} />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">CPF para Contrato</Label>
+                <Label htmlFor="idp-cpf" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">CPF para Contrato</Label>
                 <div className="relative group/input">
                   <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="000.000.000-00" value={profile?.cpf || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id }), cpf: maskCPF(e.target.value) }))} />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="000.000.000-00" id="idp-cpf" value={profile?.cpf || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id }), cpf: maskCPF(e.target.value) }))} />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">WhatsApp Celular</Label>
+                <Label htmlFor="idp-phone" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">WhatsApp Celular</Label>
                 <div className="relative group/input">
                   <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="(00) 00000-0000" value={profile?.phone || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id }), phone: maskPhone(e.target.value) }))} />
+                  <Input className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="(00) 00000-0000" id="idp-phone" value={profile?.phone || ''} onChange={(e) => setProfile((current) => ({ ...(current || { id }), phone: maskPhone(e.target.value) }))} />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Nascimento</Label>
+                <Label htmlFor="idp-birth" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Nascimento</Label>
                 <div className="relative group/input">
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input type="text" className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="DD/MM/AAAA" value={birthDateDisplay} onChange={(e) => setBirthDateDisplay(maskDate(e.target.value))} />
+                  <Input type="text" className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="DD/MM/AAAA" id="idp-birth" value={birthDateDisplay} onChange={(e) => setBirthDateDisplay(maskDate(e.target.value))} />
                 </div>
               </div>
 
               <div className="space-y-2.5">
-                <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Matricula</Label>
+                <Label htmlFor="idp-matricula" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Matricula</Label>
                 <div className="relative group/input">
                   <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
-                  <Input type="text" className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="DD/MM/AAAA" value={inscricaoDateDisplay} onChange={(e) => setInscricaoDateDisplay(maskDate(e.target.value))} />
+                  <Input type="text" className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900" placeholder="DD/MM/AAAA" id="idp-matricula" value={inscricaoDateDisplay} onChange={(e) => setInscricaoDateDisplay(maskDate(e.target.value))} />
                 </div>
               </div>
             </div>

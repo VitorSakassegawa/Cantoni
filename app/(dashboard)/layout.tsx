@@ -81,7 +81,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-black tracking-tight text-slate-900">{profile?.full_name}</p>
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+              <p className="text-xs font-black uppercase tracking-widest text-blue-500">
                 {isProfessor ? 'Professor' : 'Aluno'}
               </p>
             </div>
@@ -90,7 +90,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <form action="/api/auth/signout" method="POST">
             <button
               type="submit"
-              className="inline-flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-rose-600"
+              className="inline-flex items-center gap-2 rounded-2xl border border-rose-100 bg-rose-50 px-3 py-2 text-xs font-black uppercase tracking-widest text-rose-600"
             >
               <LogOut className="h-4 w-4" />
               Sair
@@ -108,7 +108,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               <div className="flex w-full items-center justify-center px-4">
                 <Logo src="/logo-cantoni.svg" fallbackAvatar="C" />
               </div>
-              <p className="max-w-[140px] text-[10px] font-black uppercase leading-tight tracking-[0.2em] text-blue-400">
+              <p className="max-w-[140px] text-xs font-black uppercase leading-tight tracking-[0.2em] text-blue-400">
                 Learning Management System
               </p>
             </div>
@@ -123,7 +123,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-black tracking-tight text-blue-900">{profile?.full_name}</p>
-                <p className="text-[9px] font-black uppercase tracking-widest text-blue-400">
+                <p className="text-[11px] font-black uppercase tracking-widest text-blue-400">
                   {isProfessor ? 'Professor' : 'Aluno'}
                 </p>
               </div>

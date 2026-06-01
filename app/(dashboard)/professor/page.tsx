@@ -44,9 +44,20 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', user.id).single()
   if (profile?.role !== 'professor') redirect('/aluno')
   const serviceSupabase = await createServiceClient()
+
+  // Saudação dinâmica (nome real do professor + hora de São Paulo)
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] || 'Professor'
+  const saoPauloHour = Number(
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Sao_Paulo',
+      hour: 'numeric',
+      hour12: false,
+    }).format(new Date())
+  )
+  const greeting = saoPauloHour < 12 ? 'Bom dia' : saoPauloHour < 18 ? 'Boa tarde' : 'Boa noite'
 
   // Week navigation logic
   const weekParam = typeof resolvedParams.week === 'string' ? resolvedParams.week : null
@@ -221,12 +232,12 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
         
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-[10px] font-black uppercase tracking-widest text-blue-100">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/20 backdrop-blur-md text-xs font-black uppercase tracking-widest text-blue-100">
               <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse" />
               Cantoni English School LMS
             </div>
             <h1 className="text-4xl md:text-5xl font-black tracking-tighter">
-              Bom dia, Gabriel! 🍎
+              {greeting}, {firstName}! 🍎
             </h1>
             <CurrentDateGreeting />
           </div>
@@ -267,13 +278,13 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             <div className="p-4 bg-white/10 rounded-2xl border border-white/10 backdrop-blur-md">
               <p className="text-xs font-bold text-blue-200 uppercase tracking-tighter">Conflitos Detectados</p>
               <p className="text-2xl font-black mt-1">{solicitacoesRemarcacao.length}</p>
-              <p className="text-[10px] text-blue-300/70 mt-2 italic leading-relaxed">
+              <p className="text-xs text-blue-300/70 mt-2 italic leading-relaxed">
                 Existem {solicitacoesRemarcacao.length} solicitações de remarcação aguardando sua aprovação ou sugestão de horário.
               </p>
             </div>
             
             <div className="space-y-3">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-blue-400">Sugestões Prioritárias</h4>
+              <h4 className="text-xs font-black uppercase tracking-widest text-blue-400">Sugestões Prioritárias</h4>
               <div className="space-y-2">
                 {attentionCandidates.slice(0, 3).map((candidate) => (
                   <Link
@@ -284,15 +295,15 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                     <div className="flex items-center gap-3 min-w-0">
                       <Clock className="w-4 h-4 text-blue-400 shrink-0" />
                       <div className="min-w-0">
-                        <p className="text-[10px] font-bold truncate">{candidate.studentName}</p>
-                        <p className="text-[9px] text-blue-200/70 truncate">{candidate.reasons[0]}</p>
+                        <p className="text-xs font-bold truncate">{candidate.studentName}</p>
+                        <p className="text-[11px] text-blue-200/70 truncate">{candidate.reasons[0]}</p>
                       </div>
                     </div>
                     <ChevronRight className="w-3 h-3 text-white/40 group-hover:translate-x-1 transition-all" />
                   </Link>
                 ))}
                 {attentionCandidates.length === 0 && (
-                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-[10px] font-bold text-blue-200/70">
+                  <div className="p-3 bg-white/5 rounded-xl border border-white/5 text-xs font-bold text-blue-200/70">
                     Nenhum aluno com risco alto identificado hoje.
                   </div>
                 )}
@@ -301,7 +312,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
 
             <Link
               href={attentionCandidates[0] ? `/professor/alunos/${attentionCandidates[0].studentId}` : '/professor/alunos'}
-              className="w-full bg-white text-blue-900 hover:bg-blue-50 font-black text-[10px] uppercase tracking-widest h-12 rounded-2xl flex items-center justify-center"
+              className="w-full bg-white text-blue-900 hover:bg-blue-50 font-black text-xs uppercase tracking-widest h-12 rounded-2xl flex items-center justify-center"
             >
               Abrir Prioridades
             </Link>
@@ -321,7 +332,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               </div>
               <div>
                 <h3 className="text-sm font-black text-blue-900 uppercase tracking-widest leading-none">Minha Semana</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                <p className="text-xs font-bold text-slate-400 uppercase mt-1">
                   {format(weekStart, 'dd/MM', { locale: ptBR })} — {format(weekEnd, 'dd/MM', { locale: ptBR })}
                 </p>
               </div>
@@ -331,7 +342,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               <Link href={`/professor?week=${prevWeek}`} className="p-2.5 rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-slate-200 hover:border-blue-200 shadow-sm">
                 <ChevronLeft className="w-4 h-4" />
               </Link>
-              <Link href="/professor" className="px-5 py-2 rounded-xl bg-white text-[10px] font-black uppercase tracking-widest text-slate-600 hover:text-blue-600 border border-slate-200 shadow-sm transition-all hover:shadow-md">
+              <Link href="/professor" className="px-5 py-2 rounded-xl bg-white text-xs font-black uppercase tracking-widest text-slate-600 hover:text-blue-600 border border-slate-200 shadow-sm transition-all hover:shadow-md">
                 Hoje
               </Link>
               <Link href={`/professor?week=${nextWeek}`} className="p-2.5 rounded-xl hover:bg-white text-slate-400 hover:text-blue-600 transition-all border border-slate-200 hover:border-blue-200 shadow-sm">
@@ -346,7 +357,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               return (
                 <div key={day.toISOString()} className={`flex flex-col gap-3 p-4 rounded-3xl transition-all duration-300 ${isActive ? 'bg-blue-50/80 ring-2 ring-blue-200 border-blue-200 shadow-lg shadow-blue-500/5' : 'bg-white hover:bg-slate-50 border border-slate-200 shadow-sm'}`}>
                   <div className="text-center pb-2 border-b border-slate-100">
-                    <p className={`text-[9px] font-black uppercase tracking-[0.2em] ${isActive ? 'text-blue-600' : 'text-slate-500'}`}>
+                    <p className={`text-[11px] font-black uppercase tracking-[0.2em] ${isActive ? 'text-blue-600' : 'text-slate-500'}`}>
                       {format(day, 'eee', { locale: ptBR })}
                     </p>
                     <p className={`text-xl font-black mt-1 ${isActive ? 'text-blue-900' : 'text-slate-700'}`}>
@@ -365,14 +376,14 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                                 <CheckCircle2 className="w-3 h-3 text-emerald-500" />
                               </div>
                             )}
-                            <p className={`text-[10px] font-black leading-tight ${isDada ? 'text-slate-400 line-through' : 'text-slate-900 group-hover:text-blue-900'}`}>
+                            <p className={`text-xs font-black leading-tight ${isDada ? 'text-slate-400 line-through' : 'text-slate-900 group-hover:text-blue-900'}`}>
                               {aula.contratos?.profiles?.full_name?.split(' ')[0]}
                             </p>
-                            <p className="text-[9px] font-bold text-slate-400 mt-1">
+                            <p className="text-[11px] font-bold text-slate-400 mt-1">
                               {format(new Date(aula.data_hora), 'HH:mm')}
                             </p>
                             {!isDada && aula.meet_link && (
-                              <a href={aula.meet_link} target="_blank" rel="noopener noreferrer" className="mt-2 block text-center py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[8px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
+                              <a href={aula.meet_link} target="_blank" rel="noopener noreferrer" className="mt-2 block text-center py-1.5 rounded-lg bg-blue-50 text-blue-600 text-[11px] font-black uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all">
                                 Meet
                               </a>
                             )}
@@ -380,7 +391,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                         )
                       })
                     ) : (
-                      <div className="flex-1 flex items-center justify-center text-[8px] font-black text-slate-400 uppercase tracking-widest opacity-40">
+                      <div className="flex-1 flex items-center justify-center text-[11px] font-black text-slate-400 uppercase tracking-widest opacity-40">
                         Livre
                       </div>
                     )}
@@ -416,11 +427,11 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                     >
                       <div className="space-y-1">
                         <p className="text-[11px] font-black text-slate-900 tracking-tight">{candidate.studentName}</p>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">
+                        <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">
                           {candidate.daysRemaining} dia(s) restantes • {candidate.progressPct}% concluído
                         </p>
                       </div>
-                      <Badge variant={candidate.severity === 'warning' ? 'warning' : 'secondary'} className="text-[8px] font-black uppercase tracking-widest">
+                      <Badge variant={candidate.severity === 'warning' ? 'warning' : 'secondary'} className="text-[11px] font-black uppercase tracking-widest">
                         {candidate.daysRemaining <= 14 ? 'Renovar agora' : 'Acompanhar'}
                       </Badge>
                     </Link>
@@ -469,14 +480,14 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                           </div>
                           <div>
                             <p className="text-[11px] font-black text-slate-900 tracking-tight leading-none">{contrato.profiles?.full_name}</p>
-                            <p className={`text-[9px] font-bold mt-1 uppercase ${isAtrasado ? 'text-red-500' : 'text-amber-500'}`}>
+                            <p className={`text-[11px] font-bold mt-1 uppercase ${isAtrasado ? 'text-red-500' : 'text-amber-500'}`}>
                               {isAtrasado ? 'Pagamento Atrasado' : 'Aulas no Limite / S/ Pgto'}
                             </p>
                           </div>
                         </div>
-                        <Link href={`/professor/alunos/${contrato.aluno_id}`}>
+                        <Link href={`/professor/alunos/${contrato.aluno_id}`} aria-label={`Abrir pendência de ${contrato.profiles?.full_name ?? 'aluno'}`}>
                           <Button variant="ghost" size="icon" className="w-8 h-8 rounded-xl hover:bg-red-100 text-red-600 transition-all">
-                            <ChevronRight className="w-4 h-4" />
+                            <ChevronRight className="w-4 h-4" aria-hidden="true" />
                           </Button>
                         </Link>
                       </div>
@@ -500,8 +511,8 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
             </CardHeader>
             <CardContent className="p-0">
                <div className="p-5 text-center space-y-4">
-                 <p className="text-[10px] text-slate-500 font-medium">Consulte o calendário acadêmico para ver feriados e recessos planejados.</p>
-                 <Link href="/professor/calendario" className="inline-block px-6 py-2 rounded-xl bg-orange-50 text-orange-600 text-[9px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all">
+                 <p className="text-xs text-slate-500 font-medium">Consulte o calendário acadêmico para ver feriados e recessos planejados.</p>
+                 <Link href="/professor/calendario" className="inline-block px-6 py-2 rounded-xl bg-orange-50 text-orange-600 text-[11px] font-black uppercase tracking-widest hover:bg-orange-600 hover:text-white transition-all">
                    Ver Calendário Completo
                  </Link>
                </div>
@@ -514,7 +525,7 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
               <CardTitle className="text-xs font-black text-slate-400 flex items-center gap-2 uppercase tracking-[0.2em]">
                 Meus Alunos
               </CardTitle>
-              <Link href="/professor/alunos" className="text-[9px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors">
+              <Link href="/professor/alunos" className="text-[11px] font-black text-blue-600 uppercase tracking-widest hover:text-blue-800 transition-colors">
                 Ver Todos
               </Link>
             </CardHeader>
@@ -531,10 +542,10 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
                           {contrato.profiles?.full_name}
                         </p>
                         <div className="flex items-center gap-2 mt-1.5">
-                          <Badge className="bg-blue-50/50 text-blue-600 border-none text-[8px] font-black uppercase px-1.5 py-0">
+                          <Badge className="bg-blue-50/50 text-blue-600 border-none text-[11px] font-black uppercase px-1.5 py-0">
                             {contrato.profiles?.nivel || 'N/D'}
                           </Badge>
-                          <span className="text-[9px] font-bold text-slate-400">{contrato.aulas_restantes} aulas</span>
+                          <span className="text-[11px] font-bold text-slate-400">{contrato.aulas_restantes} aulas</span>
                         </div>
                       </div>
                     </div>

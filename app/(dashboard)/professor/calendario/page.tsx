@@ -9,8 +9,9 @@ export default async function ProfessorCalendarioPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', user.id).single()
   if (profile?.role !== 'professor') redirect('/aluno')
+  const firstName = profile?.full_name?.trim().split(/\s+/)[0] || 'Professor'
 
   return (
     <div className="space-y-10 pb-16 animate-fade-in">
@@ -27,7 +28,7 @@ export default async function ProfessorCalendarioPage() {
       <div className="bg-amber-50 border border-amber-100 rounded-[2rem] p-6 flex items-start gap-4 shadow-sm">
         <Info className="w-6 h-6 text-amber-500 shrink-0 mt-1" />
         <div className="space-y-2">
-           <p className="text-xs font-black text-amber-900 uppercase tracking-widest">Atenção Gabriel</p>
+           <p className="text-xs font-black text-amber-900 uppercase tracking-widest">Atenção, {firstName}</p>
            <p className="text-sm text-amber-800/70 font-medium leading-relaxed">
              Ao marcar um <strong className="font-black text-amber-900">Recesso / Férias</strong>, todas as aulas já agendadas dentro do período serão automaticamente alteradas para <strong className="font-black text-amber-900">Pendente de Remarcação</strong>. 
              Os alunos receberão um alerta para sugerir novas datas. Feriados nacionais são apenas informativos.

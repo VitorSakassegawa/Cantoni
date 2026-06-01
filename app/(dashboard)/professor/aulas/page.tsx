@@ -52,7 +52,7 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-20 animate-fade-in">
-      <Link href="/professor" className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-[10px] uppercase tracking-widest group">
+      <Link href="/professor" className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-xs uppercase tracking-widest group">
         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         Voltar para Dashboard
       </Link>
@@ -78,7 +78,7 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
             <select 
               name="status" 
               defaultValue={status}
-              className="h-10 px-4 rounded-xl border-slate-50 bg-slate-50 text-[10px] font-black uppercase tracking-widest text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
+              className="h-10 px-4 rounded-xl border-slate-50 bg-slate-50 text-xs font-black uppercase tracking-widest text-slate-600 focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all cursor-pointer"
             >
               <option value="">Todos os Status</option>
               <option value="agendada">Agendadas</option>
@@ -119,7 +119,7 @@ export default async function ProfessorAulasPage({ searchParams }: PageProps) {
           </div>
           <p className="text-sm font-bold text-slate-400 uppercase tracking-widest">Nenhuma aula encontrada para esses filtros</p>
           {search || status ? (
-            <Link href="/professor/aulas" className="mt-4 inline-block text-[10px] font-black text-blue-600 uppercase tracking-tighter hover:underline">
+            <Link href="/professor/aulas" className="mt-4 inline-block text-xs font-black text-blue-600 uppercase tracking-tighter hover:underline">
               Limpar Filtros
             </Link>
           ) : null}

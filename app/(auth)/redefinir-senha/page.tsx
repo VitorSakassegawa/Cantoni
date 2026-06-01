@@ -159,7 +159,7 @@ export default function ResetPasswordPage() {
           <CardContent>
             <form onSubmit={handleReset} className="space-y-5">
               <div className="space-y-1.5">
-                <Label htmlFor="password" className="ml-1 text-[10px] font-black uppercase text-gray-400">
+                <Label htmlFor="password" className="ml-1 text-xs font-black uppercase text-gray-400">
                   Nova senha
                 </Label>
                 <Input
@@ -173,7 +173,7 @@ export default function ResetPasswordPage() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="confirmPassword" className="ml-1 text-[10px] font-black uppercase text-gray-400">
+                <Label htmlFor="confirmPassword" className="ml-1 text-xs font-black uppercase text-gray-400">
                   Confirmar senha
                 </Label>
                 <Input

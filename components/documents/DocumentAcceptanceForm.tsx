@@ -50,14 +50,14 @@ export default function DocumentAcceptanceForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 rounded-[1.5rem] border border-emerald-100 bg-emerald-50 p-6 print:hidden">
       <div className="space-y-2">
-        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Aceite digital</p>
+        <p className="text-xs font-black uppercase tracking-widest text-emerald-700">Aceite digital</p>
         <p className="text-sm font-medium text-emerald-900/80">
           Ao registrar o aceite, voce confirma a leitura desta versao emitida e autoriza o registro de evidencias tecnicas de auditoria do ato de aceite.
         </p>
       </div>
 
       <div className="rounded-2xl border border-emerald-100 bg-white/80 p-4">
-        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">Condicoes do aceite</p>
+        <p className="text-xs font-black uppercase tracking-widest text-emerald-700">Condicoes do aceite</p>
         <ul className="mt-3 space-y-2 text-sm text-slate-700">
           {terms.map((term) => (
             <li key={term}>• {term}</li>
@@ -72,7 +72,7 @@ export default function DocumentAcceptanceForm({
         Confirmo meu aceite digital desta versao especifica do documento e reconheco o registro de data, versao e evidencias tecnicas.
       </label>
 
-      <button type="submit" disabled={loading} className="inline-flex h-12 items-center justify-center rounded-2xl bg-emerald-600 px-5 text-[10px] font-black uppercase tracking-widest text-white transition-all hover:bg-emerald-700 disabled:opacity-50">
+      <button type="submit" disabled={loading} className="inline-flex h-12 items-center justify-center rounded-2xl bg-emerald-600 px-5 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-emerald-700 disabled:opacity-50">
         {loading ? 'Registrando...' : 'Registrar aceite'}
       </button>
     </form>

@@ -124,7 +124,7 @@ export default function AulasTimeline({
             >
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest">{card.label}</p>
+                  <p className="text-xs font-black uppercase tracking-widest">{card.label}</p>
                   <p className="mt-2 text-2xl font-black tracking-tight">{card.count}</p>
                 </div>
                 <Icon className="h-5 w-5" />
@@ -139,32 +139,32 @@ export default function AulasTimeline({
           <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/50 text-slate-400">
-                <th className="whitespace-nowrap px-8 py-6 text-center text-[10px] font-black uppercase tracking-[0.2em]">
+                <th className="whitespace-nowrap px-8 py-6 text-center text-xs font-black uppercase tracking-[0.2em]">
                   Aula #
                 </th>
-                <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                <th className="whitespace-nowrap px-4 py-6 text-xs font-black uppercase tracking-[0.2em]">
                   Data e horário
                 </th>
-                <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                <th className="whitespace-nowrap px-4 py-6 text-xs font-black uppercase tracking-[0.2em]">
                   Status
                 </th>
-                <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                <th className="whitespace-nowrap px-4 py-6 text-xs font-black uppercase tracking-[0.2em]">
                   Google Meet
                 </th>
-                <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                <th className="whitespace-nowrap px-4 py-6 text-xs font-black uppercase tracking-[0.2em]">
                   Lição / conteúdo
                 </th>
                 {showContractType ? (
-                  <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                  <th className="whitespace-nowrap px-4 py-6 text-xs font-black uppercase tracking-[0.2em]">
                     Tipo
                   </th>
                 ) : null}
                 {showStudentName ? (
-                  <th className="whitespace-nowrap px-4 py-6 text-[10px] font-black uppercase tracking-[0.2em]">
+                  <th className="whitespace-nowrap px-4 py-6 text-xs font-black uppercase tracking-[0.2em]">
                     Aluno
                   </th>
                 ) : null}
-                <th className="px-4 py-6 pr-8 text-right text-[10px] font-black uppercase tracking-[0.2em]">
+                <th className="px-4 py-6 pr-8 text-right text-xs font-black uppercase tracking-[0.2em]">
                   Ações
                 </th>
               </tr>
@@ -202,7 +202,7 @@ export default function AulasTimeline({
           <Button
             variant="ghost"
             onClick={() => setShowAll(!showAll)}
-            className="gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all hover:text-blue-600"
+            className="gap-2 text-xs font-black uppercase tracking-widest text-slate-400 transition-all hover:text-blue-600"
           >
             {showAll ? (
               <>
