@@ -85,7 +85,7 @@ export default async function PagamentosPage() {
     <div className="space-y-10 pb-20 animate-fade-in">
       <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
         <div className="space-y-2">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-600">
             <DollarSign className="h-3 w-3" />
             Gestão estratégica
           </div>
@@ -104,7 +104,7 @@ export default async function PagamentosPage() {
                 <p className="text-4xl font-black tracking-tighter text-rose-600">
                   {atrasados.length}
                 </p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-rose-400">
+                <p className="text-xs font-black uppercase tracking-widest text-rose-400">
                   Faturas em atraso
                 </p>
               </div>
@@ -128,7 +128,7 @@ export default async function PagamentosPage() {
                 <p className="text-4xl font-black tracking-tighter text-amber-600">
                   {pendentes.length}
                 </p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-400">
+                <p className="text-xs font-black uppercase tracking-widest text-amber-400">
                   Faturas pendentes
                 </p>
               </div>
@@ -152,7 +152,7 @@ export default async function PagamentosPage() {
                 <p className="text-4xl font-black tracking-tighter text-emerald-600">
                   {formatCurrency(totalRecebido)}
                 </p>
-                <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                <p className="text-xs font-black uppercase tracking-widest text-emerald-400">
                   Total arrecadado
                 </p>
               </div>

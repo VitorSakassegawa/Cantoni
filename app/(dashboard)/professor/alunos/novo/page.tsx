@@ -119,7 +119,7 @@ export default function NovoAlunoPage() {
       {/* Page Header */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div className="space-y-2">
-          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none px-3 py-1 mb-2 text-[10px] font-black uppercase tracking-widest inline-flex w-max">
+          <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none px-3 py-1 mb-2 text-xs font-black uppercase tracking-widest inline-flex w-max">
             Matrícula Inicial
           </Badge>
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Matricular Novo Aluno</h1>
@@ -139,12 +139,12 @@ export default function NovoAlunoPage() {
               <form onSubmit={handleCriarAluno} className="space-y-8">
                 <div className="grid sm:grid-cols-2 gap-6">
                   <div className="col-span-2 space-y-2.5">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nome Completo</Label>
+                    <Label htmlFor="novo-nome" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Nome Completo</Label>
                     <div className="relative group/input">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
                       <Input
                         className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
-                        value={nome}
+                        id="novo-nome" value={nome}
                         onChange={e => setNome(e.target.value)}
                         placeholder="Ex: João Silva"
                         required
@@ -153,13 +153,13 @@ export default function NovoAlunoPage() {
                   </div>
 
                   <div className="space-y-2.5">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">E-mail</Label>
+                    <Label htmlFor="novo-email" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">E-mail</Label>
                     <div className="relative group/input">
                       <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
                       <Input
                         className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
                         type="email"
-                        value={email}
+                        id="novo-email" value={email}
                         onChange={e => setEmail(e.target.value)}
                         placeholder="joao@exemplo.com"
                         required
@@ -168,12 +168,12 @@ export default function NovoAlunoPage() {
                   </div>
 
                   <div className="space-y-2.5">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">WhatsApp</Label>
+                    <Label htmlFor="novo-phone" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">WhatsApp</Label>
                     <div className="relative group/input">
                       <Phone className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
                       <Input
                         className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
-                        value={telefone}
+                        id="novo-phone" value={telefone}
                         onChange={e => setTelefone(maskPhone(e.target.value))}
                         placeholder="(00) 00000-0000"
                       />
@@ -181,12 +181,12 @@ export default function NovoAlunoPage() {
                   </div>
 
                   <div className="space-y-2.5">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">CPF para Contrato</Label>
+                    <Label htmlFor="novo-cpf" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">CPF para Contrato</Label>
                     <div className="relative group/input">
                       <Fingerprint className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
                       <Input
                         className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
-                        value={cpf}
+                        id="novo-cpf" value={cpf}
                         onChange={e => setCpf(maskCPF(e.target.value))}
                         placeholder="000.000.000-00"
                         required
@@ -195,14 +195,14 @@ export default function NovoAlunoPage() {
                   </div>
 
                   <div className="space-y-2.5">
-                    <Label className="text-[10px] font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Nascimento</Label>
+                    <Label htmlFor="novo-birth" className="text-xs font-black uppercase text-slate-400 pl-1 tracking-[0.15em]">Data de Nascimento</Label>
                     <div className="relative group/input">
                       <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within/input:text-blue-500 transition-colors" />
                       <Input
                         className="pl-12 h-14 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:border-blue-500 focus:ring-4 focus:ring-blue-500/5 transition-all font-bold text-slate-900"
                         type="text"
                         placeholder="DD/MM/AAAA"
-                        value={birthDateDisplay}
+                        id="novo-birth" value={birthDateDisplay}
                         onChange={e => setBirthDateDisplay(maskDate(e.target.value))}
                       />
                     </div>

@@ -40,13 +40,13 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
             <TrendingUp className="w-16 h-16" />
           </div>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-100">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-100">
               <TrendingUp className="w-3 h-3" /> Receita Mensal (MRR)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-black tracking-tighter">{formatCurrency(mrr)}</p>
-            <p className="mt-2 flex items-center gap-1 text-[10px] font-bold text-indigo-200">
+            <p className="mt-2 flex items-center gap-1 text-xs font-bold text-indigo-200">
               <ArrowUpRight className="w-3 h-3" /> Baseado em contratos ativos
             </p>
           </CardContent>
@@ -57,7 +57,7 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
             <DollarSign className="w-16 h-16 text-white" />
           </div>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-50">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-emerald-50">
               <DollarSign className="w-3 h-3" /> Arrecadado no Mês
             </CardTitle>
           </CardHeader>
@@ -70,7 +70,7 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
                   style={{ width: `${Math.min(100, percentageCollected)}%` }}
                 />
               </div>
-              <span className="text-[10px] font-black text-white">{percentageCollected}%</span>
+              <span className="text-xs font-black text-white">{percentageCollected}%</span>
             </div>
           </CardContent>
         </Card>
@@ -80,13 +80,13 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
             <AlertCircle className="w-16 h-16 text-white" />
           </div>
           <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-orange-50">
+            <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-orange-50">
               <AlertCircle className="w-3 h-3" /> Em Aberto (Pendente/Atrasado)
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-black tracking-tighter text-white">{formatCurrency(pendenteTotal)}</p>
-            <p className="mt-2 text-[10px] font-bold uppercase tracking-tight text-orange-200">
+            <p className="mt-2 text-xs font-bold uppercase tracking-tight text-orange-200">
               Total a receber ou em atraso
             </p>
           </CardContent>
@@ -98,7 +98,7 @@ export default function FinanceDash({ mrr, arrecadadoMes, pendenteTotal, project
           <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-[0.2em] text-slate-500">
             Projeção de Ganhos (6 Meses)
           </CardTitle>
-          <Badge className="border-none bg-blue-50 px-3 text-[8px] font-black uppercase tracking-widest text-blue-600">
+          <Badge className="border-none bg-blue-50 px-3 text-[11px] font-black uppercase tracking-widest text-blue-600">
             Previsão
           </Badge>
         </CardHeader>

@@ -54,21 +54,21 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
     return (
       <div className="max-w-4xl mx-auto py-20 text-center">
         <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mx-auto mb-4" />
-        <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Verificando contratos...</p>
+        <p className="text-slate-400 font-bold uppercase text-xs tracking-widest">Verificando contratos...</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-fade-in">
-      <Link href={`/professor/alunos/${alunoId}`} className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-[10px] uppercase tracking-widest group">
+      <Link href={`/professor/alunos/${alunoId}`} className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-xs uppercase tracking-widest group">
         <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
         Voltar para Aluno
       </Link>
 
       <div className="flex flex-col gap-4">
         <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Novo Contrato Acadêmico</h1>
-        <p className="text-slate-500 font-medium font-bold uppercase text-[10px] tracking-widest">Preencha os dados abaixo para gerar a grade de aulas e pagamentos.</p>
+        <p className="text-slate-500 font-medium font-bold uppercase text-xs tracking-widest">Preencha os dados abaixo para gerar a grade de aulas e pagamentos.</p>
       </div>
 
       {(!activeContrato || proceeded) ? (
@@ -85,12 +85,12 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
           
           <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm max-w-sm mx-auto flex flex-col gap-3">
             <div className="flex justify-between items-center px-2">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ID do Contrato</span>
+              <span className="text-xs font-black text-slate-400 uppercase tracking-widest">ID do Contrato</span>
               <span className="text-xs font-black text-slate-900">#{activeContrato.id}</span>
             </div>
             <div className="h-px bg-slate-50" />
             <div className="flex justify-between items-center px-2">
-              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Válido Até</span>
+              <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Válido Até</span>
               <span className="text-xs font-black text-blue-600">{formatDateOnly(activeContrato.data_fim)}</span>
             </div>
           </div>
@@ -98,13 +98,13 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
           <div className="pt-6 flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
               variant="ghost" 
-              className="h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-white"
+              className="h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-white"
               onClick={() => router.push(`/professor/alunos/${alunoId}`)}
             >
               <X className="w-4 h-4 mr-2" /> Cancelar e Voltar
             </Button>
             <Button 
-              className="h-14 px-10 rounded-2xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all"
+              className="h-14 px-10 rounded-2xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all"
               onClick={() => setProceeded(true)}
             >
               Sim, Prosseguir Realmente <ArrowRight className="w-4 h-4 ml-2" />
@@ -134,13 +134,13 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
             <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100">
               <Button 
                 variant="ghost" 
-                className="h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 flex-1" 
+                className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 flex-1" 
                 onClick={() => router.push(`/professor/alunos/${alunoId}`)}
               >
                 Voltar
               </Button>
               <Button 
-                className="h-14 rounded-2xl bg-blue-600 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5] text-white" 
+                className="h-14 rounded-2xl bg-blue-600 font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5] text-white" 
                 onClick={() => setProceeded(true)}
               >
                 Confirmar e Continuar

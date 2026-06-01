@@ -29,7 +29,7 @@ export default function OfflineStatusBar() {
             <WifiOff className="h-5 w-5" />
           </div>
           <div>
-            <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Modo offline</p>
+            <p className="text-xs font-black uppercase tracking-widest text-amber-600">Modo offline</p>
             <p className="mt-1 text-sm font-black tracking-tight text-slate-900">
               Você está sem conexão no momento
             </p>
@@ -42,7 +42,7 @@ export default function OfflineStatusBar() {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="inline-flex items-center gap-2 self-start rounded-2xl bg-amber-500 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600"
+          className="inline-flex items-center gap-2 self-start rounded-2xl bg-amber-500 px-4 py-2 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600"
         >
           <RefreshCw className="h-4 w-4" />
           Tentar de novo

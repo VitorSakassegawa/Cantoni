@@ -234,7 +234,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
       <div className="space-y-5">
         <Link
           href="/professor/alunos"
-          className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
+          className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
         >
           <ChevronLeft className="h-4 w-4" />
           Voltar para alunos
@@ -254,21 +254,21 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  <Badge className="bg-blue-100 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-700">
+                  <Badge className="bg-blue-100 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-700">
                     Aluno
                   </Badge>
                   {aluno.data_inscricao ? (
-                    <Badge variant="outline" className="border-slate-200 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                    <Badge variant="outline" className="border-slate-200 px-3 py-1 text-xs font-black uppercase tracking-widest text-slate-500">
                       Inscrito em {formatDateOnly(aluno.data_inscricao)}
                     </Badge>
                   ) : null}
                   {!contrato ? (
-                    <Badge variant="destructive" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                    <Badge variant="destructive" className="px-3 py-1 text-xs font-black uppercase tracking-widest">
                       Sem contrato ativo
                     </Badge>
                   ) : null}
                   {contrato?.status_financeiro === 'pendente' ? (
-                    <Badge variant="warning" className="px-3 py-1 text-[10px] font-black uppercase tracking-widest">
+                    <Badge variant="warning" className="px-3 py-1 text-xs font-black uppercase tracking-widest">
                       Pagamento pendente
                     </Badge>
                   ) : null}
@@ -278,13 +278,13 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
 
             <div className="flex flex-wrap gap-3 xl:max-w-[540px] xl:justify-end">
               <Link href={`/professor/alunos/${id}/perfil`}>
-                <Button variant="outline" className="h-11 rounded-2xl border-slate-200 px-4 text-[10px] font-black uppercase tracking-widest text-slate-600">
+                <Button variant="outline" className="h-11 rounded-2xl border-slate-200 px-4 text-xs font-black uppercase tracking-widest text-slate-600">
                   Editar perfil
                 </Button>
               </Link>
               <ResendAccessButton
                 alunoId={id}
-                className="h-11 rounded-2xl border-slate-200 px-4 text-[10px] font-black uppercase tracking-widest text-slate-600"
+                className="h-11 rounded-2xl border-slate-200 px-4 text-xs font-black uppercase tracking-widest text-slate-600"
               />
               <WhatsAppLinkButton
                 href={firstAccessWhatsAppHref}
@@ -303,7 +303,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                         ? 'Nova versão do contrato emitida com os dados atuais.'
                         : 'Contrato emitido com sucesso.'
                     }
-                    className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                    className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                   />
                   <IssueDocumentButton
                     contractId={contrato.id}
@@ -315,19 +315,19 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                         ? 'Nova versão da declaração emitida com os dados atuais.'
                         : 'Declaração emitida com sucesso.'
                     }
-                    className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                    className="h-11 rounded-2xl border border-slate-200 bg-white px-4 text-xs font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                   />
                 </>
               ) : null}
               {contrato && paidPaymentsCount > 0 && openPaymentsCount > 0 ? (
                 <Link href={`/professor/alunos/${id}/contrato/renegociar?id=${contrato.id}`}>
-                  <Button variant="outline" className="h-11 rounded-2xl border-amber-200 bg-amber-50 px-4 text-[10px] font-black uppercase tracking-widest text-amber-700 hover:bg-amber-100">
+                  <Button variant="outline" className="h-11 rounded-2xl border-amber-200 bg-amber-50 px-4 text-xs font-black uppercase tracking-widest text-amber-700 hover:bg-amber-100">
                     Renegociar saldo
                   </Button>
                 </Link>
               ) : null}
               <Link href={`/professor/alunos/${id}/contrato/novo`}>
-                <Button className="h-11 rounded-2xl lms-gradient px-5 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20">
+                <Button className="h-11 rounded-2xl lms-gradient px-5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20">
                   Novo contrato
                 </Button>
               </Link>
@@ -336,7 +336,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
 
           {contrato?.status_financeiro === 'pendente' ? (
             <div className="mt-5 rounded-[1.5rem] border border-amber-200 bg-amber-50 px-5 py-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-amber-700">Atenção financeira</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-amber-700">Atenção financeira</p>
               <p className="mt-1 text-sm font-medium text-amber-950/80">
                 Regularize o financeiro antes de renovar para evitar ruído entre contrato, agenda e pagamentos.
               </p>
@@ -345,7 +345,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
 
           {contrato && (hasIssuedContract || hasIssuedDeclaration) ? (
             <div className="mt-4 rounded-[1.5rem] border border-blue-200 bg-blue-50/90 px-5 py-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-700">Reemissão disponível</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-700">Reemissão disponível</p>
               <p className="mt-1 text-sm font-medium text-blue-900/80">
                 Se dados do aluno ou do professor forem atualizados, reemita o documento para congelar uma nova versão com as informações atuais do portal.
               </p>
@@ -359,7 +359,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">Contrato vigente</p>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-500">Contrato vigente</p>
                     <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900">
                       {contrato.semestre} {contrato.ano}
                     </h3>
@@ -371,7 +371,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 </div>
                 <div className="mt-5 rounded-2xl bg-slate-50 px-4 py-3">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Progresso</span>
+                    <span className="text-xs font-black uppercase tracking-widest text-slate-400">Progresso</span>
                     <span className="text-sm font-black text-blue-600">{Math.round(progresso)}%</span>
                   </div>
                   <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
@@ -388,7 +388,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-600">Financeiro</p>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-emerald-600">Financeiro</p>
                     <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900">
                       {overduePaymentsCount > 0 ? `${overduePaymentsCount} em atraso` : `${openPaymentsCount} em aberto`}
                     </h3>
@@ -403,10 +403,10 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   </div>
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2">
-                  <Badge variant={overduePaymentsCount > 0 ? 'destructive' : 'success'} className="px-3 py-1 text-[9px] font-black uppercase tracking-widest">
+                  <Badge variant={overduePaymentsCount > 0 ? 'destructive' : 'success'} className="px-3 py-1 text-[11px] font-black uppercase tracking-widest">
                     {overduePaymentsCount > 0 ? 'Ação necessária' : 'Em dia'}
                   </Badge>
-                  <Badge variant="outline" className="border-slate-200 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-slate-500">
+                  <Badge variant="outline" className="border-slate-200 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-slate-500">
                     {paidPaymentsCount} paga(s) • {openPaymentsCount} aberta(s)
                   </Badge>
                 </div>
@@ -420,7 +420,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
               <CardContent className="p-6">
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-violet-600">Documentos</p>
+                    <p className="text-xs font-black uppercase tracking-[0.2em] text-violet-600">Documentos</p>
                     <h3 className="mt-3 text-2xl font-black tracking-tight text-slate-900">{documentsCount} emitido(s)</h3>
                     <p className="mt-2 text-sm font-medium text-slate-500">
                       {hasIssuedContract ? 'Contrato emitido' : 'Sem contrato emitido'}
@@ -433,12 +433,12 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 </div>
                 <div className="mt-5 flex flex-wrap gap-2">
                   {latestContractIssuance ? (
-                    <Badge variant="outline" className="border-violet-200 bg-violet-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-violet-700">
+                    <Badge variant="outline" className="border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-violet-700">
                       Contrato v{latestContractIssuance.version}
                     </Badge>
                   ) : null}
                   {latestDeclarationIssuance ? (
-                    <Badge variant="outline" className="border-violet-200 bg-violet-50 px-3 py-1 text-[9px] font-black uppercase tracking-widest text-violet-700">
+                    <Badge variant="outline" className="border-violet-200 bg-violet-50 px-3 py-1 text-[11px] font-black uppercase tracking-widest text-violet-700">
                       Declaração v{latestDeclarationIssuance.version}
                     </Badge>
                   ) : null}
@@ -460,20 +460,20 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
         <div className="space-y-8">
           <Card className="border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
             <CardHeader className="border-b border-slate-100 bg-slate-50/80 pb-4">
-              <CardTitle className="text-[10px] font-black uppercase tracking-widest text-blue-500">Informações pessoais</CardTitle>
+              <CardTitle className="text-xs font-black uppercase tracking-widest text-blue-500">Informações pessoais</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <div className="flex items-start gap-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-500"><Mail className="h-4 w-4" /></div>
                 <div className="min-w-0">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">E-mail</p>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">E-mail</p>
                   <p className="truncate text-xs font-bold text-slate-700">{aluno.email}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-50 text-emerald-500"><Phone className="h-4 w-4" /></div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">WhatsApp</p>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">WhatsApp</p>
                   <p className="text-xs font-bold text-slate-700">{aluno.phone || 'Não informado'}</p>
                   <div className="mt-3">
                     <WhatsAppLinkButton href={generalWhatsAppHref} label="Abrir conversa" className="h-9 rounded-xl px-3" />
@@ -483,14 +483,14 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
               <div className="flex items-start gap-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-purple-50 text-purple-500"><Fingerprint className="h-4 w-4" /></div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">CPF</p>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">CPF</p>
                   <p className="text-xs font-bold text-slate-700">{aluno.cpf || 'Não informado'}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
                 <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-rose-50 text-rose-500"><Calendar className="h-4 w-4" /></div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Nascimento</p>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Nascimento</p>
                   <p className="text-xs font-bold text-slate-700">{formatDateOnly(aluno.birth_date)}</p>
                 </div>
               </div>
@@ -499,14 +499,14 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
 
           <Card className="border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-indigo-100/40">
             <CardHeader className="border-b border-indigo-100 bg-indigo-50 pb-4">
-              <CardTitle className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-500">
+              <CardTitle className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-500">
                 <BrainCircuit className="h-3 w-3" /> Evolução de skills
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <SkillsRadar data={avaliacoes || []} />
               <div className="border-t border-slate-100 pt-6">
-                <p className="mb-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Atualizar avaliação mensal</p>
+                <p className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Atualizar avaliação mensal</p>
                 <SkillEvaluationForm alunoId={id} initialData={currentAvaliacao} />
               </div>
             </CardContent>
@@ -515,13 +515,13 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
           {attentionCandidate ? (
             <Card className="border-none overflow-hidden rounded-[2rem] bg-amber-50 shadow-xl shadow-amber-100/40">
               <CardHeader className="border-b border-amber-200 bg-amber-100/60 pb-4">
-                <CardTitle className="text-[10px] font-black uppercase tracking-widest text-amber-700">Radar de atenção</CardTitle>
+                <CardTitle className="text-xs font-black uppercase tracking-widest text-amber-700">Radar de atenção</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3 pt-6">
                 <p className="text-3xl font-black tracking-tight text-amber-900">Score {attentionCandidate.score}</p>
                 <div className="space-y-2">
                   {attentionCandidate.reasons.map((reason) => (
-                    <div key={reason} className="rounded-xl bg-white/70 px-3 py-2 text-[10px] font-bold text-amber-700">
+                    <div key={reason} className="rounded-xl bg-white/70 px-3 py-2 text-xs font-bold text-amber-700">
                       {reason}
                     </div>
                   ))}
@@ -540,7 +540,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   <div className="min-w-0 flex-1 space-y-8">
                     <div className="grid gap-6 md:grid-cols-2">
                       <div className="space-y-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Semestre ativo</p>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Semestre ativo</p>
                         <div className="flex flex-wrap items-center gap-3">
                           <h4 className="text-2xl font-black tracking-tight text-slate-900">
                             {contrato.semestre} {contrato.ano}
@@ -549,7 +549,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                         </div>
                         <div className="flex flex-wrap items-center gap-3">
                           <Link href={`/professor/alunos/${id}/contrato/editar`}>
-                            <Button variant="ghost" size="sm" className="h-9 rounded-xl px-0 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:bg-transparent">
+                            <Button variant="ghost" size="sm" className="h-9 rounded-xl px-0 text-xs font-black uppercase tracking-widest text-blue-600 hover:bg-transparent">
                               Editar contrato
                             </Button>
                           </Link>
@@ -570,9 +570,9 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                       </div>
 
                       <div className="space-y-3">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Programa de estudo</p>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Programa de estudo</p>
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="border-none bg-blue-600 px-4 py-1.5 text-[10px] font-black tracking-widest text-white">
+                          <Badge className="border-none bg-blue-600 px-4 py-1.5 text-xs font-black tracking-widest text-white">
                             {contrato.planos?.freq_semana}x / semana
                           </Badge>
                           <span className="flex items-center gap-1.5 text-xs font-black uppercase tracking-widest text-slate-600">
@@ -584,7 +584,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
 
                     <div className="space-y-4">
                       <div className="flex items-end justify-between gap-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Progresso de aulas</p>
+                        <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-400">Progresso de aulas</p>
                         <p className="text-xl font-black tracking-tight text-blue-600">
                           {contrato.aulas_dadas} <span className="font-medium text-slate-300">/ {contrato.aulas_totais}</span>
                         </p>
@@ -592,7 +592,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                       <div className="h-4 overflow-hidden rounded-2xl bg-slate-100 p-1">
                         <div className="h-full rounded-xl lms-gradient shadow-lg shadow-blue-500/20" style={{ width: `${progresso}%` }} />
                       </div>
-                      <div className="flex flex-wrap justify-between gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                      <div className="flex flex-wrap justify-between gap-2 text-xs font-black uppercase tracking-widest text-slate-400">
                         <span>Lecionadas</span>
                         <span>{Math.round(progresso)}% concluído</span>
                         <span>Faltantes: {contrato.aulas_restantes}</span>
@@ -607,7 +607,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                           <TrendingUp className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Aproveitamento</p>
+                          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Aproveitamento</p>
                           <p className="text-xs font-black text-slate-900">{progresso >= 70 ? 'Excelente' : progresso >= 40 ? 'Consistente' : 'Em construção'}</p>
                         </div>
                       </div>
@@ -616,7 +616,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                           <BookOpen className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Livro atual</p>
+                          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Livro atual</p>
                           <p className="text-xs font-black text-slate-900">{contrato.livro_atual || 'Não definido'}</p>
                         </div>
                       </div>
@@ -625,12 +625,12 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                           <Clock className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Horário base</p>
+                          <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Horário base</p>
                           <p className="text-xs font-black text-slate-900">{contrato.horario || '--:--'}h</p>
                         </div>
                       </div>
                       <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                        <p className="text-[9px] font-black uppercase tracking-widest text-slate-400">Período</p>
+                        <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Período</p>
                         <p className="mt-1 text-xs font-black text-slate-900">
                           {formatDateOnly(contrato.data_inicio)} até {formatDateOnly(contrato.data_fim)}
                         </p>
@@ -668,7 +668,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 </div>
                 <Link
                   href={`/professor/alunos/${id}/contrato/novo`}
-                  className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+                  className="inline-flex items-center justify-center rounded-2xl bg-blue-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
                 >
                   Preparar renovação
                 </Link>
@@ -692,12 +692,12 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   <table className="w-full text-left">
                     <thead>
                       <tr className="border-b border-slate-100/50">
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato</th>
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Saldo anterior</th>
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Novo saldo</th>
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Parcelamento</th>
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">1.º vencimento</th>
-                        <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Criado em</th>
+                        <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Contrato</th>
+                        <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Saldo anterior</th>
+                        <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Novo saldo</th>
+                        <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Parcelamento</th>
+                        <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">1.º vencimento</th>
+                        <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Criado em</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -705,7 +705,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                         <tr key={entry.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
                           <td className="px-6 py-5">
                             <p className="text-sm font-black text-slate-900">#{entry.contract_id}</p>
-                            <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">Aditivo #{entry.id}</p>
+                            <p className="text-xs font-bold uppercase tracking-tight text-slate-400">Aditivo #{entry.id}</p>
                           </td>
                           <td className="px-6 py-5 text-sm font-black text-slate-700">{formatCurrency(Number(entry.previous_open_value || 0))}</td>
                           <td className="px-6 py-5 text-sm font-black text-blue-700">{formatCurrency(Number(entry.new_open_value || 0))}</td>
@@ -739,11 +739,11 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-100/50">
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Motivo</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Financeiro</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Aulas</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Registro</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Contrato</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Motivo</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Financeiro</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Aulas</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Registro</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -751,14 +751,14 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                       <tr key={entry.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
                         <td className="px-6 py-5">
                           <p className="text-sm font-black text-slate-900">#{entry.contract_id}</p>
-                          <p className="text-[10px] font-bold uppercase tracking-tight text-slate-400">
+                          <p className="text-xs font-bold uppercase tracking-tight text-slate-400">
                             efetivo em {formatDateOnly(entry.effective_date)}
                           </p>
                         </td>
                         <td className="px-6 py-5">
                           <p className="text-xs font-black text-slate-700">{entry.reason_label}</p>
                           {entry.reason_details ? (
-                            <p className="mt-1 text-[10px] font-medium text-slate-400">{entry.reason_details}</p>
+                            <p className="mt-1 text-xs font-medium text-slate-400">{entry.reason_details}</p>
                           ) : null}
                         </td>
                         <td className="px-6 py-5 text-xs font-bold text-slate-500">
@@ -801,11 +801,11 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-100/50">
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Parcela</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Valor</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Vencimento</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
-                      <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Observação</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Parcela</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Valor</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Vencimento</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Status</th>
+                      <th className="px-6 py-5 text-right text-xs font-black uppercase tracking-widest text-slate-400">Observação</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -813,7 +813,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                       <tr key={p.id} className="border-b border-slate-50 transition-colors hover:bg-slate-50/50">
                         <td className="px-6 py-5">
                           <span className="text-sm font-black text-slate-900">{p.parcela_num}</span>
-                          <span className="text-[10px] font-bold text-slate-300"> / {totalPaymentsCount}</span>
+                          <span className="text-xs font-bold text-slate-300"> / {totalPaymentsCount}</span>
                         </td>
                         <td className="px-6 py-5 text-sm font-black text-slate-700">{formatCurrency(p.valor)}</td>
                         <td className="px-6 py-5">
@@ -833,18 +833,18 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                                     ? 'warning'
                                     : 'outline'
                             }
-                            className="px-3 py-1 text-[9px] font-black uppercase tracking-widest"
+                            className="px-3 py-1 text-[11px] font-black uppercase tracking-widest"
                           >
                             {p.effectiveStatus}
                           </Badge>
                         </td>
                         <td className="px-6 py-5 text-right">
                           {p.mercadopago_id ? (
-                            <Badge className="border-none bg-blue-100 text-[8px] font-black uppercase tracking-tighter text-blue-600">
+                            <Badge className="border-none bg-blue-100 text-[11px] font-black uppercase tracking-tighter text-blue-600">
                               MP: {p.mercadopago_id}
                             </Badge>
                           ) : p.status !== 'pago' ? (
-                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-300">Aguardando Bricks</span>
+                            <span className="text-xs font-black uppercase tracking-widest text-slate-300">Aguardando Bricks</span>
                           ) : null}
                         </td>
                       </tr>
@@ -876,11 +876,11 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-100/50">
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">ID / tipo</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Período</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Plano</th>
-                      <th className="px-6 py-5 text-[10px] font-black uppercase tracking-widest text-slate-400">Status</th>
-                      <th className="px-6 py-5 text-right text-[10px] font-black uppercase tracking-widest text-slate-400">Ação</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">ID / tipo</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Período</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Plano</th>
+                      <th className="px-6 py-5 text-xs font-black uppercase tracking-widest text-slate-400">Status</th>
+                      <th className="px-6 py-5 text-right text-xs font-black uppercase tracking-widest text-slate-400">Ação</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -893,18 +893,18 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                       >
                         <td className="px-6 py-5">
                           <p className="text-sm font-black text-slate-900">#{entry.id}</p>
-                          <p className="text-[10px] font-bold uppercase tracking-tighter text-slate-400">{entry.tipo_contrato}</p>
+                          <p className="text-xs font-bold uppercase tracking-tighter text-slate-400">{entry.tipo_contrato}</p>
                         </td>
                         <td className="px-6 py-5">
                           <p className="text-xs font-bold text-slate-700">
                             {formatDateOnly(entry.data_inicio)} — {formatDateOnly(entry.data_fim)}
                           </p>
-                          <p className="text-[9px] font-medium text-slate-400">
+                          <p className="text-[11px] font-medium text-slate-400">
                             {entry.semestre} {entry.ano}
                           </p>
                         </td>
                         <td className="px-6 py-5">
-                          <Badge variant="outline" className="border-slate-200 text-[9px] font-black uppercase text-slate-500">
+                          <Badge variant="outline" className="border-slate-200 text-[11px] font-black uppercase text-slate-500">
                             {entry.planos?.freq_semana}x/semana
                           </Badge>
                         </td>
@@ -919,14 +919,14 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                                     ? 'destructive'
                                     : 'warning'
                             }
-                            className="px-3 py-1 text-[9px] font-black uppercase tracking-widest"
+                            className="px-3 py-1 text-[11px] font-black uppercase tracking-widest"
                           >
                             {entry.status}
                           </Badge>
                         </td>
                         <td className="px-6 py-5 text-right">
                           <Link href={`/professor/alunos/${id}/contrato/editar?id=${entry.id}`}>
-                            <Button variant="ghost" size="sm" className="h-8 rounded-xl text-[10px] font-black uppercase text-blue-600 hover:bg-blue-50">
+                            <Button variant="ghost" size="sm" className="h-8 rounded-xl text-xs font-black uppercase text-blue-600 hover:bg-blue-50">
                               Detalhes
                             </Button>
                           </Link>
@@ -966,7 +966,7 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                 <Trash2 className="h-5 w-5" />
               </div>
               <div>
-                <h4 className="mb-1 text-[10px] font-black uppercase tracking-widest text-rose-600">Zona de perigo</h4>
+                <h4 className="mb-1 text-xs font-black uppercase tracking-widest text-rose-600">Zona de perigo</h4>
                 <p className="text-xs font-medium text-slate-500">
                   Excluir este aluno apagará permanentemente todos os seus dados e registros.
                 </p>

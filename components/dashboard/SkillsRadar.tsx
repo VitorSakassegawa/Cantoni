@@ -112,7 +112,7 @@ export default function SkillsRadar({ data }: { data: SkillData[] }) {
             key={level}
             onClick={() => setSelectedCefr(selectedCefr === level ? null : level)}
             className={`
-              px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
+              px-3 py-1.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all
               ${selectedCefr === level 
                 ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' 
                 : 'bg-slate-50 text-slate-400 hover:bg-slate-100 hover:text-slate-600'}
@@ -129,7 +129,7 @@ export default function SkillsRadar({ data }: { data: SkillData[] }) {
           {growth !== null && growth !== 0 && (
             <div className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl border ${growth >= 0 ? 'bg-emerald-50 border-emerald-100 text-emerald-600' : 'bg-rose-50 border-rose-100 text-rose-600'}`}>
               <TrendingUp className={`w-3.5 h-3.5 ${growth < 0 ? 'rotate-180' : ''}`} />
-              <span className="text-[10px] font-black uppercase tracking-widest">{growth >= 0 ? '+' : ''}{growth}%</span>
+              <span className="text-xs font-black uppercase tracking-widest">{growth >= 0 ? '+' : ''}{growth}%</span>
             </div>
           )}
         </div>
@@ -182,14 +182,14 @@ export default function SkillsRadar({ data }: { data: SkillData[] }) {
       <div className="bg-blue-50/50 rounded-[2rem] p-6 border border-blue-100/50 space-y-4">
         <div className="flex items-center gap-2 text-blue-600">
           <Sparkles className="w-4 h-4" />
-          <p className="text-[10px] font-black uppercase tracking-widest leading-none">Caminho da Evolução</p>
+          <p className="text-xs font-black uppercase tracking-widest leading-none">Caminho da Evolução</p>
         </div>
         
         <div className="space-y-4">
           {selectedCefr ? (
             <div className="p-4 bg-white/60 rounded-2xl border border-white shadow-sm space-y-3">
               <div className="flex items-center justify-between border-b border-slate-100 pb-2">
-                <p className="text-[10px] font-black uppercase text-blue-600 tracking-wider">
+                <p className="text-xs font-black uppercase text-blue-600 tracking-wider">
                   {checkBenchmarkReached(selectedCefr) ? 'Marco Alcançado:' : 'Rumo ao Nível:'} {selectedCefr}
                 </p>
                 {checkBenchmarkReached(selectedCefr) && (
@@ -223,14 +223,14 @@ export default function SkillsRadar({ data }: { data: SkillData[] }) {
                             {skill.label}
                           </span>
                         </div>
-                        <p className="text-[9px] text-slate-400 pl-5 font-medium leading-tight">
+                        <p className="text-[11px] text-slate-400 pl-5 font-medium leading-tight">
                           {SKILL_DESCRIPTIONS[selectedCefr][skill.key]}
                         </p>
                       </li>
                     )
                   })}
                 </ul>
-                <p className="mt-3 text-[9px] text-slate-400 italic font-medium pt-3 border-t border-slate-50">
+                <p className="mt-3 text-[11px] text-slate-400 italic font-medium pt-3 border-t border-slate-50">
                   * Benchmarks baseados no Quadro Comum Europeu de Referência para Línguas.
                 </p>
               </div>

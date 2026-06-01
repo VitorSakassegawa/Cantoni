@@ -103,7 +103,7 @@ export default async function AlunoAulasPage() {
     <div className="mx-auto max-w-6xl space-y-10 animate-fade-in pb-20">
       <Link
         href="/aluno"
-        className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
+        className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
       >
         <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
         Voltar para Dashboard
@@ -125,7 +125,7 @@ export default async function AlunoAulasPage() {
             {contratoAtual ? (
               <>
                 <div className="space-y-2">
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                     {contratoAtual?.planos?.descricao || 'Plano atual'}
                   </p>
                   <p className="text-3xl font-black tracking-tighter text-slate-900">
@@ -140,7 +140,7 @@ export default async function AlunoAulasPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                  <div className="flex items-center justify-between text-xs font-black uppercase tracking-widest text-slate-400">
                     <span>Concluído</span>
                     <span>{progressPct}%</span>
                   </div>
@@ -154,7 +154,7 @@ export default async function AlunoAulasPage() {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                    <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Período</p>
+                    <p className="text-xs font-black uppercase tracking-widest text-slate-400">Período</p>
                     <p className="mt-2 text-sm font-bold text-slate-900">
                       {new Date(contratoAtual.data_inicio).toLocaleDateString('pt-BR')} -{' '}
                       {new Date(contratoAtual.data_fim).toLocaleDateString('pt-BR')}
@@ -164,18 +164,18 @@ export default async function AlunoAulasPage() {
                   <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
                     <div className="flex items-start justify-between gap-3">
                       <div>
-                        <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Remarcações</p>
+                        <p className="text-xs font-black uppercase tracking-widest text-slate-400">Remarcações</p>
                         <p className="mt-2 text-sm font-bold text-slate-900">
                           Até {currentMonthlyLimit} por mês no plano atual
                         </p>
                       </div>
                       <div className="rounded-xl bg-white px-3 py-2 text-right shadow-sm ring-1 ring-slate-100">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Disponíveis</p>
+                        <p className="text-xs font-black uppercase tracking-widest text-emerald-500">Disponíveis</p>
                         <p className="mt-1 text-2xl font-black tracking-tight text-slate-900">{currentMonthlyAvailable}</p>
                       </div>
                     </div>
 
-                    <div className="mt-4 flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                    <div className="mt-4 flex items-center justify-between text-xs font-black uppercase tracking-widest text-slate-400">
                       <span>Usadas no mês</span>
                       <span>
                         {currentMonthlyReschedules}/{currentMonthlyLimit}

@@ -25,7 +25,7 @@ export default function WhatsAppLinkButton({
       onClick={(event) => event.stopPropagation()}
       className={cn(
         buttonVariants({ variant: 'outline' }),
-        'border-emerald-200 bg-emerald-50 text-[10px] font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-100',
+        'border-emerald-200 bg-emerald-50 text-xs font-black uppercase tracking-widest text-emerald-700 hover:bg-emerald-100',
         className
       )}
     >

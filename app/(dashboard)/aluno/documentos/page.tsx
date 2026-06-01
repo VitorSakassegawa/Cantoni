@@ -71,7 +71,7 @@ export default async function AlunoDocumentosPage() {
     <div className="mx-auto max-w-6xl animate-fade-in space-y-10 pb-20">
       <Link
         href="/aluno"
-        className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
+        className="group flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
       >
         <ChevronLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
         Voltar para Dashboard
@@ -107,13 +107,13 @@ export default async function AlunoDocumentosPage() {
                     <p className="text-sm font-black text-slate-900">
                       {formatDateOnly(contrato.data_inicio)} - {formatDateOnly(contrato.data_fim)}
                     </p>
-                    <p className="mt-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    <p className="mt-2 text-xs font-bold uppercase tracking-widest text-slate-400">
                       {contrato.tipo_contrato} - status {contrato.status}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Badge
                         variant="outline"
-                        className="border-slate-200 text-[9px] font-black uppercase text-slate-500"
+                        className="border-slate-200 text-[11px] font-black uppercase text-slate-500"
                       >
                         {contractIssuance
                           ? `Contrato emitido v${contractIssuance.version} - ${contractIssuance.status}`
@@ -121,7 +121,7 @@ export default async function AlunoDocumentosPage() {
                       </Badge>
                       <Badge
                         variant="outline"
-                        className="border-slate-200 text-[9px] font-black uppercase text-slate-500"
+                        className="border-slate-200 text-[11px] font-black uppercase text-slate-500"
                       >
                         {declarationIssuance
                           ? `Declaração emitida v${declarationIssuance.version}`
@@ -141,7 +141,7 @@ export default async function AlunoDocumentosPage() {
                           ? `/documentos/emitidos/${contractIssuance.id}`
                           : `/documentos/contrato/${contrato.id}`
                       }
-                      className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+                      className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
                     >
                       <FileCheck2 className="h-4 w-4" />
                       {contractIssuance ? 'Contrato emitido' : 'Ver prévia'}
@@ -152,7 +152,7 @@ export default async function AlunoDocumentosPage() {
                           ? `/documentos/emitidos/${declarationIssuance.id}`
                           : `/documentos/declaracao/${contrato.id}`
                       }
-                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                      className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-xs font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                     >
                       <GraduationCap className="h-4 w-4" />
                       {declarationIssuance ? 'Declaração emitida' : 'Ver prévia'}

@@ -45,7 +45,7 @@ export default function ManualTranscriptImportButton() {
     <div className="rounded-3xl border border-blue-100 bg-blue-50/80 p-4 shadow-sm shadow-blue-500/5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="space-y-1">
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">
+          <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-500">
             Google Meet Transcript
           </p>
           <p className="text-sm font-bold text-slate-700">
@@ -60,7 +60,7 @@ export default function ManualTranscriptImportButton() {
           type="button"
           onClick={handleImport}
           disabled={loading}
-          className="h-11 rounded-2xl bg-blue-600 px-5 text-[10px] font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700"
+          className="h-11 rounded-2xl bg-blue-600 px-5 text-xs font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700"
         >
           {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
           {loading ? 'Importando...' : 'Importar Transcrições'}

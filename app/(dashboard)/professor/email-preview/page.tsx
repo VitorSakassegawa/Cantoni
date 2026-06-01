@@ -23,7 +23,7 @@ export default async function EmailPreviewPage() {
     <div className="space-y-8 animate-fade-in pb-20">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-600">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-600">
             <Eye className="h-3 w-3" />
             Preview editorial
           </div>
@@ -56,7 +56,7 @@ export default async function EmailPreviewPage() {
               </div>
               <div className="min-w-0">
                 <p className="truncate text-sm font-black tracking-tight text-slate-900">{template.name}</p>
-                <p className="truncate text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="truncate text-xs font-black uppercase tracking-widest text-slate-400">
                   {template.subject}
                 </p>
               </div>
@@ -72,7 +72,7 @@ export default async function EmailPreviewPage() {
         {templates.map((template) => (
           <section key={template.slug} id={template.slug} className="space-y-4 scroll-mt-24">
             <div className="rounded-[2rem] border border-slate-200 bg-white/80 p-6 shadow-sm">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">{template.name}</p>
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-500">{template.name}</p>
               <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900">{template.subject}</h2>
             </div>
 

@@ -43,23 +43,23 @@ export default function SkillEvaluationForm({ alunoId, initialData }: SkillEvalu
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Speaking (0-10)</label>
+          <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Speaking (0-10)</label>
           <Input name="speaking" type="number" min="0" max="10" defaultValue={initialData?.speaking || 0} required className="h-10 bg-slate-50 border-none rounded-xl font-bold" />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Listening (0-10)</label>
+          <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Listening (0-10)</label>
           <Input name="listening" type="number" min="0" max="10" defaultValue={initialData?.listening || 0} required className="h-10 bg-slate-50 border-none rounded-xl font-bold" />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Reading (0-10)</label>
+          <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Reading (0-10)</label>
           <Input name="reading" type="number" min="0" max="10" defaultValue={initialData?.reading || 0} required className="h-10 bg-slate-50 border-none rounded-xl font-bold" />
         </div>
         <div className="space-y-1.5">
-          <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Writing (0-10)</label>
+          <label className="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">Writing (0-10)</label>
           <Input name="writing" type="number" min="0" max="10" defaultValue={initialData?.writing || 0} required className="h-10 bg-slate-50 border-none rounded-xl font-bold" />
         </div>
       </div>
-      <Button type="submit" disabled={loading} className="w-full h-10 rounded-xl bg-blue-600 text-white font-black text-[10px] uppercase tracking-widest gap-2 shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
+      <Button type="submit" disabled={loading} className="w-full h-10 rounded-xl bg-blue-600 text-white font-black text-xs uppercase tracking-widest gap-2 shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-all">
         {loading ? 'Salvando...' : 'Atualizar Radar'}
         <Check className="w-3 h-3" />
       </Button>

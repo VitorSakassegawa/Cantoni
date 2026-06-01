@@ -47,28 +47,28 @@ function VocabularyCard({ word, translation, example }: { word: string, translat
       }`}
     >
       <div className="flex flex-col gap-1">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Palavra/Expressão</span>
+        <span className="text-xs font-black uppercase tracking-widest text-slate-400">Palavra/Expressão</span>
         <span className="text-sm font-bold text-slate-900">{word}</span>
       </div>
 
       <div className="mt-4 flex flex-col gap-1">
-        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Significado</span>
+        <span className="text-xs font-black uppercase tracking-widest text-slate-400">Significado</span>
         {revealed ? (
           <div className="animate-in fade-in slide-in-from-top-1 duration-300">
             <span className="text-sm font-medium text-emerald-600 italic">&quot;{translation}&quot;</span>
             {example && (
-              <p className="text-[10px] text-slate-500 mt-2 leading-relaxed bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed bg-slate-50 p-2 rounded-lg border border-slate-100 italic">
                 {example}
               </p>
             )}
-            <Badge variant="outline" className="mt-3 bg-red-50 text-red-600 border-red-100 text-[8px] font-black uppercase px-1.5 py-0">
+            <Badge variant="outline" className="mt-3 bg-red-50 text-red-600 border-red-100 text-[11px] font-black uppercase px-1.5 py-0">
               Não sabia esta
             </Badge>
           </div>
         ) : (
           <div className="h-10 flex items-center gap-2 text-slate-300 group-hover:text-amber-400 transition-colors">
             <Eye className="w-4 h-4" />
-            <span className="text-[10px] font-black uppercase tracking-widest">Clique para revelar</span>
+            <span className="text-xs font-black uppercase tracking-widest">Clique para revelar</span>
           </div>
         )}
       </div>
@@ -245,12 +245,12 @@ export default function AulaRow({
   return (
     <>
       <tr className="hover:bg-slate-50/80 transition-all group border-b border-slate-50">
-        <td className="py-6 text-slate-400 text-[10px] font-black pl-2 text-center w-8">{index}</td>
+        <td className="py-6 text-slate-400 text-xs font-black pl-2 text-center w-8">{index}</td>
         <td className="py-6 font-bold text-slate-700 text-sm whitespace-nowrap">
           <div className="flex flex-col">
             <span>{formatDateTime(aula.data_hora)}</span>
             {status === 'pendente_remarcacao' && (
-              <span className="text-[10px] font-black mt-1 uppercase tracking-tighter">
+              <span className="text-xs font-black mt-1 uppercase tracking-tighter">
                 {dataHoraSolicitada && !formatDateTime(dataHoraSolicitada).includes('Não informada') ? (
                   <span className="text-amber-600">Solicitado p/: {formatDateTime(dataHoraSolicitada)}</span>
                 ) : (
@@ -262,19 +262,19 @@ export default function AulaRow({
             )}
             {!isProfessor && remarkBlockReason && (
               <div className="mt-1">
-                <span className="text-[10px] font-black uppercase tracking-tighter text-slate-400">
+                <span className="text-xs font-black uppercase tracking-tighter text-slate-400">
                   Remarcação bloqueada
                 </span>
-                <p className="text-[10px] text-slate-500 leading-snug mt-0.5">{remarkBlockReason}</p>
+                <p className="text-xs text-slate-500 leading-snug mt-0.5">{remarkBlockReason}</p>
               </div>
             )}
             {status === 'pendente_remarcacao_rejeitada' && (
               <div className="mt-1 flex flex-col">
-                <span className="text-[10px] font-black uppercase tracking-tighter text-red-600">
+                <span className="text-xs font-black uppercase tracking-tighter text-red-600">
                   Reserva Rejeitada
                 </span>
                 {aula.justificativa_professor && (
-                  <span className="text-[10px] font-medium text-slate-500 bg-red-50/50 p-1 rounded-md border border-red-100/30 mt-0.5">
+                  <span className="text-xs font-medium text-slate-500 bg-red-50/50 p-1 rounded-md border border-red-100/30 mt-0.5">
                     &quot;{aula.justificativa_professor}&quot;
                   </span>
                 )}
@@ -283,11 +283,11 @@ export default function AulaRow({
             {aula.motivo_remarcacao && (
               <div className="mt-1 flex flex-col gap-1">
                 {(aula.motivo_remarcacao.includes('Conflito') || aula.motivo_remarcacao.includes('Férias') || aula.motivo_remarcacao.includes('Feriado')) && (
-                  <Badge className="w-fit bg-emerald-100 text-emerald-700 border-none text-[8px] font-black uppercase px-1.5 py-0">
+                  <Badge className="w-fit bg-emerald-100 text-emerald-700 border-none text-[11px] font-black uppercase px-1.5 py-0">
                     Abonada (S/ Limite)
                   </Badge>
                 )}
-                <span className={`text-[9px] italic ${
+                <span className={`text-[11px] italic ${
                   (aula.motivo_remarcacao.includes('Recesso') || aula.motivo_remarcacao.includes('Férias') || aula.motivo_remarcacao.includes('Feriado')) 
                     ? 'font-black text-blue-600' 
                     : 'font-medium text-slate-400'
@@ -299,14 +299,14 @@ export default function AulaRow({
           </div>
         </td>
         <td className="py-6">
-          <Badge variant={STATUS_BADGE[status] || 'outline'} className="capitalize text-[9px] font-black uppercase tracking-[0.1em] px-3 py-1 whitespace-nowrap rounded-lg">
+          <Badge variant={STATUS_BADGE[status] || 'outline'} className="capitalize text-[11px] font-black uppercase tracking-[0.1em] px-3 py-1 whitespace-nowrap rounded-lg">
             {status === 'dada' ? 'FINALIZADO' : status.replace('_', ' ')}
           </Badge>
         </td>
         <td className="py-6">
           {aula.meet_link ? (
             <a href={aula.meet_link} target="_blank" rel="noopener noreferrer"
-              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-black text-[10px] uppercase tracking-widest transition-all whitespace-nowrap group/meet">
+              className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-black text-xs uppercase tracking-widest transition-all whitespace-nowrap group/meet">
               <div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center group-hover/meet:bg-blue-100 transition-colors">
                 <Video className="w-3.5 h-3.5" />
               </div>
@@ -329,7 +329,7 @@ export default function AulaRow({
                         {aula.homework}
                       </p>
                     ) : new Date(aula.data_hora) > new Date() ? (
-                      <span className="text-blue-500/60 font-bold text-[10px] uppercase tracking-tight italic">Nenhuma lição enviada pelo professor para a próxima aula</span>
+                      <span className="text-blue-500/60 font-bold text-xs uppercase tracking-tight italic">Nenhuma lição enviada pelo professor para a próxima aula</span>
                     ) : (
                       <span className="text-slate-300 italic text-[11px]">Aula sem conteúdo registrado</span>
                     )}
@@ -349,7 +349,7 @@ export default function AulaRow({
                 <button 
                   type="button"
                   onClick={() => setIsExpanded(!isExpanded)}
-                  className="text-[9px] font-black uppercase text-blue-500 hover:text-blue-700 flex items-center gap-0.5 transition-colors w-fit tracking-widest"
+                  className="text-[11px] font-black uppercase text-blue-500 hover:text-blue-700 flex items-center gap-0.5 transition-colors w-fit tracking-widest"
                 >
                   {isExpanded ? (
                     <><ChevronUp className="w-3 h-3" /> Ver Menos</>
@@ -362,7 +362,7 @@ export default function AulaRow({
             
             <div className="flex items-center gap-2 flex-wrap">
               {lesson.homework_type && (
-                <Badge variant="outline" className={`text-[8px] font-black tracking-widest uppercase rounded-md border-0 ${
+                <Badge variant="outline" className={`text-[11px] font-black tracking-widest uppercase rounded-md border-0 ${
                   lesson.homework_type === 'esl_brains' ? 'bg-blue-50 text-blue-600' : 
                   lesson.homework_type === 'evolve' ? 'bg-indigo-50 text-indigo-600' : 
                   'bg-slate-50 text-slate-500'
@@ -375,7 +375,7 @@ export default function AulaRow({
                 <button 
                   type="button"
                   onClick={() => setShowAIModal(true)}
-                  className="flex items-center gap-1.5 text-[9px] text-amber-600 hover:text-amber-700 font-black uppercase tracking-widest bg-amber-50/50 px-2 py-1 rounded-md transition-all border border-amber-100/50"
+                  className="flex items-center gap-1.5 text-[11px] text-amber-600 hover:text-amber-700 font-black uppercase tracking-widest bg-amber-50/50 px-2 py-1 rounded-md transition-all border border-amber-100/50"
                 >
                   <Sparkles className="w-3 h-3" /> Resumo da IA
                 </button>
@@ -385,18 +385,18 @@ export default function AulaRow({
                 <button
                   type="button"
                   onClick={() => setShowLessonDetailsModal(true)}
-                  className="flex items-center gap-1.5 text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/60 px-2 py-1 rounded-md transition-all border border-blue-100/60"
+                  className="flex items-center gap-1.5 text-[11px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/60 px-2 py-1 rounded-md transition-all border border-blue-100/60"
                 >
                   <NotebookText className="w-3 h-3" /> Ver detalhes
                 </button>
               )}
 
               {lesson.homework_image_url ? (
-                <a href={lesson.homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/50 px-2 py-1 rounded-md transition-all">
+                <a href={lesson.homework_image_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] text-blue-600 hover:text-blue-800 font-black uppercase tracking-widest bg-blue-50/50 px-2 py-1 rounded-md transition-all">
                   <Paperclip className="w-3 h-3" /> Ver Anexo
                 </a>
               ) : (
-                <label className="flex items-center gap-1.5 text-[9px] text-slate-400 hover:text-blue-600 cursor-pointer font-black uppercase tracking-widest transition-all">
+                <label className="flex items-center gap-1.5 text-[11px] text-slate-400 hover:text-blue-600 cursor-pointer font-black uppercase tracking-widest transition-all">
                   <Upload className="w-3 h-3" /> 
                   {uploading ? 'Enviando...' : isProfessor ? 'Subir Anexo' : 'Anexar Arquivo'}
                   <input type="file" className="hidden" onChange={handleFileUpload} disabled={uploading} />
@@ -405,7 +405,7 @@ export default function AulaRow({
 
               {lesson.homework_type === 'evolve' && lesson.homework_link && (
                 <div className="flex items-center gap-2">
-                  <a href={lesson.homework_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[9px] text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-widest bg-indigo-50/50 px-2 py-1 rounded-md transition-all">
+                  <a href={lesson.homework_link} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-[11px] text-indigo-600 hover:text-indigo-800 font-black uppercase tracking-widest bg-indigo-50/50 px-2 py-1 rounded-md transition-all">
                     <ExternalLink className="w-3 h-3" /> Cambridge One
                   </a>
                 </div>
@@ -415,7 +415,7 @@ export default function AulaRow({
         </td>
 
         {showContractType && (
-          <td className="py-6 px-4 text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">
+          <td className="py-6 px-4 text-[11px] font-black text-slate-400 uppercase tracking-[0.2em] whitespace-nowrap">
             {lesson.contratos 
               ? (lesson.contratos.tipo_contrato === 'ad-hoc' ? 'Personalizado' : 'Semestral')
               : '—'}
@@ -440,7 +440,7 @@ export default function AulaRow({
               </Button>
             )}
             {isProfessor && status === 'pendente_remarcacao' && aula.data_hora_solicitada && !formatDateTime(aula.data_hora_solicitada).includes('Não informada') && (
-              <Button size="sm" variant="outline" className="h-9 px-4 text-[10px] font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl" onClick={() => {
+              <Button size="sm" variant="outline" className="h-9 px-4 text-xs font-black uppercase tracking-widest border-amber-200 text-amber-700 hover:bg-amber-50 rounded-xl" onClick={() => {
                 const d = new Date(aula.data_hora_solicitada!)
                 setSelectedDate(d)
                 setSelectedTime(format(d, 'HH:mm'))
@@ -499,8 +499,8 @@ export default function AulaRow({
               </div>
 
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Horário Sugerido</Label>
-                <Select value={selectedTime} onChange={e => setSelectedTime(e.target.value)} className="h-12 rounded-2xl border-slate-100 bg-white font-bold px-6 outline-none ring-0">
+                <Label htmlFor="aularow-horario" className="text-xs font-black uppercase tracking-[0.2em] text-slate-400 pl-1">Horário Sugerido</Label>
+                <Select id="aularow-horario" value={selectedTime} onChange={e => setSelectedTime(e.target.value)} className="h-12 rounded-2xl border-slate-100 bg-white font-bold px-6 outline-none ring-0">
                   {HORARIOS_DISPONIVEIS.map(h => (
                     <option key={h} value={h} className="font-bold text-slate-900">{h}h</option>
                   ))}
@@ -520,8 +520,8 @@ export default function AulaRow({
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-3">
-              <Button variant="ghost" className="h-12 px-6 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50" onClick={() => setShowRemarkModal(false)}>Voltar</Button>
-              <Button className="h-12 px-8 rounded-2xl lms-gradient text-white font-black text-[10px] uppercase tracking-widest shadow-lg shadow-blue-500/20" onClick={handleRemark} disabled={loading || !selectedDate || Boolean(remarkBlockReason)}>
+              <Button variant="ghost" className="h-12 px-6 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50" onClick={() => setShowRemarkModal(false)}>Voltar</Button>
+              <Button className="h-12 px-8 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/20" onClick={handleRemark} disabled={loading || !selectedDate || Boolean(remarkBlockReason)}>
                 {loading ? 'Processando...' : isProfessor ? 'Confirmar Remarcação' : 'Enviar Solicitação'}
               </Button>
             </DialogFooter>
@@ -544,15 +544,15 @@ export default function AulaRow({
               <div className="absolute top-0 right-0 p-4 opacity-10 group-hover/cancel:rotate-12 transition-transform">
                 <AlertCircle className="w-12 h-12" />
               </div>
-              <p className="font-black uppercase tracking-widest text-[10px] text-orange-600 mb-2">Aviso de Política</p>
+              <p className="font-black uppercase tracking-widest text-xs text-orange-600 mb-2">Aviso de Política</p>
               <p className="font-medium">
                 Cancelamentos com menos de <span className="text-red-600 font-black underline underline-offset-4 Decoration-2">2 horas</span> de antecedência serão contabilizados como aula dada.
               </p>
             </div>
 
             <DialogFooter className="flex-col sm:flex-row gap-3 pt-4">
-              <Button variant="ghost" className="h-14 px-8 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all flex-1" onClick={() => setShowCancelModal(false)}>Voltar</Button>
-              <Button variant="destructive" className="h-14 px-10 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]" onClick={handleCancel} disabled={loading}>
+              <Button variant="ghost" className="h-14 px-8 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 transition-all flex-1" onClick={() => setShowCancelModal(false)}>Voltar</Button>
+              <Button variant="destructive" className="h-14 px-10 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-red-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]" onClick={handleCancel} disabled={loading}>
                 {loading ? 'Processando...' : 'Confirmar Cancelamento'}
               </Button>
             </DialogFooter>
@@ -593,13 +593,13 @@ export default function AulaRow({
                 <div className="flex bg-slate-100 p-1 rounded-xl shadow-inner border border-slate-200">
                   <button
                     onClick={() => setSummaryLang('pt')}
-                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${summaryLang === 'pt' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${summaryLang === 'pt' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     PT
                   </button>
                   <button
                     onClick={() => setSummaryLang('en')}
-                    className={`px-3 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${summaryLang === 'en' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${summaryLang === 'en' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                   >
                     EN
                   </button>
@@ -612,7 +612,7 @@ export default function AulaRow({
               </DialogDescription>
             </DialogHeader>
 
-            <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4 prose-table:border-collapse prose-th:bg-slate-50 prose-th:text-[10px] prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-td:text-xs prose-td:font-medium mb-10">
+            <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4 prose-table:border-collapse prose-th:bg-slate-50 prose-th:text-xs prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-td:text-xs prose-td:font-medium mb-10">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {summaryLang === 'pt' ? lesson.ai_summary_pt : lesson.ai_summary_en}
               </ReactMarkdown>
@@ -621,7 +621,7 @@ export default function AulaRow({
           </div>
           <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100">
             <Button 
-              className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest"
+              className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest"
               onClick={() => setShowAIModal(false)}
             >
               {summaryLang === 'pt' ? 'Fechar Resumo' : 'Close Summary'}
@@ -648,11 +648,11 @@ export default function AulaRow({
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data da aula</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Data da aula</p>
                 <p className="mt-2 text-sm font-bold text-slate-900">{formatDateTime(aula.data_hora)}</p>
               </div>
               <div className="rounded-2xl border border-slate-100 bg-slate-50 px-4 py-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Prazo do homework</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Prazo do homework</p>
                 <p className="mt-2 text-sm font-bold text-slate-900">
                   {lesson.homework_due_date
                     ? new Date(`${lesson.homework_due_date}T00:00:00`).toLocaleDateString('pt-BR')
@@ -662,7 +662,7 @@ export default function AulaRow({
             </div>
 
             <div className="rounded-3xl border border-slate-100 bg-white px-5 py-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Homework</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Homework</p>
               <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                 {lesson.homework || 'Nenhum homework registrado para esta aula.'}
               </div>
@@ -670,7 +670,7 @@ export default function AulaRow({
 
             {visibleClassNotes ? (
               <div className="rounded-3xl border border-slate-100 bg-white px-5 py-5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Anotações da aula</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Anotações da aula</p>
                 <div className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">
                   {visibleClassNotes}
                 </div>
@@ -679,7 +679,7 @@ export default function AulaRow({
 
             {lesson.vocabulary_json && lesson.vocabulary_json.length > 0 && (
               <div className="space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Vocabulario</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Vocabulario</p>
                 <div className="grid gap-3 md:grid-cols-2">
                   {lesson.vocabulary_json.map((entry, entryIndex) => (
                     <VocabularyCard
@@ -696,7 +696,7 @@ export default function AulaRow({
           <DialogFooter className="p-6 bg-slate-50 border-t border-slate-100">
             <Button
               type="button"
-              className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black text-[10px] uppercase tracking-widest"
+              className="w-full h-12 rounded-2xl bg-slate-900 text-white font-black text-xs uppercase tracking-widest"
               onClick={() => setShowLessonDetailsModal(false)}
             >
               Fechar detalhes

@@ -191,7 +191,7 @@ export default async function AlunoDashboard() {
 
         <div className="relative z-10 flex flex-col justify-between gap-6 md:flex-row md:items-center">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-blue-100">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-blue-100">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-blue-400" />
               Portal do Aluno
             </div>
@@ -200,7 +200,7 @@ export default async function AlunoDashboard() {
             </h1>
             <div className="flex flex-wrap items-center gap-3 font-medium text-blue-100/80">
               <div className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-1.5">
-                <Badge className="border-none bg-blue-500 text-[10px] font-black uppercase text-white">
+                <Badge className="border-none bg-blue-500 text-xs font-black uppercase text-white">
                   {profile?.nivel || 'Nível não definido'}
                 </Badge>
               </div>
@@ -253,7 +253,7 @@ export default async function AlunoDashboard() {
                 </div>
                 <Link
                   href={card.href}
-                  className={`inline-flex h-10 items-center justify-center rounded-xl px-6 text-[10px] font-black uppercase tracking-widest text-white shadow-lg transition-all ${card.buttonTone}`}
+                  className={`inline-flex h-10 items-center justify-center rounded-xl px-6 text-xs font-black uppercase tracking-widest text-white shadow-lg transition-all ${card.buttonTone}`}
                 >
                   {card.actionLabel}
                 </Link>
@@ -307,7 +307,7 @@ export default async function AlunoDashboard() {
                 {proximaAula.homework && !proximaAula.homework_completed ? (
                   <div className="relative overflow-hidden rounded-2xl border border-blue-100/50 bg-blue-50/50 p-5">
                     <div className="absolute top-0 right-0 h-full w-1 bg-blue-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">
+                    <span className="text-xs font-black uppercase tracking-widest text-blue-600">
                       Tarefa pendente
                     </span>
                     <p className="mt-2 text-sm font-semibold leading-relaxed text-blue-900/80">
@@ -319,7 +319,7 @@ export default async function AlunoDashboard() {
                 {(flashcardsDue?.length || 0) > 0 ? (
                   <div className="relative overflow-hidden rounded-2xl border border-indigo-100/60 bg-indigo-50/60 p-5">
                     <div className="absolute top-0 right-0 h-full w-1 bg-indigo-500" />
-                    <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600">
+                    <span className="text-xs font-black uppercase tracking-widest text-indigo-600">
                       Revisão recomendada
                     </span>
                     <p className="mt-2 text-sm font-semibold leading-relaxed text-indigo-900/80">
@@ -327,7 +327,7 @@ export default async function AlunoDashboard() {
                     </p>
                     <Link
                       href="/aluno/flashcards"
-                      className="mt-3 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700"
+                      className="mt-3 inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-700"
                     >
                       Abrir flashcards
                       <ArrowRight className="h-3.5 w-3.5" />
@@ -367,7 +367,7 @@ export default async function AlunoDashboard() {
                   </div>
                   <Badge
                     variant={pagamentoPendenteComStatus.effectiveStatus === 'atrasado' ? 'destructive' : 'warning'}
-                    className="rounded-lg px-3 py-1 text-[10px] font-black uppercase"
+                    className="rounded-lg px-3 py-1 text-xs font-black uppercase"
                   >
                     {pagamentoPendenteComStatus.effectiveStatus === 'atrasado' ? 'Em atraso' : 'Pendente'}
                   </Badge>
@@ -391,7 +391,7 @@ export default async function AlunoDashboard() {
                       />
                     </div>
                     <div className="w-full flex-1 space-y-4">
-                      <p className="text-center text-[10px] font-black uppercase tracking-widest text-slate-400 sm:text-left">
+                      <p className="text-center text-xs font-black uppercase tracking-widest text-slate-400 sm:text-left">
                         QR Code PIX gerado
                       </p>
                       <p className="text-center text-xs font-bold text-slate-500 sm:text-left">
@@ -401,7 +401,7 @@ export default async function AlunoDashboard() {
                         <CopiarPixBtn codigo={pagamentoPendenteComStatus.pix_copia_cola} />
                       ) : null}
                       {pagamentoPendenteComStatus.mercadopago_status ? (
-                        <p className="text-center text-[10px] font-black uppercase tracking-widest text-blue-500 sm:text-left">
+                        <p className="text-center text-xs font-black uppercase tracking-widest text-blue-500 sm:text-left">
                           Mercado Pago: {pendingPaymentProcessorCopy?.shortLabel || pagamentoPendenteComStatus.mercadopago_status}
                         </p>
                       ) : null}
@@ -420,7 +420,7 @@ export default async function AlunoDashboard() {
 
                 <Link
                   href="/aluno/pagamentos"
-                  className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-blue-600 hover:text-blue-700"
+                  className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-blue-600 hover:text-blue-700"
                 >
                   Ver detalhes financeiros
                   <ArrowRight className="h-3.5 w-3.5" />
@@ -466,7 +466,7 @@ export default async function AlunoDashboard() {
               </p>
               <Link
                 href="/aluno/pagamentos"
-                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
               >
                 Ver financeiro e contrato
                 <ArrowRight className="h-4 w-4" />
@@ -492,12 +492,12 @@ export default async function AlunoDashboard() {
           </CardHeader>
           <CardContent className="p-0">
             <div className="space-y-4 p-5 text-center">
-              <p className="text-[10px] font-medium tracking-tight text-slate-500">
+              <p className="text-xs font-medium tracking-tight text-slate-500">
                 Consulte o calendário para planejar suas aulas em feriados e recessos.
               </p>
               <Link
                 href="/aluno/calendario"
-                className="inline-block rounded-xl bg-orange-50 px-6 py-2 text-[9px] font-black uppercase tracking-widest text-orange-600 transition-all hover:bg-orange-600 hover:text-white"
+                className="inline-block rounded-xl bg-orange-50 px-6 py-2 text-[11px] font-black uppercase tracking-widest text-orange-600 transition-all hover:bg-orange-600 hover:text-white"
               >
                 Ver calendário completo
               </Link>
@@ -521,7 +521,7 @@ export default async function AlunoDashboard() {
             </div>
             <Link
               href="/aluno/documentos"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
             >
               Abrir documentos
               <ArrowRight className="h-4 w-4" />
@@ -549,7 +549,7 @@ export default async function AlunoDashboard() {
             </div>
             <Link
               href="/aluno/nivelamento"
-              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700"
+              className="inline-flex items-center justify-center gap-2 rounded-2xl bg-indigo-600 px-6 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700"
             >
               Abrir nivelamento
               <ArrowRight className="h-4 w-4" />
@@ -565,16 +565,16 @@ export default async function AlunoDashboard() {
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-2xl bg-amber-500 px-4 py-4 text-white">
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-100">Sequência atual</p>
+              <p className="text-xs font-black uppercase tracking-widest text-amber-100">Sequência atual</p>
               <p className="text-3xl font-black tracking-tight">{profile?.streak_count || 0} dias</p>
             </div>
             <div className="rounded-2xl border border-blue-100 bg-blue-50 px-4 py-4">
-              <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Status de hoje</p>
+              <p className="text-xs font-black uppercase tracking-widest text-blue-500">Status de hoje</p>
               <p className="mt-2 text-sm font-black tracking-tight text-blue-900">{streakSummary.headline}</p>
             </div>
             <Link
               href="/aluno/jornada"
-              className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600"
+              className="inline-flex items-center gap-2 rounded-2xl bg-amber-500 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-amber-500/20 transition-all hover:bg-amber-600"
             >
               Abrir jornada
               <ArrowRight className="h-4 w-4" />

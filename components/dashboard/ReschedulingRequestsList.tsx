@@ -51,12 +51,12 @@ export default function ReschedulingRequests({ initialSolicitacoes }: Props) {
                     </p>
                     <Badge 
                       variant={hasNovaData ? "warning" : "secondary"} 
-                      className="text-[8px] font-black uppercase tracking-widest px-1.5 py-0"
+                      className="text-[11px] font-black uppercase tracking-widest px-1.5 py-0"
                     >
                       {hasNovaData ? "Solicitado" : "Pendente (Aluno)"}
                     </Badge>
                   </div>
-                  <div className="flex flex-col gap-1 text-[10px] text-slate-500 font-bold">
+                  <div className="flex flex-col gap-1 text-xs text-slate-500 font-bold">
                     <div className="flex items-center gap-2">
                       <span className="text-slate-400">De:</span> {formatDateTime(sol.data_hora)}
                     </div>
@@ -68,7 +68,7 @@ export default function ReschedulingRequests({ initialSolicitacoes }: Props) {
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     <Link 
                       href={`/professor/alunos/${sol.contracts?.aluno_id || sol.contratos?.aluno_id}`}
-                      className="py-2 px-3 rounded-xl bg-slate-100 text-slate-600 text-[10px] font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-center"
+                      className="py-2 px-3 rounded-xl bg-slate-100 text-slate-600 text-xs font-black uppercase tracking-widest hover:bg-slate-200 transition-all text-center"
                     >
                       Ver Aluno
                     </Link>
@@ -78,12 +78,12 @@ export default function ReschedulingRequests({ initialSolicitacoes }: Props) {
                           setSelectedAula(sol)
                           setShowModal(true)
                         }}
-                        className="py-2.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg transition-all bg-amber-600 hover:bg-amber-700 shadow-amber-600/20"
+                        className="py-2.5 rounded-xl text-white text-xs font-black uppercase tracking-widest shadow-lg transition-all bg-amber-600 hover:bg-amber-700 shadow-amber-600/20"
                       >
                         Analisar
                       </Button>
                     ) : (
-                      <div className="py-2.5 rounded-xl bg-slate-400 text-white text-[10px] font-black uppercase tracking-widest shadow-lg text-center opacity-50">
+                      <div className="py-2.5 rounded-xl bg-slate-400 text-white text-xs font-black uppercase tracking-widest shadow-lg text-center opacity-50">
                         Aguardando
                       </div>
                     )}

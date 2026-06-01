@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Cantoni English School',
     short_name: 'Cantoni',
     description: 'Portal acadêmico e administrativo da Cantoni English School',
-    start_url: '/login',
+    start_url: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',

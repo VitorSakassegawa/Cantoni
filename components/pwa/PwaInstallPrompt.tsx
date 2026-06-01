@@ -77,7 +77,7 @@ export default function PwaInstallPrompt() {
           {iosMode ? <Smartphone className="h-5 w-5" /> : <Download className="h-5 w-5" />}
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">Adicionar à tela inicial</p>
+          <p className="text-xs font-black uppercase tracking-widest text-blue-500">Adicionar à tela inicial</p>
           <p className="mt-1 text-sm font-black tracking-tight text-slate-900">
             Instale a Cantoni English School no seu celular
           </p>
@@ -91,7 +91,7 @@ export default function PwaInstallPrompt() {
               <button
                 type="button"
                 onClick={() => void handleInstall()}
-                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+                className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-4 py-2 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
               >
                 <Download className="h-4 w-4" />
                 Instalar app
@@ -100,7 +100,7 @@ export default function PwaInstallPrompt() {
             <button
               type="button"
               onClick={handleDismiss}
-              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-500"
+              className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-500"
             >
               <X className="h-4 w-4" />
               Agora não

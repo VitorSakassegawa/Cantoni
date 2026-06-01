@@ -93,7 +93,7 @@ export default async function ProfessorRenegociarContratoPage({
       <div className="flex flex-col gap-6">
         <Link
           href={`/professor/alunos/${alunoId}`}
-          className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-[10px] uppercase tracking-widest group w-fit"
+          className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-xs uppercase tracking-widest group w-fit"
         >
           <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Voltar para Aluno

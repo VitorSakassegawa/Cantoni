@@ -113,7 +113,7 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
         type="button"
         variant="outline"
         disabled
-        className="h-10 rounded-xl border-rose-200 px-4 text-[10px] font-black uppercase tracking-widest text-rose-400"
+        className="h-10 rounded-xl border-rose-200 px-4 text-xs font-black uppercase tracking-widest text-rose-400"
       >
         Contrato cancelado
       </Button>
@@ -126,7 +126,7 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
         type="button"
         variant="outline"
         onClick={() => setOpen(true)}
-        className="h-10 rounded-xl border-rose-200 bg-rose-50 px-4 text-[10px] font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100"
+        className="h-10 rounded-xl border-rose-200 bg-rose-50 px-4 text-xs font-black uppercase tracking-widest text-rose-700 hover:bg-rose-100"
       >
         Cancelar contrato
       </Button>
@@ -149,34 +149,34 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
 
             <div className="mt-6 grid gap-4 md:grid-cols-4">
               <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pago</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Pago</p>
                 <p className="mt-2 text-2xl font-black text-slate-900">{formatCurrency(summary.paidAmount)}</p>
               </div>
               <div className="rounded-[1.5rem] border border-slate-100 bg-slate-50 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Consumido</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Consumido</p>
                 <p className="mt-2 text-2xl font-black text-slate-900">{formatCurrency(summary.consumedValue)}</p>
               </div>
               <div className="rounded-[1.5rem] border border-amber-100 bg-amber-50 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Saldo em aberto</p>
+                <p className="text-xs font-black uppercase tracking-widest text-amber-600">Saldo em aberto</p>
                 <p className="mt-2 text-2xl font-black text-amber-700">{formatCurrency(summary.openAmount)}</p>
               </div>
               <div className="rounded-[1.5rem] border border-blue-100 bg-blue-50 p-4">
-                <p className="text-[10px] font-black uppercase tracking-widest text-blue-600">Credito estimado</p>
+                <p className="text-xs font-black uppercase tracking-widest text-blue-600">Credito estimado</p>
                 <p className="mt-2 text-2xl font-black text-blue-700">{formatCurrency(summary.creditValue)}</p>
               </div>
             </div>
 
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div className="rounded-[1.5rem] border border-slate-100 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aulas concluidas</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Aulas concluidas</p>
                 <p className="mt-2 text-xl font-black text-slate-900">{summary.completedLessons}</p>
               </div>
               <div className="rounded-[1.5rem] border border-slate-100 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aulas futuras</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Aulas futuras</p>
                 <p className="mt-2 text-xl font-black text-slate-900">{summary.futureLessons}</p>
               </div>
               <div className="rounded-[1.5rem] border border-slate-100 bg-white p-4 shadow-sm">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data final atual</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Data final atual</p>
                 <p className="mt-2 text-xl font-black text-slate-900">{formatDateOnly(props.contractEndDate)}</p>
               </div>
             </div>
@@ -192,12 +192,12 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
 
             <div className="mt-8 grid gap-6 md:grid-cols-2">
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Data efetiva</Label>
-                <Input type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} className="h-12 rounded-xl border-slate-200 font-bold" />
+                <Label htmlFor="cancel-data" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Data efetiva</Label>
+                <Input id="cancel-data" type="date" value={effectiveDate} onChange={(event) => setEffectiveDate(event.target.value)} className="h-12 rounded-xl border-slate-200 font-bold" />
               </div>
               <div className="space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Motivo do cancelamento</Label>
-                <Select value={reasonCode} onChange={(event) => setReasonCode(event.target.value as CancellationReasonCode)} className="h-12 rounded-xl border-slate-200 font-bold">
+                <Label htmlFor="cancel-motivo" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Motivo do cancelamento</Label>
+                <Select id="cancel-motivo" value={reasonCode} onChange={(event) => setReasonCode(event.target.value as CancellationReasonCode)} className="h-12 rounded-xl border-slate-200 font-bold">
                   {cancellationReasonOptions.map((option) => (
                     <option key={option.value} value={option.value}>
                       {option.label}
@@ -210,8 +210,9 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
 
             {reasonCode === 'other' ? (
               <div className="mt-6 space-y-3">
-                <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Descreva o motivo</Label>
+                <Label htmlFor="cancel-descricao" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Descreva o motivo</Label>
                 <Textarea
+                  id="cancel-descricao"
                   value={reasonDetails}
                   onChange={(event) => setReasonDetails(event.target.value)}
                   rows={3}
@@ -225,7 +226,7 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
               <div className="rounded-[1.75rem] border border-slate-100 bg-slate-50 p-5">
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-slate-500" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Aulas futuras</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">Aulas futuras</p>
                 </div>
                 <Select
                   value={lessonAction}
@@ -243,7 +244,7 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
               <div className="rounded-[1.75rem] border border-slate-100 bg-slate-50 p-5">
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-slate-500" />
-                  <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Saldo em aberto</p>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">Saldo em aberto</p>
                 </div>
                 <Select
                   value={outstandingAction}
@@ -265,7 +266,7 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
             <div className="mt-6 rounded-[1.75rem] border border-slate-100 bg-slate-50 p-5">
               <div className="flex items-center gap-2">
                 <FileWarning className="h-4 w-4 text-slate-500" />
-                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-500">Credito do aluno</p>
+                <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">Credito do aluno</p>
               </div>
               <Select
                 value={creditAction}
@@ -285,8 +286,9 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
             </div>
 
             <div className="mt-6 space-y-3">
-              <Label className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400">Observacoes internas</Label>
+              <Label htmlFor="cancel-obs" className="text-xs font-black uppercase tracking-[0.15em] text-slate-400">Observacoes internas</Label>
               <Textarea
+                id="cancel-obs"
                 value={notes}
                 onChange={(event) => setNotes(event.target.value)}
                 rows={4}
@@ -296,14 +298,14 @@ export default function CancelContractButton(props: CancelContractButtonProps) {
             </div>
 
             <DialogFooter className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-end">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="h-11 rounded-xl border-slate-200 px-5 text-[10px] font-black uppercase tracking-widest text-slate-600">
+              <Button type="button" variant="outline" onClick={() => setOpen(false)} className="h-11 rounded-xl border-slate-200 px-5 text-xs font-black uppercase tracking-widest text-slate-600">
                 Voltar
               </Button>
               <Button
                 type="button"
                 onClick={() => void handleSubmit()}
                 disabled={loading}
-                className="h-11 rounded-xl bg-rose-600 px-5 text-[10px] font-black uppercase tracking-widest text-white hover:bg-rose-700"
+                className="h-11 rounded-xl bg-rose-600 px-5 text-xs font-black uppercase tracking-widest text-white hover:bg-rose-700"
               >
                 {loading ? 'Cancelando...' : 'Confirmar cancelamento'}
               </Button>

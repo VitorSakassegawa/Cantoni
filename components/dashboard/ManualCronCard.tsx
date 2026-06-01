@@ -77,14 +77,14 @@ export default function ManualCronCard({
       <div className="flex flex-col gap-5">
         <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
           <div className="space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-blue-500">{label}</p>
+            <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-500">{label}</p>
             <h2 className="text-xl font-black tracking-tight text-slate-900">{title}</h2>
             <p className="max-w-2xl text-sm font-medium leading-6 text-slate-600">{description}</p>
           </div>
 
           <div className="flex items-center gap-2">
             {badge ? (
-              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] text-emerald-700">
+              <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-emerald-700">
                 {badge}
               </span>
             ) : null}
@@ -94,13 +94,13 @@ export default function ManualCronCard({
                 type="button"
                 onClick={handleRun}
                 disabled={loading || disabled}
-                className="h-11 rounded-2xl bg-blue-600 px-5 text-[10px] font-black uppercase tracking-[0.18em] text-white shadow-lg shadow-blue-500/15 hover:bg-blue-700"
+                className="h-11 rounded-2xl bg-blue-600 px-5 text-xs font-black uppercase tracking-[0.18em] text-white shadow-lg shadow-blue-500/15 hover:bg-blue-700"
               >
                 {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Play className="mr-2 h-4 w-4" />}
                 {loading ? 'Executando...' : actionLabel}
               </Button>
             ) : (
-              <div className="inline-flex h-11 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 text-[10px] font-black uppercase tracking-[0.18em] text-slate-500">
+              <div className="inline-flex h-11 items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 text-xs font-black uppercase tracking-[0.18em] text-slate-500">
                 <CheckCircle2 className="mr-2 h-4 w-4" />
                 Manual no menu
               </div>

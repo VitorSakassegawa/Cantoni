@@ -102,7 +102,7 @@ export default async function AlunoNivelamentoPage() {
     <div className="mx-auto max-w-7xl animate-fade-in space-y-10 pb-16">
       <Link
         href="/aluno"
-        className="group inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
+        className="group inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-400 transition-colors hover:text-blue-600"
       >
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
         Voltar para dashboard
@@ -112,7 +112,7 @@ export default async function AlunoNivelamentoPage() {
         <div className="absolute -top-16 -right-16 h-56 w-56 rounded-full bg-white/10 blur-3xl" />
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
           <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-indigo-100">
+            <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-black uppercase tracking-widest text-indigo-100">
               <BrainCircuit className="h-3.5 w-3.5" />
               Nivelamento
             </div>
@@ -125,7 +125,7 @@ export default async function AlunoNivelamentoPage() {
           {eligibility.allowed ? (
             <Link
               href="/aluno/teste-nivel"
-              className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-[10px] font-black uppercase tracking-widest text-indigo-700 shadow-lg shadow-indigo-900/10 transition-all hover:scale-105"
+              className="inline-flex items-center gap-2 rounded-2xl bg-white px-6 py-3 text-xs font-black uppercase tracking-widest text-indigo-700 shadow-lg shadow-indigo-900/10 transition-all hover:scale-105"
             >
               {profile?.placement_test_completed ? (
                 <>
@@ -140,7 +140,7 @@ export default async function AlunoNivelamentoPage() {
               )}
             </Link>
           ) : (
-            <div className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-[10px] font-black uppercase tracking-widest text-white/80">
+            <div className="rounded-2xl border border-white/20 bg-white/10 px-6 py-3 text-xs font-black uppercase tracking-widest text-white/80">
               Aguardando liberação
             </div>
           )}
@@ -157,11 +157,11 @@ export default async function AlunoNivelamentoPage() {
           <CardContent className="space-y-6 pt-6">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-3xl border border-indigo-100 bg-indigo-50 px-5 py-5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-500">Nível CEFR</p>
+                <p className="text-xs font-black uppercase tracking-widest text-indigo-500">Nível CEFR</p>
                 <p className="mt-2 text-4xl font-black tracking-tight text-slate-900">{profile?.cefr_level || 'A1'}</p>
               </div>
               <div className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Último teste</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Último teste</p>
                 <p className="mt-2 text-lg font-black tracking-tight text-slate-900">
                   {latestResult ? new Date(latestResult.created_at).toLocaleDateString('pt-BR') : 'Ainda não realizado'}
                 </p>
@@ -169,7 +169,7 @@ export default async function AlunoNivelamentoPage() {
             </div>
 
             <div className="rounded-3xl border border-slate-100 bg-slate-50 px-5 py-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Linha de progressão CEFR</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Linha de progressão CEFR</p>
               <div className="mt-5 flex items-center justify-between gap-2">
                 {CEFR_LEVELS.map((level, idx) => {
                   const isCompleted = idx < currentCefrIdx
@@ -178,7 +178,7 @@ export default async function AlunoNivelamentoPage() {
                   return (
                     <div key={level} className="flex flex-col items-center gap-2">
                       <div
-                        className={`flex h-10 w-10 items-center justify-center rounded-xl text-[10px] font-black transition-all ${
+                        className={`flex h-10 w-10 items-center justify-center rounded-xl text-xs font-black transition-all ${
                           isCompleted
                             ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/10'
                             : isCurrent
@@ -197,14 +197,14 @@ export default async function AlunoNivelamentoPage() {
             <div className="rounded-3xl border border-slate-100 bg-white px-5 py-5">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Status do teste</p>
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400">Status do teste</p>
                   <p className="mt-2 text-lg font-black tracking-tight text-slate-900">
                     {profile?.placement_test_completed ? 'Teste concluído' : 'Teste pendente'}
                   </p>
                 </div>
                 <Badge
                   variant={profile?.placement_test_completed ? 'success' : 'warning'}
-                  className="text-[9px] font-black uppercase tracking-widest"
+                  className="text-[11px] font-black uppercase tracking-widest"
                 >
                   {profile?.placement_test_completed ? 'Concluído' : 'Pendente'}
                 </Badge>
@@ -216,7 +216,7 @@ export default async function AlunoNivelamentoPage() {
                 eligibility.allowed ? 'border-emerald-100 bg-emerald-50/70' : 'border-amber-100 bg-amber-50/70'
               }`}
             >
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Janela de novo teste</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Janela de novo teste</p>
               <p className="mt-2 text-lg font-black tracking-tight text-slate-900">{eligibility.title}</p>
               <p className="mt-2 text-sm font-medium leading-relaxed text-slate-500">{eligibility.description}</p>
             </div>
@@ -245,7 +245,7 @@ export default async function AlunoNivelamentoPage() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             {eligibilityRules.map((rule) => (
               <div key={rule.title} className={`rounded-3xl border px-5 py-5 shadow-sm ${rule.tone}`}>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">{rule.title}</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">{rule.title}</p>
                 <p className="mt-3 text-sm font-medium leading-relaxed text-slate-700">{rule.body}</p>
               </div>
             ))}
@@ -269,13 +269,13 @@ export default async function AlunoNivelamentoPage() {
               {eligibility.allowed ? (
                 <Link
                   href="/aluno/teste-nivel"
-                  className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700"
+                  className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 px-5 py-3 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-indigo-500/20 transition-all hover:bg-indigo-700"
                 >
                   Iniciar teste
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               ) : (
-                <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <div className="mt-5 inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-5 py-3 text-xs font-black uppercase tracking-widest text-slate-400">
                   Aguardando liberação
                 </div>
               )}
@@ -291,7 +291,7 @@ export default async function AlunoNivelamentoPage() {
                   <div key={test.id} className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
                     <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                       <div className="space-y-2">
-                        <p className="text-[10px] font-black uppercase tracking-widest text-blue-500">
+                        <p className="text-xs font-black uppercase tracking-widest text-blue-500">
                           {new Date(test.created_at).toLocaleDateString('pt-BR', {
                             day: '2-digit',
                             month: 'long',
@@ -300,7 +300,7 @@ export default async function AlunoNivelamentoPage() {
                         </p>
                         <div className="flex flex-wrap items-center gap-3">
                           <p className="text-2xl font-black tracking-tight text-slate-900">CEFR {test.cefr_level}</p>
-                          <Badge variant="secondary" className="text-[9px] font-black uppercase tracking-widest">
+                          <Badge variant="secondary" className="text-[11px] font-black uppercase tracking-widest">
                             {test.score}/{test.total_questions} pontos
                           </Badge>
                         </div>
@@ -309,13 +309,13 @@ export default async function AlunoNivelamentoPage() {
                       {eligibility.allowed ? (
                         <Link
                           href="/aluno/teste-nivel"
-                          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
+                          className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-600 transition-all hover:bg-slate-50"
                         >
                           Refazer teste
                           <RotateCcw className="h-4 w-4" />
                         </Link>
                       ) : (
-                        <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400">
+                        <div className="inline-flex items-center gap-2 rounded-2xl border border-slate-200 px-4 py-2 text-xs font-black uppercase tracking-widest text-slate-400">
                           Aguardando liberação
                         </div>
                       )}
@@ -325,19 +325,19 @@ export default async function AlunoNivelamentoPage() {
                       <details className="mt-6 overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/80">
                         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-5 py-4">
                           <div className="space-y-2">
-                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                               Detalhamento das respostas
                             </p>
                             <div className="flex flex-wrap gap-2">
-                              <Badge variant="success" className="text-[9px] font-black uppercase tracking-widest">
+                              <Badge variant="success" className="text-[11px] font-black uppercase tracking-widest">
                                 {correctAnswers} corretas
                               </Badge>
-                              <Badge variant="destructive" className="text-[9px] font-black uppercase tracking-widest">
+                              <Badge variant="destructive" className="text-[11px] font-black uppercase tracking-widest">
                                 {wrongAnswers} incorretas
                               </Badge>
                             </div>
                           </div>
-                          <span className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500">
+                          <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-widest text-slate-500">
                             Mostrar ou ocultar perguntas
                             <ChevronDown className="h-4 w-4" />
                           </span>
@@ -365,7 +365,7 @@ export default async function AlunoNivelamentoPage() {
                                   </p>
                                   <div className="space-y-1 rounded-2xl bg-white/70 p-4">
                                     <p className={`text-xs font-semibold ${answer.correct ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                      <span className="mr-2 text-[9px] font-black uppercase tracking-widest opacity-70">
+                                      <span className="mr-2 text-[11px] font-black uppercase tracking-widest opacity-70">
                                         Sua resposta:
                                       </span>
                                       {typeof answer.selected === 'number' && answer.options
@@ -374,7 +374,7 @@ export default async function AlunoNivelamentoPage() {
                                     </p>
                                     {!answer.correct && typeof answer.correctAnswer === 'number' && answer.options ? (
                                       <p className="text-xs font-semibold text-emerald-700">
-                                        <span className="mr-2 text-[9px] font-black uppercase tracking-widest opacity-70">
+                                        <span className="mr-2 text-[11px] font-black uppercase tracking-widest opacity-70">
                                           Correta:
                                         </span>
                                         {answer.options[answer.correctAnswer]}

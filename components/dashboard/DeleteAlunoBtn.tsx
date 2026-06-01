@@ -52,7 +52,7 @@ export default function DeleteAlunoBtn({ alunoId, alunoNome }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" className="h-12 px-6 rounded-2xl border-2 border-rose-100 text-rose-500 hover:bg-rose-50 font-black text-[10px] uppercase tracking-widest gap-2">
+        <Button variant="ghost" className="h-12 px-6 rounded-2xl border-2 border-rose-100 text-rose-500 hover:bg-rose-50 font-black text-xs uppercase tracking-widest gap-2">
           <Trash2 className="w-4 h-4" />
           Deletar Aluno
         </Button>
@@ -71,7 +71,7 @@ export default function DeleteAlunoBtn({ alunoId, alunoNome }: Props) {
               Você está prestes a apagar <strong className="font-black text-slate-900">{alunoNome}</strong> permanentemente. 
               Esta ação removerá todos os contratos, pagamentos, tarefas e excluirá as aulas do Google Calendar.
               <br/>
-              <span className="text-rose-600 font-black uppercase text-[10px] block mt-4 tracking-widest">
+              <span className="text-rose-600 font-black uppercase text-xs block mt-4 tracking-widest">
                 Recomendado apenas para perfis de teste.
               </span>
             </DialogDescription>
@@ -80,14 +80,14 @@ export default function DeleteAlunoBtn({ alunoId, alunoNome }: Props) {
           <DialogFooter className="flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100">
             <Button 
               variant="ghost" 
-              className="h-14 rounded-2xl font-black text-[10px] uppercase tracking-widest text-slate-400 hover:bg-slate-50 flex-1" 
+              className="h-14 rounded-2xl font-black text-xs uppercase tracking-widest text-slate-400 hover:bg-slate-50 flex-1" 
               onClick={() => setOpen(false)}
             >
               Cancelar
             </Button>
             <Button 
               variant="destructive" 
-              className="h-14 rounded-2xl bg-rose-600 font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]" 
+              className="h-14 rounded-2xl bg-rose-600 font-black text-xs uppercase tracking-widest shadow-xl shadow-rose-500/20 hover:scale-[1.02] active:scale-98 transition-all flex-[1.5]" 
               onClick={handleDelete} 
               disabled={loading}
             >

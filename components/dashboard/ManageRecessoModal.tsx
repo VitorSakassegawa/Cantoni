@@ -75,7 +75,7 @@ export default function ManageRecessoModal({ onSuccess, existingRecessos }: Prop
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="px-8 py-4 rounded-2xl lms-gradient text-white font-black text-[10px] uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
+        <button className="px-8 py-4 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-3">
           <Plus className="w-4 h-4" /> Configurar Datas
         </button>
       </DialogTrigger>
@@ -94,29 +94,29 @@ export default function ManageRecessoModal({ onSuccess, existingRecessos }: Prop
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4 md:col-span-2">
               <div className="space-y-2">
-                <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Titulo do Evento</Label>
-                <Input placeholder="Ex: Ferias Julho, Carnaval..." className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
+                <Label htmlFor="recesso-titulo" className="text-xs font-black uppercase text-slate-400 tracking-widest ml-1">Titulo do Evento</Label>
+                <Input placeholder="Ex: Ferias Julho, Carnaval..." className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" id="recesso-titulo" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Data Inicio</Label>
-              <Input type="date" className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
+              <Label htmlFor="recesso-inicio" className="text-xs font-black uppercase text-slate-400 tracking-widest ml-1">Data Inicio</Label>
+              <Input type="date" className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" id="recesso-inicio" value={dataInicio} onChange={(e) => setDataInicio(e.target.value)} />
             </div>
 
             <div className="space-y-2">
-              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Data Fim</Label>
-              <Input type="date" className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
+              <Label htmlFor="recesso-fim" className="text-xs font-black uppercase text-slate-400 tracking-widest ml-1">Data Fim</Label>
+              <Input type="date" className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold" id="recesso-fim" value={dataFim} onChange={(e) => setDataFim(e.target.value)} />
             </div>
 
             <div className="space-y-2 md:col-span-2">
-              <Label className="text-[10px] font-black uppercase text-slate-400 tracking-widest ml-1">Tipo de Evento</Label>
-              <Select value={tipo} onChange={(e) => setTipo(e.target.value as RecessoType)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
+              <Label htmlFor="recesso-tipo" className="text-xs font-black uppercase text-slate-400 tracking-widest ml-1">Tipo de Evento</Label>
+              <Select id="recesso-tipo" value={tipo} onChange={(e) => setTipo(e.target.value as RecessoType)} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
                 <option value="recesso">Recesso / Ferias do Professor</option>
                 <option value="feriado">Feriado Nacional / Pontual</option>
               </Select>
               {tipo === 'recesso' && (
-                <p className="text-[9px] text-orange-600 font-bold mt-2 uppercase tracking-tight flex items-center gap-1">
+                <p className="text-[11px] text-orange-600 font-bold mt-2 uppercase tracking-tight flex items-center gap-1">
                   <Umbrella className="w-3 h-3" /> Aulas neste periodo serao marcadas para remarcacao.
                 </p>
               )}
@@ -128,7 +128,7 @@ export default function ManageRecessoModal({ onSuccess, existingRecessos }: Prop
           </form>
 
           <div className="space-y-4">
-            <h4 className="text-[10px] font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
+            <h4 className="text-xs font-black uppercase text-slate-400 tracking-widest flex items-center gap-2">
               <Info className="w-3.5 h-3.5" /> Eventos Registrados
             </h4>
             <div className="grid grid-cols-1 gap-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
@@ -140,7 +140,7 @@ export default function ManageRecessoModal({ onSuccess, existingRecessos }: Prop
                     </div>
                     <div>
                       <p className="text-[11px] font-black text-slate-900 leading-none">{r.titulo}</p>
-                      <p className="text-[9px] font-bold text-slate-400 mt-1 uppercase">
+                      <p className="text-[11px] font-bold text-slate-400 mt-1 uppercase">
                         {new Date(`${r.data_inicio}T12:00:00`).toLocaleDateString('pt-BR')} - {new Date(`${r.data_fim}T12:00:00`).toLocaleDateString('pt-BR')}
                       </p>
                     </div>
@@ -151,7 +151,7 @@ export default function ManageRecessoModal({ onSuccess, existingRecessos }: Prop
                 </div>
               ))}
               {existingRecessos.length === 0 && (
-                <p className="text-[10px] text-center text-slate-300 font-bold uppercase py-4">Nenhum evento registrado</p>
+                <p className="text-xs text-center text-slate-300 font-bold uppercase py-4">Nenhum evento registrado</p>
               )}
             </div>
           </div>
