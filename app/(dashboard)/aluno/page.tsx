@@ -336,8 +336,23 @@ export default async function AlunoDashboard() {
                 ) : null}
               </div>
             ) : (
-              <div className="lms-gradient-soft rounded-3xl border border-dashed border-blue-200 py-12 text-center">
-                <p className="text-sm font-bold uppercase tracking-widest text-blue-400/60">Sem aulas agendadas</p>
+              <div className="lms-gradient-soft flex flex-col items-center gap-4 rounded-3xl border border-dashed border-blue-200 px-6 py-12 text-center">
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-100 text-blue-600 shadow-sm">
+                  <Calendar className="h-7 w-7" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-base font-black tracking-tight text-blue-900">Nenhuma aula agendada</p>
+                  <p className="text-sm font-semibold text-slate-500">
+                    Suas próximas aulas aparecem aqui assim que o professor agendá-las.
+                  </p>
+                </div>
+                <Link
+                  href="/aluno/calendario"
+                  className="inline-flex h-11 items-center gap-2 rounded-2xl bg-blue-600 px-5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/25 transition-colors hover:bg-blue-700"
+                >
+                  <Calendar className="h-4 w-4" />
+                  Ver calendário
+                </Link>
               </div>
             )}
           </CardContent>
@@ -395,7 +410,9 @@ export default async function AlunoDashboard() {
                         QR Code PIX gerado
                       </p>
                       <p className="text-center text-xs font-bold text-slate-500 sm:text-left">
-                        O pagamento ainda está pendente. Assim que o Mercado Pago confirmar a compensação, o status será atualizado.
+                        Pague pelo app do seu banco usando o QR Code ou o código abaixo. A confirmação costuma
+                        levar até <span className="text-slate-700">30 minutos</span> — o status atualiza
+                        sozinho, sem precisar enviar comprovante.
                       </p>
                       {pagamentoPendenteComStatus.pix_copia_cola ? (
                         <CopiarPixBtn codigo={pagamentoPendenteComStatus.pix_copia_cola} />
