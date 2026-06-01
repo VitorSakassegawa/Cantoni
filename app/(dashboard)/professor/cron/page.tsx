@@ -74,6 +74,19 @@ export default async function ProfessorCronPage() {
         />
 
         <ManualCronCard
+          label="Assinatura"
+          title="Lembrar contratos pendentes de assinatura"
+          description="Procura contratos emitidos que ainda nao foram assinados/aceitos pelo aluno e envia um e-mail de lembrete com link direto para a assinatura digital. Util quando o aluno demora a entrar no portal."
+          details={[
+            'Uso recomendado: alguns dias apos emitir o contrato, se o aluno ainda nao assinou.',
+            'Efeito esperado: envia o lembrete por e-mail e registra no historico do aluno.',
+            'Protecao contra spam: respeita intervalo minimo entre lembretes e um teto de 3 por contrato.',
+          ]}
+          endpoint="/api/professor/cron/lembretes-assinatura"
+          badge="Manual"
+        />
+
+        <ManualCronCard
           label="Google Meet"
           title="Importar transcripts e gerar resumo"
           description="Busca transcricoes elegiveis do Google Meet, importa o conteudo para a aula e atualiza resumo, homework e flashcards quando houver material disponivel. O processamento continua respeitando a janela minima de 30 minutos apos a aula."

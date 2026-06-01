@@ -9,6 +9,7 @@ import {
 } from '@/lib/documents'
 import { generateDocumentHash } from '@/lib/document-audit'
 import { logActivityBestEffort } from '@/lib/activity-log'
+import { enviarEmailContratoParaAssinar } from '@/lib/resend'
 
 type IssueDocumentRpcResult = {
   issuance_id: number
@@ -142,6 +143,19 @@ export async function POST(request: NextRequest) {
       contentHash,
     },
   })
+
+  // Contrato exige aceite: notifica o aluno por e-mail com link para assinar.
+  if (kind === 'contract' && context.student?.email) {
+    try {
+      await enviarEmailContratoParaAssinar({
+        to: context.student.email,
+        nomeAluno: context.student.full_name || 'Aluno',
+        issuanceId: issuance.issuance_id,
+      })
+    } catch (emailError) {
+      console.error('contract signature email failed:', emailError)
+    }
+  }
 
   revalidatePath(`/professor/alunos/${context.contract.aluno_id}`)
   revalidatePath('/aluno/documentos')

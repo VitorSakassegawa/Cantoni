@@ -11,6 +11,8 @@ import { Select } from '@/components/ui/select'
 import { Calendar, Clock, Info, Percent, DollarSign, AlertTriangle, BrainCircuit, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
+import { createClient } from '@/lib/supabase/client'
+import { DEFAULT_PRICING, getPricingSettings, type ContractPricing } from '@/lib/pricing'
 import { findContractEndDateForLessons, formatCurrency, formatDateOnly, gerarGradeAulas, maskCurrency } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
 
@@ -48,6 +50,7 @@ type ContractInitialData = {
   num_parcelas?: number
   status?: string
   has_paid_payments?: boolean
+  pricing_override_reason?: string
 }
 
 type ContractPayload = {
@@ -72,6 +75,8 @@ type ContractPayload = {
   id?: number
   status?: string
   creditToApply?: number
+  valorPadrao?: number
+  motivoAjuste?: string
 }
 
 type AvailableCreditSource = {
@@ -157,6 +162,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [availableCreditSources, setAvailableCreditSources] = useState<AvailableCreditSource[]>([])
   const [useCredit, setUseCredit] = useState(false)
   const [creditToApplyMasked, setCreditToApplyMasked] = useState('')
+  const [pricing, setPricing] = useState<ContractPricing>(DEFAULT_PRICING)
+  const [motivoAjuste, setMotivoAjuste] = useState(initialData?.pricing_override_reason || '')
 
   // Effect to handle Evolve book logic on initial load
   useEffect(() => {
@@ -233,7 +240,17 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
     }
 
     fetchCredits()
-    
+
+    async function fetchPricing() {
+      try {
+        const supabase = createClient()
+        setPricing(await getPricingSettings(supabase))
+      } catch (error) {
+        console.error('Error fetching pricing settings:', error)
+      }
+    }
+    fetchPricing()
+
     if (initialData?.livro_atual) {
       const isEvolve = initialData.livro_atual.toLowerCase().includes('evolve')
       const isESL = initialData.livro_atual.toLowerCase().includes('esl brains')
@@ -261,11 +278,12 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         const requestedEnd = dataFim ? new Date(dataFim + 'T12:00:00') : undefined
         
         const specs = calculateContractSpecs(
-          start, 
-          parseInt(planoId), 
-          diasSelecionados, 
+          start,
+          parseInt(planoId),
+          diasSelecionados,
           tipoContrato,
-          requestedEnd
+          requestedEnd,
+          pricing
         )
 
         const targetLessons =
@@ -287,7 +305,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         
         setAulasTotais(targetLessons.toString())
         setBonusAulas(tipoContrato === 'semestral' ? specs.bonusLessons : 0)
-        const calculatedBaseValue = tipoContrato === 'ad-hoc' ? targetLessons * 90 : specs.totalValue
+        const calculatedBaseValue = tipoContrato === 'ad-hoc' ? targetLessons * pricing.avulsa : specs.totalValue
         setBaseValue(calculatedBaseValue)
         setIsCrossSemester(specs.isCrossSemester)
 
@@ -297,7 +315,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         console.error('Calculation error:', e)
       }
     }
-  }, [customHolidays, dataFim, dataInicio, diasSelecionados, descontoPercentual, descontoValor, planoId, tipoContrato])
+  }, [customHolidays, dataFim, dataInicio, diasSelecionados, descontoPercentual, descontoValor, planoId, tipoContrato, pricing])
 
   // Cross-feeding Logic
   const handleDescontoValorChange = (val: string) => {
@@ -329,6 +347,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   }
 
   const grossFinalValue = parseFloat(valorFinalComMascara.replace(/\D/g, '') || '0') / 100
+  const descontoNumeric = parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100
+  const hasDeviation = descontoNumeric > 0.005
   const parsedInstallmentCount = parseInt(numParcelas || '1', 10) || 1
   const parsedCreditToApply = useCredit
     ? parseFloat(creditToApplyMasked.replace(/\D/g, '') || '0') / 100
@@ -377,6 +397,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       toast.error('Selecione ao menos um dia da semana.')
       return
     }
+    if (hasDeviation && !motivoAjuste.trim()) {
+      toast.error('Informe a justificativa do desconto (o valor está abaixo do preço-padrão).')
+      return
+    }
 
     setLoading(true)
 
@@ -403,6 +427,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           diasDaSemana: diasSelecionados,
           horario,
           aulasTotais: parseInt(aulasTotais),
+          valorPadrao: baseValue,
+          motivoAjuste: hasDeviation ? motivoAjuste.trim() : '',
       }
 
       if (isEdit) {
@@ -747,6 +773,26 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               </div>
             </div>
           </div>
+
+          {hasDeviation ? (
+            <div className="space-y-3 rounded-[2rem] border border-amber-200 bg-amber-50/60 p-6">
+              <Label htmlFor="motivo-ajuste" className="text-xs font-black uppercase tracking-[0.15em] text-amber-700 flex items-center gap-2">
+                <AlertTriangle className="w-3.5 h-3.5" /> Justificativa do desconto (obrigatória)
+              </Label>
+              <p className="text-[11px] font-medium text-amber-800/70">
+                O valor final ({formatCurrency(grossFinalValue)}) está abaixo do preço-padrão ({formatCurrency(baseValue)}). Explique o motivo do ajuste para registro.
+              </p>
+              <textarea
+                id="motivo-ajuste"
+                value={motivoAjuste}
+                onChange={(e) => setMotivoAjuste(e.target.value)}
+                rows={3}
+                required
+                className="w-full rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-amber-400 focus:ring-2 focus:ring-amber-100 resize-none"
+                placeholder="Ex.: bolsa parcial, indicação de aluno, condição comercial acordada..."
+              />
+            </div>
+          ) : null}
 
           <div className="h-px bg-slate-50" />
 
