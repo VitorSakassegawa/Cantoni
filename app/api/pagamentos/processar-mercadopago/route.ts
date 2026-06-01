@@ -157,6 +157,14 @@ export async function POST(req: NextRequest) {
     const { formData, paymentId, selectedPaymentMethod } = (await req.json()) as RequestPayload
     const supabase = await createClient()
 
+    // Defesa em profundidade: exige sessão (além da RLS) antes de processar o pagamento.
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Não autenticado' }, { status: 401 })
+    }
+
     const { data: localPayment, error: fetchErr } = await supabase
       .from('pagamentos')
       .select('*, contrato:contratos(aluno:profiles(id, email, full_name, cpf, cpf_encrypted))')
@@ -174,6 +182,18 @@ export async function POST(req: NextRequest) {
     }
 
     const aluno = getAlunoProfile(typedLocalPayment)
+
+    // Autorização explícita: somente o professor ou o próprio aluno dono do pagamento.
+    const { data: currentProfile } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', user.id)
+      .single()
+    const isProfessor = currentProfile?.role === 'professor'
+    if (!isProfessor && aluno?.id !== user.id) {
+      return NextResponse.json({ error: 'Sem permissão para este pagamento' }, { status: 403 })
+    }
+
     const amount = normalizePaymentAmount(typedLocalPayment.valor)
     const numericPaymentId = Number(paymentId)
     const { firstName, lastName } = splitFullName(aluno?.full_name || '')
