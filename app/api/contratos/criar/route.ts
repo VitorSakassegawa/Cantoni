@@ -20,6 +20,8 @@ import {
 } from '@/lib/contract-credits'
 import { splitInstallmentsExact } from '@/lib/contract-payments'
 import { getPricingSettings } from '@/lib/pricing'
+import { issueContractDocument } from '@/lib/contract-document-issue'
+import { enviarEmailContratoParaAssinar } from '@/lib/resend'
 
 const CALENDAR_CONCURRENCY = 4
 
@@ -383,6 +385,20 @@ export async function POST(request: NextRequest) {
           appliedCreditTotal,
         },
       })
+
+      // Emite automaticamente o contrato para assinatura e notifica o aluno (best-effort).
+      try {
+        const issued = await issueContractDocument(serviceSupabase, contrato.id, professor.id)
+        if (issued && aluno?.email) {
+          await enviarEmailContratoParaAssinar({
+            to: aluno.email,
+            nomeAluno: aluno.full_name || 'Aluno',
+            issuanceId: issued.issuanceId,
+          })
+        }
+      } catch (issueError) {
+        console.error('Auto-issue/notify contract document failed:', issueError)
+      }
 
       return NextResponse.json({ success: true, contrato, emailWarning, calendarWarning })
     } catch (error: unknown) {

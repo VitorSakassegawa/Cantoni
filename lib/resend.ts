@@ -376,6 +376,48 @@ export async function enviarEmailBoasVindas({
   })
 }
 
+export async function enviarEmailContratoParaAssinar({
+  to,
+  nomeAluno,
+  issuanceId,
+  isReminder = false,
+}: {
+  to: string
+  nomeAluno: string
+  issuanceId: number
+  isReminder?: boolean
+}) {
+  const resend = getResendClient()
+  const link = `${getAppUrl()}/documentos/emitidos/${issuanceId}`
+
+  return resend.emails.send({
+    from: FROM,
+    to,
+    subject: isReminder
+      ? 'Lembrete: seu contrato aguarda assinatura'
+      : 'Seu contrato está pronto para assinatura',
+    html: BaseLayout({
+      eyebrow: isReminder ? 'Lembrete de assinatura' : 'Contrato emitido',
+      title: `Olá, ${nomeAluno}!`,
+      intro: isReminder
+        ? 'Notamos que seu contrato ainda não foi assinado. Para concluir sua matrícula, faça a assinatura digital no portal — leva menos de um minuto.'
+        : 'Seu contrato já está emitido e disponível para assinatura digital no portal. É simples, rápido e seguro.',
+      tone: 'primary',
+      ctaLabel: 'Revisar e assinar contrato',
+      ctaHref: link,
+      content: card(
+        'Como assinar',
+        bulletList([
+          'Clique no botão acima para abrir o contrato.',
+          'Revise as informações (plano, valores e datas).',
+          'Confirme a assinatura digital no final da página.',
+        ])
+      ),
+      note: 'Se tiver qualquer dúvida, basta responder este e-mail.',
+    }),
+  })
+}
+
 export async function enviarEmailCobranca({
   to,
   nomeAluno,
