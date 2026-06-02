@@ -49,7 +49,8 @@ export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname()
 
   return (
-    <div className="-mx-1 mt-4 flex max-w-full snap-x gap-3 overflow-x-auto px-1 pb-1">
+    <div className="relative -mx-1 mt-4">
+      <div className="flex max-w-full snap-x gap-3 overflow-x-auto px-1 pb-1">
       {items.map((item) => {
         const Icon = iconMap[item.icon as keyof typeof iconMap] || LayoutDashboard
         const isActive = normalizePath(pathname, item.href)
@@ -70,6 +71,12 @@ export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
           </Link>
         )
       })}
+      </div>
+      {/* Dica visual de que há mais itens para rolar à direita */}
+      <div
+        className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent"
+        aria-hidden="true"
+      />
     </div>
   )
 }

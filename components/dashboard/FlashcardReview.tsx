@@ -23,6 +23,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
   const [completed, setCompleted] = useState(false)
   const [loading, setLoading] = useState(false)
   const [audioLoading, setAudioLoading] = useState(false)
+  const [xpFlash, setXpFlash] = useState<{ amount: number; key: number } | null>(null)
 
   if (cards.length === 0 || completed) {
     return (
@@ -52,6 +53,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
     setLoading(true)
     try {
       const result = await updateFlashcardReview(currentCard.id, quality)
+      setXpFlash({ amount: result.xpAwarded, key: currentIdx + 1 })
       toast.success(`Revisão salva. +${result.xpAwarded} XP na sua Jornada.`, {
         id: 'journey-xp',
         duration: 1800,
@@ -111,6 +113,14 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
         className="relative h-80 w-full cursor-pointer perspective-1000 group"
         onClick={() => !isFlipped && setIsFlipped(true)}
       >
+        {xpFlash ? (
+          <div
+            key={xpFlash.key}
+            className="animate-xp pointer-events-none absolute left-1/2 top-3 z-20 -translate-x-1/2 rounded-full bg-emerald-500 px-4 py-1.5 text-sm font-black text-white shadow-lg shadow-emerald-500/30"
+          >
+            +{xpFlash.amount} XP
+          </div>
+        ) : null}
         <div className={`relative h-full w-full preserve-3d transition-all duration-700 ${isFlipped ? 'rotate-y-180' : ''}`}>
           <div className="absolute inset-0 backface-hidden">
             <Card className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden border-none p-10 text-center shadow-2xl glass-card">
@@ -202,6 +212,13 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
         .preserve-3d { transform-style: preserve-3d; }
         .backface-hidden { backface-visibility: hidden; }
         .rotate-y-180 { transform: rotateY(180deg); }
+        @keyframes xpFloat {
+          0% { opacity: 0; transform: translate(-50%, 10px) scale(0.85); }
+          20% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          75% { opacity: 1; }
+          100% { opacity: 0; transform: translate(-50%, -16px) scale(1); }
+        }
+        .animate-xp { animation: xpFloat 1.4s ease-out forwards; }
       `}</style>
     </div>
   )

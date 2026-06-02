@@ -26,6 +26,20 @@ type IssuanceRow = {
   external_signature_status?: string | null
 }
 
+const TIPO_CONTRATO_LABELS: Record<string, string> = {
+  semestral: 'Semestral',
+  'ad-hoc': 'Personalizado',
+}
+const CONTRATO_STATUS_LABELS: Record<string, string> = {
+  ativo: 'Ativo',
+  pendente: 'Pendente',
+  encerrado: 'Encerrado',
+}
+function humanizeToken(value?: string | null) {
+  if (!value) return ''
+  return value.charAt(0).toUpperCase() + value.slice(1).replace(/_/g, ' ')
+}
+
 export default async function AlunoDocumentosPage() {
   const supabase = await createClient()
   const {
@@ -108,7 +122,8 @@ export default async function AlunoDocumentosPage() {
                       {formatDateOnly(contrato.data_inicio)} - {formatDateOnly(contrato.data_fim)}
                     </p>
                     <p className="mt-2 text-xs font-bold uppercase tracking-widest text-slate-400">
-                      {contrato.tipo_contrato} - status {contrato.status}
+                      Plano {TIPO_CONTRATO_LABELS[contrato.tipo_contrato] ?? humanizeToken(contrato.tipo_contrato)} ·{' '}
+                      {CONTRATO_STATUS_LABELS[contrato.status] ?? humanizeToken(contrato.status)}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Badge
@@ -116,16 +131,16 @@ export default async function AlunoDocumentosPage() {
                         className="border-slate-200 text-[11px] font-black uppercase text-slate-500"
                       >
                         {contractIssuance
-                          ? `Contrato emitido v${contractIssuance.version} - ${contractIssuance.status}`
-                          : 'Contrato em prévia'}
+                          ? `Contrato emitido · versão ${contractIssuance.version}`
+                          : 'Prévia do contrato'}
                       </Badge>
                       <Badge
                         variant="outline"
                         className="border-slate-200 text-[11px] font-black uppercase text-slate-500"
                       >
                         {declarationIssuance
-                          ? `Declaração emitida v${declarationIssuance.version}`
-                          : 'Declaração em prévia'}
+                          ? `Declaração emitida · versão ${declarationIssuance.version}`
+                          : 'Prévia da declaração'}
                       </Badge>
                       {contractIssuance ? (
                         <ExternalSignatureStatusBadge
