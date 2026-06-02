@@ -295,6 +295,7 @@ export async function POST(request: NextRequest) {
         outstandingAction,
         creditAction,
         notes: notes || undefined,
+        issuanceId: cancellationInfo.issuance_id,
       })
     } catch (emailError) {
       console.error('Cancellation email failed:', emailError)

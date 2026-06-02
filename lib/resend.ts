@@ -776,6 +776,7 @@ export async function enviarEmailCancelamentoContrato({
   outstandingAction,
   creditAction,
   notes,
+  issuanceId,
 }: {
   to: string
   nomeAluno: string
@@ -784,8 +785,10 @@ export async function enviarEmailCancelamentoContrato({
   outstandingAction: string
   creditAction: string
   notes?: string
+  issuanceId?: number | null
 }) {
   const resend = getResendClient()
+  const documentLink = issuanceId ? `${getAppUrl()}/documentos/emitidos/${issuanceId}` : undefined
 
   const outstandingCopy =
     outstandingAction === 'waive_open_balance'
@@ -809,6 +812,8 @@ export async function enviarEmailCancelamentoContrato({
       intro:
         'Registramos o encerramento do seu contrato no portal da Cantoni English School. Abaixo, reunimos as informações principais deste fechamento para sua referência.',
       tone: 'warning',
+      ctaLabel: documentLink ? 'Ver termo de encerramento' : undefined,
+      ctaHref: documentLink,
       content: [
         statGrid([
           { label: 'Data efetiva', value: effectiveDate },
