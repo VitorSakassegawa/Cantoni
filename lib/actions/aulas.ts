@@ -187,13 +187,20 @@ export async function remarcarAula(aulaId: number, novaDataHora: string) {
     throw new Error('Erro ao criar nova aula')
   }
 
-  await enviarConfirmacaoRemarcacao({
-    to: aluno.email,
-    nomeAluno: aluno.full_name,
-    dataAntiga: formatDateTime(aula.data_hora),
-    dataNova: formatDateTime(novaDataHora),
-    meetLink: novoMeetLink,
-  })
+  // Best-effort: the reschedule already persisted above. A mail failure must
+  // NOT throw here, or the action would report failure after the new lesson was
+  // created and the professor could reschedule again (duplicate lesson).
+  try {
+    await enviarConfirmacaoRemarcacao({
+      to: aluno.email,
+      nomeAluno: aluno.full_name,
+      dataAntiga: formatDateTime(aula.data_hora),
+      dataNova: formatDateTime(novaDataHora),
+      meetLink: novoMeetLink,
+    })
+  } catch (emailError) {
+    console.error('Reschedule confirmation email failed:', emailError)
+  }
 
   revalidatePath('/professor')
   revalidatePath(`/professor/alunos/${contrato.aluno_id}`)

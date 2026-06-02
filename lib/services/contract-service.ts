@@ -150,13 +150,19 @@ export class ContractService {
 
     const studentEmail = contrato.profiles?.email
     if (studentEmail) {
-      await enviarAulaContabilizadaComoDada({
-        to: studentEmail,
-        nomeAluno: contrato.profiles?.full_name || 'Aluno',
-        dataHora: formatDateTime(aula.data_hora),
-        aulasDadas,
-        aulasRestantes,
-      })
+      // Best-effort: the lesson counts were already updated above. A mail
+      // failure must not throw, or the caller could retry and double-count.
+      try {
+        await enviarAulaContabilizadaComoDada({
+          to: studentEmail,
+          nomeAluno: contrato.profiles?.full_name || 'Aluno',
+          dataHora: formatDateTime(aula.data_hora),
+          aulasDadas,
+          aulasRestantes,
+        })
+      } catch (emailError) {
+        console.error('Lesson-counted email failed:', emailError)
+      }
     }
 
     return { aulasDadas, aulasRestantes }

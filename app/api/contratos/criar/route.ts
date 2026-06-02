@@ -322,24 +322,12 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      let setupPasswordLink: string | undefined
       let emailWarning: string | null = null
       let calendarWarning: string | null = null
+      // Welcome email is informational only. The password-setup link is sent
+      // once by /api/alunos/criar ("Primeiro acesso"); generating a second
+      // recovery link here would invalidate/confuse the first one.
       if ((existingContractsCount || 0) === 0) {
-      try {
-        const { data: linkData } = await serviceSupabase.auth.admin.generateLink({
-          type: 'recovery',
-          email: aluno.email,
-          options: {
-            redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/redefinir-senha`,
-          },
-        })
-        setupPasswordLink = linkData?.properties?.action_link
-      } catch (error) {
-        console.error('Generate link error:', error)
-        emailWarning = 'Contrato criado, mas não foi possível gerar o link de primeiro acesso.'
-      }
-
       try {
         const emailResult = (await enviarEmailBoasVindas({
           to: aluno.email,
@@ -348,7 +336,6 @@ export async function POST(request: NextRequest) {
           dataInicio: new Date(dataInicio).toLocaleDateString('pt-BR'),
           dataFim: new Date(effectiveEndDate).toLocaleDateString('pt-BR'),
           aulas: primeirasCinco,
-          setupPasswordLink,
         })) as { error?: { message?: string } | null } | null
 
         if (emailResult?.error) {
