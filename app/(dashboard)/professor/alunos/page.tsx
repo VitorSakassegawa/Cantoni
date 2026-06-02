@@ -80,17 +80,15 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
         ) : null}
       </form>
 
+      {/* Contagem de resultados da busca */}
+      {query ? (
+        <p className="-mt-4 text-sm font-semibold text-slate-500">
+          {studentList.length} resultado{studentList.length === 1 ? '' : 's'} para “{query}”
+        </p>
+      ) : null}
+
       {/* Alunos Grid */}
       <div className="grid gap-6">
-        {studentList.length === 0 ? (
-          <Card className="glass-card border-none">
-            <CardContent className="p-10 text-center text-sm font-semibold text-slate-500">
-              {query
-                ? `Nenhum aluno encontrado para "${query}".`
-                : 'Nenhum aluno matriculado ainda. Use "Matricular Aluno" para começar.'}
-            </CardContent>
-          </Card>
-        ) : null}
         {studentList.map((aluno) => {
           const contrato = activeContracts.find((item) => item.aluno_id === aluno.id)
           const pagAtrasado = contrato?.pagamentos?.find(
@@ -188,15 +186,29 @@ export default async function AlunosPage({ searchParams }: { searchParams: Promi
         {studentList.length === 0 && (
           <div className="text-center py-20 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[2.5rem]">
             <div className="w-20 h-20 bg-slate-100 rounded-3xl flex items-center justify-center text-slate-300 mx-auto mb-6">
-              <GraduationCap className="w-10 h-10" />
+              {query ? <Search className="w-10 h-10" aria-hidden="true" /> : <GraduationCap className="w-10 h-10" aria-hidden="true" />}
             </div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">Nenhum aluno encontrado</h3>
-            <p className="text-slate-500 font-medium mb-8">Comece cadastrando seu primeiro aluno na plataforma.</p>
-            <Link href="/professor/alunos/novo">
-              <Button className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20">
-                Cadastrar Primeiro Aluno
-              </Button>
-            </Link>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight mb-2">
+              {query ? `Nenhum aluno encontrado para “${query}”` : 'Nenhum aluno cadastrado'}
+            </h3>
+            <p className="text-slate-500 font-medium mb-8">
+              {query
+                ? 'Tente outro nome ou e-mail, ou limpe a busca.'
+                : 'Comece cadastrando seu primeiro aluno na plataforma.'}
+            </p>
+            {query ? (
+              <Link href="/professor/alunos">
+                <Button variant="outline" className="h-14 px-10 rounded-2xl border-2 border-slate-200 font-black text-xs uppercase tracking-widest text-slate-600 hover:bg-slate-50">
+                  Limpar busca
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/professor/alunos/novo">
+                <Button className="h-14 px-10 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20">
+                  Cadastrar Primeiro Aluno
+                </Button>
+              </Link>
+            )}
           </div>
         )}
       </div>
