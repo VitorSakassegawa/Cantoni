@@ -10,6 +10,7 @@ import { Users, AlertCircle, Clock, ChevronLeft, ChevronRight, Calendar as Calen
 import { startOfWeek, endOfWeek, addWeeks, subWeeks, format, parseISO, isSameDay, isToday } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import CurrentDateGreeting from '@/components/dashboard/CurrentDateGreeting'
+import TranscriptImportReminder from '@/components/dashboard/TranscriptImportReminder'
 import ReschedulingRequestsList from '@/components/dashboard/ReschedulingRequestsList'
 import FinanceDash from '@/components/dashboard/FinanceDash'
 import { addMonths, startOfMonth as startOfMonthDate, endOfMonth as endOfMonthDate } from 'date-fns'
@@ -253,6 +254,8 @@ export default async function ProfessorDashboard({ searchParams }: PageProps) {
           </div>
         </div>
       </div>
+
+      <TranscriptImportReminder />
 
       {/* Smart Insights & Schedule Optimizer (NEW) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
