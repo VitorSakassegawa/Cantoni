@@ -10,6 +10,7 @@ import {
   BookOpen,
   BrainCircuit,
   Calendar,
+  ChevronDown,
   ChevronLeft,
   Clock,
   CreditCard,
@@ -683,11 +684,15 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
               emptyMessage="Sem movimentações registradas para este aluno ainda."
             />
 
-            <Card className="border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
-              <CardHeader className="border-b border-slate-100 bg-slate-50/80 p-8">
-                <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-blue-500">Histórico de aditivos</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
+            <details className="group overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
+              <summary className="flex cursor-pointer list-none items-center justify-between border-b border-transparent bg-slate-50/80 p-8 transition-colors group-open:border-slate-100 hover:bg-slate-100/60">
+                <span className="text-xs font-black uppercase tracking-[0.2em] text-blue-500">Histórico de aditivos</span>
+                <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                  {addendaList.length} registro{addendaList.length === 1 ? '' : 's'}
+                  <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+                </span>
+              </summary>
+              <div className="p-0">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left">
                     <thead>
@@ -726,15 +731,19 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                     </tbody>
                   </table>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </details>
           </div>
 
-          <Card className="border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
-            <CardHeader className="border-b border-slate-100 bg-slate-50/80 p-8">
-              <CardTitle className="text-xs font-black uppercase tracking-[0.2em] text-rose-500">Histórico de cancelamentos</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
+          <details className="group border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
+            <summary className="flex cursor-pointer list-none items-center justify-between border-b border-transparent bg-slate-50/80 p-8 transition-colors group-open:border-slate-100 hover:bg-slate-100/60">
+              <span className="text-xs font-black uppercase tracking-[0.2em] text-rose-500">Histórico de cancelamentos</span>
+              <span className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400">
+                {cancellationRecordList.length} registro{cancellationRecordList.length === 1 ? '' : 's'}
+                <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" aria-hidden="true" />
+              </span>
+            </summary>
+            <div className="p-0">
               <div className="overflow-x-auto">
                 <table className="w-full text-left">
                   <thead>
@@ -784,8 +793,8 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   </tbody>
                 </table>
               </div>
-            </CardContent>
-          </Card>
+            </div>
+          </details>
 
           <Card className="border-none overflow-hidden rounded-[2rem] bg-white shadow-xl shadow-slate-200/40">
             <CardHeader className="flex flex-row items-center justify-between border-b border-slate-100 bg-slate-50/80 p-8">
