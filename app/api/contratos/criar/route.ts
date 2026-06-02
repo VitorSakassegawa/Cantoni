@@ -21,6 +21,7 @@ import {
 import { splitInstallmentsExact } from '@/lib/contract-payments'
 import { getPricingSettings } from '@/lib/pricing'
 import { applyLoyaltyDiscount, loyaltyDiscountPercent } from '@/lib/loyalty'
+import { installmentsForDuration, isContractDuration } from '@/lib/contract-durations'
 import { issueContractDocument } from '@/lib/contract-document-issue'
 import { enviarEmailContratoParaAssinar } from '@/lib/resend'
 
@@ -122,11 +123,20 @@ export async function POST(request: NextRequest) {
       tipoContrato === 'ad-hoc' ? Number((totalLessons * pricing.avulsa).toFixed(2)) : specs.totalValue
     const standardValue = applyLoyaltyDiscount(tierBaseValue, loyaltyPercent)
     const overrideReason = typeof motivoAjuste === 'string' ? motivoAjuste.trim() : ''
-    if (Number(descontoValor || 0) > 0.005 && !overrideReason) {
+    const serverDescontoValor = Math.max(0, Number(descontoValor || 0))
+    if (serverDescontoValor > 0.005 && !overrideReason) {
       return NextResponse.json(
         { error: 'Justificativa obrigatória: o valor do contrato está abaixo do preço-padrão.' },
         { status: 400 }
       )
+    }
+
+    // O servidor é autoritativo no valor: cobra o preço-padrão (tier → fidelidade)
+    // menos o desconto manual declarado/justificado — não confia no `valor` do
+    // payload (que poderia ser adulterado para cobrar abaixo sem justificativa).
+    const authoritativeValue = Number(Math.max(0, standardValue - serverDescontoValor).toFixed(2))
+    if (Math.abs(authoritativeValue - contractValue) > 0.01) {
+      console.warn('Contract value mismatch (using server value):', { contractValue, authoritativeValue })
     }
     const availableCreditSources = await listAvailableContractCredits(serviceSupabase, alunoId)
     const totalAvailableCredit = Number(
@@ -143,11 +153,11 @@ export async function POST(request: NextRequest) {
     }
 
     const creditApplications = calculateCreditApplicationPlan({
-      requestedAmount: Math.min(contractValue, requestedCreditToApply),
+      requestedAmount: Math.min(authoritativeValue, requestedCreditToApply),
       sources: availableCreditSources,
     })
     const appliedCreditTotal = getAppliedCreditTotal(creditApplications)
-    const netContractValue = Number(Math.max(0, contractValue - appliedCreditTotal).toFixed(2))
+    const netContractValue = Number(Math.max(0, authoritativeValue - appliedCreditTotal).toFixed(2))
 
     const { data: recessosDb } = await serviceSupabase
       .from('recessos')
@@ -288,7 +298,13 @@ export async function POST(request: NextRequest) {
         throw insertAulasErr
       }
 
-      const nParcelas = numParcelas || (tipoContrato === 'ad-hoc' ? 1 : specs.remainingMonths)
+      // Teto de parcelas = nº de meses da duração (mensal=1 … anual=12); avulsa
+      // usa o nº de meses do período. Limita o valor recebido do cliente.
+      const requestedParcelas = Number(numParcelas) || (tipoContrato === 'ad-hoc' ? 1 : specs.remainingMonths)
+      const maxParcelas = isContractDuration(tipoContrato)
+        ? installmentsForDuration(tipoContrato)
+        : specs.remainingMonths || 12
+      const nParcelas = Math.max(1, Math.min(requestedParcelas, maxParcelas))
       const installmentPlan = splitInstallmentsExact(netContractValue, nParcelas)
       const pagamentosParaInserir = []
 
@@ -383,7 +399,7 @@ export async function POST(request: NextRequest) {
           tipoContrato: tipoContrato || 'semestral',
           totalLessons,
           value: netContractValue,
-          grossValue: contractValue,
+          grossValue: authoritativeValue,
           appliedCreditTotal,
         },
       })
