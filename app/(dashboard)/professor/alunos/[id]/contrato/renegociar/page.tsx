@@ -1,7 +1,7 @@
-import { ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import ContratoRenegociacaoForm from '@/components/dashboard/ContratoRenegociacaoForm'
+import Breadcrumbs from '@/components/dashboard/Breadcrumbs'
 import { createClient } from '@/lib/supabase/server'
 import type { RenegotiationPaymentSummary } from '@/lib/dashboard-types'
 
@@ -36,6 +36,13 @@ export default async function ProfessorRenegociarContratoPage({
   if (profile?.role !== 'professor') {
     redirect('/aluno')
   }
+
+  const { data: alunoRow } = await supabase
+    .from('profiles')
+    .select('full_name')
+    .eq('id', alunoId)
+    .single()
+  const alunoNome = alunoRow?.full_name || 'Aluno'
 
   let contractQuery = supabase
     .from('contratos')
@@ -91,13 +98,13 @@ export default async function ProfessorRenegociarContratoPage({
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-20 animate-fade-in">
       <div className="flex flex-col gap-6">
-        <Link
-          href={`/professor/alunos/${alunoId}`}
-          className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-xs uppercase tracking-widest group w-fit"
-        >
-          <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-          Voltar para Aluno
-        </Link>
+        <Breadcrumbs
+          items={[
+            { label: 'Alunos', href: '/professor/alunos' },
+            { label: alunoNome, href: `/professor/alunos/${alunoId}` },
+            { label: 'Renegociar contrato' },
+          ]}
+        />
         <div className="flex flex-col gap-2">
           <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Renegociação de Contrato</h1>
           <p className="text-slate-500 font-medium italic">
