@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
 import {
   Dialog,
   DialogContent,
@@ -22,6 +23,7 @@ interface PaymentWrapperProps {
   hasPixGenerated?: boolean
   pixQrCodeBase64?: string | null
   pixCopyPaste?: string | null
+  buttonClassName?: string
 }
 
 export default function PaymentWrapper({
@@ -32,6 +34,7 @@ export default function PaymentWrapper({
   hasPixGenerated = false,
   pixQrCodeBase64,
   pixCopyPaste,
+  buttonClassName,
 }: PaymentWrapperProps) {
   const [isOpen, setIsOpen] = useState(false)
   const pixImageSrc = pixQrCodeBase64
@@ -45,7 +48,10 @@ export default function PaymentWrapper({
       <Button
         type="button"
         onClick={() => setIsOpen(true)}
-        className="h-10 min-w-[156px] justify-center rounded-xl bg-blue-600 px-6 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95"
+        className={cn(
+          'h-10 min-w-[156px] justify-center rounded-xl bg-blue-600 px-6 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95',
+          buttonClassName
+        )}
       >
         <CreditCard className="mr-2 h-4 w-4" />
         {hasPixGenerated ? 'Ver PIX' : 'Pagar Agora'}

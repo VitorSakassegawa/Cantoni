@@ -34,6 +34,18 @@ type PaymentRow = PaymentWithEffectiveStatus & {
   data_pagamento?: string | null
 }
 
+function paymentStatusLabel(status: PaymentWithEffectiveStatus['effectiveStatus']) {
+  return status === 'atrasado' ? 'Em atraso' : status === 'pendente' ? 'Pendente' : 'Pago'
+}
+
+function paymentStatusBadgeClass(status: PaymentWithEffectiveStatus['effectiveStatus']) {
+  return status === 'pago'
+    ? 'bg-emerald-500 text-white'
+    : status === 'atrasado'
+      ? 'bg-rose-500 text-white'
+      : 'bg-amber-400 text-white'
+}
+
 export default async function AlunoPagamentosPage() {
   const supabase = await createClient()
   const {
@@ -244,7 +256,7 @@ export default async function AlunoPagamentosPage() {
             </CardHeader>
 
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
+              <div className="hidden overflow-x-auto md:block">
                 <table className="w-full text-left">
                   <thead>
                     <tr className="border-b border-slate-200 bg-slate-50/50 text-slate-500">
@@ -303,19 +315,9 @@ export default async function AlunoPagamentosPage() {
                         <td className="px-4 py-6">
                           <div className="flex flex-col items-start gap-2">
                             <Badge
-                              className={`border-none px-3 py-1 text-xs font-black uppercase tracking-widest ${
-                                payment.effectiveStatus === 'pago'
-                                  ? 'bg-emerald-500 text-white'
-                                  : payment.effectiveStatus === 'atrasado'
-                                    ? 'bg-rose-500 text-white'
-                                    : 'bg-amber-400 text-white'
-                              }`}
+                              className={`border-none px-3 py-1 text-xs font-black uppercase tracking-widest ${paymentStatusBadgeClass(payment.effectiveStatus)}`}
                             >
-                              {payment.effectiveStatus === 'atrasado'
-                                ? 'Em atraso'
-                                : payment.effectiveStatus === 'pendente'
-                                  ? 'Pendente'
-                                  : 'Pago'}
+                              {paymentStatusLabel(payment.effectiveStatus)}
                             </Badge>
 
                             {payment.effectiveStatus !== 'pago' && payment.pix_copia_cola ? (
@@ -377,6 +379,98 @@ export default async function AlunoPagamentosPage() {
                     })}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile: cards em vez de tabela (evita scroll horizontal e botões na borda) */}
+              <div className="space-y-4 p-5 md:hidden">
+                {pagamentos.map((payment) => {
+                  const processorCopy = getMercadoPagoStatusCopy(payment.mercadopago_status)
+                  const total = String(
+                    totalPorContrato[payment.contrato_id] || pagamentos.length
+                  ).padStart(2, '0')
+
+                  return (
+                    <div
+                      key={payment.id}
+                      className={`rounded-2xl border p-5 ${
+                        payment.effectiveStatus === 'atrasado'
+                          ? 'border-rose-200 bg-rose-50/60'
+                          : payment.effectiveStatus === 'pendente'
+                            ? 'border-amber-200 bg-amber-50/40'
+                            : 'border-slate-200 bg-white'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Parcela
+                          </p>
+                          <p className="text-sm font-black text-slate-900">
+                            {payment.parcela_num}
+                            <span className="font-bold text-slate-400">/{total}</span>
+                          </p>
+                        </div>
+                        <Badge
+                          className={`border-none px-3 py-1 text-xs font-black uppercase tracking-widest ${paymentStatusBadgeClass(payment.effectiveStatus)}`}
+                        >
+                          {paymentStatusLabel(payment.effectiveStatus)}
+                        </Badge>
+                      </div>
+
+                      <div className="mt-4 flex items-end justify-between gap-3">
+                        <div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Valor
+                          </p>
+                          <p className="text-2xl font-black tracking-tighter text-slate-900">
+                            {formatCurrency(payment.valor)}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                            Vencimento
+                          </p>
+                          <p className="text-sm font-bold text-slate-600">
+                            {formatDate(payment.data_vencimento)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {payment.data_pagamento ? (
+                        <p className="mt-3 text-xs font-bold text-slate-500">
+                          Pago em {formatDate(payment.data_pagamento)}
+                        </p>
+                      ) : null}
+
+                      {payment.effectiveStatus !== 'pago' && payment.pix_copia_cola ? (
+                        <p className="mt-3 rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold leading-relaxed text-blue-700">
+                          PIX gerado — aguardando compensação do Mercado Pago (até ~30 min).
+                        </p>
+                      ) : payment.effectiveStatus !== 'pago' && processorCopy ? (
+                        <p className="mt-3 rounded-xl bg-slate-50 px-3 py-2 text-xs font-bold leading-relaxed text-slate-500">
+                          {processorCopy.detail}
+                        </p>
+                      ) : null}
+
+                      {payment.effectiveStatus !== 'pago' ? (
+                        <div className="mt-4">
+                          <PaymentWrapper
+                            paymentId={String(payment.id)}
+                            amount={Number(payment.valor)}
+                            email={userProfile?.email || ''}
+                            nome={userProfile?.full_name || ''}
+                            hasPixGenerated={Boolean(
+                              payment.pix_copia_cola || payment.pix_qrcode_base64
+                            )}
+                            pixQrCodeBase64={payment.pix_qrcode_base64 || null}
+                            pixCopyPaste={payment.pix_copia_cola || null}
+                            buttonClassName="h-12 w-full"
+                          />
+                        </div>
+                      ) : null}
+                    </div>
+                  )
+                })}
               </div>
             </CardContent>
           </Card>
