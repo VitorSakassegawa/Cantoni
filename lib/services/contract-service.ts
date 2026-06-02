@@ -1,6 +1,9 @@
 import { enviarAulaContabilizadaComoDada } from '../resend'
 import { createServiceClient } from '../supabase/server'
 import { formatDateTime } from '../utils'
+import { logActivityBestEffort } from '../activity-log'
+
+const FINANCIAL_ALERT_EVENT = 'financial.pendency_alert'
 
 type ContractServicePayment = {
   parcela_num?: number | null
@@ -82,15 +85,36 @@ export class ContractService {
         statusFinanceiro = 'pendente'
 
         try {
-          const { enviarAlertaPendenciaFinanceira } = await import('../resend')
           const studentEmail = contrato.profiles?.email
           if (studentEmail) {
-            await enviarAlertaPendenciaFinanceira({
-              to: studentEmail,
-              nomeAluno: contrato.profiles?.full_name || 'Aluno',
-              aulasConcluidas: aulasDadas,
-              proximosPassos: `Aula #${aulasDadas} concluida (limite do ciclo). Pendencia financeira detectada.`,
-            })
+            // Dedup per cycle: avoids re-alerting the same cycle if concluirAula
+            // is retried before the status is persisted by the RPC below.
+            const { data: priorAlerts } = await supabase
+              .from('activity_logs')
+              .select('metadata')
+              .eq('contract_id', contrato.id)
+              .eq('event_type', FINANCIAL_ALERT_EVENT)
+            const alreadyAlerted = (priorAlerts || []).some(
+              (entry) => Number((entry.metadata as { cycle?: number } | null)?.cycle) === currentCycle
+            )
+
+            if (!alreadyAlerted) {
+              const { enviarAlertaPendenciaFinanceira } = await import('../resend')
+              await enviarAlertaPendenciaFinanceira({
+                to: studentEmail,
+                nomeAluno: contrato.profiles?.full_name || 'Aluno',
+                aulasConcluidas: aulasDadas,
+                proximosPassos: `Aula #${aulasDadas} concluida (limite do ciclo). Pendencia financeira detectada.`,
+              })
+              await logActivityBestEffort({
+                contractId: contrato.id,
+                eventType: FINANCIAL_ALERT_EVENT,
+                title: 'Alerta de pendência financeira enviado',
+                description: `Alerta de pendência enviado ao aluno no ciclo ${currentCycle} (aula #${aulasDadas}).`,
+                severity: 'warning',
+                metadata: { cycle: currentCycle, aulasConcluidas: aulasDadas },
+              })
+            }
           }
         } catch (err) {
           console.error('ContractService: Alert email failed', err)

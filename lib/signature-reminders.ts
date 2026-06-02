@@ -83,22 +83,26 @@ export async function runSignatureReminders(options: SignatureReminderOptions = 
       continue
     }
 
+    // Reserve the reminder slot BEFORE sending. Logging after a ~500ms email
+    // send left a long window where a concurrent run could read no log and
+    // double-send. Recording first shrinks that window to a single insert.
+    // Trade-off: a failed send still consumes a slot — acceptable for reminders.
+    await logActivityBestEffort({
+      targetUserId: issuance.student_id,
+      contractId: issuance.contract_id,
+      eventType: REMINDER_EVENT,
+      title: 'Lembrete de assinatura enviado',
+      description: `Lembrete de assinatura do contrato (documento #${issuance.id}) enviado ao aluno.`,
+      severity: 'info',
+      metadata: { issuanceId: issuance.id },
+    })
+
     try {
       await enviarEmailContratoParaAssinar({
         to: profile.email,
         nomeAluno: profile.full_name || 'Aluno',
         issuanceId: issuance.id,
         isReminder: true,
-      })
-
-      await logActivityBestEffort({
-        targetUserId: issuance.student_id,
-        contractId: issuance.contract_id,
-        eventType: REMINDER_EVENT,
-        title: 'Lembrete de assinatura enviado',
-        description: `Lembrete de assinatura do contrato (documento #${issuance.id}) enviado ao aluno.`,
-        severity: 'info',
-        metadata: { issuanceId: issuance.id },
       })
 
       sent += 1

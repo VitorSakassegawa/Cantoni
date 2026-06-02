@@ -12,7 +12,21 @@ import {
   PASSWORD_RECOVERY_WINDOW_MS,
 } from '@/lib/auth-security'
 
+// The generic-success responses are padded to a minimum duration so an attacker
+// can't tell an existing account (which generates a link + sends an email,
+// ~hundreds of ms) from a non-existing one (which returns immediately) by timing.
+const MIN_RESPONSE_MS = 700
+
 export async function POST(request: NextRequest) {
+  const startedAt = Date.now()
+  const genericSuccess = async () => {
+    const elapsed = Date.now() - startedAt
+    if (elapsed < MIN_RESPONSE_MS) {
+      await new Promise((resolve) => setTimeout(resolve, MIN_RESPONSE_MS - elapsed))
+    }
+    return NextResponse.json({ success: true, message: PASSWORD_RECOVERY_GENERIC_MESSAGE })
+  }
+
   try {
     const { email } = (await request.json()) as { email?: unknown }
     const normalizedEmail = normalizeRecoveryEmail(email)
@@ -65,10 +79,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (!profile?.email) {
-      return NextResponse.json({
-        success: true,
-        message: PASSWORD_RECOVERY_GENERIC_MESSAGE,
-      })
+      return genericSuccess()
     }
 
     const { data: linkData, error: linkError } = await serviceSupabase.auth.admin.generateLink({
@@ -81,10 +92,7 @@ export async function POST(request: NextRequest) {
 
     if (linkError || !linkData?.properties?.action_link) {
       console.error('Password recovery link generation error:', linkError)
-      return NextResponse.json({
-        success: true,
-        message: PASSWORD_RECOVERY_GENERIC_MESSAGE,
-      })
+      return genericSuccess()
     }
 
     const emailResult = await enviarEmailRecuperacaoSenha({
@@ -97,15 +105,9 @@ export async function POST(request: NextRequest) {
       console.error('Password recovery email delivery error:', emailResult.error)
     }
 
-    return NextResponse.json({
-      success: true,
-      message: PASSWORD_RECOVERY_GENERIC_MESSAGE,
-    })
+    return genericSuccess()
   } catch (error) {
     console.error('Password recovery route error:', error)
-    return NextResponse.json({
-      success: true,
-      message: PASSWORD_RECOVERY_GENERIC_MESSAGE,
-    })
+    return genericSuccess()
   }
 }
