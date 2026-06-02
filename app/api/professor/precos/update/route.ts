@@ -20,10 +20,24 @@ export async function POST(request: NextRequest) {
       const n = Number(value)
       return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : fallback
     }
+    const menuTiers = ['mensal', 'bimestral', 'trimestral', 'anual'] as const
+    const incomingTiers = (body.tiers ?? {}) as Record<string, { price1x?: unknown; price2x?: unknown }>
+    const nextTiers: NonNullable<ContractPricing['tiers']> = {}
+    for (const tier of menuTiers) {
+      const beforeTier = before.tiers?.[tier]
+      const entry = incomingTiers[tier]
+      const p1 = parse(entry?.price1x, beforeTier?.price1x ?? 0)
+      const p2 = parse(entry?.price2x, beforeTier?.price2x ?? 0)
+      if (p1 > 0 && p2 > 0) {
+        nextTiers[tier] = { price1x: p1, price2x: p2 }
+      }
+    }
+
     const next: ContractPricing = {
       semestral1x: parse(body.semestral1x, before.semestral1x),
       semestral2x: parse(body.semestral2x, before.semestral2x),
       avulsa: parse(body.avulsa, before.avulsa),
+      tiers: Object.keys(nextTiers).length > 0 ? nextTiers : undefined,
     }
 
     const { error } = await supabase

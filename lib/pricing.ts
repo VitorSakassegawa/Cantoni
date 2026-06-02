@@ -70,6 +70,26 @@ type PricingRow = {
   price_semestral_1x?: number | string | null
   price_semestral_2x?: number | string | null
   price_avulsa?: number | string | null
+  tier_pricing?: unknown
+}
+
+// Durações configuráveis no cardápio (semestral usa as colunas próprias; avulsa
+// é por aula). Apenas estas vão em tier_pricing.
+const MENU_TIERS: ContractDuration[] = ['mensal', 'bimestral', 'trimestral', 'anual']
+
+function parseTierPricing(value: unknown): ContractPricing['tiers'] {
+  if (!value || typeof value !== 'object') return undefined
+  const source = value as Record<string, unknown>
+  const tiers: Partial<Record<ContractDuration, DurationTierPrice>> = {}
+  for (const tier of MENU_TIERS) {
+    const entry = source[tier] as { price1x?: unknown; price2x?: unknown } | undefined
+    const p1 = Number(entry?.price1x)
+    const p2 = Number(entry?.price2x)
+    if (Number.isFinite(p1) && p1 > 0 && Number.isFinite(p2) && p2 > 0) {
+      tiers[tier] = { price1x: round2(p1), price2x: round2(p2) }
+    }
+  }
+  return Object.keys(tiers).length > 0 ? tiers : undefined
 }
 
 export function pricingFromRow(row: PricingRow | null | undefined): ContractPricing {
@@ -78,11 +98,16 @@ export function pricingFromRow(row: PricingRow | null | undefined): ContractPric
     return Number.isFinite(n) && n > 0 ? round2(n) : fallback
   }
   if (!row) return DEFAULT_PRICING
-  return {
+  const result: ContractPricing = {
     semestral1x: num(row.price_semestral_1x, DEFAULT_PRICING.semestral1x),
     semestral2x: num(row.price_semestral_2x, DEFAULT_PRICING.semestral2x),
     avulsa: num(row.price_avulsa, DEFAULT_PRICING.avulsa),
   }
+  const tiers = parseTierPricing(row.tier_pricing)
+  if (tiers) {
+    result.tiers = tiers
+  }
+  return result
 }
 
 export function pricingToColumns(prices: ContractPricing) {
@@ -90,6 +115,7 @@ export function pricingToColumns(prices: ContractPricing) {
     price_semestral_1x: prices.semestral1x,
     price_semestral_2x: prices.semestral2x,
     price_avulsa: prices.avulsa,
+    tier_pricing: prices.tiers ?? null,
   }
 }
 
@@ -99,7 +125,7 @@ export async function getPricingSettings(supabase: SupabaseClient): Promise<Cont
   try {
     const { data } = await supabase
       .from('pricing_settings')
-      .select('price_semestral_1x, price_semestral_2x, price_avulsa')
+      .select('price_semestral_1x, price_semestral_2x, price_avulsa, tier_pricing')
       .eq('id', true)
       .maybeSingle()
     return pricingFromRow(data as PricingRow | null)
