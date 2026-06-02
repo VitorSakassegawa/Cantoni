@@ -40,6 +40,21 @@ export async function POST(request: NextRequest) {
       tiers: Object.keys(nextTiers).length > 0 ? nextTiers : undefined,
     }
 
+    const changed =
+      before.semestral1x !== next.semestral1x ||
+      before.semestral2x !== next.semestral2x ||
+      before.avulsa !== next.avulsa ||
+      JSON.stringify(before.tiers ?? null) !== JSON.stringify(next.tiers ?? null)
+
+    // Justificativa obrigatória quando há alteração (impacta contratos futuros).
+    const note = typeof body.note === 'string' ? body.note.trim() : ''
+    if (changed && note.length < 3) {
+      return NextResponse.json(
+        { error: 'Informe uma justificativa para a alteração de preços (impacta contratos futuros).' },
+        { status: 400 }
+      )
+    }
+
     const { error } = await supabase
       .from('pricing_settings')
       .update({ ...pricingToColumns(next), updated_at: new Date().toISOString(), updated_by: user.id })
@@ -50,18 +65,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Falha ao salvar os preços.' }, { status: 500 })
     }
 
-    const changed =
-      before.semestral1x !== next.semestral1x ||
-      before.semestral2x !== next.semestral2x ||
-      before.avulsa !== next.avulsa
-
     if (changed) {
       await supabase.from('pricing_adjustments').insert({
         kind: 'manual',
         percent: null,
         prices_before: before,
         prices_after: next,
-        note: typeof body.note === 'string' ? body.note.trim() || null : null,
+        note,
         created_by: user.id,
       })
     }

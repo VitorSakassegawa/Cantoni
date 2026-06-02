@@ -50,6 +50,9 @@ export default function PricingSettingsClient({
   const [saving, setSaving] = useState(false)
   const [percent, setPercent] = useState('')
   const [applyingIpca, setApplyingIpca] = useState(false)
+  // Justificativa obrigatória: toda alteração de preço impacta contratos futuros.
+  const [justification, setJustification] = useState('')
+  const [ipcaJustification, setIpcaJustification] = useState('')
 
   const parsedPercent = Number(percent.replace(',', '.'))
   const ipcaPreview =
@@ -72,17 +75,22 @@ export default function PricingSettingsClient({
   }
 
   async function handleSave() {
+    if (justification.trim().length < 3) {
+      toast.error('Informe uma justificativa para a alteração (mín. 3 caracteres).')
+      return
+    }
     setSaving(true)
     try {
       const res = await fetch('/api/professor/precos/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(prices),
+        body: JSON.stringify({ ...prices, note: justification.trim() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Falha ao salvar.')
       setPrices(data.pricing)
-      toast.success('Preços-padrão atualizados.')
+      setJustification('')
+      toast.success('Preços atualizados (alteração registrada com justificativa).')
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao salvar os preços.')
@@ -96,17 +104,25 @@ export default function PricingSettingsClient({
       toast.error('Informe um percentual de reajuste válido.')
       return
     }
+    if (ipcaJustification.trim().length < 3) {
+      toast.error('Informe uma justificativa para o reajuste (mín. 3 caracteres).')
+      return
+    }
     setApplyingIpca(true)
     try {
       const res = await fetch('/api/professor/precos/reajuste', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ percent: parsedPercent, note: `Reajuste IPCA de ${parsedPercent}%` }),
+        body: JSON.stringify({
+          percent: parsedPercent,
+          note: `Reajuste IPCA de ${parsedPercent}% — ${ipcaJustification.trim()}`,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Falha ao aplicar o reajuste.')
       setPrices(data.pricing)
       setPercent('')
+      setIpcaJustification('')
       toast.success(`Reajuste de ${parsedPercent}% aplicado aos preços-padrão.`)
       router.refresh()
     } catch (error) {
@@ -160,6 +176,22 @@ export default function PricingSettingsClient({
                 <p className="text-[11px] font-medium text-slate-400">{field.hint}</p>
               </div>
             ))}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="price-justification" className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
+              Justificativa da alteração *
+            </Label>
+            <textarea
+              id="price-justification"
+              value={justification}
+              onChange={(e) => setJustification(e.target.value)}
+              rows={2}
+              placeholder="Ex.: reajuste de tabela, nova política comercial, correção de valor..."
+              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none"
+            />
+            <p className="text-[11px] font-medium text-slate-400">
+              Obrigatória — registrada no histórico (impacta contratos futuros).
+            </p>
           </div>
           <div className="flex justify-end pt-2">
             <Button
@@ -224,6 +256,22 @@ export default function PricingSettingsClient({
               </div>
             ))}
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="tier-justification" className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
+              Justificativa da alteração *
+            </Label>
+            <textarea
+              id="tier-justification"
+              value={justification}
+              onChange={(e) => setJustification(e.target.value)}
+              rows={2}
+              placeholder="Ex.: nova faixa de preço, ajuste de margem, condição comercial..."
+              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none"
+            />
+            <p className="text-[11px] font-medium text-slate-400">
+              Obrigatória — registrada no histórico (impacta contratos futuros).
+            </p>
+          </div>
           <div className="flex justify-end pt-2">
             <Button
               onClick={handleSave}
@@ -279,6 +327,23 @@ export default function PricingSettingsClient({
               {applyingIpca ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <TrendingUp className="w-4 h-4" aria-hidden="true" />}
               {applyingIpca ? 'Aplicando...' : 'Aplicar reajuste'}
             </Button>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ipca-justification" className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
+              Justificativa do reajuste *
+            </Label>
+            <textarea
+              id="ipca-justification"
+              value={ipcaJustification}
+              onChange={(e) => setIpcaJustification(e.target.value)}
+              rows={2}
+              placeholder="Ex.: IPCA acumulado de 2025 (jan–dez) conforme índice oficial."
+              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-amber-400 focus:ring-2 focus:ring-amber-100 resize-none"
+            />
+            <p className="text-[11px] font-medium text-slate-400">
+              Obrigatória — registrada no histórico (impacta contratos futuros).
+            </p>
           </div>
 
           {ipcaPreview ? (

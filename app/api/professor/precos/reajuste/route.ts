@@ -23,6 +23,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Justificativa obrigatória: o reajuste impacta todos os contratos novos.
+    const note = typeof body.note === 'string' ? body.note.trim() : ''
+    if (note.length < 3) {
+      return NextResponse.json(
+        { error: 'Informe uma justificativa para o reajuste (impacta contratos futuros).' },
+        { status: 400 }
+      )
+    }
+
     const supabase = await createClient()
     const before = await getPricingSettings(supabase)
     const after = applyPercentToPricing(before, percent)
@@ -42,7 +51,7 @@ export async function POST(request: NextRequest) {
       percent,
       prices_before: before,
       prices_after: after,
-      note: typeof body.note === 'string' ? body.note.trim() || null : null,
+      note,
       created_by: user.id,
     })
 
