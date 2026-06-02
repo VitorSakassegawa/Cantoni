@@ -61,7 +61,7 @@ create table if not exists contratos (
   valor numeric(10, 2),
   dia_vencimento integer,
   forma_pagamento text,
-  tipo_contrato text not null default 'semestral' check (tipo_contrato in ('semestral', 'ad-hoc')),
+  tipo_contrato text not null default 'semestral' check (tipo_contrato in ('mensal', 'bimestral', 'trimestral', 'semestral', 'anual', 'ad-hoc')),
   desconto_valor numeric(10, 2) not null default 0,
   desconto_percentual numeric(5, 2) not null default 0,
   dias_da_semana integer[],
