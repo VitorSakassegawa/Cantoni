@@ -20,10 +20,39 @@ export async function POST(request: NextRequest) {
       const n = Number(value)
       return Number.isFinite(n) && n > 0 ? Math.round(n * 100) / 100 : fallback
     }
+    const menuTiers = ['mensal', 'bimestral', 'trimestral', 'anual'] as const
+    const incomingTiers = (body.tiers ?? {}) as Record<string, { price1x?: unknown; price2x?: unknown }>
+    const nextTiers: NonNullable<ContractPricing['tiers']> = {}
+    for (const tier of menuTiers) {
+      const beforeTier = before.tiers?.[tier]
+      const entry = incomingTiers[tier]
+      const p1 = parse(entry?.price1x, beforeTier?.price1x ?? 0)
+      const p2 = parse(entry?.price2x, beforeTier?.price2x ?? 0)
+      if (p1 > 0 && p2 > 0) {
+        nextTiers[tier] = { price1x: p1, price2x: p2 }
+      }
+    }
+
     const next: ContractPricing = {
       semestral1x: parse(body.semestral1x, before.semestral1x),
       semestral2x: parse(body.semestral2x, before.semestral2x),
       avulsa: parse(body.avulsa, before.avulsa),
+      tiers: Object.keys(nextTiers).length > 0 ? nextTiers : undefined,
+    }
+
+    const changed =
+      before.semestral1x !== next.semestral1x ||
+      before.semestral2x !== next.semestral2x ||
+      before.avulsa !== next.avulsa ||
+      JSON.stringify(before.tiers ?? null) !== JSON.stringify(next.tiers ?? null)
+
+    // Justificativa obrigatória quando há alteração (impacta contratos futuros).
+    const note = typeof body.note === 'string' ? body.note.trim() : ''
+    if (changed && note.length < 3) {
+      return NextResponse.json(
+        { error: 'Informe uma justificativa para a alteração de preços (impacta contratos futuros).' },
+        { status: 400 }
+      )
     }
 
     const { error } = await supabase
@@ -36,18 +65,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Falha ao salvar os preços.' }, { status: 500 })
     }
 
-    const changed =
-      before.semestral1x !== next.semestral1x ||
-      before.semestral2x !== next.semestral2x ||
-      before.avulsa !== next.avulsa
-
     if (changed) {
       await supabase.from('pricing_adjustments').insert({
         kind: 'manual',
         percent: null,
         prices_before: before,
         prices_after: next,
-        note: typeof body.note === 'string' ? body.note.trim() || null : null,
+        note,
         created_by: user.id,
       })
     }

@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { DollarSign, TrendingUp, History, Save, Loader2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { applyPercentToPricing, type ContractPricing } from '@/lib/pricing'
+import { DURATION_SPECS } from '@/lib/contract-durations'
 
 type Adjustment = {
   id: number
@@ -30,6 +31,14 @@ const PRICE_FIELDS: Array<{ key: NumericPriceKey; label: string; hint: string }>
   { key: 'avulsa', label: 'Aula avulsa', hint: 'Valor por aula (contrato personalizado / hora-aula)' },
 ]
 
+type MenuTier = 'mensal' | 'bimestral' | 'trimestral' | 'anual'
+const MENU_TIER_FIELDS: Array<{ key: MenuTier; label: string; lessons: string }> = [
+  { key: 'mensal', label: 'Mensal', lessons: '4 / 8 aulas' },
+  { key: 'bimestral', label: 'Bimestral', lessons: '8 / 16 aulas' },
+  { key: 'trimestral', label: 'Trimestral', lessons: '12 / 24 aulas' },
+  { key: 'anual', label: 'Anual', lessons: '40 / 80 aulas' },
+]
+
 export default function PricingSettingsClient({
   initialPricing,
   adjustments,
@@ -42,28 +51,62 @@ export default function PricingSettingsClient({
   const [saving, setSaving] = useState(false)
   const [percent, setPercent] = useState('')
   const [applyingIpca, setApplyingIpca] = useState(false)
+  // Justificativa obrigatória: toda alteração de preço impacta contratos futuros.
+  const [justification, setJustification] = useState('')
+  const [ipcaJustification, setIpcaJustification] = useState('')
 
   const parsedPercent = Number(percent.replace(',', '.'))
   const ipcaPreview =
     Number.isFinite(parsedPercent) && parsedPercent > 0 ? applyPercentToPricing(prices, parsedPercent) : null
+
+  // Transparência: preço por aula do pacote e quanto está abaixo do avulso.
+  function perClassMeta(packagePrice: number | undefined, lessons: number): string | null {
+    const avulsa = prices.avulsa
+    if (!packagePrice || packagePrice <= 0 || !lessons || !avulsa) return null
+    const perClass = packagePrice / lessons
+    const diff = (1 - perClass / avulsa) * 100
+    const label =
+      diff >= 0.5
+        ? `${diff.toFixed(0)}% abaixo do avulso`
+        : diff <= -0.5
+          ? `${Math.abs(diff).toFixed(0)}% acima do avulso`
+          : 'igual ao avulso'
+    return `${formatCurrency(perClass)}/aula · ${label}`
+  }
 
   function setPrice(key: NumericPriceKey, value: string) {
     const n = Number(value.replace(',', '.'))
     setPrices((current) => ({ ...current, [key]: Number.isFinite(n) ? n : 0 }))
   }
 
+  function setTierPrice(tier: MenuTier, freq: 1 | 2, value: string) {
+    const n = Number(value.replace(',', '.'))
+    const amount = Number.isFinite(n) && n > 0 ? n : 0
+    setPrices((current) => {
+      const tiers = { ...(current.tiers || {}) }
+      const existing = tiers[tier] || { price1x: 0, price2x: 0 }
+      tiers[tier] = { ...existing, [freq === 1 ? 'price1x' : 'price2x']: amount }
+      return { ...current, tiers }
+    })
+  }
+
   async function handleSave() {
+    if (justification.trim().length < 3) {
+      toast.error('Informe uma justificativa para a alteração (mín. 3 caracteres).')
+      return
+    }
     setSaving(true)
     try {
       const res = await fetch('/api/professor/precos/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(prices),
+        body: JSON.stringify({ ...prices, note: justification.trim() }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Falha ao salvar.')
       setPrices(data.pricing)
-      toast.success('Preços-padrão atualizados.')
+      setJustification('')
+      toast.success('Preços atualizados (alteração registrada com justificativa).')
       router.refresh()
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Erro ao salvar os preços.')
@@ -77,17 +120,25 @@ export default function PricingSettingsClient({
       toast.error('Informe um percentual de reajuste válido.')
       return
     }
+    if (ipcaJustification.trim().length < 3) {
+      toast.error('Informe uma justificativa para o reajuste (mín. 3 caracteres).')
+      return
+    }
     setApplyingIpca(true)
     try {
       const res = await fetch('/api/professor/precos/reajuste', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ percent: parsedPercent, note: `Reajuste IPCA de ${parsedPercent}%` }),
+        body: JSON.stringify({
+          percent: parsedPercent,
+          note: `Reajuste IPCA de ${parsedPercent}% — ${ipcaJustification.trim()}`,
+        }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Falha ao aplicar o reajuste.')
       setPrices(data.pricing)
       setPercent('')
+      setIpcaJustification('')
       toast.success(`Reajuste de ${parsedPercent}% aplicado aos preços-padrão.`)
       router.refresh()
     } catch (error) {
@@ -139,8 +190,31 @@ export default function PricingSettingsClient({
                   />
                 </div>
                 <p className="text-[11px] font-medium text-slate-400">{field.hint}</p>
+                {field.key === 'avulsa' ? (
+                  <p className="text-[11px] font-bold text-slate-400">Referência (preço por aula)</p>
+                ) : (
+                  <p className="text-[11px] font-bold text-blue-500">
+                    {perClassMeta(prices[field.key], field.key === 'semestral1x' ? 20 : 40)}
+                  </p>
+                )}
               </div>
             ))}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="price-justification" className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
+              Justificativa da alteração *
+            </Label>
+            <textarea
+              id="price-justification"
+              value={justification}
+              onChange={(e) => setJustification(e.target.value)}
+              rows={2}
+              placeholder="Ex.: reajuste de tabela, nova política comercial, correção de valor..."
+              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none"
+            />
+            <p className="text-[11px] font-medium text-slate-400">
+              Obrigatória — registrada no histórico (impacta contratos futuros).
+            </p>
           </div>
           <div className="flex justify-end pt-2">
             <Button
@@ -150,6 +224,91 @@ export default function PricingSettingsClient({
             >
               {saving ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Save className="w-4 h-4" aria-hidden="true" />}
               {saving ? 'Salvando...' : 'Salvar preços'}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Cardápio de durações (mensal → anual) */}
+      <Card className="glass-card border-none overflow-hidden">
+        <CardHeader className="pb-6 border-b border-slate-100">
+          <CardTitle className="text-xs font-black text-blue-500 flex items-center gap-2 uppercase tracking-[0.2em]">
+            <DollarSign className="w-4 h-4" aria-hidden="true" /> Cardápio de durações
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="pt-8 space-y-6">
+          <p className="text-sm font-medium leading-relaxed text-slate-500">
+            Preço-pacote por duração. Semestral e avulsa ficam acima; aqui você ajusta as demais
+            durações do cardápio. Quanto maior o compromisso, menor deve ser o preço por aula.
+          </p>
+          <div className="space-y-4">
+            {MENU_TIER_FIELDS.map((tier) => (
+              <div key={tier.key} className="grid items-end gap-4 sm:grid-cols-[1fr_1fr_1fr]">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.15em] text-slate-600">{tier.label}</p>
+                  <p className="text-[11px] font-medium text-slate-400">{tier.lessons} (1x / 2x)</p>
+                </div>
+                {([1, 2] as const).map((freq) => {
+                  const current = prices.tiers?.[tier.key]
+                  const val = freq === 1 ? current?.price1x : current?.price2x
+                  return (
+                    <div key={freq} className="space-y-1.5">
+                      <Label
+                        htmlFor={`tier-${tier.key}-${freq}`}
+                        className="text-[11px] font-black uppercase tracking-[0.15em] text-slate-400"
+                      >
+                        Pacote {freq}x
+                      </Label>
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-bold text-emerald-600">R$</span>
+                        <Input
+                          id={`tier-${tier.key}-${freq}`}
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          inputMode="decimal"
+                          value={val !== undefined ? String(val) : ''}
+                          placeholder="0,00"
+                          onChange={(e) => setTierPrice(tier.key, freq, e.target.value)}
+                          className="h-12 pl-10 rounded-2xl bg-slate-50 border-slate-100 font-black text-slate-900"
+                        />
+                      </div>
+                      <p className="pl-1 text-[11px] font-bold text-blue-500">
+                        {perClassMeta(
+                          val,
+                          freq === 1 ? DURATION_SPECS[tier.key].lessons1x : DURATION_SPECS[tier.key].lessons2x
+                        )}
+                      </p>
+                    </div>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="tier-justification" className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
+              Justificativa da alteração *
+            </Label>
+            <textarea
+              id="tier-justification"
+              value={justification}
+              onChange={(e) => setJustification(e.target.value)}
+              rows={2}
+              placeholder="Ex.: nova faixa de preço, ajuste de margem, condição comercial..."
+              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-blue-400 focus:ring-2 focus:ring-blue-100 resize-none"
+            />
+            <p className="text-[11px] font-medium text-slate-400">
+              Obrigatória — registrada no histórico (impacta contratos futuros).
+            </p>
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="h-12 px-8 rounded-2xl lms-gradient text-white font-black text-xs uppercase tracking-widest shadow-xl shadow-blue-500/20 gap-2 disabled:opacity-50"
+            >
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <Save className="w-4 h-4" aria-hidden="true" />}
+              {saving ? 'Salvando...' : 'Salvar cardápio'}
             </Button>
           </div>
         </CardContent>
@@ -197,6 +356,23 @@ export default function PricingSettingsClient({
               {applyingIpca ? <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" /> : <TrendingUp className="w-4 h-4" aria-hidden="true" />}
               {applyingIpca ? 'Aplicando...' : 'Aplicar reajuste'}
             </Button>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="ipca-justification" className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
+              Justificativa do reajuste *
+            </Label>
+            <textarea
+              id="ipca-justification"
+              value={ipcaJustification}
+              onChange={(e) => setIpcaJustification(e.target.value)}
+              rows={2}
+              placeholder="Ex.: IPCA acumulado de 2025 (jan–dez) conforme índice oficial."
+              className="w-full rounded-2xl border border-slate-100 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 outline-none transition-all focus:border-amber-400 focus:ring-2 focus:ring-amber-100 resize-none"
+            />
+            <p className="text-[11px] font-medium text-slate-400">
+              Obrigatória — registrada no histórico (impacta contratos futuros).
+            </p>
           </div>
 
           {ipcaPreview ? (
