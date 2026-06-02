@@ -24,6 +24,24 @@ export async function createClient() {
   })
 }
 
+/**
+ * Cookie-less anon client for the password-recovery flow. It is deliberately
+ * NOT bound to the request cookies, so the user being modified is resolved
+ * strictly from the recovery token in the link — never from whoever happens to
+ * be logged in on the device (which previously let a reset hit the wrong user).
+ */
+export function createRecoveryClient() {
+  const { url, anonKey } = getSupabasePublicEnv()
+
+  return createSupabaseClient(url, anonKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+      detectSessionInUrl: false,
+    },
+  })
+}
+
 export async function createServiceClient() {
   const { url, serviceRoleKey } = getSupabaseServiceEnv()
 
