@@ -13,7 +13,7 @@ type ImportResponse = {
   failed: number
 }
 
-export default function ManualTranscriptImportButton() {
+export default function ManualTranscriptImportButton({ compact = false }: { compact?: boolean } = {}) {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
 
@@ -41,6 +41,22 @@ export default function ManualTranscriptImportButton() {
     }
   }
 
+  const importButton = (
+    <Button
+      type="button"
+      onClick={handleImport}
+      disabled={loading}
+      className="h-11 rounded-2xl bg-blue-600 px-5 text-xs font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700"
+    >
+      {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+      {loading ? 'Importando...' : 'Importar Transcrições'}
+    </Button>
+  )
+
+  if (compact) {
+    return importButton
+  }
+
   return (
     <div className="rounded-3xl border border-blue-100 bg-blue-50/80 p-4 shadow-sm shadow-blue-500/5">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
@@ -56,15 +72,7 @@ export default function ManualTranscriptImportButton() {
           </p>
         </div>
 
-        <Button
-          type="button"
-          onClick={handleImport}
-          disabled={loading}
-          className="h-11 rounded-2xl bg-blue-600 px-5 text-xs font-black uppercase tracking-[0.2em] text-white shadow-lg shadow-blue-500/20 hover:bg-blue-700"
-        >
-          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-          {loading ? 'Importando...' : 'Importar Transcrições'}
-        </Button>
+        {importButton}
       </div>
     </div>
   )
