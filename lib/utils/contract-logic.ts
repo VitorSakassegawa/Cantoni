@@ -1,11 +1,34 @@
-import { FERIADOS_NACIONAIS } from '../constants/holidays'
-import { DEFAULT_PRICING, type ContractPricing } from '../pricing'
+import { FERIADOS_NACIONAIS } from '../constants/holidays.ts'
+import { DEFAULT_PRICING, packagePriceFor, type ContractPricing } from '../pricing.ts'
+import {
+  DURATION_SPECS,
+  isContractDuration,
+  lessonsForDuration,
+} from '../contract-durations.ts'
 import {
   startOfMonth,
   endOfMonth,
   differenceInMonths,
   eachDayOfInterval
 } from 'date-fns'
+
+const round2 = (n: number) => Math.round(n * 100) / 100
+
+// Gera as próximas `target` datas de aula a partir de `start`, nos dias da
+// semana escolhidos, pulando feriados. Usado pelas durações de contagem fixa.
+function generateFixedLessonDates(start: Date, diasDaSemana: number[], target: number): Date[] {
+  const dates: Date[] = []
+  const cursor = new Date(start)
+  let guard = 0
+  while (dates.length < target && guard < 1200) {
+    if (diasDaSemana.includes(cursor.getDay()) && !isHoliday(cursor)) {
+      dates.push(new Date(cursor))
+    }
+    cursor.setDate(cursor.getDate() + 1)
+    guard += 1
+  }
+  return dates
+}
 
 export const SEMESTERS = {
   1: { startMonth: 0, endMonth: 5, label: 'jan-jun', totalMonths: 6, maxRegular1x: 20, maxRegular2x: 40, price1x: 1920, price2x: 2880 },
@@ -47,8 +70,30 @@ export function calculateContractSpecs(
   pricing: ContractPricing = DEFAULT_PRICING
 ) {
   const sem = getSemesterInfo(startDate)
+
+  // Fixed-count durations from the menu (mensal/bimestral/trimestral/anual):
+  // generate exactly the tier's lesson count, skipping holidays. These may
+  // cross the jun/jul boundary freely (only 'semestral' stays locked).
+  if (isContractDuration(tipoContrato) && tipoContrato !== 'semestral') {
+    const freqNum: 1 | 2 = planoId === 1 ? 1 : 2
+    const targetLessons = lessonsForDuration(tipoContrato, freqNum)
+    const lessonDates = generateFixedLessonDates(startDate, diasDaSemana, targetLessons)
+    const computedEnd = lessonDates[lessonDates.length - 1] || startDate
+    return {
+      semesterLabel: sem.label,
+      endDate: computedEnd,
+      totalLessons: lessonDates.length,
+      regularLessons: lessonDates.length,
+      bonusLessons: 0,
+      totalValue: round2(packagePriceFor(pricing, tipoContrato, freqNum)),
+      remainingMonths: DURATION_SPECS[tipoContrato].months,
+      lessonDates,
+      isCrossSemester: false,
+    }
+  }
+
   const endDate = tipoContrato === 'semestral' ? sem.end : (manualEndDate || sem.end)
-  
+
   // Count match weekdays excluding holidays
   const allDays = eachDayOfInterval({ start: startDate, end: endDate })
   const lessonDates = allDays.filter(d => 
