@@ -13,63 +13,49 @@ function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback
 }
 
+type RecoveryCredential = {
+  accessToken?: string
+  refreshToken?: string
+  tokenHash?: string
+}
+
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [validatingLink, setValidatingLink] = useState(true)
+  const [credential, setCredential] = useState<RecoveryCredential | null>(null)
   const router = useRouter()
 
   useEffect(() => {
-    let active = true
+    // SECURITY: the reset must be driven by the recovery credential in the link,
+    // never by an ambient session. We read it from the URL and, if it is absent,
+    // redirect to login instead of operating on whoever is currently logged in.
+    const hashParams = new URLSearchParams(
+      window.location.hash.startsWith('#') ? window.location.hash.slice(1) : ''
+    )
+    const queryParams = new URLSearchParams(window.location.search)
 
-    async function bootstrapRecoverySession() {
-      try {
-        const hash = window.location.hash.startsWith('#') ? window.location.hash.slice(1) : ''
-        const params = new URLSearchParams(hash)
-        const accessToken = params.get('access_token')
-        const refreshToken = params.get('refresh_token')
-        const type = params.get('type')
+    const type = hashParams.get('type') || queryParams.get('type')
+    const accessToken = hashParams.get('access_token') || queryParams.get('access_token') || undefined
+    const refreshToken = hashParams.get('refresh_token') || queryParams.get('refresh_token') || undefined
+    const tokenHash = queryParams.get('token_hash') || hashParams.get('token_hash') || undefined
 
-        if (type === 'recovery' && accessToken && refreshToken) {
-          const response = await fetch('/api/auth/recovery-session', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ accessToken, refreshToken }),
-          })
-          const data = (await response.json()) as { error?: string }
+    const hasTokenPair = Boolean(accessToken && refreshToken)
+    const hasTokenHash = Boolean(tokenHash) && (type === 'recovery' || !type)
 
-          if (!response.ok) {
-            throw new Error(data.error || 'Não foi possível validar o link de recuperação.')
-          }
-
-          window.history.replaceState({}, document.title, window.location.pathname)
-        }
-
-        const sessionResponse = await fetch('/api/auth/recovery-session')
-        const sessionData = (await sessionResponse.json()) as { valid?: boolean }
-
-        if (!sessionResponse.ok || !sessionData.valid) {
-          toast.error('Link de redefinição inválido ou expirado. Solicite um novo e-mail.')
-          router.replace('/login')
-          return
-        }
-      } catch (error: unknown) {
-        toast.error(getErrorMessage(error, 'Não foi possível validar o link de redefinição.'))
-        router.replace('/login')
-        return
-      } finally {
-        if (active) {
-          setValidatingLink(false)
-        }
-      }
+    if (!hasTokenPair && !hasTokenHash) {
+      toast.error('Link de redefinição inválido ou expirado. Solicite um novo e-mail.')
+      router.replace('/login')
+      return
     }
 
-    void bootstrapRecoverySession()
-
-    return () => {
-      active = false
-    }
+    setCredential(
+      hasTokenPair ? { accessToken, refreshToken } : { tokenHash }
+    )
+    // Strip the credential from the address bar so it isn't left in history.
+    window.history.replaceState({}, document.title, window.location.pathname)
+    setValidatingLink(false)
   }, [router])
 
   async function handleReset(e: React.FormEvent) {
@@ -79,13 +65,18 @@ export default function ResetPasswordPage() {
       toast.error('As senhas não coincidem.')
       return
     }
+    if (!credential) {
+      toast.error('Link de redefinição inválido. Solicite um novo e-mail.')
+      router.replace('/login')
+      return
+    }
 
     setLoading(true)
     try {
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password }),
+        body: JSON.stringify({ password, ...credential }),
       })
       const data = (await response.json()) as { error?: string }
 
