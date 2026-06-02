@@ -1,10 +1,10 @@
 'use client'
 
 import { use, useState, useEffect } from 'react'
-import { ChevronLeft, AlertTriangle, ArrowRight, X } from 'lucide-react'
-import Link from 'next/link'
+import { AlertTriangle, ArrowRight, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import ContratoForm from '@/components/dashboard/ContratoForm'
+import Breadcrumbs from '@/components/dashboard/Breadcrumbs'
 import { createClient } from '@/lib/supabase/client'
 import { formatDateOnly } from '@/lib/utils'
 import {
@@ -28,19 +28,27 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
   const supabase = createClient()
   
   const [loading, setLoading] = useState(true)
+  const [alunoNome, setAlunoNome] = useState('')
   const [activeContrato, setActiveContrato] = useState<ActiveContractSummary | null>(null)
   const [showWarning, setShowWarning] = useState(false)
   const [proceeded, setProceeded] = useState(false)
 
   useEffect(() => {
     async function checkActiveContract() {
+      const { data: prof } = await supabase
+        .from('profiles')
+        .select('full_name')
+        .eq('id', alunoId)
+        .maybeSingle()
+      if (prof?.full_name) setAlunoNome(prof.full_name)
+
       const { data } = await supabase
         .from('contratos')
         .select('*')
         .eq('aluno_id', alunoId)
         .eq('status', 'ativo')
         .maybeSingle()
-      
+
       if (data) {
         setActiveContrato(data as ActiveContractSummary)
         setShowWarning(true)
@@ -61,10 +69,13 @@ export default function NovoContratoPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="max-w-4xl mx-auto space-y-10 pb-20 animate-fade-in">
-      <Link href={`/professor/alunos/${alunoId}`} className="flex items-center gap-2 text-slate-400 hover:text-blue-600 transition-colors font-black text-xs uppercase tracking-widest group">
-        <ChevronLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
-        Voltar para Aluno
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: 'Alunos', href: '/professor/alunos' },
+          { label: alunoNome || 'Aluno', href: `/professor/alunos/${alunoId}` },
+          { label: 'Novo contrato' },
+        ]}
+      />
 
       <div className="flex flex-col gap-4">
         <h1 className="text-4xl font-black text-slate-900 tracking-tighter">Novo Contrato Acadêmico</h1>
