@@ -18,6 +18,13 @@ import ReactMarkdown from 'react-markdown'
 
 type ContractKind = 'semestral' | 'ad-hoc'
 type PaymentMethod = 'pix' | 'cartao' | 'dinheiro'
+type ContractTab = 'plano' | 'valores' | 'academico'
+
+const CONTRACT_TABS: { id: ContractTab; label: string }[] = [
+  { id: 'plano', label: '1 · Plano e período' },
+  { id: 'valores', label: '2 · Valores' },
+  { id: 'academico', label: '3 · Material e pagamento' },
+]
 
 type PlacementSummary = {
   cefr_level: string
@@ -164,6 +171,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [creditToApplyMasked, setCreditToApplyMasked] = useState('')
   const [pricing, setPricing] = useState<ContractPricing>(DEFAULT_PRICING)
   const [motivoAjuste, setMotivoAjuste] = useState(initialData?.pricing_override_reason || '')
+
+  // Tabs + inline validation
+  const [activeTab, setActiveTab] = useState<ContractTab>('plano')
+  const [triedSubmit, setTriedSubmit] = useState(false)
 
   // Effect to handle Evolve book logic on initial load
   useEffect(() => {
@@ -349,6 +360,18 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const grossFinalValue = parseFloat(valorFinalComMascara.replace(/\D/g, '') || '0') / 100
   const descontoNumeric = parseFloat(descontoValor.replace(/\D/g, '') || '0') / 100
   const hasDeviation = descontoNumeric > 0.005
+
+  // Inline validation flags (also used to flag the tab that contains the error)
+  const diasInsufficient =
+    tipoContrato === 'semestral'
+      ? diasSelecionados.length < parseInt(planoId)
+      : diasSelecionados.length === 0
+  const motivoMissing = hasDeviation && !motivoAjuste.trim()
+  const tabHasError: Record<ContractTab, boolean> = {
+    plano: triedSubmit && diasInsufficient,
+    valores: triedSubmit && motivoMissing,
+    academico: false,
+  }
   const parsedInstallmentCount = parseInt(numParcelas || '1', 10) || 1
   const parsedCreditToApply = useCredit
     ? parseFloat(creditToApplyMasked.replace(/\D/g, '') || '0') / 100
@@ -385,19 +408,24 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    setTriedSubmit(true)
     if (isCrossSemester && tipoContrato === 'semestral') {
+      setActiveTab('plano')
       toast.error('Contratos semestrais não podem ultrapassar o limite do semestre (Jul/Dez). Crie dois contratos separados.')
       return
     }
     if (tipoContrato === 'semestral' && diasSelecionados.length < parseInt(planoId)) {
+      setActiveTab('plano')
       toast.error(`Selecione ${planoId} dia(s) para este plano.`)
       return
     }
     if (diasSelecionados.length === 0) {
+      setActiveTab('plano')
       toast.error('Selecione ao menos um dia da semana.')
       return
     }
     if (hasDeviation && !motivoAjuste.trim()) {
+      setActiveTab('valores')
       toast.error('Informe a justificativa do desconto (o valor está abaixo do preço-padrão).')
       return
     }
@@ -502,8 +530,34 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             Configuração do Novo Contrato
           </CardTitle>
         </CardHeader>
-        <CardContent className="p-8 space-y-10">
-          
+        <CardContent className="p-8">
+
+          {/* Navegação por abas */}
+          <div className="mb-8 flex flex-wrap gap-2 border-b border-slate-100 pb-4" role="tablist">
+            {CONTRACT_TABS.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`relative rounded-2xl px-5 py-3 text-xs font-black uppercase tracking-widest transition-all ${
+                  activeTab === tab.id
+                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20'
+                    : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+                }`}
+              >
+                {tab.label}
+                {tabHasError[tab.id] ? (
+                  <span className="absolute -right-1 -top-1 h-3 w-3 rounded-full border-2 border-white bg-rose-500" aria-label="Há campos pendentes nesta aba" />
+                ) : null}
+              </button>
+            ))}
+          </div>
+
+          {/* Painel 1: Plano e período */}
+          <div hidden={activeTab !== 'plano'} className="space-y-10">
+
           {/* Section 1: Tipo e Plano */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
@@ -612,9 +666,19 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                 </button>
               ))}
             </div>
+            {triedSubmit && diasInsufficient ? (
+              <p className="pl-1 text-xs font-bold text-rose-500">
+                {tipoContrato === 'semestral'
+                  ? `Selecione ${planoId} dia(s) para este plano.`
+                  : 'Selecione ao menos um dia da semana.'}
+              </p>
+            ) : null}
           </div>
 
-          <div className="h-px bg-slate-50" />
+          </div>{/* /Painel 1 */}
+
+          {/* Painel 2: Valores */}
+          <div hidden={activeTab !== 'valores'} className="space-y-10">
 
           {/* Section 3: Investimento */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -794,9 +858,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
             </div>
           ) : null}
 
-          <div className="h-px bg-slate-50" />
+          </div>{/* /Painel 2 */}
 
-          <div className="h-px bg-slate-50" />
+          {/* Painel 3: Material e pagamento */}
+          <div hidden={activeTab !== 'academico'} className="space-y-10">
 
           {/* New Placement Indicators Section */}
           {!isEdit && (
@@ -920,6 +985,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
               </p>
             </div>
           </div>
+
+          </div>{/* /Painel 3 */}
         </CardContent>
       </Card>
 
