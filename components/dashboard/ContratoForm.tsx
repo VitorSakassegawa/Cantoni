@@ -11,12 +11,13 @@ import { Select } from '@/components/ui/select'
 import { Calendar, Clock, Info, Percent, DollarSign, AlertTriangle, BrainCircuit, Target } from 'lucide-react'
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
+import { installmentsForDuration, isContractDuration } from '@/lib/contract-durations'
 import { createClient } from '@/lib/supabase/client'
 import { DEFAULT_PRICING, getPricingSettings, type ContractPricing } from '@/lib/pricing'
 import { findContractEndDateForLessons, formatCurrency, formatDateOnly, gerarGradeAulas, maskCurrency } from '@/lib/utils'
 import ReactMarkdown from 'react-markdown'
 
-type ContractKind = 'semestral' | 'ad-hoc'
+type ContractKind = 'semestral' | 'mensal' | 'bimestral' | 'trimestral' | 'anual' | 'ad-hoc'
 type PaymentMethod = 'pix' | 'cartao' | 'dinheiro'
 type ContractTab = 'plano' | 'valores' | 'academico'
 
@@ -276,10 +277,14 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   }, [initialData, alunoId, isEdit])
 
   useEffect(() => {
+    if (isEdit) return // edições mantêm o parcelamento já emitido
     if (tipoContrato === 'ad-hoc') {
       setNumParcelas('1')
+    } else if (isContractDuration(tipoContrato)) {
+      // parcelas = nº de meses da duração (mensal=1 … anual=12)
+      setNumParcelas(String(installmentsForDuration(tipoContrato)))
     }
-  }, [tipoContrato])
+  }, [tipoContrato, isEdit])
 
   // Auto-calculation on any relevant field change
   useEffect(() => {
@@ -306,7 +311,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
           : specs.endDate
         const effectiveEnd = requestedEnd && requestedEnd > generatedEnd ? requestedEnd : generatedEnd
 
-        if (tipoContrato === 'semestral' && (!dataFim || effectiveEnd.toISOString().split('T')[0] !== dataFim)) {
+        // Semestral e durações de contagem fixa têm a data de término calculada
+        // automaticamente (ad-hoc usa a data informada manualmente).
+        if (tipoContrato !== 'ad-hoc' && (!dataFim || effectiveEnd.toISOString().split('T')[0] !== dataFim)) {
           setDataFim(effectiveEnd.toISOString().split('T')[0])
         }
 
@@ -394,7 +401,8 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   }, [availableCreditTotal, creditToApplyMasked, grossFinalValue, isEdit, useCredit])
 
   const toggleDia = (dia: number) => {
-    if (tipoContrato === 'semestral') {
+    // Todas as durações (exceto avulsa) seguem a frequência do plano (1x/2x).
+    if (tipoContrato !== 'ad-hoc') {
       const limit = parseInt(planoId)
       if (!diasSelecionados.includes(dia) && diasSelecionados.length >= limit) {
         toast.error(`O plano ${planoId}x permite apenas ${limit} dia(s) na semana.`)
@@ -406,6 +414,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
     )
   }
 
+  // Parcelas máximas: "parcelas = nº de meses" para as durações do cardápio.
+  const maxParcelas = isContractDuration(tipoContrato) ? installmentsForDuration(tipoContrato) : 12
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setTriedSubmit(true)
@@ -414,7 +425,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
       toast.error('Contratos semestrais não podem ultrapassar o limite do semestre (Jul/Dez). Crie dois contratos separados.')
       return
     }
-    if (tipoContrato === 'semestral' && diasSelecionados.length < parseInt(planoId)) {
+    if (tipoContrato !== 'ad-hoc' && diasSelecionados.length < parseInt(planoId)) {
       setActiveTab('plano')
       toast.error(`Selecione ${planoId} dia(s) para este plano.`)
       return
@@ -566,7 +577,11 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                 setTipoContrato(e.target.value as ContractKind)
                 if (e.target.value === 'semestral') setIsCrossSemester(false)
               }} className="h-14 rounded-2xl bg-slate-50 border-slate-100 font-bold">
-                <option value="semestral">Semestral Padrão</option>
+                <option value="mensal">Mensal (4 / 8 aulas)</option>
+                <option value="bimestral">Bimestral (8 / 16 aulas)</option>
+                <option value="trimestral">Trimestral (12 / 24 aulas)</option>
+                <option value="semestral">Semestral (20 / 40 aulas)</option>
+                <option value="anual">Anual (40 / 80 aulas)</option>
                 <option value="ad-hoc">Personalizado (Hora/Aula)</option>
               </Select>
             </div>
@@ -610,7 +625,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                 className={`h-14 rounded-2xl border-slate-100 font-bold ${hasPaidPayments ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50'}`} 
                 id="contrato-data-fim" value={dataFim}
                 onChange={e => setDataFim(e.target.value)} 
-                disabled={tipoContrato === 'semestral' || hasPaidPayments}
+                disabled={tipoContrato !== 'ad-hoc' || hasPaidPayments}
                 required
               />
             </div>
@@ -693,7 +708,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                 />
               </div>
               <p className="text-[11px] text-slate-400 font-bold pl-1 uppercase tracking-widest italic">
-                {tipoContrato === 'semestral' ? 'Base Semestral' : 'Base R$ 90,00/aula'} x {aulasTotais} aulas
+                {tipoContrato === 'ad-hoc'
+                  ? `Base por aula x ${aulasTotais} aulas`
+                  : `Pacote ${tipoContrato} · ${aulasTotais} aulas`}
               </p>
             </div>
 
@@ -963,7 +980,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                 disabled={isEdit || hasPaidPayments}
                 className={`h-14 rounded-2xl border-slate-100 font-bold ${(isEdit || hasPaidPayments) ? 'bg-slate-100 text-slate-400 cursor-not-allowed opacity-60' : 'bg-slate-50 text-slate-900'}`}
               >
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(n => (
+                {Array.from({ length: maxParcelas }, (_, i) => i + 1).map(n => (
                   <option key={n} value={n.toString()}>{n === 1 ? '1x (À vista)' : `${n}x parcelado`}</option>
                 ))}
               </Select>
