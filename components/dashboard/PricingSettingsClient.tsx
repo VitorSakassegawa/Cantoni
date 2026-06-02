@@ -22,7 +22,9 @@ type Adjustment = {
   created_at: string
 }
 
-const PRICE_FIELDS: Array<{ key: keyof ContractPricing; label: string; hint: string }> = [
+type NumericPriceKey = 'semestral1x' | 'semestral2x' | 'avulsa'
+
+const PRICE_FIELDS: Array<{ key: NumericPriceKey; label: string; hint: string }> = [
   { key: 'semestral1x', label: 'Semestral · 1x por semana', hint: 'Pacote do semestre (20 aulas)' },
   { key: 'semestral2x', label: 'Semestral · 2x por semana', hint: 'Pacote do semestre (40 aulas)' },
   { key: 'avulsa', label: 'Aula avulsa', hint: 'Valor por aula (contrato personalizado / hora-aula)' },
@@ -45,7 +47,7 @@ export default function PricingSettingsClient({
   const ipcaPreview =
     Number.isFinite(parsedPercent) && parsedPercent > 0 ? applyPercentToPricing(prices, parsedPercent) : null
 
-  function setPrice(key: keyof ContractPricing, value: string) {
+  function setPrice(key: NumericPriceKey, value: string) {
     const n = Number(value.replace(',', '.'))
     setPrices((current) => ({ ...current, [key]: Number.isFinite(n) ? n : 0 }))
   }

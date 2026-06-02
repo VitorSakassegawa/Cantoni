@@ -1,12 +1,17 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { DURATION_SPECS, lessonsForDuration, type ContractDuration } from './contract-durations.ts'
 
-// Preços-padrão por tipo de contrato. Fonte da verdade passa a ser a tabela
-// pricing_settings (singleton); os valores abaixo são apenas fallback/seed,
-// idênticos aos antigos hardcoded em lib/utils/contract-logic.ts.
+export type DurationTierPrice = { price1x: number; price2x: number }
+
+// Preços-padrão por tipo de contrato. Fonte da verdade é a tabela
+// pricing_settings (singleton). `tiers` (opcional) guarda o preço-pacote por
+// duração do "cardápio" (mensal→anual); quando ausente, o preço é derivado do
+// preço-por-aula semestral, e os descontos de compromisso são configurados na UI.
 export type ContractPricing = {
   semestral1x: number // pacote semestral, 1x/semana (20 aulas)
   semestral2x: number // pacote semestral, 2x/semana (40 aulas)
   avulsa: number // valor por aula avulsa (ad-hoc)
+  tiers?: Partial<Record<ContractDuration, DurationTierPrice>>
 }
 
 export const DEFAULT_PRICING: ContractPricing = {
@@ -17,14 +22,48 @@ export const DEFAULT_PRICING: ContractPricing = {
 
 const round2 = (n: number) => Math.round(n * 100) / 100
 
-// Aplica um percentual (ex.: IPCA acumulado) a todos os preços-padrão.
+function semestralPerClass(prices: ContractPricing, freq: 1 | 2): number {
+  return freq === 1
+    ? prices.semestral1x / DURATION_SPECS.semestral.lessons1x
+    : prices.semestral2x / DURATION_SPECS.semestral.lessons2x
+}
+
+/**
+ * Preço-pacote (total) de uma duração do cardápio numa dada frequência.
+ * Prioridade: tier configurado → preço semestral existente → derivado do
+ * preço-por-aula semestral × nº fixo de aulas do tier.
+ */
+export function packagePriceFor(prices: ContractPricing, duration: ContractDuration, freq: 1 | 2): number {
+  const tier = prices.tiers?.[duration]
+  if (tier) {
+    return round2(freq === 1 ? tier.price1x : tier.price2x)
+  }
+  if (duration === 'semestral') {
+    return round2(freq === 1 ? prices.semestral1x : prices.semestral2x)
+  }
+  return round2(semestralPerClass(prices, freq) * lessonsForDuration(duration, freq))
+}
+
+// Aplica um percentual (ex.: IPCA acumulado) a todos os preços-padrão (e tiers).
 export function applyPercentToPricing(prices: ContractPricing, percent: number): ContractPricing {
   const factor = 1 + (Number(percent) || 0) / 100
-  return {
+  const next: ContractPricing = {
     semestral1x: round2(prices.semestral1x * factor),
     semestral2x: round2(prices.semestral2x * factor),
     avulsa: round2(prices.avulsa * factor),
   }
+  if (prices.tiers) {
+    const scaledTiers: Partial<Record<ContractDuration, DurationTierPrice>> = {}
+    for (const [key, value] of Object.entries(prices.tiers)) {
+      if (!value) continue
+      scaledTiers[key as ContractDuration] = {
+        price1x: round2(value.price1x * factor),
+        price2x: round2(value.price2x * factor),
+      }
+    }
+    next.tiers = scaledTiers
+  }
+  return next
 }
 
 type PricingRow = {

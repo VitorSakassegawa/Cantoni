@@ -45,7 +45,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
     ? [
         { href: basePath, label: 'Dashboard', icon: LayoutDashboard, iconKey: 'dashboard' },
         { href: '/professor/pagamentos', label: 'Financeiro', icon: CreditCard, iconKey: 'financeiro' },
-        { href: '/professor/precos', label: 'Preços', icon: Tag, iconKey: 'precos' },
+        { href: '/professor/precos', label: 'Planos & Investimento', icon: Tag, iconKey: 'precos' },
         { href: '/professor/alunos', label: 'Alunos', icon: Users, iconKey: 'alunos' },
         { href: '/professor/aulas', label: 'Aulas', icon: BookOpen, iconKey: 'aulas' },
         { href: '/professor/nivelamento', label: 'Nivelamento', icon: Sparkles, iconKey: 'nivelamento' },
