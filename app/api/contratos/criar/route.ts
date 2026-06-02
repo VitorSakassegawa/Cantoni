@@ -20,6 +20,7 @@ import {
 } from '@/lib/contract-credits'
 import { splitInstallmentsExact } from '@/lib/contract-payments'
 import { getPricingSettings } from '@/lib/pricing'
+import { applyLoyaltyDiscount, loyaltyDiscountPercent } from '@/lib/loyalty'
 import { issueContractDocument } from '@/lib/contract-document-issue'
 import { enviarEmailContratoParaAssinar } from '@/lib/resend'
 
@@ -104,9 +105,22 @@ export async function POST(request: NextRequest) {
     const specs = calculateContractSpecs(startObj, planoId, diasDaSemana, tipoContrato, requestedEndObj, pricing)
     const totalLessons = normalizeLessonTotal(aulasTotais, specs.totalLessons)
 
-    // Desvio de valor: quando há desconto sobre o preço-padrão, a justificativa é obrigatória.
-    const standardValue =
+    // Fidelidade ("tempo de casa"): % por ano desde o 1º contrato do aluno.
+    // Aplicada apenas a contratos novos (igual ao IPCA); 1º contrato → 0%.
+    const { data: firstContract } = await serviceSupabase
+      .from('contratos')
+      .select('data_inicio')
+      .eq('aluno_id', alunoId)
+      .order('data_inicio', { ascending: true })
+      .limit(1)
+      .maybeSingle()
+    const loyaltyPercent = loyaltyDiscountPercent(firstContract?.data_inicio ?? null, new Date())
+
+    // Desvio de valor: quando há desconto manual sobre o preço-padrão (já com
+    // fidelidade aplicada), a justificativa é obrigatória.
+    const tierBaseValue =
       tipoContrato === 'ad-hoc' ? Number((totalLessons * pricing.avulsa).toFixed(2)) : specs.totalValue
+    const standardValue = applyLoyaltyDiscount(tierBaseValue, loyaltyPercent)
     const overrideReason = typeof motivoAjuste === 'string' ? motivoAjuste.trim() : ''
     if (Number(descontoValor || 0) > 0.005 && !overrideReason) {
       return NextResponse.json(
@@ -181,6 +195,7 @@ export async function POST(request: NextRequest) {
         desconto_percentual: descontoPercentual || 0,
         dias_da_semana: diasDaSemana,
         valor_padrao: standardValue,
+        loyalty_discount_percent: loyaltyPercent,
         pricing_override_reason: overrideReason || null,
       })
       .select()

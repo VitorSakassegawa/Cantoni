@@ -12,6 +12,7 @@ import { Calendar, Clock, Info, Percent, DollarSign, AlertTriangle, BrainCircuit
 import { toast } from 'sonner'
 import { calculateContractSpecs } from '@/lib/utils/contract-logic'
 import { installmentsForDuration, isContractDuration } from '@/lib/contract-durations'
+import { applyLoyaltyDiscount, loyaltyDiscountPercent } from '@/lib/loyalty'
 import { createClient } from '@/lib/supabase/client'
 import { DEFAULT_PRICING, getPricingSettings, type ContractPricing } from '@/lib/pricing'
 import { findContractEndDateForLessons, formatCurrency, formatDateOnly, gerarGradeAulas, maskCurrency } from '@/lib/utils'
@@ -172,6 +173,9 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
   const [creditToApplyMasked, setCreditToApplyMasked] = useState('')
   const [pricing, setPricing] = useState<ContractPricing>(DEFAULT_PRICING)
   const [motivoAjuste, setMotivoAjuste] = useState(initialData?.pricing_override_reason || '')
+  // Fidelidade (tempo de casa) — só para contratos novos.
+  const [loyaltyPercent, setLoyaltyPercent] = useState(0)
+  const [tierBaseValue, setTierBaseValue] = useState(initialData?.valor || 0)
 
   // Tabs + inline validation
   const [activeTab, setActiveTab] = useState<ContractTab>('plano')
@@ -263,6 +267,26 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
     }
     fetchPricing()
 
+    async function fetchLoyalty() {
+      if (isEdit || !alunoId) return // fidelidade só entra em contratos novos
+      try {
+        const supabase = createClient()
+        const { data } = await supabase
+          .from('contratos')
+          .select('data_inicio')
+          .eq('aluno_id', alunoId)
+          .order('data_inicio', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        if (data?.data_inicio) {
+          setLoyaltyPercent(loyaltyDiscountPercent(data.data_inicio, new Date()))
+        }
+      } catch (error) {
+        console.error('Error fetching loyalty tenure:', error)
+      }
+    }
+    fetchLoyalty()
+
     if (initialData?.livro_atual) {
       const isEvolve = initialData.livro_atual.toLowerCase().includes('evolve')
       const isESL = initialData.livro_atual.toLowerCase().includes('esl brains')
@@ -323,7 +347,10 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         
         setAulasTotais(targetLessons.toString())
         setBonusAulas(tipoContrato === 'semestral' ? specs.bonusLessons : 0)
-        const calculatedBaseValue = tipoContrato === 'ad-hoc' ? targetLessons * pricing.avulsa : specs.totalValue
+        const tierBase = tipoContrato === 'ad-hoc' ? targetLessons * pricing.avulsa : specs.totalValue
+        // Fidelidade aplicada sobre o preço do tier (antes do desconto manual).
+        const calculatedBaseValue = applyLoyaltyDiscount(tierBase, loyaltyPercent)
+        setTierBaseValue(tierBase)
         setBaseValue(calculatedBaseValue)
         setIsCrossSemester(specs.isCrossSemester)
 
@@ -333,7 +360,7 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
         console.error('Calculation error:', e)
       }
     }
-  }, [customHolidays, dataFim, dataInicio, diasSelecionados, descontoPercentual, descontoValor, planoId, tipoContrato, pricing])
+  }, [customHolidays, dataFim, dataInicio, diasSelecionados, descontoPercentual, descontoValor, planoId, tipoContrato, pricing, loyaltyPercent])
 
   // Cross-feeding Logic
   const handleDescontoValorChange = (val: string) => {
@@ -712,6 +739,11 @@ export default function ContratoForm({ alunoId, defaultNivel, initialData, onSuc
                   ? `Base por aula x ${aulasTotais} aulas`
                   : `Pacote ${tipoContrato} · ${aulasTotais} aulas`}
               </p>
+              {loyaltyPercent > 0 ? (
+                <p className="pl-1 text-[11px] font-black uppercase tracking-widest text-emerald-600">
+                  Fidelidade −{loyaltyPercent}%: de {formatCurrency(tierBaseValue)} por {formatCurrency(baseValue)}
+                </p>
+              ) : null}
             </div>
 
             <div className="space-y-3">

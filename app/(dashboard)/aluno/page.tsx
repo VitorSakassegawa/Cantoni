@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import CopiarPixBtn from '@/components/dashboard/CopiarPixBtn'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
+import LoyaltyCard from '@/components/dashboard/LoyaltyCard'
 import { buildStudentNotifications, getDaysRemaining, type FeedItem } from '@/lib/insights'
 import { getMercadoPagoStatusCopy, withEffectivePaymentStatus } from '@/lib/payments'
 import { getStreakSummary } from '@/lib/streak-utils'
@@ -230,6 +231,8 @@ export default async function AlunoDashboard() {
           </Link>
         </div>
       </div>
+
+      <LoyaltyCard alunoId={user.id} />
 
       {priorityCards.length > 0 ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
