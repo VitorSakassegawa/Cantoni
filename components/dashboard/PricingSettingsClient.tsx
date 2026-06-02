@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge'
 import { DollarSign, TrendingUp, History, Save, Loader2 } from 'lucide-react'
 import { formatCurrency } from '@/lib/utils'
 import { applyPercentToPricing, type ContractPricing } from '@/lib/pricing'
+import { DURATION_SPECS } from '@/lib/contract-durations'
 
 type Adjustment = {
   id: number
@@ -57,6 +58,21 @@ export default function PricingSettingsClient({
   const parsedPercent = Number(percent.replace(',', '.'))
   const ipcaPreview =
     Number.isFinite(parsedPercent) && parsedPercent > 0 ? applyPercentToPricing(prices, parsedPercent) : null
+
+  // Transparência: preço por aula do pacote e quanto está abaixo do avulso.
+  function perClassMeta(packagePrice: number | undefined, lessons: number): string | null {
+    const avulsa = prices.avulsa
+    if (!packagePrice || packagePrice <= 0 || !lessons || !avulsa) return null
+    const perClass = packagePrice / lessons
+    const diff = (1 - perClass / avulsa) * 100
+    const label =
+      diff >= 0.5
+        ? `${diff.toFixed(0)}% abaixo do avulso`
+        : diff <= -0.5
+          ? `${Math.abs(diff).toFixed(0)}% acima do avulso`
+          : 'igual ao avulso'
+    return `${formatCurrency(perClass)}/aula · ${label}`
+  }
 
   function setPrice(key: NumericPriceKey, value: string) {
     const n = Number(value.replace(',', '.'))
@@ -174,6 +190,13 @@ export default function PricingSettingsClient({
                   />
                 </div>
                 <p className="text-[11px] font-medium text-slate-400">{field.hint}</p>
+                {field.key === 'avulsa' ? (
+                  <p className="text-[11px] font-bold text-slate-400">Referência (preço por aula)</p>
+                ) : (
+                  <p className="text-[11px] font-bold text-blue-500">
+                    {perClassMeta(prices[field.key], field.key === 'semestral1x' ? 20 : 40)}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -250,6 +273,12 @@ export default function PricingSettingsClient({
                           className="h-12 pl-10 rounded-2xl bg-slate-50 border-slate-100 font-black text-slate-900"
                         />
                       </div>
+                      <p className="pl-1 text-[11px] font-bold text-blue-500">
+                        {perClassMeta(
+                          val,
+                          freq === 1 ? DURATION_SPECS[tier.key].lessons1x : DURATION_SPECS[tier.key].lessons2x
+                        )}
+                      </p>
                     </div>
                   )
                 })}
