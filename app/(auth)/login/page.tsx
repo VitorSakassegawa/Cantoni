@@ -159,10 +159,11 @@ export default function LoginPage() {
               ) : (
                 <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-500">
-                    Primeiro acesso
+                    Como funciona
                   </p>
                   <p className="mt-1 text-sm text-slate-600">
-                    Use o link enviado ao seu e-mail para definir sua senha inicial.
+                    Enviaremos um link seguro para o seu e-mail. Abra-o para definir uma nova senha —
+                    vale tanto para o primeiro acesso quanto para redefinições.
                   </p>
                 </div>
               )}
