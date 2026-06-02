@@ -49,18 +49,25 @@ const AUDIO_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tt
 const AUDIO_FALLBACK = process.env.GEMINI_TTS_FALLBACK_MODEL || 'gemini-2.5-pro-preview-tts'
 const AUDIO_VOICE = process.env.GEMINI_TTS_VOICE || 'Kore'
 
+const TEXT_GENERATION_TIMEOUT_MS = Number(process.env.GEMINI_TEXT_TIMEOUT_MS || 60000)
+
 export async function generateAIContent(
-  prompt: string, 
+  prompt: string,
   modelName: string = PRIMARY_MODEL,
   responseMimeType: string = 'text/plain'
 ) {
   try {
     const genAI = getGenAI()
-    const model = genAI.getGenerativeModel({ 
+    const model = genAI.getGenerativeModel({
       model: modelName,
       generationConfig: { responseMimeType }
     })
-    const result = await model.generateContent(prompt)
+    // Bound the call so a hung request can't block a whole import batch; on
+    // timeout we fall through to the fallback model below.
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), TEXT_GENERATION_TIMEOUT_MS)
+    )
+    const result = await Promise.race([model.generateContent(prompt), timeoutPromise])
     const response = await result.response
     return response.text()
   } catch (error: unknown) {
@@ -153,6 +160,21 @@ function normalizeHomeworkValue(value?: string | null) {
   }
 
   return trimmedValue
+}
+
+// The model is asked for YYYY-MM-DD, but it can hallucinate prose or a bad
+// date. Only accept a real calendar date so it can't break the date column.
+function normalizeDueDate(value?: string | null) {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value.trim())) {
+    return null
+  }
+  const trimmed = value.trim()
+  const parsed = new Date(`${trimmed}T12:00:00`)
+  if (Number.isNaN(parsed.getTime())) {
+    return null
+  }
+  // Guard against things like 2026-13-40 that regex passes but Date rolls over.
+  return parsed.toISOString().slice(0, 10) === trimmed ? trimmed : null
 }
 
 export async function generateLessonAnalysisV2(notes: string, studentInfo: LessonAnalysisStudentInfo) {
@@ -260,7 +282,7 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: Lesso
     summary_pt: finalizeLessonSummary(parsed?.summary_pt || '', studentInfo, 'pt'),
     summary_en: finalizeLessonSummary(parsed?.summary_en || '', studentInfo, 'en'),
     homework: normalizeHomeworkValue(parsed?.homework),
-    due_date: parsed?.due_date || null,
+    due_date: normalizeDueDate(parsed?.due_date),
   }
 }
 

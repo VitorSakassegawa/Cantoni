@@ -172,6 +172,11 @@ export async function runMeetTranscriptImport({
         vocabulary_json: Array.isArray(analysis.vocabulary) ? analysis.vocabulary : null,
         homework: nextHomework,
         homework_due_date: analysis.due_date || lesson.homework_due_date || null,
+        // A transcript is proof the class happened — reconcile the status so
+        // completed-lesson metrics and the student view stay in sync. The query
+        // only selects agendada/confirmada/dada, so this never overrides a
+        // cancelled/finalizado lesson.
+        status: 'dada',
       }
 
       const { error: updateError } = await supabase.from('aulas').update(updatePayload).eq('id', lesson.id)

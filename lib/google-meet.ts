@@ -73,8 +73,12 @@ export function extractMeetingCodeFromLink(meetLink?: string | null) {
 }
 
 function buildConferenceFilter(meetingCode: string, scheduledAt: Date) {
-  const startWindow = new Date(scheduledAt.getTime() - 12 * 60 * 60 * 1000).toISOString()
-  const endWindow = new Date(scheduledAt.getTime() + 36 * 60 * 60 * 1000).toISOString()
+  // Weekly 1:1 lessons reuse the same Meet link, so the meeting_code repeats.
+  // A tight window around the scheduled time avoids matching a different day's
+  // session (e.g. a 2x/week student with classes on consecutive days), while
+  // still tolerating a late start or timezone offset.
+  const startWindow = new Date(scheduledAt.getTime() - 6 * 60 * 60 * 1000).toISOString()
+  const endWindow = new Date(scheduledAt.getTime() + 6 * 60 * 60 * 1000).toISOString()
 
   return `space.meeting_code = "${meetingCode}" AND start_time >= "${startWindow}" AND start_time <= "${endWindow}"`
 }
