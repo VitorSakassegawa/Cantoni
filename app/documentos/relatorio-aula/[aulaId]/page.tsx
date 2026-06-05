@@ -7,6 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import DocumentShell from '@/components/documents/DocumentShell'
 import { createClient } from '@/lib/supabase/server'
+import { stripTeacherOnlySections } from '@/lib/lesson-summary-filter'
 import type { VocabularyEntry } from '@/lib/dashboard-types'
 
 function formatLessonDate(value: string | null) {
@@ -110,8 +111,11 @@ export default async function LessonReportPage({
   if (!isProfessor && ownerId !== user.id) redirect('/aluno')
 
   const studentName = contrato?.profiles?.full_name || 'Aluno(a)'
-  const summaryPt = aula.ai_summary_pt as string | null
-  const summaryEn = aula.ai_summary_en as string | null
+  // Students don't see the corrections / error-pattern sections — teacher-only.
+  const rawPt = aula.ai_summary_pt as string | null
+  const rawEn = aula.ai_summary_en as string | null
+  const summaryPt = isProfessor ? rawPt : rawPt ? stripTeacherOnlySections(rawPt) : rawPt
+  const summaryEn = isProfessor ? rawEn : rawEn ? stripTeacherOnlySections(rawEn) : rawEn
   const vocabulary = (aula.vocabulary_json ?? []) as VocabularyEntry[]
   const lessonDate = formatLessonDate(aula.data_hora as string | null)
   const hasSummary = Boolean(summaryPt || summaryEn)
