@@ -37,7 +37,7 @@ export default async function EnrollmentDeclarationPage({
         </section>
 
         <section className="rounded-[1.5rem] bg-slate-50 p-6">
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emitente</p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Emitente</p>
           <p className="mt-2 text-lg font-black">{LEGAL_TEACHER_NAME}</p>
           <p className="text-sm text-slate-600">CPF: {context.teacher?.cpf || 'não informado'}</p>
           <p className="text-sm text-slate-600">E-mail: {context.teacher?.email || 'não informado'}</p>
@@ -45,18 +45,18 @@ export default async function EnrollmentDeclarationPage({
 
         <footer className="space-y-6 border-t border-slate-200 pt-10">
           <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante institucional</p>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Comprovante institucional</p>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Documento</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Documento</p>
                 <p className="mt-2 text-sm font-bold">Declaração de Matrícula</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato vinculado</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Contrato vinculado</p>
                 <p className="mt-2 text-sm font-bold">#{context.contract.id}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Emissão</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Emissão</p>
                 <p className="mt-2 text-sm font-bold">{declaration.issueDate}</p>
               </div>
             </div>

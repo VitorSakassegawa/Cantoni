@@ -49,7 +49,7 @@ export default function DesktopDashboardNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname()
 
   return (
-    <nav className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
+    <nav aria-label="Navegação principal" className="flex-1 space-y-2 overflow-y-auto px-4 py-4">
       {items.map((item) => {
         const Icon = iconMap[item.icon as keyof typeof iconMap] || LayoutDashboard
         const isActive = normalizePath(pathname, item.href)

@@ -8,7 +8,7 @@ import { formatDateTime } from '@/lib/utils'
 
 import type { StatusAula } from '@/lib/types'
 import type { TimelineAula } from '@/lib/dashboard-types'
-import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp, NotebookText } from 'lucide-react'
+import { Video, RotateCcw, X, AlertCircle, Settings2, Upload, FileCheck, ExternalLink, Paperclip, Clock, ChevronDown, ChevronUp, NotebookText, FileText } from 'lucide-react'
 
 import ManageAulaModal from './ManageAulaModal'
 import RescheduleCalendar from './RescheduleCalendar'
@@ -372,13 +372,24 @@ export default function AulaRow({
               )}
               
               {(lesson.ai_summary_pt || lesson.ai_summary_en) && (
-                <button 
-                  type="button"
-                  onClick={() => setShowAIModal(true)}
-                  className="flex items-center gap-1.5 text-[11px] text-amber-600 hover:text-amber-700 font-black uppercase tracking-widest bg-amber-50/50 px-2 py-1 rounded-md transition-all border border-amber-100/50"
-                >
-                  <Sparkles className="w-3 h-3" /> Resumo da IA
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowAIModal(true)}
+                    className="flex items-center gap-1.5 text-[11px] text-amber-600 hover:text-amber-700 font-black uppercase tracking-widest bg-amber-50/50 px-2 py-1 rounded-md transition-all border border-amber-100/50"
+                  >
+                    <Sparkles className="w-3 h-3" /> Resumo da IA
+                  </button>
+                  <a
+                    href={`/documentos/relatorio-aula/${aula.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-800 font-black uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-md transition-all border border-slate-100"
+                    title="Abrir relatório imprimível (PDF)"
+                  >
+                    <FileText className="w-3 h-3" /> Relatório PDF
+                  </a>
+                </>
               )}
 
               {hasLessonDetails && (

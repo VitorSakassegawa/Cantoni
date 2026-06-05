@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -39,6 +41,12 @@ import type {
 } from '@/lib/dashboard-types'
 
 type PlacementStep = 'intro' | 'auto-eval' | 'quiz' | 'result'
+
+const SKILL_LABELS: Record<string, string> = {
+  grammar: 'Gramática',
+  reading: 'Leitura',
+  listening: 'Listening',
+}
 
 const LEVEL_OPTIONS: Array<{ level: PlacementLevel; title: string; description: string }> = [
   { level: 'A1', title: 'Iniciante (A1)', description: 'Entendo frases simples e consigo me apresentar.' },
@@ -735,17 +743,50 @@ export default function LevelTestPage() {
               <p className="text-sm font-bold text-slate-400 uppercase tracking-tight">
                 {result?.suggestedNivel || 'Processando'}
               </p>
+              {result?.promoted && (
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-black uppercase tracking-widest text-emerald-600">
+                  <ArrowRight className="h-3 w-3 -rotate-45" />
+                  Promovido de {result.attemptedLevel}
+                </span>
+              )}
             </div>
+
+            {result?.skillBreakdown && result.skillBreakdown.length > 0 && (
+              <div className="space-y-3 rounded-3xl border border-slate-100 bg-white p-6 text-left">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Desempenho por habilidade</p>
+                {result.skillBreakdown.map((skill) => (
+                  <div key={skill.module} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                      <span>{SKILL_LABELS[skill.module] || skill.module}</span>
+                      <span className="text-slate-400">
+                        {skill.score}/{skill.total} · {skill.estimatedLevel}
+                      </span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                      <div
+                        className="h-full rounded-full bg-indigo-500 transition-all"
+                        style={{ width: `${Math.round(skill.ratio * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="bg-slate-50 p-6 rounded-3xl border border-slate-100 text-left space-y-4">
               <div className="flex items-center gap-3 text-indigo-600">
                 <Sparkles className="w-4 h-4" />
                 <p className="text-xs font-black uppercase tracking-widest">Validação técnica</p>
               </div>
-              <p className="text-[11px] text-slate-500 font-medium leading-relaxed whitespace-pre-wrap">
-                {result?.insights ||
-                  `Diagnóstico concluído para o nível ${result?.suggestedLevel}. Sua jornada foi calibrada com sucesso.`}
-              </p>
+              {result?.insights ? (
+                <div className="prose prose-sm max-w-none text-xs leading-relaxed text-slate-600 [&_strong]:text-slate-800 [&_ul]:my-1 [&_ul]:pl-4 [&_li]:list-disc">
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.insights}</ReactMarkdown>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                  Diagnóstico concluído para o nível {result?.suggestedLevel}. Sua jornada foi calibrada com sucesso.
+                </p>
+              )}
             </div>
 
             <div className="grid grid-cols-1 gap-3 pt-8 border-t border-slate-100 mt-8">

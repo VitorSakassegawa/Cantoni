@@ -261,9 +261,26 @@ textarea {
   .glass-card,
   .glass-panel,
   .animate-slide-up,
-  .animate-fade-in {
+  .animate-fade-in,
+  .animate-xp,
+  [class*="animate-"] {
     animation: none !important;
     transition: none !important;
+  }
+
+  /* Neutralize hover/active scale transforms used across CTAs without
+     killing layout transforms that some components rely on. */
+  .hover\:scale-105:hover,
+  .hover\:scale-110:hover,
+  .hover\:scale-\[1\.02\]:hover,
+  .active\:scale-95:active,
+  .active\:scale-98:active {
     transform: none !important;
+  }
+
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
   }
 }

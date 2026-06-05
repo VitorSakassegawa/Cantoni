@@ -2,6 +2,7 @@ import crypto from 'node:crypto'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 import { requireProfessor } from '@/lib/auth'
+import { secureCompareSecret } from '@/lib/auth-security'
 import { getEnv } from '@/lib/env'
 import { getGoogleAuth } from '@/lib/google-calendar'
 
@@ -11,7 +12,7 @@ export async function GET(request: Request) {
   const requestUrl = new URL(request.url)
   const providedSecret = requestUrl.searchParams.get('setup')
 
-  if (isProduction && (!env.GOOGLE_OAUTH_SETUP_SECRET || providedSecret !== env.GOOGLE_OAUTH_SETUP_SECRET)) {
+  if (isProduction && (!env.GOOGLE_OAUTH_SETUP_SECRET || !secureCompareSecret(providedSecret, env.GOOGLE_OAUTH_SETUP_SECRET))) {
     return NextResponse.json(
       { error: 'Google OAuth setup route is locked in production' },
       { status: 403 }

@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import {
   BookOpen,
@@ -47,9 +48,16 @@ function normalizePath(pathname: string, href: string) {
 
 export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname()
+  const activeRef = useRef<HTMLAnchorElement>(null)
+
+  // Keep the current destination visible — the strip overflows horizontally
+  // and the active chip can otherwise be scrolled off-screen.
+  useEffect(() => {
+    activeRef.current?.scrollIntoView({ block: 'nearest', inline: 'center' })
+  }, [pathname])
 
   return (
-    <div className="relative -mx-1 mt-4">
+    <nav aria-label="Navegação principal" className="relative -mx-1 mt-4">
       <div className="flex max-w-full snap-x gap-3 overflow-x-auto px-1 pb-1">
       {items.map((item) => {
         const Icon = iconMap[item.icon as keyof typeof iconMap] || LayoutDashboard
@@ -59,6 +67,7 @@ export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
           <Link
             key={item.href}
             href={item.href}
+            ref={isActive ? activeRef : undefined}
             aria-current={isActive ? 'page' : undefined}
             className={`inline-flex shrink-0 snap-start items-center gap-2 rounded-2xl border px-4 py-2.5 text-xs font-black uppercase tracking-widest shadow-sm transition-all ${
               isActive
@@ -77,6 +86,6 @@ export default function MobileDashboardNav({ items }: { items: NavItem[] }) {
         className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent"
         aria-hidden="true"
       />
-    </div>
+    </nav>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,7 +18,17 @@ interface Flashcard {
   example?: string
 }
 
+// SM-2 quality scale (0–5). We expose four honest outcomes instead of a
+// 1–5 row where the two lowest buttons behaved identically.
+const REVIEW_OPTIONS = [
+  { quality: 1, label: 'Errei', hint: 'Não lembrei', className: 'bg-rose-500 shadow-rose-500/20' },
+  { quality: 3, label: 'Difícil', hint: 'Lembrei com esforço', className: 'bg-amber-500 shadow-amber-500/20' },
+  { quality: 4, label: 'Bom', hint: 'Lembrei', className: 'bg-blue-500 shadow-blue-500/20' },
+  { quality: 5, label: 'Fácil', hint: 'Dominado', className: 'bg-emerald-500 shadow-emerald-500/20' },
+] as const
+
 export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
+  const router = useRouter()
   const [currentIdx, setCurrentIdx] = useState(0)
   const [isFlipped, setIsFlipped] = useState(false)
   const [completed, setCompleted] = useState(false)
@@ -38,10 +49,10 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
           </p>
         </div>
         <Button
-          onClick={() => window.location.reload()}
+          onClick={() => router.refresh()}
           className="rounded-2xl bg-blue-600 px-8 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20"
         >
-          RECARREGAR
+          Revisar de novo
         </Button>
       </div>
     )
@@ -110,8 +121,17 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
       </div>
 
       <div
-        className="relative h-80 w-full cursor-pointer perspective-1000 group"
+        role="button"
+        tabIndex={0}
+        aria-label={isFlipped ? 'Carta virada, mostrando tradução' : 'Clique ou pressione Enter para virar a carta'}
+        className="relative h-80 w-full cursor-pointer perspective-1000 group rounded-[2rem] outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
         onClick={() => !isFlipped && setIsFlipped(true)}
+        onKeyDown={(e) => {
+          if ((e.key === 'Enter' || e.key === ' ') && !isFlipped) {
+            e.preventDefault()
+            setIsFlipped(true)
+          }
+        }}
       >
         {xpFlash ? (
           <div
@@ -181,29 +201,24 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
         <p className="mb-6 text-center text-xs font-black uppercase tracking-widest text-slate-400">
           Qual foi o nível de dificuldade?
         </p>
-        <div className="grid grid-cols-5 gap-3">
-          {[1, 2, 3, 4, 5].map((q) => (
+        <div className="grid grid-cols-4 gap-3">
+          {REVIEW_OPTIONS.map((opt) => (
             <button
-              key={q}
-              onClick={() => void handleReview(q)}
+              key={opt.quality}
+              onClick={() => void handleReview(opt.quality)}
               disabled={loading}
+              aria-label={`${opt.label} — ${opt.hint}`}
+              title={opt.hint}
               className={`
-                flex h-14 items-center justify-center rounded-2xl text-lg font-black transition-all
-                ${q === 5 ? 'bg-emerald-500 text-white shadow-lg shadow-emerald-500/20 hover:scale-110' :
-                  q === 4 ? 'bg-blue-500 text-white shadow-lg shadow-blue-500/20 hover:scale-110' :
-                  q === 3 ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:scale-110' :
-                  q === 2 ? 'bg-amber-500 text-white shadow-lg shadow-amber-500/20 hover:scale-110' :
-                  'bg-rose-500 text-white shadow-lg shadow-rose-500/20 hover:scale-110'}
+                flex h-16 flex-col items-center justify-center gap-0.5 rounded-2xl text-white shadow-lg transition-all hover:scale-105
+                ${opt.className}
                 ${loading ? 'opacity-50 grayscale' : ''}
               `}
             >
-              {q}
+              <span className="text-sm font-black uppercase tracking-wide">{opt.label}</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider opacity-80">{opt.hint}</span>
             </button>
           ))}
-        </div>
-        <div className="mt-4 flex justify-between px-2 text-[11px] font-black uppercase tracking-widest text-slate-500">
-          <span>ERREI COMPLETAMENTE</span>
-          <span>DOMINADO</span>
         </div>
       </div>
 

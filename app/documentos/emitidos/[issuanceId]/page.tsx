@@ -95,7 +95,7 @@ export default async function IssuedDocumentPage({
             <div className="flex flex-col items-center gap-4">
               <Image src="/logo-cantoni.svg" alt="Cantoni English School" width={160} height={64} className="h-16 w-auto object-contain" />
               <div
-                className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+                className={`rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${statusTone}`}
               >
                 {statusLabel}
               </div>
@@ -115,14 +115,14 @@ export default async function IssuedDocumentPage({
           <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Comprovante de emissão
                 </p>
                 <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div
-                  className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+                  className={`rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${statusTone}`}
                 >
                   {statusLabel}
                 </div>
@@ -131,25 +131,25 @@ export default async function IssuedDocumentPage({
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Versão
                 </p>
                 <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Status
                 </p>
                 <p className="mt-2 text-sm font-bold">{statusLabel}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Número de emissão
                 </p>
                 <p className="mt-2 text-sm font-bold">{issuanceCode}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Hash de integridade
                 </p>
                 <p className="mt-2 break-all font-mono text-xs text-slate-700">
@@ -161,7 +161,7 @@ export default async function IssuedDocumentPage({
 
           <section className="document-section grid gap-6 md:grid-cols-2">
             <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                 Contratante
               </p>
               <p className="mt-3 text-lg font-black">{payload.student?.fullName}</p>
@@ -170,7 +170,7 @@ export default async function IssuedDocumentPage({
               <p className="text-sm text-slate-600">Telefone: {payload.student?.phone}</p>
             </div>
             <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                 Contratado
               </p>
               <p className="mt-3 text-lg font-black">{payload.teacher?.fullName}</p>
@@ -182,7 +182,7 @@ export default async function IssuedDocumentPage({
 
           <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="mb-5">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                 Quadro-resumo do contrato
               </p>
               <p className="mt-2 text-sm text-slate-600">
@@ -192,7 +192,7 @@ export default async function IssuedDocumentPage({
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Período
                 </p>
                 <p className="mt-2 text-sm font-bold">
@@ -201,13 +201,13 @@ export default async function IssuedDocumentPage({
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Aulas
                 </p>
                 <p className="mt-2 text-sm font-bold">{payload.summary?.lessons} contratadas</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Valor global
                 </p>
                 <p className="mt-2 text-sm font-bold">
@@ -215,7 +215,7 @@ export default async function IssuedDocumentPage({
                 </p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Forma
                 </p>
                 <p className="mt-2 text-sm font-bold">
@@ -284,7 +284,7 @@ export default async function IssuedDocumentPage({
 
           {issuance.external_signature_notes ? (
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 print:hidden">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
                 Observações da assinatura externa
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-700">
@@ -303,7 +303,7 @@ export default async function IssuedDocumentPage({
 
           {issuance.status === 'accepted' ? (
             <div className="document-card rounded-[1.5rem] border border-emerald-100 bg-emerald-50 p-6 print:hidden">
-              <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+              <p className="text-xs font-black uppercase tracking-widest text-emerald-700">
                 Aceite registrado
               </p>
               <p className="mt-2 text-sm font-medium text-emerald-900/80">
@@ -311,7 +311,7 @@ export default async function IssuedDocumentPage({
               </p>
               <div className="mt-4 grid gap-3 md:grid-cols-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                  <p className="text-xs font-black uppercase tracking-widest text-emerald-700">
                     Versão aceita
                   </p>
                   <p className="mt-1 text-sm font-bold text-emerald-900">
@@ -319,7 +319,7 @@ export default async function IssuedDocumentPage({
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                  <p className="text-xs font-black uppercase tracking-widest text-emerald-700">
                     IP
                   </p>
                   <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">
@@ -327,7 +327,7 @@ export default async function IssuedDocumentPage({
                   </p>
                 </div>
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-emerald-700">
+                  <p className="text-xs font-black uppercase tracking-widest text-emerald-700">
                     User-Agent
                   </p>
                   <p className="mt-1 break-all text-xs font-medium text-emerald-900/80">
@@ -349,7 +349,7 @@ export default async function IssuedDocumentPage({
             </p>
             <div className="document-signature grid gap-8 md:grid-cols-2">
               <div className="space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Contratante
                 </p>
                 <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
@@ -360,7 +360,7 @@ export default async function IssuedDocumentPage({
                 </p>
               </div>
               <div className="space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Contratado
                 </p>
                 <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
@@ -380,7 +380,7 @@ export default async function IssuedDocumentPage({
               <Image src="/logo-cantoni.svg" alt="Cantoni English School" width={160} height={64} className="h-16 w-auto object-contain" />
             </div>
             <div
-              className={`mx-auto inline-flex rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+              className={`mx-auto inline-flex rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${statusTone}`}
             >
               {statusLabel}
             </div>
@@ -398,32 +398,32 @@ export default async function IssuedDocumentPage({
           <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Comprovante de emissão
                 </p>
                 <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
               </div>
               <div
-                className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+                className={`rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${statusTone}`}
               >
                 {statusLabel}
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Contrato</p>
                 <p className="mt-2 text-sm font-bold">#{payload.contract?.id}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Data efetiva</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Data efetiva</p>
                 <p className="mt-2 text-sm font-bold">{formatDateOnly(payload.cancellation?.effectiveDate)}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Motivo</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Motivo</p>
                 <p className="mt-2 text-sm font-bold">{payload.cancellation?.reasonLabel}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Hash</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Hash</p>
                 <p className="mt-2 break-all font-mono text-xs text-slate-700">{issuance.content_hash || 'n/a'}</p>
               </div>
             </div>
@@ -431,14 +431,14 @@ export default async function IssuedDocumentPage({
 
           <section className="grid gap-6 md:grid-cols-2">
             <div className="rounded-[1.5rem] border border-slate-200 p-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aluno</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Aluno</p>
               <p className="mt-3 text-lg font-black">{payload.student?.fullName}</p>
               <p className="mt-2 text-sm text-slate-600">CPF: {payload.student?.cpf}</p>
               <p className="text-sm text-slate-600">E-mail: {payload.student?.email}</p>
               <p className="text-sm text-slate-600">Telefone: {payload.student?.phone}</p>
             </div>
             <div className="rounded-[1.5rem] border border-slate-200 p-6">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Escola / responsável</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Escola / responsável</p>
               <p className="mt-3 text-lg font-black">{payload.teacher?.fullName}</p>
               <p className="mt-2 text-sm text-slate-600">CPF: {payload.teacher?.cpf}</p>
               <p className="text-sm text-slate-600">E-mail: {payload.teacher?.email}</p>
@@ -449,19 +449,19 @@ export default async function IssuedDocumentPage({
           <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Pago</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Pago</p>
                 <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.cancellation?.paidAmount || 0))}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Consumido</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Consumido</p>
                 <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.cancellation?.consumedValue || 0))}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aberto</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Aberto</p>
                 <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.cancellation?.outstandingValue || 0))}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Crédito</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Crédito</p>
                 <p className="mt-2 text-sm font-bold">{formatCurrency(Number(payload.cancellation?.creditValue || 0))}</p>
               </div>
             </div>
@@ -512,14 +512,14 @@ export default async function IssuedDocumentPage({
           <section className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
             <div className="mb-5 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Comprovante de emissão
                 </p>
                 <p className="mt-1 text-lg font-black text-slate-900">{issuanceCode}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div
-                  className={`rounded-full border px-4 py-2 text-[10px] font-black uppercase tracking-[0.2em] ${statusTone}`}
+                  className={`rounded-full border px-4 py-2 text-xs font-black uppercase tracking-[0.2em] ${statusTone}`}
                 >
                   {statusLabel}
                 </div>
@@ -528,25 +528,25 @@ export default async function IssuedDocumentPage({
             </div>
             <div className="grid gap-4 md:grid-cols-4">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Versão
                 </p>
                 <p className="mt-2 text-sm font-bold">v{issuance.version}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Status
                 </p>
                 <p className="mt-2 text-sm font-bold">{statusLabel}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Número de emissão
                 </p>
                 <p className="mt-2 text-sm font-bold">{issuanceCode}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                   Hash de integridade
                 </p>
                 <p className="mt-2 break-all font-mono text-xs text-slate-700">
@@ -561,7 +561,7 @@ export default async function IssuedDocumentPage({
             <p className="text-base leading-8 text-slate-600">{payload.complementary}</p>
           </section>
           <section className="rounded-[1.5rem] bg-slate-50 p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">
               Emitente
             </p>
             <p className="mt-2 text-lg font-black">{payload.teacher?.fullName}</p>
@@ -577,7 +577,7 @@ export default async function IssuedDocumentPage({
           ) : null}
           {issuance.external_signature_notes ? (
             <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-5 print:hidden">
-              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">
+              <p className="text-xs font-black uppercase tracking-[0.2em] text-slate-500">
                 Observações da assinatura externa
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-700">

@@ -1,6 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
 import { createClient } from '@/lib/supabase/server'
 import { buildEncryptedCpfColumns } from '@/lib/cpf-security'
+
+const alunoUpdateSchema = z.object({
+  aluno_id: z.string().uuid(),
+  full_name: z.string().trim().min(1).max(120).optional(),
+  phone: z.string().trim().max(30).nullish(),
+  cpf: z.string().trim().max(20).nullish(),
+  birth_date: z.string().trim().max(10).nullish(),
+  nivel: z.string().trim().max(40).nullish(),
+  data_inscricao: z.string().trim().max(10).nullish(),
+})
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
@@ -18,9 +29,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Apenas professores podem editar alunos' }, { status: 403 })
   }
 
-  const { aluno_id, full_name, phone, cpf, birth_date, nivel, data_inscricao } = await request.json()
-
-  if (!aluno_id) return NextResponse.json({ error: 'ID do aluno é obrigatório' }, { status: 400 })
+  const parsed = alunoUpdateSchema.safeParse(await request.json())
+  if (!parsed.success) {
+    return NextResponse.json({ error: 'Dados inválidos' }, { status: 400 })
+  }
+  const { aluno_id, full_name, phone, cpf, birth_date, nivel, data_inscricao } = parsed.data
 
   const { error } = await supabase
     .from('profiles')

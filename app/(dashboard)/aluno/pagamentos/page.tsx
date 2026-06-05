@@ -402,7 +402,7 @@ export default async function AlunoPagamentosPage() {
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                             Parcela
                           </p>
                           <p className="text-sm font-black text-slate-900">
@@ -419,7 +419,7 @@ export default async function AlunoPagamentosPage() {
 
                       <div className="mt-4 flex items-end justify-between gap-3">
                         <div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                             Valor
                           </p>
                           <p className="text-2xl font-black tracking-tighter text-slate-900">
@@ -427,7 +427,7 @@ export default async function AlunoPagamentosPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                          <p className="text-xs font-black uppercase tracking-widest text-slate-400">
                             Vencimento
                           </p>
                           <p className="text-sm font-bold text-slate-600">

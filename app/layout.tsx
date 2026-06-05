@@ -37,7 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
         <ServiceWorkerRegister />
         {children}
-        <Toaster position="top-right" richColors closeButton />
+        <Toaster position="top-center" richColors closeButton />
       </body>
     </html>
   )
