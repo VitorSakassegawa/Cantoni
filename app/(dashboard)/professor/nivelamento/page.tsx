@@ -18,8 +18,14 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { requestNewPlacementTest } from '@/lib/actions/placement-test'
 import type { PlacementAnswerRecord } from '@/lib/dashboard-types'
-import { hasDetailedPlacementAnswers } from '@/lib/placement-test-utils'
+import { hasDetailedPlacementAnswers, summarizePlacementSkills } from '@/lib/placement-test-utils'
 import ReactMarkdown from 'react-markdown'
+
+const SKILL_LABELS: Record<string, string> = {
+  grammar: 'Gramática',
+  reading: 'Leitura',
+  listening: 'Listening',
+}
 
 interface PlacementStudent {
   id: string
@@ -260,6 +266,7 @@ export default function ProfessorNivelamentoPage() {
                     {history.map((test, index) => {
                       const detailedAnswers = test.answers ?? []
                       const hasDetailedAnswers = hasDetailedPlacementAnswers(detailedAnswers)
+                      const skillSummary = summarizePlacementSkills(detailedAnswers)
 
                       return (
                       <div key={test.id} className="relative pl-10 group">
@@ -305,6 +312,23 @@ export default function ProfessorNivelamentoPage() {
                               </ReactMarkdown>
                             </div>
                           </div>
+
+                          {/* Per-skill breakdown (computed from module-tagged answers) */}
+                          {skillSummary.length > 0 && (
+                            <div className="grid gap-3 sm:grid-cols-3">
+                              {skillSummary.map((skill) => (
+                                <div key={skill.module} className="rounded-2xl border border-slate-100 bg-white px-4 py-3 shadow-sm">
+                                  <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                                    <span>{SKILL_LABELS[skill.module] || skill.module}</span>
+                                    <span className="text-slate-400">{skill.score}/{skill.total}</span>
+                                  </div>
+                                  <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                                    <div className="h-full rounded-full bg-indigo-500" style={{ width: `${Math.round(skill.ratio * 100)}%` }} />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
 
                           {/* Detailed Q&A Breakdown */}
                           {hasDetailedAnswers && (

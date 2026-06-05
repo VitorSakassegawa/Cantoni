@@ -3,7 +3,8 @@ import { redirect } from 'next/navigation'
 import FlashcardReview from '@/components/dashboard/FlashcardReview'
 import AddFlashcardForm from '@/components/dashboard/AddFlashcardForm'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { BrainCircuit, Plus, Info } from 'lucide-react'
+import { BrainCircuit, Plus, Info, AlertTriangle } from 'lucide-react'
+import { LEECH_THRESHOLD } from '@/lib/flashcards-srs'
 
 export default async function FlashcardsPage() {
   const supabase = await createClient()
@@ -35,6 +36,17 @@ export default async function FlashcardsPage() {
     .from('flashcards')
     .select('id', { count: 'exact', head: true })
     .eq('aluno_id', user.id)
+
+  // Leeches: cards that keep being failed. Tolerant of the `lapses` column not
+  // existing yet (pre-migration) — on error we just show no leech section.
+  const { data: leechRows } = await supabase
+    .from('flashcards')
+    .select('id, word, translation, lapses')
+    .eq('aluno_id', user.id)
+    .gte('lapses', LEECH_THRESHOLD)
+    .order('lapses', { ascending: false })
+    .limit(10)
+  const leechCards = (leechRows ?? []) as Array<{ id: string; word: string; translation: string; lapses: number }>
 
   return (
     <div className="space-y-10 animate-fade-in pb-16">
@@ -115,6 +127,26 @@ export default async function FlashcardsPage() {
               <AddFlashcardForm />
             </CardContent>
           </Card>
+
+          {leechCards.length > 0 && (
+            <div className="space-y-4 rounded-[2rem] border border-amber-200 bg-amber-50 p-6">
+              <div className="flex items-center gap-2 text-amber-700">
+                <AlertTriangle className="h-4 w-4" />
+                <h4 className="text-xs font-black uppercase tracking-widest">Palavras que estão te desafiando</h4>
+              </div>
+              <p className="text-xs leading-relaxed text-amber-700/80">
+                Você errou estas palavras várias vezes. Vale revisá-las com calma ou comentar com seu professor na próxima aula.
+              </p>
+              <ul className="space-y-2">
+                {leechCards.map((card) => (
+                  <li key={card.id} className="flex items-center justify-between rounded-xl border border-amber-100 bg-white px-3 py-2">
+                    <span className="text-sm font-bold text-slate-800">{card.word}</span>
+                    <span className="text-xs text-slate-500">{card.translation}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
 
           <div className="space-y-4 rounded-[2rem] text-white shadow-xl shadow-blue-900/10 lms-gradient p-8">
             <h4 className="text-sm font-black uppercase tracking-tight">Como funciona o SRS?</h4>

@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict'
 
-import { calculateNextSRS, DEFAULT_EASE_FACTOR, MIN_EASE_FACTOR } from '../lib/flashcards-srs.ts'
+import {
+  calculateNextSRS,
+  DEFAULT_EASE_FACTOR,
+  MIN_EASE_FACTOR,
+  LEECH_THRESHOLD,
+  isLeech,
+  nextLapses,
+} from '../lib/flashcards-srs.ts'
 
 // A lapse (q < 3) resets repetitions and schedules for tomorrow.
 const lapse = calculateNextSRS(1, 30, 5, 2.5)
@@ -38,5 +45,14 @@ for (let i = 0; i < 20; i++) ef = calculateNextSRS(0, 1, 0, ef).easeFactor
 assert.equal(ef, MIN_EASE_FACTOR)
 
 assert.equal(DEFAULT_EASE_FACTOR, 2.5)
+
+// Leech tracking: lapses only increment on a lapse, and isLeech triggers at the threshold.
+assert.equal(nextLapses(2, true), 3)
+assert.equal(nextLapses(2, false), 2)
+assert.equal(nextLapses(null, true), 1)
+assert.equal(nextLapses(undefined, false), 0)
+assert.equal(isLeech(LEECH_THRESHOLD - 1), false)
+assert.equal(isLeech(LEECH_THRESHOLD), true)
+assert.equal(isLeech(null), false)
 
 console.log('flashcards-srs tests passed')

@@ -75,6 +75,47 @@ export function gradePlacementSelections(
   }
 }
 
+// ---- Resumo por habilidade (computado das respostas module-tagged) ----
+
+export type PlacementSkillSummary = {
+  module: string
+  score: number
+  total: number
+  ratio: number
+}
+
+const PLACEMENT_SKILL_ORDER = ['grammar', 'reading', 'listening']
+
+// Reconstructs the per-skill breakdown from a stored placement answers array.
+// Returns [] for legacy results whose answers were not tagged with `module`.
+export function summarizePlacementSkills(
+  answers: Array<{ module?: unknown; correct?: unknown }> | null | undefined
+): PlacementSkillSummary[] {
+  const byModule = new Map<string, { score: number; total: number }>()
+
+  for (const answer of answers || []) {
+    const moduleName = typeof answer?.module === 'string' ? answer.module : null
+    if (!moduleName) continue
+    const entry = byModule.get(moduleName) || { score: 0, total: 0 }
+    entry.total += 1
+    if (answer.correct === true) entry.score += 1
+    byModule.set(moduleName, entry)
+  }
+
+  return Array.from(byModule.entries())
+    .map(([moduleName, { score, total }]) => ({
+      module: moduleName,
+      score,
+      total,
+      ratio: total > 0 ? score / total : 0,
+    }))
+    .sort((a, b) => {
+      const ai = PLACEMENT_SKILL_ORDER.indexOf(a.module)
+      const bi = PLACEMENT_SKILL_ORDER.indexOf(b.module)
+      return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+    })
+}
+
 // ---- Validação estrutural das questões geradas pela IA (#3) ----
 
 export type ValidatedPlacementQuestion = {
