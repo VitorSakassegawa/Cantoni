@@ -220,6 +220,14 @@ textarea {
     page-break-inside: avoid;
   }
 
+  /* Keep a section heading with the content that follows it (avoid orphan
+     headings at the bottom of a page). */
+  .print-document h2,
+  .print-document h3 {
+    break-after: avoid;
+    page-break-after: avoid;
+  }
+
   .document-section + .document-section {
     margin-top: 8mm !important;
   }

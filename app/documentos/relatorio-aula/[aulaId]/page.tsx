@@ -151,7 +151,7 @@ export default async function LessonReportPage({
         )}
 
         {summaryPt && (
-          <section className="document-section space-y-3">
+          <section className="space-y-3">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Resumo da aula</h3>
             <div className="prose prose-sm max-w-none text-slate-700 prose-headings:font-black prose-headings:text-slate-900 prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-5">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryPt}</ReactMarkdown>
@@ -160,7 +160,7 @@ export default async function LessonReportPage({
         )}
 
         {summaryEn && (
-          <section className="document-section space-y-3">
+          <section className="space-y-3">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Lesson summary (EN)</h3>
             <div className="prose prose-sm max-w-none text-slate-700 prose-headings:font-black prose-headings:text-slate-900 prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-5">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>{summaryEn}</ReactMarkdown>
@@ -169,7 +169,7 @@ export default async function LessonReportPage({
         )}
 
         {vocabulary.length > 0 && (
-          <section className="document-section space-y-3">
+          <section className="space-y-3">
             <h3 className="text-xs font-black uppercase tracking-widest text-slate-400">Vocabulário da aula</h3>
             <div className="grid gap-3 sm:grid-cols-2">
               {vocabulary.map((entry, index) => (
@@ -183,7 +183,7 @@ export default async function LessonReportPage({
           </section>
         )}
 
-        <footer className="document-section border-t border-slate-200 pt-8 text-center">
+        <footer className="border-t border-slate-200 pt-8 text-center">
           <p className="text-xs font-medium uppercase tracking-[0.2em] text-slate-400">
             Cantoni English School · Relatório gerado automaticamente
           </p>
