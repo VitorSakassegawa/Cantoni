@@ -160,6 +160,7 @@ create table if not exists flashcards (
   interval integer not null default 0,
   repetitions integer not null default 0,
   ease_factor numeric(4, 2) not null default 2.5,
+  lapses integer not null default 0,
   next_review timestamptz not null default now(),
   created_at timestamptz not null default now()
 );

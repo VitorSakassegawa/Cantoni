@@ -1,6 +1,20 @@
 export const DEFAULT_EASE_FACTOR = 2.5
 export const MIN_EASE_FACTOR = 1.3
 
+// A card is flagged as a "leech" once it has lapsed this many times — it keeps
+// resetting to interval=1 and is wasting the student's time without help.
+export const LEECH_THRESHOLD = 6
+
+export function isLeech(lapses: number | null | undefined): boolean {
+  return (Number(lapses) || 0) >= LEECH_THRESHOLD
+}
+
+// Cumulative lapse counter: increments on a lapse, never decreases.
+export function nextLapses(prevLapses: number | null | undefined, lapsed: boolean): number {
+  const prev = Math.max(0, Number(prevLapses) || 0)
+  return lapsed ? prev + 1 : prev
+}
+
 export type SRSResult = {
   interval: number
   repetitions: number

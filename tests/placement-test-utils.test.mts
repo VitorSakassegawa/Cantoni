@@ -5,6 +5,7 @@ import {
   gradePlacementSelections,
   hasDetailedPlacementAnswers,
   normalizePlacementAnswers,
+  summarizePlacementSkills,
   validateGeneratedQuestions,
 } from '../lib/placement-test-utils.ts'
 
@@ -73,5 +74,25 @@ const validQuestions = validateGeneratedQuestions([
 assert.equal(validQuestions.length, 1)
 assert.equal(validQuestions[0].id, 1)
 assert.equal(validQuestions[0].correctAnswer, 1)
+
+// summarizePlacementSkills: agrupa por módulo, na ordem grammar→reading→listening
+const skills = summarizePlacementSkills([
+  { module: 'reading', correct: true },
+  { module: 'grammar', correct: true },
+  { module: 'grammar', correct: false },
+  { module: 'listening', correct: true },
+  { module: 'listening', correct: false },
+])
+assert.deepEqual(
+  skills.map((s) => s.module),
+  ['grammar', 'reading', 'listening']
+)
+assert.equal(skills[0].score, 1)
+assert.equal(skills[0].total, 2)
+assert.equal(skills[0].ratio, 0.5)
+assert.equal(skills[1].ratio, 1)
+// resultados legados (sem module) não geram breakdown
+assert.deepEqual(summarizePlacementSkills([{ correct: true }, { correct: false }]), [])
+assert.deepEqual(summarizePlacementSkills(null), [])
 
 console.log('placement-test-utils tests passed')

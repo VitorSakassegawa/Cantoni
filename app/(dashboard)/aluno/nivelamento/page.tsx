@@ -5,6 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import { evaluatePlacementEligibility } from '@/lib/placement-eligibility'
+import { summarizePlacementSkills } from '@/lib/placement-test-utils'
 import {
   ArrowLeft,
   ArrowRight,
@@ -20,11 +21,18 @@ import {
 } from 'lucide-react'
 
 type PlacementAnswerEntry = {
+  module?: string
   question?: string
   options?: string[]
   selected?: number
   correct?: boolean
   correctAnswer?: number
+}
+
+const SKILL_LABELS: Record<string, string> = {
+  grammar: 'Gramática',
+  reading: 'Leitura',
+  listening: 'Listening',
 }
 
 type PlacementHistoryEntry = {
@@ -286,6 +294,7 @@ export default async function AlunoNivelamentoPage() {
                 const answers = (test.answers as PlacementAnswerEntry[]) || []
                 const correctAnswers = answers.filter((answer) => answer.correct).length
                 const wrongAnswers = answers.filter((answer) => answer.correct === false).length
+                const skillSummary = summarizePlacementSkills(answers)
 
                 return (
                   <div key={test.id} className="rounded-[2rem] border border-slate-100 bg-white p-6 shadow-sm">
@@ -320,6 +329,27 @@ export default async function AlunoNivelamentoPage() {
                         </div>
                       )}
                     </div>
+
+                    {skillSummary.length > 0 ? (
+                      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                        {skillSummary.map((skill) => (
+                          <div key={skill.module} className="rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3">
+                            <div className="flex items-center justify-between text-xs font-bold text-slate-600">
+                              <span>{SKILL_LABELS[skill.module] || skill.module}</span>
+                              <span className="text-slate-400">
+                                {skill.score}/{skill.total}
+                              </span>
+                            </div>
+                            <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-200">
+                              <div
+                                className="h-full rounded-full bg-indigo-500"
+                                style={{ width: `${Math.round(skill.ratio * 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
 
                     {answers.length > 0 && answers[0].question ? (
                       <details className="mt-6 overflow-hidden rounded-3xl border border-slate-100 bg-slate-50/80">

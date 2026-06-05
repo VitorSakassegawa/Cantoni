@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { registerStudentActivityBestEffort } from '@/lib/streak'
 import { getXpReward } from '@/lib/gamification'
-import { calculateNextSRS } from '@/lib/flashcards-srs'
+import { calculateNextSRS, nextLapses } from '@/lib/flashcards-srs'
 
 export async function addFlashcard(word: string, translation: string, example?: string) {
   const supabase = await createClient()
@@ -55,6 +55,7 @@ export async function updateFlashcardReview(id: string, quality: number) {
       interval,
       repetitions,
       ease_factor: easeFactor,
+      lapses: nextLapses(card.lapses, lapsed),
       next_review: nextReview.toISOString()
     })
     .eq('id', id)

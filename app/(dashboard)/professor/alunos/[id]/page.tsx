@@ -46,6 +46,7 @@ import type {
   TimelineAula,
 } from '@/lib/dashboard-types'
 import { buildAttentionCandidate, buildRenewalCandidate, type FeedItem } from '@/lib/insights'
+import { LEECH_THRESHOLD } from '@/lib/flashcards-srs'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 import { resolveCpf } from '@/lib/cpf-security'
 import { formatCurrency, formatDate, formatDateOnly, formatDateTime } from '@/lib/utils'
@@ -154,6 +155,18 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
     .limit(1)
 
   const currentAvaliacao = avaliacoes?.[0]
+
+  // Flashcard leeches (cards the student keeps failing). Tolerant of the
+  // `lapses` column not existing yet (pre-migration) → just shows nothing.
+  const { data: leechRows } = await supabase
+    .from('flashcards')
+    .select('id, word, translation, lapses')
+    .eq('aluno_id', id)
+    .gte('lapses', LEECH_THRESHOLD)
+    .order('lapses', { ascending: false })
+    .limit(10)
+  const leechCards = (leechRows ?? []) as Array<{ id: string; word: string; translation: string; lapses: number }>
+
   const renewalCandidate = contrato ? buildRenewalCandidate({ ...contrato, profiles: aluno }) : null
   const attentionCandidate = contrato
     ? buildAttentionCandidate(
@@ -506,6 +519,21 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <SkillsRadar data={avaliacoes || []} />
+              {leechCards.length > 0 && (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                  <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-700">
+                    <AlertCircle className="h-3.5 w-3.5" /> Vocabulário com dificuldade recorrente
+                  </p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {leechCards.map((card) => (
+                      <span key={card.id} className="rounded-lg border border-amber-100 bg-white px-2.5 py-1 text-xs font-bold text-slate-700">
+                        {card.word}
+                        <span className="ml-1 text-amber-600">·{card.lapses}×</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div className="border-t border-slate-100 pt-6">
                 <p className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Atualizar avaliação mensal</p>
                 <SkillEvaluationForm alunoId={id} initialData={currentAvaliacao} />
