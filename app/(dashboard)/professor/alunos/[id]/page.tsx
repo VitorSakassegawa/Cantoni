@@ -31,6 +31,7 @@ import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
 import AiSkillEstimate from '@/components/dashboard/AiSkillEstimate'
+import NextLessonPrep from '@/components/dashboard/NextLessonPrep'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import ResendAccessButton from '@/components/dashboard/ResendAccessButton'
 import WhatsAppLinkButton from '@/components/dashboard/WhatsAppLinkButton'
@@ -49,6 +50,7 @@ import type {
 import { buildAttentionCandidate, buildRenewalCandidate, type FeedItem } from '@/lib/insights'
 import { LEECH_THRESHOLD } from '@/lib/flashcards-srs'
 import { averageSkillScores, hasAnySkillScore, type SkillScores } from '@/lib/lesson-skills'
+import { extractTeacherOnlySections } from '@/lib/lesson-summary-filter'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 import { resolveCpf } from '@/lib/cpf-security'
 import { formatCurrency, formatDate, formatDateOnly, formatDateTime } from '@/lib/utils'
@@ -178,6 +180,31 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
     .order('lapses', { ascending: false })
     .limit(10)
   const leechCards = (leechRows ?? []) as Array<{ id: string; word: string; translation: string; lapses: number }>
+
+  // Next-lesson prep (teacher-only): weakest skill + leech vocab + the AI's
+  // recent error notes — all from data already loaded above.
+  const SKILL_LABELS_PREP: Record<string, string> = {
+    speaking: 'Speaking',
+    listening: 'Listening',
+    reading: 'Reading',
+    writing: 'Writing',
+  }
+  let weakestSkill: { label: string; value: number } | null = null
+  for (const [key, value] of Object.entries(aiSkillScores)) {
+    if (typeof value === 'number' && (!weakestSkill || value < weakestSkill.value)) {
+      weakestSkill = { label: SKILL_LABELS_PREP[key] || key, value }
+    }
+  }
+  const leechWords = leechCards.map((c) => c.word).slice(0, 8)
+  const latestSummarized = [...lessonList]
+    .reverse()
+    .find((l) => (l as { ai_summary_pt?: string | null }).ai_summary_pt)
+  const recentErrors = extractTeacherOnlySections(
+    (latestSummarized as { ai_summary_pt?: string | null } | undefined)?.ai_summary_pt
+  )
+  const recentErrorsLabel = latestSummarized?.data_hora
+    ? new Date(latestSummarized.data_hora).toLocaleDateString('pt-BR')
+    : undefined
 
   const renewalCandidate = contrato ? buildRenewalCandidate({ ...contrato, profiles: aluno }) : null
   const attentionCandidate = contrato
@@ -549,6 +576,12 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   </div>
                 </div>
               )}
+              <NextLessonPrep
+                weakestSkill={weakestSkill}
+                leechWords={leechWords}
+                recentErrors={recentErrors}
+                recentErrorsLabel={recentErrorsLabel}
+              />
               <div className="border-t border-slate-100 pt-6">
                 <p className="mb-4 text-xs font-black uppercase tracking-widest text-slate-400">Atualizar avaliação mensal</p>
                 <SkillEvaluationForm alunoId={id} initialData={currentAvaliacao} />

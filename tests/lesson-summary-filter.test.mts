@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 
-import { stripTeacherOnlySections } from '../lib/lesson-summary-filter.ts'
+import { stripTeacherOnlySections, extractTeacherOnlySections } from '../lib/lesson-summary-filter.ts'
 
 const summary = `### 📘 Resumo da Aula
 
@@ -53,5 +53,15 @@ assert.ok(!/\n{3,}/.test(filtered), 'collapses blank gaps')
 assert.equal(stripTeacherOnlySections(''), '')
 assert.equal(stripTeacherOnlySections(null), '')
 assert.equal(stripTeacherOnlySections('No sections here, just text.'), 'No sections here, just text.')
+
+// extractTeacherOnlySections: returns ONLY the teacher sections (inverse).
+const extracted = extractTeacherOnlySections(summary)
+assert.ok(/Corre[çc][õo]es/i.test(extracted), 'extract keeps Correções heading')
+assert.ok(/he goes/.test(extracted), 'extract keeps correction content')
+assert.ok(/Terceira pessoa/.test(extracted), 'extract keeps error-pattern content')
+assert.ok(!/Objetivo da Aula/.test(extracted), 'extract drops non-teacher sections')
+assert.ok(!/Li[çc][ãa]o de Casa/.test(extracted), 'extract drops homework')
+assert.equal(extractTeacherOnlySections('No teacher sections here.'), '')
+assert.equal(extractTeacherOnlySections(null), '')
 
 console.log('lesson-summary-filter tests passed')
