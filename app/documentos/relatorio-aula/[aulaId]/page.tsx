@@ -1,11 +1,11 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import DocumentShell from '@/components/documents/DocumentShell'
-import SetPrintTitle from '@/components/documents/SetPrintTitle'
 import { createClient } from '@/lib/supabase/server'
 import type { VocabularyEntry } from '@/lib/dashboard-types'
 
@@ -42,6 +42,39 @@ function formatShortDate(value: string | null) {
     /* ignore */
   }
   return ''
+}
+
+function buildPrintTitle(studentName: string, dataHora: string | null) {
+  const shortDate = formatShortDate(dataHora)
+  return shortDate ? `CES - English Class (${shortDate} - ${studentName})` : `CES - English Class (${studentName})`
+}
+
+// Sets the page <title> server-side so the browser's "Save as PDF" uses it as
+// the default filename. RLS scopes the lookup, so an unauthorized request just
+// gets the generic fallback (no data leak).
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ aulaId: string }>
+}): Promise<Metadata> {
+  const fallback: Metadata = { title: 'Relatório de Aula - Cantoni English School' }
+  try {
+    const { aulaId } = await params
+    const id = Number(aulaId)
+    if (!Number.isFinite(id)) return fallback
+    const supabase = await createClient()
+    const { data: aula } = await supabase
+      .from('aulas')
+      .select('data_hora, contratos(profiles:aluno_id(full_name))')
+      .eq('id', id)
+      .single()
+    if (!aula) return fallback
+    const contrato = (aula.contratos ?? null) as { profiles?: { full_name?: string | null } | null } | null
+    const studentName = contrato?.profiles?.full_name || 'Aluno(a)'
+    return { title: buildPrintTitle(studentName, aula.data_hora as string | null) }
+  } catch {
+    return fallback
+  }
 }
 
 export default async function LessonReportPage({
@@ -82,10 +115,6 @@ export default async function LessonReportPage({
   const vocabulary = (aula.vocabulary_json ?? []) as VocabularyEntry[]
   const lessonDate = formatLessonDate(aula.data_hora as string | null)
   const hasSummary = Boolean(summaryPt || summaryEn)
-  const shortDate = formatShortDate(aula.data_hora as string | null)
-  const printTitle = shortDate
-    ? `CES - English Class (${shortDate} - ${studentName})`
-    : `CES - English Class (${studentName})`
 
   return (
     <DocumentShell
@@ -93,7 +122,6 @@ export default async function LessonReportPage({
       subtitle="Documento pronto para impressão e salvamento em PDF."
       backHref={isProfessor ? '/professor/aulas' : '/aluno/aulas'}
     >
-      <SetPrintTitle title={printTitle} />
       <div className="space-y-10 text-slate-900">
         <header className="document-header space-y-3 border-b border-slate-200 pb-8 text-center">
           <div className="flex justify-center">
