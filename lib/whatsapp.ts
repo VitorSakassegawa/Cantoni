@@ -1,3 +1,5 @@
+import type { EscalationTier } from '@/lib/payment-escalation'
+
 function normalizeDigits(value: string) {
   return value.replace(/\D/g, '')
 }
@@ -82,5 +84,56 @@ export function buildPaymentWhatsAppMessage({
     `Passando para sinalizar que a ${installmentLabel} está disponível no portal no valor de ${amount}, com vencimento em ${dueDate}.`,
     '',
     `Você pode acompanhar os detalhes em: ${getPortalUrl('/aluno/pagamentos')}`,
+  ].join('\n')
+}
+
+// Tiered overdue-payment reminders (professor-reviewed before sending). Tone
+// escalates with how late the payment is, while staying respectful.
+export function buildPaymentReminderMessage({
+  tier,
+  studentName,
+  amount,
+  dueDate,
+  daysOverdue,
+}: {
+  tier: EscalationTier
+  studentName: string
+  amount: string
+  dueDate: string
+  daysOverdue: number
+}) {
+  const intro = `Olá, ${studentName}! Aqui é a equipe da Cantoni English School.`
+  const link = `Você pode regularizar pelo portal: ${getPortalUrl('/aluno/pagamentos')}`
+
+  if (tier === 'suave') {
+    return [
+      intro,
+      '',
+      `Passando para lembrar, com carinho, que a mensalidade de ${amount} (vencida em ${dueDate}) está em aberto. Se já tiver pago, é só desconsiderar. 🙂`,
+      '',
+      link,
+    ].join('\n')
+  }
+
+  if (tier === 'firme') {
+    return [
+      intro,
+      '',
+      `Notamos que a mensalidade de ${amount}, vencida em ${dueDate}, está em aberto há ${daysOverdue} dias. Você consegue nos ajudar a regularizar nos próximos dias?`,
+      '',
+      'Se houver qualquer dificuldade, é só nos avisar que encontramos a melhor forma juntos.',
+      '',
+      link,
+    ].join('\n')
+  }
+
+  return [
+    intro,
+    '',
+    `A mensalidade de ${amount} (vencimento ${dueDate}) está em aberto há ${daysOverdue} dias. Para mantermos suas aulas em dia, pedimos a regularização o quanto antes.`,
+    '',
+    'Sabemos que imprevistos acontecem — se precisar, fale com a gente para combinarmos uma solução.',
+    '',
+    link,
   ].join('\n')
 }
