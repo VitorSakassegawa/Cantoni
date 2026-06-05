@@ -4,8 +4,8 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { Download } from 'lucide-react'
 import DocumentShell from '@/components/documents/DocumentShell'
+import SetPrintTitle from '@/components/documents/SetPrintTitle'
 import { createClient } from '@/lib/supabase/server'
 import type { VocabularyEntry } from '@/lib/dashboard-types'
 
@@ -20,6 +20,28 @@ function formatLessonDate(value: string | null) {
   } catch {
     return 'Data não informada'
   }
+}
+
+const MONTHS_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// DD.MMM.YYYY (e.g. 02.Jun.2026) — used for the print/save filename.
+function formatShortDate(value: string | null) {
+  if (!value) return ''
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Sao_Paulo',
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).formatToParts(new Date(value))
+    const dd = parts.find((p) => p.type === 'day')?.value ?? ''
+    const mm = Number(parts.find((p) => p.type === 'month')?.value ?? 0)
+    const yyyy = parts.find((p) => p.type === 'year')?.value ?? ''
+    if (dd && mm && yyyy) return `${dd}.${MONTHS_ABBR[mm - 1]}.${yyyy}`
+  } catch {
+    /* ignore */
+  }
+  return ''
 }
 
 export default async function LessonReportPage({
@@ -60,6 +82,8 @@ export default async function LessonReportPage({
   const vocabulary = (aula.vocabulary_json ?? []) as VocabularyEntry[]
   const lessonDate = formatLessonDate(aula.data_hora as string | null)
   const hasSummary = Boolean(summaryPt || summaryEn)
+  const shortDate = formatShortDate(aula.data_hora as string | null)
+  const printTitle = shortDate ? `CES - English Class (${shortDate})` : 'CES - English Class'
 
   return (
     <DocumentShell
@@ -67,6 +91,7 @@ export default async function LessonReportPage({
       subtitle="Documento pronto para impressão e salvamento em PDF."
       backHref={isProfessor ? '/professor/aulas' : '/aluno/aulas'}
     >
+      <SetPrintTitle title={printTitle} />
       <div className="space-y-10 text-slate-900">
         <header className="document-header space-y-3 border-b border-slate-200 pb-8 text-center">
           <div className="flex justify-center">
@@ -74,15 +99,6 @@ export default async function LessonReportPage({
           </div>
           <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Cantoni English School</p>
           <h2 className="text-3xl font-black tracking-tight">Relatório de Aula</h2>
-          <div className="print:hidden">
-            <a
-              href={`/api/documentos/relatorio-aula/${aula.id}`}
-              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
-            >
-              <Download className="h-4 w-4" />
-              Baixar PDF
-            </a>
-          </div>
         </header>
 
         <section className="document-section grid gap-4 sm:grid-cols-2">
