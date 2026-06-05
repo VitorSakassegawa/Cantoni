@@ -67,8 +67,13 @@ export default function LoginPage() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.error || 'Erro ao enviar o link de recuperação.')
 
-      setSuccessMessage('E-mail de recuperação enviado. Verifique sua caixa de entrada.')
-      toast.success('Link de recuperação enviado!')
+      // Use the backend's generic, anti-enumeration message ("Se existir uma
+      // conta...") so we don't falsely claim an e-mail was sent to an address
+      // that isn't registered.
+      setSuccessMessage(
+        data.message || 'Se existir uma conta com este e-mail, você receberá um link de recuperação em instantes.'
+      )
+      toast.success('Solicitação recebida.')
     } catch (error: unknown) {
       const message = getErrorMessage(error, 'Erro ao enviar o link de recuperação.')
       setError(message)
