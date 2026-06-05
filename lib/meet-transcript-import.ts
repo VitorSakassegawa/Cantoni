@@ -10,6 +10,7 @@ import {
   truncateTranscriptForAI,
 } from '@/lib/google-meet'
 import { syncFlashcardsFromVocabulary } from '@/lib/flashcards-auto'
+import { normalizeSkillScores, hasAnySkillScore } from '@/lib/lesson-skills'
 
 type LessonRow = {
   id: number
@@ -187,6 +188,20 @@ export async function runMeetTranscriptImport({
 
       if (studentProfile.id && Array.isArray(analysis.vocabulary) && analysis.vocabulary.length > 0) {
         await syncFlashcardsFromVocabulary(studentProfile.id, analysis.vocabulary)
+      }
+
+      // Best-effort: store the AI's per-skill estimate for this lesson.
+      if (studentProfile.id) {
+        try {
+          const skillScores = normalizeSkillScores((analysis as { skill_scores?: unknown }).skill_scores)
+          if (hasAnySkillScore(skillScores)) {
+            await supabase
+              .from('aula_skill_scores')
+              .upsert({ aula_id: lesson.id, aluno_id: studentProfile.id, ...skillScores }, { onConflict: 'aula_id' })
+          }
+        } catch (skillError) {
+          console.error('Error storing aula skill scores:', skillError)
+        }
       }
 
       imported += 1

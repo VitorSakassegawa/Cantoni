@@ -30,6 +30,7 @@ import ContratoForm from '@/components/dashboard/ContratoForm'
 import DeleteAlunoBtn from '@/components/dashboard/DeleteAlunoBtn'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import SkillEvaluationForm from '@/components/dashboard/SkillEvaluationForm'
+import AiSkillEstimate from '@/components/dashboard/AiSkillEstimate'
 import NotificationFeed from '@/components/dashboard/NotificationFeed'
 import ResendAccessButton from '@/components/dashboard/ResendAccessButton'
 import WhatsAppLinkButton from '@/components/dashboard/WhatsAppLinkButton'
@@ -47,6 +48,7 @@ import type {
 } from '@/lib/dashboard-types'
 import { buildAttentionCandidate, buildRenewalCandidate, type FeedItem } from '@/lib/insights'
 import { LEECH_THRESHOLD } from '@/lib/flashcards-srs'
+import { averageSkillScores, hasAnySkillScore, type SkillScores } from '@/lib/lesson-skills'
 import { withEffectivePaymentStatus } from '@/lib/payments'
 import { resolveCpf } from '@/lib/cpf-security'
 import { formatCurrency, formatDate, formatDateOnly, formatDateTime } from '@/lib/utils'
@@ -155,6 +157,16 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
     .limit(1)
 
   const currentAvaliacao = avaliacoes?.[0]
+
+  // AI per-skill estimates from recent lessons (rolling average). Tolerant of
+  // the table not existing yet (pre-migration) → just shows nothing.
+  const { data: skillRows } = await supabase
+    .from('aula_skill_scores')
+    .select('speaking, listening, reading, writing')
+    .eq('aluno_id', id)
+    .order('created_at', { ascending: false })
+    .limit(8)
+  const aiSkillScores = averageSkillScores((skillRows ?? []) as SkillScores[])
 
   // Flashcard leeches (cards the student keeps failing). Tolerant of the
   // `lapses` column not existing yet (pre-migration) → just shows nothing.
@@ -519,6 +531,9 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <SkillsRadar data={avaliacoes || []} />
+              {hasAnySkillScore(aiSkillScores) && (
+                <AiSkillEstimate scores={aiSkillScores} lessonCount={(skillRows ?? []).length} />
+              )}
               {leechCards.length > 0 && (
                 <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
                   <p className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-amber-700">

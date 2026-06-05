@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/server'
 import { generateLessonAnalysisV2 } from '@/lib/ai'
 import { enviarResumoAulaAI } from '@/lib/resend'
 import { syncFlashcardsFromVocabulary } from '@/lib/flashcards-auto'
+import { hasAnySkillScore, type SkillScores } from '@/lib/lesson-skills'
 import type { VocabularyEntry } from '@/lib/dashboard-types'
 
 type StudentSummary = {
@@ -56,7 +57,8 @@ export async function getAIAnalysisV2(aulaId: number, content?: string) {
 export async function enviarResumoAI(
   aulaId: number,
   summaries: { pt: string; en: string },
-  vocabulary?: VocabularyEntry[]
+  vocabulary?: VocabularyEntry[],
+  skillScores?: SkillScores
 ) {
   const { aula, contrato, isProfessor } = await requireLessonAccess(aulaId, {
     allowProfessor: true,
@@ -110,6 +112,18 @@ export async function enviarResumoAI(
         await syncFlashcardsFromVocabulary(student.id, vocabulary)
       } catch (flashError) {
         console.error('Error syncing flashcards:', flashError)
+      }
+    }
+
+    // Best-effort: store the AI's per-skill estimate for this lesson (complements
+    // the professor's monthly manual evaluation; never blocks the summary).
+    if (skillScores && hasAnySkillScore(skillScores)) {
+      try {
+        await supabase
+          .from('aula_skill_scores')
+          .upsert({ aula_id: aulaId, aluno_id: student.id, ...skillScores }, { onConflict: 'aula_id' })
+      } catch (skillError) {
+        console.error('Error storing aula skill scores:', skillError)
       }
     }
 

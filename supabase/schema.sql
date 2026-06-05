@@ -1309,3 +1309,29 @@ drop trigger if exists trg_lock_profile_role on profiles;
 create trigger trg_lock_profile_role
 before update on profiles
 for each row execute function prevent_role_self_escalation();
+
+-- AI-estimated per-skill scores per lesson (complements the monthly manual eval).
+create table if not exists aula_skill_scores (
+  id uuid primary key default gen_random_uuid(),
+  aula_id integer not null references aulas(id) on delete cascade,
+  aluno_id uuid not null references profiles(id) on delete cascade,
+  speaking integer check (speaking between 1 and 10),
+  listening integer check (listening between 1 and 10),
+  reading integer check (reading between 1 and 10),
+  writing integer check (writing between 1 and 10),
+  created_at timestamptz not null default now(),
+  unique (aula_id)
+);
+
+create index if not exists idx_aula_skill_scores_aluno_id on aula_skill_scores (aluno_id);
+
+alter table aula_skill_scores enable row level security;
+
+create policy "aula_skill_scores_select_policy" on aula_skill_scores
+  for select using (is_professor() or aluno_id = (select auth.uid()));
+create policy "aula_skill_scores_insert_professor_policy" on aula_skill_scores
+  for insert with check (is_professor());
+create policy "aula_skill_scores_update_professor_policy" on aula_skill_scores
+  for update using (is_professor()) with check (is_professor());
+create policy "aula_skill_scores_delete_professor_policy" on aula_skill_scores
+  for delete using (is_professor());
