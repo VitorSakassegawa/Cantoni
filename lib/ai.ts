@@ -42,8 +42,11 @@ function getGenAI() {
 
 // Text models and TTS models have different capabilities and must be configured separately.
 const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-pro'
-const STABLE_FALLBACK = 'gemini-1.5-flash-latest'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
+// Last-resort fallback. Use the rolling `-latest` alias so it tracks the current
+// stable Flash model and never 404s when a specific version is retired.
+// (The previous gemini-1.5-* models were silently retired by Google → 404.)
+const STABLE_FALLBACK = process.env.GEMINI_STABLE_FALLBACK_MODEL || 'gemini-flash-latest'
 
 const AUDIO_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts'
 const AUDIO_FALLBACK = process.env.GEMINI_TTS_FALLBACK_MODEL || 'gemini-2.5-pro-preview-tts'
@@ -190,8 +193,15 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: Lesso
     - Adapt explanations to the student level (${studentInfo.level}).
     - Be concise and objective.
     - Avoid repetition.
-    - Do NOT include any performance feedback or evaluation.
-    - Only extract real corrections and examples from the transcript.
+    - The transcript is an AUTOMATIC speech-to-text capture. It is full of
+      transcription errors: misheard words, wrong/garbled proper nouns, broken
+      fragments, and duplicated filler words ("the the", "but but", "Okay. Okay.").
+      These are NOT the student's mistakes — IGNORE them entirely. Never list a
+      transcription artifact, a misheard word, a wrong name, or a repeated filler
+      as a correction.
+    - Only flag GENUINE English learner mistakes the student actually made:
+      grammar, verb tense, subject-verb agreement, word choice, collocation,
+      prepositions, or natural phrasing.
     - Vocabulary must be relevant and actually used during the lesson.
     - Corrections must include a short explanation.
     - Do NOT skip any section of the template.
@@ -249,6 +259,9 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: Lesso
     ---
 
     ### ❗ Correções & Melhorias
+    (Include AT MOST 6 of the student's most useful, DISTINCT genuine mistakes.
+    Deduplicate — never repeat the same correction. Skip transcription noise. If
+    no clear genuine learner errors are present, write "Not observed".)
     * **Erro:** "[Error]"
       **Correção:** "[Correction]"
       **Explicação:** [Explanation]

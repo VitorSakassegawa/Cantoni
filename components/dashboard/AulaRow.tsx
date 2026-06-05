@@ -387,7 +387,7 @@ export default function AulaRow({
                     className="flex items-center gap-1.5 text-[11px] text-slate-500 hover:text-slate-800 font-black uppercase tracking-widest bg-slate-50 px-2 py-1 rounded-md transition-all border border-slate-100"
                     title="Abrir relatório imprimível (PDF)"
                   >
-                    <FileText className="w-3 h-3" /> Relatório PDF
+                    <FileText className="w-3 h-3" /> Relatório
                   </a>
                 </>
               )}
