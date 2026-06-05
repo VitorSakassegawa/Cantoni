@@ -49,14 +49,14 @@ export default async function ContractDocumentPage({
 
         <section className="document-section grid gap-6 md:grid-cols-2">
           <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Contratante</p>
             <p className="mt-3 text-lg font-black">{context.student?.full_name || 'Aluno'}</p>
             <p className="mt-2 text-sm text-slate-600">
               CPF: {context.student?.cpf || 'não informado'} | E-mail: {context.student?.email || 'não informado'} | Tel.: {context.student?.phone || 'não informado'}
             </p>
           </div>
           <div className="document-card rounded-[1.5rem] border border-slate-200 p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Contratado</p>
             <p className="mt-3 text-lg font-black">{LEGAL_TEACHER_NAME}</p>
             <p className="mt-2 text-sm text-slate-600">
               CPF: {context.teacher?.cpf || 'não informado'} | E-mail: {context.teacher?.email || 'não informado'} | Tel.: {context.teacher?.phone || 'não informado'} | Pessoa Física
@@ -66,28 +66,28 @@ export default async function ContractDocumentPage({
 
         <section className="document-section rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
           <div className="mb-5">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Quadro-resumo do contrato</p>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Quadro-resumo do contrato</p>
             <p className="mt-2 text-sm text-slate-600">
               Consolidado contratual para conferência antes da impressão e salvamento em PDF.
             </p>
           </div>
           <div className="grid gap-4 md:grid-cols-4">
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodo</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Periodo</p>
               <p className="mt-2 text-sm font-bold">
                 {formatDateOnly(context.contract.data_inicio)} – {formatDateOnly(context.contract.data_fim)}
               </p>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Aulas</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Aulas</p>
               <p className="mt-2 text-sm font-bold">{context.contract.aulas_totais} contratadas</p>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Valor global</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Valor global</p>
               <p className="mt-2 text-sm font-bold">{formatCurrency(Number(context.contract.valor || 0))}</p>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Forma</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Forma</p>
               <p className="mt-2 text-sm font-bold">
                 {(context.contract.forma_pagamento || 'a combinar')} ({Math.max(context.payments?.length || 1, 1)} parcela{(context.payments?.length || 1) > 1 ? 's' : ''})
               </p>
@@ -137,23 +137,23 @@ export default async function ContractDocumentPage({
 
         <footer className="document-section space-y-6 border-t border-slate-200 pt-8">
           <div className="document-card rounded-[1.5rem] border border-slate-200 bg-slate-50 p-6">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Comprovante institucional</p>
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400">Comprovante institucional</p>
             <div className="mt-4 grid gap-4 md:grid-cols-3">
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Documento</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Documento</p>
                 <p className="mt-2 text-sm font-bold">Contrato administrativo</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contrato vinculado</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Contrato vinculado</p>
                 <p className="mt-2 text-sm font-bold">#{context.contract.id}</p>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Periodo</p>
+                <p className="text-xs font-black uppercase tracking-widest text-slate-400">Periodo</p>
                 <p className="mt-2 text-sm font-bold">{formatDateOnly(context.contract.data_inicio)} - {formatDateOnly(context.contract.data_fim)}</p>
               </div>
             </div>
           </div>
-          <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Base jurídica informativa</p>
+          <p className="text-xs font-black uppercase tracking-widest text-slate-400">Base jurídica informativa</p>
           <ul className="space-y-2 text-sm text-slate-600">
             <li>Transparência e informação adequada ao consumidor, incluindo dever de clareza da oferta e das cláusulas contratuais.</li>
             <li>Boa-fé objetiva, probidade e interpretação favorável ao aderente em cláusulas ambíguas.</li>
@@ -172,7 +172,7 @@ export default async function ContractDocumentPage({
           </div>
           <div className="document-signature grid gap-8 md:grid-cols-2">
             <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratante</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Contratante</p>
               <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
                 {context.student?.full_name || 'Aluno'}
               </p>
@@ -181,7 +181,7 @@ export default async function ContractDocumentPage({
               </p>
             </div>
             <div className="space-y-3">
-              <p className="text-[10px] font-black uppercase tracking-widest text-slate-400">Contratado</p>
+              <p className="text-xs font-black uppercase tracking-widest text-slate-400">Contratado</p>
               <p className="w-full border-t border-slate-400 pt-3 text-center text-sm font-bold text-slate-700">
                 {LEGAL_TEACHER_NAME}
               </p>

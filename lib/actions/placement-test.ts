@@ -114,24 +114,112 @@ export async function generatePlacementQuestions(
   }
 }
 
-async function generateAIInsights(answers: { correct: boolean }[], level: string) {
+const MODULE_LABEL: Record<string, string> = {
+  grammar: 'Gramática & Vocabulário',
+  reading: 'Leitura',
+  listening: 'Compreensão Oral',
+}
+
+type SkillBreakdownEntry = {
+  module: string
+  level: string
+  score: number
+  total: number
+  ratio: number
+  estimatedLevel: string
+}
+
+type StructuredInsights = {
+  strengths: string[]
+  gaps: string[]
+  firstLessonsFocus: string[]
+}
+
+function buildInsightsMarkdown(level: string, skills: SkillBreakdownEntry[], data: StructuredInsights) {
+  const skillLines = skills
+    .map((s) => `- **${MODULE_LABEL[s.module] || s.module}** (testado em ${s.level}): ${s.score}/${s.total} (${Math.round(s.ratio * 100)}%)`)
+    .join('\n')
+
+  const bullets = (items: string[]) =>
+    items.length ? items.map((i) => `- ${i}`).join('\n') : '- Não observado'
+
+  return [
+    `**Nível sugerido:** ${level}`,
+    '',
+    '**Desempenho por habilidade**',
+    skillLines || '- Não observado',
+    '',
+    '**Pontos de Destaque**',
+    bullets(data.strengths),
+    '',
+    '**Pontos de Melhoria**',
+    bullets(data.gaps),
+    '',
+    '**Foco das primeiras aulas**',
+    bullets(data.firstLessonsFocus),
+  ].join('\n')
+}
+
+function fallbackInsights(level: string, skills: SkillBreakdownEntry[]): StructuredInsights {
+  const sorted = [...skills].sort((a, b) => b.ratio - a.ratio)
+  const best = sorted[0]
+  const worst = sorted[sorted.length - 1]
+  return {
+    strengths: best ? [`Melhor desempenho em ${MODULE_LABEL[best.module] || best.module} (${Math.round(best.ratio * 100)}%).`] : [],
+    gaps: worst && worst !== best ? [`Reforçar ${MODULE_LABEL[worst.module] || worst.module} (${Math.round(worst.ratio * 100)}%).`] : [],
+    firstLessonsFocus: [`Consolidar fundamentos de nível ${level} antes de avançar.`],
+  }
+}
+
+// Generates diagnostic insights from the ACTUAL missed items + per-skill scores,
+// constrained to a fixed JSON shape so the output is reliable (not hallucinated
+// from an aggregate count, and not free-form prose).
+async function generateAIInsights(
+  level: string,
+  skills: SkillBreakdownEntry[],
+  missed: Array<{ module: string; question: string; chosen: string; correct: string }>
+): Promise<string> {
+  const skillSummary = skills
+    .map((s) => `${MODULE_LABEL[s.module] || s.module}: ${s.score}/${s.total} (${Math.round(s.ratio * 100)}%) @ ${s.level}`)
+    .join('; ')
+
+  const missedSummary = missed
+    .slice(0, 12)
+    .map((m) => `[${MODULE_LABEL[m.module] || m.module}] "${m.question}" — marcou "${m.chosen}", correto "${m.correct}"`)
+    .join('\n')
+
   const prompt = `
-    Analise o desempenho deste aluno em um teste de nivelamento de inglês CEFR ${level}.
-    Respostas: ${JSON.stringify(answers)}
+    Você é um coordenador pedagógico de inglês. Nível sugerido para o aluno: CEFR ${level}.
+    Desempenho por habilidade: ${skillSummary || 'sem dados'}.
+    Questões que o aluno ERROU (use APENAS estas para diagnosticar lacunas reais; não invente):
+    ${missedSummary || 'Nenhum erro registrado.'}
 
-    Trabalhe como um coordenador pedagógico experiente.
-    Gere um resumo curto (markdown) com:
-    1. **Pontos de Destaque** (O que o aluno domina).
-    2. **Pontos de Melhoria** (Gaps gramaticais ou de leitura/listening).
-    3. **Sugestão Pedagógica** (Foco das primeiras 10 aulas).
-
-    Seja direto, profissional e encorajador.
+    Retorne APENAS um objeto JSON válido, sem preâmbulos, neste formato exato:
+    {
+      "strengths": ["frase curta", "..."],
+      "gaps": ["lacuna específica baseada nos erros acima", "..."],
+      "firstLessonsFocus": ["foco prático para as primeiras aulas", "..."]
+    }
+    Regras: 2 a 4 itens por lista, frases curtas em português, profissional e encorajador.
+    NÃO inclua nada fora do JSON.
   `
 
   try {
-    return await generateAIContent(prompt)
+    const response = await generateAIContent(prompt, undefined, 'application/json')
+    const parsed = response ? (extractAndParseJSON(response) as Partial<StructuredInsights>) : null
+    const toStrings = (value: unknown): string[] =>
+      Array.isArray(value)
+        ? value.filter((v): v is string => typeof v === 'string' && v.trim().length > 0).slice(0, 4)
+        : []
+    const structured: StructuredInsights = {
+      strengths: toStrings(parsed?.strengths),
+      gaps: toStrings(parsed?.gaps),
+      firstLessonsFocus: toStrings(parsed?.firstLessonsFocus),
+    }
+    const hasContent = structured.strengths.length || structured.gaps.length || structured.firstLessonsFocus.length
+    return buildInsightsMarkdown(level, skills, hasContent ? structured : fallbackInsights(level, skills))
   } catch {
-    return 'Insights automáticos indisponíveis no momento.'
+    return buildInsightsMarkdown(level, skills, fallbackInsights(level, skills))
   }
 }
 
@@ -182,12 +270,17 @@ export async function evaluatePlacementTest(input: {
   let total = 0
   const storedAnswers: Array<{
     id: number
+    module: string
     question: string | null
     options: string[] | null
     selected: number | null
     correct: boolean
     correctAnswer: number
   }> = []
+  const missed: Array<{ module: string; question: string; chosen: string; correct: string }> = []
+  // Per-skill accumulation so each module gets its own level estimate instead of
+  // being pooled into a single, count-weighted ratio.
+  const moduleStats = new Map<string, { level: string; score: number; total: number }>()
 
   for (const mod of modules) {
     const payload = decryptPlacementKey(mod?.keyToken)
@@ -198,17 +291,34 @@ export async function evaluatePlacementTest(input: {
     score += graded.score
     total += graded.total
 
+    const moduleName = payload.module || 'grammar'
+    const stat = moduleStats.get(moduleName) || { level: payload.level || 'A1', score: 0, total: 0 }
+    stat.score += graded.score
+    stat.total += graded.total
+    moduleStats.set(moduleName, stat)
+
     const metaById = new Map((mod?.meta || []).map((m) => [m.id, m]))
     for (const g of graded.graded) {
       const meta = metaById.get(g.id)
+      const question = typeof meta?.question === 'string' ? meta.question : null
+      const options = Array.isArray(meta?.options) ? meta.options : null
       storedAnswers.push({
         id: g.id,
-        question: typeof meta?.question === 'string' ? meta.question : null,
-        options: Array.isArray(meta?.options) ? meta.options : null,
+        module: moduleName,
+        question,
+        options,
         selected: g.selected,
         correct: g.correct,
         correctAnswer: g.correctAnswer,
       })
+      if (!g.correct && question && options) {
+        missed.push({
+          module: moduleName,
+          question,
+          chosen: g.selected !== null ? options[g.selected] ?? '(em branco)' : '(em branco)',
+          correct: options[g.correctAnswer] ?? '(desconhecido)',
+        })
+      }
     }
   }
 
@@ -216,20 +326,43 @@ export async function evaluatePlacementTest(input: {
     throw new Error('Nenhuma resposta válida para avaliação.')
   }
 
-  const ratio = score / total
   const attemptedLevel = (PLACEMENT_LEVELS as readonly string[]).includes(input?.attemptedLevel)
     ? input.attemptedLevel
     : 'A1'
 
-  let suggestedLevel = attemptedLevel
-  let confirmed = false
-
-  if (ratio >= 0.7) {
-    confirmed = true
-  } else if (ratio < 0.4) {
-    const idx = PLACEMENT_LEVELS.indexOf(attemptedLevel as (typeof PLACEMENT_LEVELS)[number])
-    suggestedLevel = idx > 0 ? PLACEMENT_LEVELS[idx - 1] : 'A1'
+  // Per-skill level estimate: symmetric (can promote AND demote) and clamped to
+  // the supported A1–C1 range (placement_results.cefr_level CHECK constraint).
+  const estimateLevelIndex = (testedLevel: string, ratio: number) => {
+    const testedIdx = Math.max(0, (PLACEMENT_LEVELS as readonly string[]).indexOf(testedLevel))
+    let delta: number
+    if (ratio >= 0.85) delta = 1
+    else if (ratio >= 0.6) delta = 0
+    else if (ratio >= 0.4) delta = -1
+    else delta = -2
+    return Math.max(0, Math.min(PLACEMENT_LEVELS.length - 1, testedIdx + delta))
   }
+
+  const skillBreakdown: SkillBreakdownEntry[] = Array.from(moduleStats.entries()).map(([module, s]) => {
+    const ratio = s.total > 0 ? s.score / s.total : 0
+    const estimatedIdx = estimateLevelIndex(s.level, ratio)
+    return {
+      module,
+      level: s.level,
+      score: s.score,
+      total: s.total,
+      ratio,
+      estimatedLevel: PLACEMENT_LEVELS[estimatedIdx],
+    }
+  })
+
+  // Overall level = average of the per-skill estimates (equal weight per skill),
+  // falling back to the attempted level if a skill estimate is somehow missing.
+  const estimateIdxs = skillBreakdown.map((s) => (PLACEMENT_LEVELS as readonly string[]).indexOf(s.estimatedLevel))
+  const overallIdx = estimateIdxs.length
+    ? Math.round(estimateIdxs.reduce((a, b) => a + b, 0) / estimateIdxs.length)
+    : Math.max(0, (PLACEMENT_LEVELS as readonly string[]).indexOf(attemptedLevel))
+  const suggestedLevel = PLACEMENT_LEVELS[Math.max(0, Math.min(PLACEMENT_LEVELS.length - 1, overallIdx))]
+  const confirmed = suggestedLevel === attemptedLevel
 
   const nivelMap: Record<string, string> = {
     A1: 'iniciante',
@@ -239,10 +372,7 @@ export async function evaluatePlacementTest(input: {
     C1: 'avancado',
   }
 
-  const insights = await generateAIInsights(
-    storedAnswers.map((a) => ({ correct: a.correct })),
-    suggestedLevel
-  )
+  const insights = await generateAIInsights(suggestedLevel, skillBreakdown, missed)
 
   const { error: resultError } = await supabase.from('placement_results').insert({
     student_id: studentId,
@@ -272,9 +402,12 @@ export async function evaluatePlacementTest(input: {
   const result = {
     suggestedLevel,
     suggestedNivel: nivelMap[suggestedLevel],
+    attemptedLevel,
     score,
     total,
     confirmed,
+    promoted: !confirmed && (PLACEMENT_LEVELS as readonly string[]).indexOf(suggestedLevel) > (PLACEMENT_LEVELS as readonly string[]).indexOf(attemptedLevel),
+    skillBreakdown,
     insights,
   }
 

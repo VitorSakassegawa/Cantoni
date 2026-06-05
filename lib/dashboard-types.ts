@@ -239,12 +239,24 @@ export type PlacementAnswerRecord = Partial<PlacementQuestion> & {
   correct?: boolean
 }
 
+export type PlacementSkillBreakdown = {
+  module: string
+  level: string
+  score: number
+  total: number
+  ratio: number
+  estimatedLevel: string
+}
+
 export type PlacementEvaluationResult = {
   suggestedLevel: PlacementLevel
   suggestedNivel: string
+  attemptedLevel?: string
   score: number
   total: number
   confirmed: boolean
+  promoted?: boolean
+  skillBreakdown?: PlacementSkillBreakdown[]
   insights: string
 }
 

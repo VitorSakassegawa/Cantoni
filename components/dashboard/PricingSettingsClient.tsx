@@ -409,7 +409,7 @@ export default function PricingSettingsClient({
                 <li key={adj.id} className="flex items-center justify-between gap-4 py-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
-                      <Badge className={`text-[10px] font-black uppercase tracking-widest border-none ${adj.kind === 'ipca' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                      <Badge className={`text-xs font-black uppercase tracking-widest border-none ${adj.kind === 'ipca' ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
                         {adj.kind === 'ipca' ? `IPCA ${adj.percent ?? ''}%` : 'Manual'}
                       </Badge>
                       <span className="text-xs font-bold text-slate-400">

@@ -68,6 +68,48 @@ function nl2br(value: string) {
   return escapeHtml(value).replace(/\n/g, '<br />')
 }
 
+// Minimal, safe Markdown → email-HTML for AI summaries. Escapes first, then
+// renders headings, bold and bullet lists — so `**bold**`/`##`/`-` no longer
+// leak as literal characters into the student's inbox.
+function simpleMarkdownToHtml(value: string) {
+  const inline = (s: string) => s.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+  const parts: string[] = []
+  let inList = false
+  const closeList = () => {
+    if (inList) {
+      parts.push('</ul>')
+      inList = false
+    }
+  }
+
+  for (const raw of escapeHtml(value).split(/\r?\n/)) {
+    const line = raw.trim()
+    if (!line) {
+      closeList()
+      continue
+    }
+    const heading = line.match(/^#{1,6}\s+(.*)$/)
+    if (heading) {
+      closeList()
+      parts.push(`<p style="margin:14px 0 4px 0;font-weight:700;color:#0f172a;">${inline(heading[1])}</p>`)
+      continue
+    }
+    const bullet = line.match(/^[-*]\s+(.*)$/)
+    if (bullet) {
+      if (!inList) {
+        parts.push('<ul style="margin:4px 0;padding-left:20px;">')
+        inList = true
+      }
+      parts.push(`<li style="margin:2px 0;">${inline(bullet[1])}</li>`)
+      continue
+    }
+    closeList()
+    parts.push(`<p style="margin:6px 0;">${inline(line)}</p>`)
+  }
+  closeList()
+  return parts.join('')
+}
+
 function getToneStyles(tone: EmailTone) {
   switch (tone) {
     case 'success':
@@ -697,7 +739,7 @@ export async function enviarResumoAulaAI({
         statGrid([{ label: 'Aula', value: dataHora }]),
         card(
           'Resumo gerado',
-          `<div style="font-size:14px;line-height:1.8;color:#334155;">${nl2br(resumoMarkdown)}</div>`
+          `<div style="font-size:14px;line-height:1.8;color:#334155;">${simpleMarkdownToHtml(resumoMarkdown)}</div>`
         ),
       ].join(''),
     }),

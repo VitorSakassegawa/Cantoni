@@ -4,40 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { registerStudentActivityBestEffort } from '@/lib/streak'
 import { getXpReward } from '@/lib/gamification'
-
-/**
- * SuperMemo-2 (SM-2) Algorithm simplified
- * q: quality of response (0-5)
- */
-function calculateNextSRS(
-  q: number, 
-  prevInterval: number, 
-  prevRepetitions: number, 
-  prevEaseFactor: number
-) {
-  let interval = 0
-  let repetitions = prevRepetitions
-  let easeFactor = prevEaseFactor
-
-  if (q >= 3) {
-    if (repetitions === 0) {
-      interval = 1
-    } else if (repetitions === 1) {
-      interval = 6
-    } else {
-      interval = Math.round(prevInterval * easeFactor)
-    }
-    repetitions++
-  } else {
-    repetitions = 0
-    interval = 1
-  }
-
-  easeFactor = easeFactor + (0.1 - (5 - q) * (0.08 + (5 - q) * 0.02))
-  if (easeFactor < 1.3) easeFactor = 1.3
-
-  return { interval, repetitions, easeFactor }
-}
+import { calculateNextSRS } from '@/lib/flashcards-srs'
 
 export async function addFlashcard(word: string, translation: string, example?: string) {
   const supabase = await createClient()
@@ -72,11 +39,11 @@ export async function updateFlashcardReview(id: string, quality: number) {
 
   if (fetchError || !card) throw new Error('Flashcard not found')
 
-  const { interval, repetitions, easeFactor } = calculateNextSRS(
+  const { interval, repetitions, easeFactor, lapsed } = calculateNextSRS(
     quality,
     card.interval,
     card.repetitions,
-    Number(card.ease_factor)
+    card.ease_factor
   )
 
   const nextReview = new Date()
@@ -97,5 +64,8 @@ export async function updateFlashcardReview(id: string, quality: number) {
   await registerStudentActivityBestEffort(user.id)
   revalidatePath('/aluno')
   revalidatePath('/aluno/flashcards')
-  return { success: true, xpAwarded: getXpReward('flashcardReview') }
+  // Reward retention, not raw volume: a lapse earns less than a successful recall.
+  const baseXp = getXpReward('flashcardReview')
+  const xpAwarded = lapsed ? Math.ceil(baseXp / 2) : baseXp
+  return { success: true, xpAwarded }
 }

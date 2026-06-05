@@ -12,17 +12,28 @@ export default async function FlashcardsPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const DAILY_REVIEW_CAP = 30
   const now = new Date().toISOString()
+
+  // Most-overdue first, capped per session so a student returning after a long
+  // break isn't buried under every overdue card at once.
   const { data: dueCards } = await supabase
     .from('flashcards')
     .select('*')
     .eq('aluno_id', user.id)
     .lte('next_review', now)
-    .order('created_at')
+    .order('next_review', { ascending: true })
+    .limit(DAILY_REVIEW_CAP)
 
-  const { data: totalCards } = await supabase
+  const { count: dueCount } = await supabase
     .from('flashcards')
-    .select('id', { count: 'exact' })
+    .select('id', { count: 'exact', head: true })
+    .eq('aluno_id', user.id)
+    .lte('next_review', now)
+
+  const { count: totalCount } = await supabase
+    .from('flashcards')
+    .select('id', { count: 'exact', head: true })
     .eq('aluno_id', user.id)
 
   return (
@@ -44,11 +55,11 @@ export default async function FlashcardsPage() {
 
         <div className="flex rounded-3xl border border-slate-100 bg-white p-2 shadow-xl shadow-slate-200/50">
           <div className="border-r border-slate-100 px-6 py-3 text-center">
-            <p className="text-2xl font-black leading-tight text-slate-900">{totalCards?.length || 0}</p>
+            <p className="text-2xl font-black leading-tight text-slate-900">{totalCount || 0}</p>
             <p className="text-[11px] font-black uppercase tracking-widest text-slate-400">Total</p>
           </div>
           <div className="px-6 py-3 text-center">
-            <p className="text-2xl font-black leading-tight text-indigo-600">{dueCards?.length || 0}</p>
+            <p className="text-2xl font-black leading-tight text-indigo-600">{dueCount || 0}</p>
             <p className="text-[11px] font-black uppercase tracking-widest text-indigo-400">Para revisar</p>
           </div>
         </div>
@@ -57,7 +68,14 @@ export default async function FlashcardsPage() {
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-3">
         <div className="space-y-8 lg:col-span-2">
           {dueCards && dueCards.length > 0 ? (
-            <FlashcardReview cards={dueCards} />
+            <div className="space-y-4">
+              {(dueCount || 0) > dueCards.length && (
+                <p className="rounded-2xl border border-indigo-100 bg-indigo-50 px-5 py-3 text-xs font-semibold text-indigo-700">
+                  Mostrando {dueCards.length} de {dueCount} palavras pendentes nesta sessão. Conclua estas e volte para revisar o restante.
+                </p>
+              )}
+              <FlashcardReview cards={dueCards} />
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center space-y-8 rounded-[3rem] border border-slate-100 bg-white p-16 text-center shadow-2xl shadow-slate-200/20">
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-indigo-50 text-indigo-200">
