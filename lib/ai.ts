@@ -42,8 +42,11 @@ function getGenAI() {
 
 // Text models and TTS models have different capabilities and must be configured separately.
 const PRIMARY_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash'
-const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-1.5-pro'
-const STABLE_FALLBACK = 'gemini-1.5-flash-latest'
+const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-lite'
+// Last-resort fallback. Use the rolling `-latest` alias so it tracks the current
+// stable Flash model and never 404s when a specific version is retired.
+// (The previous gemini-1.5-* models were silently retired by Google → 404.)
+const STABLE_FALLBACK = process.env.GEMINI_STABLE_FALLBACK_MODEL || 'gemini-flash-latest'
 
 const AUDIO_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts'
 const AUDIO_FALLBACK = process.env.GEMINI_TTS_FALLBACK_MODEL || 'gemini-2.5-pro-preview-tts'
