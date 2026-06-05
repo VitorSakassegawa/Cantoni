@@ -22,9 +22,9 @@ function formatLessonDate(value: string | null) {
   }
 }
 
-const MONTHS_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+const MONTHS_ABBR = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC']
 
-// DD.MMM.YYYY (e.g. 02.Jun.2026) — used for the print/save filename.
+// DD.MMM.YYYY (e.g. 02.JUN.2026) — used for the print/save filename.
 function formatShortDate(value: string | null) {
   if (!value) return ''
   try {
@@ -83,7 +83,9 @@ export default async function LessonReportPage({
   const lessonDate = formatLessonDate(aula.data_hora as string | null)
   const hasSummary = Boolean(summaryPt || summaryEn)
   const shortDate = formatShortDate(aula.data_hora as string | null)
-  const printTitle = shortDate ? `CES - English Class (${shortDate})` : 'CES - English Class'
+  const printTitle = shortDate
+    ? `CES - English Class (${shortDate} - ${studentName})`
+    : `CES - English Class (${studentName})`
 
   return (
     <DocumentShell
