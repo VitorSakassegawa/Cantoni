@@ -1,5 +1,6 @@
 import 'server-only'
 import { GoogleGenerativeAI } from '@google/generative-ai'
+import { normalizeSkillScores } from './lesson-skills'
 
 type GeminiAudioInlineData = {
   data?: string | null
@@ -29,6 +30,12 @@ type LessonAnalysisParsed = {
   }>
   homework?: string | null
   due_date?: string | null
+  skill_scores?: {
+    speaking?: number | null
+    listening?: number | null
+    reading?: number | null
+    writing?: number | null
+  } | null
 }
 
 function getGenAI() {
@@ -227,6 +234,12 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: Lesso
     - "vocabulary": A list of objects { "word": string, "translation": string, "example": string }.
     - "homework": A string describing the homework task mentioned.
     - "due_date": A string (YYYY-MM-DD) if a deadline was explicitly mentioned, otherwise null.
+    - "skill_scores": An object estimating the student's level (integer 1–10, where the
+      student's CEFR level ${studentInfo.level} is the anchor) for the four skills:
+      { "speaking": n, "listening": n, "reading": n, "writing": n }.
+      CRITICAL: only score a skill that was ACTUALLY exercised/observable in THIS lesson.
+      A 1:1 conversation lesson usually shows speaking and listening; reading/writing are
+      often NOT observable. Set a skill to null when you did not observe it — never guess.
 
     For tables inside the summaries, ensure they are perfectly valid Markdown with header separators (e.g., | :--- | :--- |).
     Do NOT add empty columns at the end. Use exactly the columns specified.
@@ -296,6 +309,7 @@ export async function generateLessonAnalysisV2(notes: string, studentInfo: Lesso
     summary_en: finalizeLessonSummary(parsed?.summary_en || '', studentInfo, 'en'),
     homework: normalizeHomeworkValue(parsed?.homework),
     due_date: normalizeDueDate(parsed?.due_date),
+    skill_scores: normalizeSkillScores(parsed?.skill_scores),
   }
 }
 

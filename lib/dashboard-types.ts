@@ -198,6 +198,12 @@ export type LessonAnalysisResult = {
   homework?: string
   due_date?: string
   vocabulary: VocabularyEntry[]
+  skill_scores?: {
+    speaking: number | null
+    listening: number | null
+    reading: number | null
+    writing: number | null
+  }
 }
 
 export type PlacementQuestion = {

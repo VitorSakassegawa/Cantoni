@@ -157,7 +157,8 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
       const { success, error } = await enviarResumoAI(
         aula.id,
         { pt: editedSummaryPt, en: editedSummaryEn },
-        aiResult.vocabulary
+        aiResult.vocabulary,
+        aiResult.skill_scores
       )
 
       if (!success) {
