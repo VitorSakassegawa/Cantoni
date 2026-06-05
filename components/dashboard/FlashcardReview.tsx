@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { BrainCircuit, CheckCircle2, RotateCcw, Volume2 } from 'lucide-react'
 import { updateFlashcardReview } from '@/lib/actions/flashcards'
 import { getAIVocabularyAudio } from '@/lib/actions/audio'
+import { buildCloze, pickCardMode } from '@/lib/flashcards-cloze'
 import { toast } from 'sonner'
 import { Loader2 } from 'lucide-react'
 
@@ -65,6 +66,10 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
   }
 
   const currentCard = cards[currentIdx]
+  // Study-mode variety: rotate between showing the word, a "complete the
+  // sentence" cloze (when the example contains the word), and an audio prompt.
+  const cloze = buildCloze(currentCard.example, currentCard.word)
+  const cardMode = pickCardMode(currentIdx, Boolean(cloze))
 
   const handleReview = async (quality: number) => {
     if (submittingRef.current) return
@@ -154,7 +159,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
           <div className="absolute inset-0 backface-hidden">
             <Card className="relative flex h-full w-full flex-col items-center justify-center overflow-hidden border-none p-10 text-center shadow-2xl glass-card">
               <Badge className="absolute top-6 left-6 border-none bg-slate-100 text-[11px] font-black uppercase tracking-widest text-slate-400">
-                FRENTE
+                {cardMode === 'cloze' ? 'COMPLETE' : cardMode === 'audio' ? 'OUÇA' : 'FRENTE'}
               </Badge>
               <button
                 onClick={(e) => {
@@ -166,7 +171,29 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
               >
                 {audioLoading ? <Loader2 className="h-4 w-4 animate-spin text-indigo-500" /> : <Volume2 className="h-4 w-4" />}
               </button>
-              <p className="text-4xl font-black leading-tight tracking-tighter text-blue-900">{currentCard.word}</p>
+              {cardMode === 'cloze' ? (
+                <div className="space-y-3 px-2">
+                  <p className="text-xs font-black uppercase tracking-widest text-indigo-400">Complete a frase</p>
+                  <p className="text-2xl font-bold leading-snug text-blue-900">{cloze}</p>
+                </div>
+              ) : cardMode === 'audio' ? (
+                <div className="flex flex-col items-center gap-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      void speak(currentCard.word)
+                    }}
+                    disabled={audioLoading}
+                    aria-label="Ouvir a palavra"
+                    className="flex h-20 w-20 items-center justify-center rounded-full bg-indigo-600 text-white shadow-xl shadow-indigo-500/30 transition-transform hover:scale-105 disabled:opacity-50"
+                  >
+                    {audioLoading ? <Loader2 className="h-8 w-8 animate-spin" /> : <Volume2 className="h-8 w-8" />}
+                  </button>
+                  <p className="text-xs font-black uppercase tracking-widest text-slate-400">Ouça e recorde a palavra</p>
+                </div>
+              ) : (
+                <p className="text-4xl font-black leading-tight tracking-tighter text-blue-900">{currentCard.word}</p>
+              )}
               <div className="mt-8 flex items-center justify-center gap-2 text-indigo-400 transition-colors group-hover:text-indigo-600 animate-bounce">
                 <RotateCcw className="h-4 w-4" />
                 <span className="text-xs font-black uppercase tracking-widest">Clique para ver</span>
