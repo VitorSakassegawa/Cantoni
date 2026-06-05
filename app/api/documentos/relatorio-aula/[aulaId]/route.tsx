@@ -19,6 +19,30 @@ function formatLessonDate(value: string | null) {
   }
 }
 
+const MONTHS_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+
+// "CES - Class 02.Jun.2026 (Vitor Sakassegawa)"
+function buildReportFileName(studentName: string, dataHora: string | null) {
+  let datePart = 'Lesson'
+  if (dataHora) {
+    try {
+      const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: 'America/Sao_Paulo',
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      }).formatToParts(new Date(dataHora))
+      const dd = parts.find((p) => p.type === 'day')?.value ?? ''
+      const mm = Number(parts.find((p) => p.type === 'month')?.value ?? 0)
+      const yyyy = parts.find((p) => p.type === 'year')?.value ?? ''
+      if (dd && mm && yyyy) datePart = `${dd}.${MONTHS_ABBR[mm - 1]}.${yyyy}`
+    } catch {
+      /* keep fallback */
+    }
+  }
+  return `CES - Class ${datePart} (${studentName})`
+}
+
 export async function GET(_request: Request, { params }: { params: Promise<{ aulaId: string }> }) {
   const { aulaId } = await params
   const id = Number(aulaId)
@@ -60,12 +84,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ aul
   }
 
   const buffer = await renderToBuffer(<LessonReportPdf data={data} />)
-  const fileName = `relatorio-aula-${id}.pdf`
+  const baseName = `${buildReportFileName(data.studentName, aula.data_hora as string | null)}.pdf`
+  // ASCII-safe fallback + RFC 5987 UTF-8 name so accented student names survive.
+  const asciiName = baseName.replace(/[^\x20-\x7E]/g, '').replace(/"/g, '')
+  const utf8Name = encodeURIComponent(baseName)
 
   return new NextResponse(new Uint8Array(buffer), {
     headers: {
       'Content-Type': 'application/pdf',
-      'Content-Disposition': `attachment; filename="${fileName}"`,
+      'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${utf8Name}`,
       'Cache-Control': 'private, no-store',
     },
   })

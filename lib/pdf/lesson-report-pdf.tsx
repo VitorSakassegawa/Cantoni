@@ -33,9 +33,31 @@ const styles = StyleSheet.create({
   empty: { backgroundColor: '#f8fafc', borderRadius: 8, padding: 16, textAlign: 'center', color: '#64748b' },
 })
 
-// Renders the lesson summary markdown into PDF primitives. Supports headings
-// (#), bold (**…**) and bullet (- / *) lists — the same subset the email and
-// the on-screen report use.
+// Emojis/pictographs (the template headings use 📘🎯🧠❗ etc.) render as empty
+// "tofu" boxes in @react-pdf's built-in Helvetica — strip them. Keeps Latin
+// accents (á, ç, ã …) untouched.
+const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{2190}-\u{21FF}\u{FE0F}\u{200D}]/gu
+
+// Renders an inline string into <Text> runs, turning **bold** into real bold and
+// dropping italic/code markers and emojis.
+function renderInline(text: string, baseKey: string) {
+  const noEmoji = text.replace(EMOJI_RE, '').replace(/`([^`]+)`/g, '$1')
+  return noEmoji
+    .split(/\*\*(.+?)\*\*/g)
+    .flatMap((part, i) => {
+      if (!part) return []
+      const isBold = i % 2 === 1
+      const t = (isBold ? part : part.replace(/\*(?!\*)([^*]+)\*/g, '$1')).replace(/\s{2,}/g, ' ')
+      if (!t.trim()) return []
+      return [
+        <Text key={`${baseKey}-${i}`} style={isBold ? { fontWeight: 700 } : undefined}>{t}</Text>,
+      ]
+    })
+}
+
+// Renders the lesson summary markdown into PDF primitives: headings, bullets,
+// **bold**, paragraphs, and simple tables. Skips horizontal rules and renders
+// table separator rows away.
 function renderSummary(markdown: string) {
   const nodes: React.ReactElement[] = []
   let key = 0
@@ -43,32 +65,37 @@ function renderSummary(markdown: string) {
   for (const raw of markdown.split(/\r?\n/)) {
     const line = raw.trim()
     if (!line) continue
+    if (/^[-*_]{3,}$/.test(line)) continue // horizontal rule
 
     const heading = line.match(/^#{1,6}\s+(.*)$/)
     if (heading) {
-      nodes.push(<Text key={key++} style={styles.heading}>{stripBold(heading[1])}</Text>)
+      nodes.push(<Text key={key++} style={styles.heading}>{renderInline(heading[1], `h${key}`)}</Text>)
       continue
     }
+
+    if (line.includes('|')) {
+      // markdown table row; drop the |:---| separator, render data rows flat
+      if (/^\|?[\s:|-]+\|?$/.test(line)) continue
+      const cells = line.split('|').map((c) => c.trim()).filter(Boolean)
+      nodes.push(<Text key={key++} style={styles.paragraph}>{renderInline(cells.join('   —   '), `t${key}`)}</Text>)
+      continue
+    }
+
     const bullet = line.match(/^[-*]\s+(.*)$/)
     if (bullet) {
       nodes.push(
         <View key={key++} style={styles.bullet}>
           <Text style={styles.bulletDot}>•</Text>
-          <Text style={{ flex: 1 }}>{stripBold(bullet[1])}</Text>
+          <Text style={{ flex: 1 }}>{renderInline(bullet[1], `b${key}`)}</Text>
         </View>
       )
       continue
     }
-    nodes.push(<Text key={key++} style={styles.paragraph}>{stripBold(line)}</Text>)
+
+    nodes.push(<Text key={key++} style={styles.paragraph}>{renderInline(line, `p${key}`)}</Text>)
   }
 
   return nodes
-}
-
-// @react-pdf has no rich inline styling here; we strip the ** markers so they
-// don't leak as literal characters (kept simple and robust).
-function stripBold(value: string) {
-  return value.replace(/\*\*(.+?)\*\*/g, '$1')
 }
 
 export function LessonReportPdf({ data }: { data: LessonReportPdfData }) {
