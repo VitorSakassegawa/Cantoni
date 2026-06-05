@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -35,8 +35,14 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
   const [loading, setLoading] = useState(false)
   const [audioLoading, setAudioLoading] = useState(false)
   const [xpFlash, setXpFlash] = useState<{ amount: number; key: number } | null>(null)
+  // Synchronous guard: `disabled={loading}` only takes effect after a re-render,
+  // so rapid double-clicks can fire two reviews before the buttons disable,
+  // overshooting the card index. This blocks the second call immediately.
+  const submittingRef = useRef(false)
 
-  if (cards.length === 0 || completed) {
+  // `currentIdx >= cards.length` guards against any out-of-range state so a stray
+  // index can never render an undefined card (which would crash the page).
+  if (cards.length === 0 || completed || currentIdx >= cards.length) {
     return (
       <div className="flex flex-col items-center justify-center space-y-6 rounded-[3rem] border-2 border-dashed border-blue-200 p-12 text-center lms-gradient-soft">
         <div className="flex h-20 w-20 items-center justify-center rounded-full bg-green-100 text-green-600 shadow-xl shadow-green-500/10">
@@ -61,6 +67,8 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
   const currentCard = cards[currentIdx]
 
   const handleReview = async (quality: number) => {
+    if (submittingRef.current) return
+    submittingRef.current = true
     setLoading(true)
     try {
       const result = await updateFlashcardReview(currentCard.id, quality)
@@ -80,6 +88,7 @@ export default function FlashcardReview({ cards }: { cards: Flashcard[] }) {
       toast.error('Erro ao salvar revisão')
     } finally {
       setLoading(false)
+      submittingRef.current = false
     }
   }
 

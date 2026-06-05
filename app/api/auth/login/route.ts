@@ -62,10 +62,15 @@ export async function POST(request: NextRequest) {
     const { data, error: authError } = await supabase.auth.signInWithPassword({ email, password })
 
     if (authError || !data.user) {
-      return NextResponse.json(
-        { error: authError?.message ?? 'Não foi possível autenticar.' },
-        { status: 401 }
-      )
+      // Friendly PT message. Stays generic (same for wrong password vs unknown
+      // e-mail) so it doesn't leak which accounts exist (anti-enumeration).
+      const raw = authError?.message ?? ''
+      const friendly = /invalid login credentials/i.test(raw)
+        ? 'E-mail ou senha incorretos.'
+        : /email not confirmed/i.test(raw)
+          ? 'Confirme seu e-mail antes de entrar. Verifique sua caixa de entrada.'
+          : 'Não foi possível entrar. Verifique seus dados e tente novamente.'
+      return NextResponse.json({ error: friendly }, { status: 401 })
     }
 
     const { data: profile } = await supabase
