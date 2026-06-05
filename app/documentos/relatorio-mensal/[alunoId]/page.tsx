@@ -27,7 +27,19 @@ function monthRange(mes: string) {
   const [y, m] = mes.split('-').map(Number)
   const nextM = m === 12 ? 1 : m + 1
   const nextY = m === 12 ? y + 1 : y
-  return { start: `${mes}-01`, end: `${nextY}-${String(nextM).padStart(2, '0')}-01`, year: y, month: m }
+  const startDate = `${mes}-01`
+  const endDate = `${nextY}-${String(nextM).padStart(2, '0')}-01`
+  // São Paulo is UTC-03:00 (no DST). Offset the timestamptz boundaries so the
+  // month window aligns to SP calendar days, not UTC — otherwise events in the
+  // last 3h of a month would be counted in the wrong month.
+  return {
+    startDate,
+    endDate,
+    startTs: `${startDate}T00:00:00-03:00`,
+    endTs: `${endDate}T00:00:00-03:00`,
+    year: y,
+    month: m,
+  }
 }
 
 function shiftMonth(mes: string, delta: number): string {
@@ -81,7 +93,7 @@ export default async function MonthlyReportPage({
   const { alunoId } = await params
   const mes = normalizeMonth((await searchParams).mes)
   const { supabase, isProfessor, aluno } = await resolveContext(alunoId)
-  const { start, end, month, year } = monthRange(mes)
+  const { startDate, endDate, startTs, endTs, month, year } = monthRange(mes)
   const studentName = aluno?.full_name || 'Aluno(a)'
 
   // Lessons in the month (across the student's contracts).
@@ -92,8 +104,8 @@ export default async function MonthlyReportPage({
         .from('aulas')
         .select('status, data_hora')
         .in('contrato_id', contractIds)
-        .gte('data_hora', start)
-        .lt('data_hora', end)
+        .gte('data_hora', startTs)
+        .lt('data_hora', endTs)
     : { data: [] as Array<{ status: string; data_hora: string }> }
   const lessons = (aulas ?? []) as Array<{ status: string; data_hora: string }>
   const attended = lessons.filter((l) => ['dada', 'finalizado'].includes(l.status)).length
@@ -106,16 +118,16 @@ export default async function MonthlyReportPage({
     .from('flashcards')
     .select('id', { count: 'exact', head: true })
     .eq('aluno_id', alunoId)
-    .gte('created_at', start)
-    .lt('created_at', end)
+    .gte('created_at', startTs)
+    .lt('created_at', endTs)
 
   // AI skill estimate average for the month (tolerant of missing table).
   const { data: skillRows } = await supabase
     .from('aula_skill_scores')
     .select('speaking, listening, reading, writing, created_at')
     .eq('aluno_id', alunoId)
-    .gte('created_at', start)
-    .lt('created_at', end)
+    .gte('created_at', startTs)
+    .lt('created_at', endTs)
   const aiSkills = averageSkillScores((skillRows ?? []) as SkillScores[])
 
   // Manual monthly evaluation, if the professor filled one for this month.
@@ -123,8 +135,8 @@ export default async function MonthlyReportPage({
     .from('avaliacoes_habilidades')
     .select('speaking, listening, reading, writing, comentarios')
     .eq('aluno_id', alunoId)
-    .gte('mes_referencia', start)
-    .lt('mes_referencia', end)
+    .gte('mes_referencia', startDate)
+    .lt('mes_referencia', endDate)
     .maybeSingle()
 
   const hasSkillData = SKILL_KEYS.some((k) => aiSkills[k] !== null) || Boolean(avaliacao)

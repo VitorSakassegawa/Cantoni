@@ -86,7 +86,9 @@ export default async function PagamentosPage() {
 
   // Dunning ladder: classify each overdue payment by days late + pre-fill a
   // WhatsApp message the professor reviews and sends (nothing is auto-sent).
-  const today = new Date().toISOString().split('T')[0]
+  // São Paulo calendar day (en-CA → YYYY-MM-DD), so the tier doesn't shift a day
+  // near midnight BRT vs UTC.
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())
   const escalationRows = atrasados
     .map((payment) => {
       const esc = getEscalationTier(payment.data_vencimento, today)
