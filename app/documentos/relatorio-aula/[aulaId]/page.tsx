@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
+import { Download } from 'lucide-react'
 import DocumentShell from '@/components/documents/DocumentShell'
 import { createClient } from '@/lib/supabase/server'
 import type { VocabularyEntry } from '@/lib/dashboard-types'
@@ -73,6 +74,15 @@ export default async function LessonReportPage({
           </div>
           <p className="text-xs font-black uppercase tracking-[0.3em] text-slate-400">Cantoni English School</p>
           <h2 className="text-3xl font-black tracking-tight">Relatório de Aula</h2>
+          <div className="print:hidden">
+            <a
+              href={`/api/documentos/relatorio-aula/${aula.id}`}
+              className="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-2.5 text-xs font-black uppercase tracking-widest text-white shadow-lg shadow-blue-500/20 transition-all hover:bg-blue-700"
+            >
+              <Download className="h-4 w-4" />
+              Baixar PDF
+            </a>
+          </div>
         </header>
 
         <section className="document-section grid gap-4 sm:grid-cols-2">
