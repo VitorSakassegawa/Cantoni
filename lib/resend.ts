@@ -88,10 +88,24 @@ function simpleMarkdownToHtml(value: string) {
       closeList()
       continue
     }
+    // Horizontal rule (---, ***, ___) → a soft divider instead of literal dashes.
+    if (/^[-*_]{3,}$/.test(line)) {
+      closeList()
+      parts.push('<hr style="border:none;border-top:1px solid #e8edf3;margin:18px 0;">')
+      continue
+    }
     const heading = line.match(/^#{1,6}\s+(.*)$/)
     if (heading) {
       closeList()
       parts.push(`<p style="margin:14px 0 4px 0;font-weight:700;color:#0f172a;">${inline(heading[1])}</p>`)
+      continue
+    }
+    // Markdown table row: drop the |:---| separator, render data rows flat.
+    if (line.includes('|')) {
+      closeList()
+      if (/^\|?[\s:|-]+\|?$/.test(line)) continue
+      const cells = line.split('|').map((c) => c.trim()).filter(Boolean)
+      parts.push(`<p style="margin:6px 0;">${inline(cells.join(' &middot; '))}</p>`)
       continue
     }
     const bullet = line.match(/^[-*]\s+(.*)$/)
