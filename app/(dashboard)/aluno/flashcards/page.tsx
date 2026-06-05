@@ -17,12 +17,15 @@ export default async function FlashcardsPage() {
   const now = new Date().toISOString()
 
   // Most-overdue first, capped per session so a student returning after a long
-  // break isn't buried under every overdue card at once.
+  // break isn't buried under every overdue card at once. Leeches (lapses >=
+  // threshold) are auto-suspended from the rotation — they're surfaced in the
+  // dedicated panel below instead of churning here.
   const { data: dueCards } = await supabase
     .from('flashcards')
     .select('*')
     .eq('aluno_id', user.id)
     .lte('next_review', now)
+    .lt('lapses', LEECH_THRESHOLD)
     .order('next_review', { ascending: true })
     .limit(DAILY_REVIEW_CAP)
 
@@ -31,6 +34,7 @@ export default async function FlashcardsPage() {
     .select('id', { count: 'exact', head: true })
     .eq('aluno_id', user.id)
     .lte('next_review', now)
+    .lt('lapses', LEECH_THRESHOLD)
 
   const { count: totalCount } = await supabase
     .from('flashcards')
@@ -135,7 +139,7 @@ export default async function FlashcardsPage() {
                 <h4 className="text-xs font-black uppercase tracking-widest">Palavras que estão te desafiando</h4>
               </div>
               <p className="text-xs leading-relaxed text-amber-700/80">
-                Você errou estas palavras várias vezes. Vale revisá-las com calma ou comentar com seu professor na próxima aula.
+                Pausamos estas palavras da revisão automática porque você errou várias vezes. Revise com calma aqui e comente com seu professor na próxima aula.
               </p>
               <ul className="space-y-2">
                 {leechCards.map((card) => (
