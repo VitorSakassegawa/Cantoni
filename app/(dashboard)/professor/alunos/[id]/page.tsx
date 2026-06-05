@@ -335,6 +335,11 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   Editar perfil
                 </Button>
               </Link>
+              <Link href={`/documentos/relatorio-mensal/${id}`}>
+                <Button variant="outline" className="h-11 rounded-2xl border-slate-200 px-4 text-xs font-black uppercase tracking-widest text-slate-600">
+                  Relatório mensal
+                </Button>
+              </Link>
               <ResendAccessButton
                 alunoId={id}
                 className="h-11 rounded-2xl border-slate-200 px-4 text-xs font-black uppercase tracking-widest text-slate-600"
