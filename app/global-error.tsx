@@ -1,6 +1,7 @@
 'use client' // Error boundaries devem ser Client Components
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/nextjs'
 import './globals.css'
 
 export default function GlobalError({
@@ -11,6 +12,7 @@ export default function GlobalError({
   unstable_retry: () => void
 }) {
   useEffect(() => {
+    Sentry.captureException(error)
     console.error(error)
   }, [error])
 

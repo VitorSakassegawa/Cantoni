@@ -1,6 +1,7 @@
 'use client' // Error boundaries devem ser Client Components
 
 import { useEffect } from 'react'
+import * as Sentry from '@sentry/nextjs'
 import { AlertTriangle, RotateCcw } from 'lucide-react'
 
 export default function DashboardError({
@@ -11,7 +12,7 @@ export default function DashboardError({
   unstable_retry: () => void
 }) {
   useEffect(() => {
-    // TODO: enviar para um serviço de observabilidade (Sentry, etc.)
+    Sentry.captureException(error)
     console.error(error)
   }, [error])
 
