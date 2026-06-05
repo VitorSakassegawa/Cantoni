@@ -18,6 +18,7 @@ import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { Sparkles } from 'lucide-react'
 import { extractVisibleLessonNotes } from '@/lib/lesson-notes'
+import { stripTeacherOnlySections } from '@/lib/lesson-summary-filter'
 
 import { toast } from 'sonner'
 import { cancelarAula, remarcarAula, solicitarRemarcacao } from '@/lib/actions/aulas'
@@ -625,7 +626,11 @@ export default function AulaRow({
 
             <div className="prose prose-slate prose-sm max-w-none prose-headings:font-black prose-headings:tracking-tight prose-headings:text-slate-900 prose-p:text-slate-600 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:list-disc prose-ul:pl-4 prose-table:border-collapse prose-th:bg-slate-50 prose-th:text-xs prose-th:font-black prose-th:uppercase prose-th:tracking-widest prose-td:text-xs prose-td:font-medium mb-10">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {summaryLang === 'pt' ? lesson.ai_summary_pt : lesson.ai_summary_en}
+                {(() => {
+                  const raw = summaryLang === 'pt' ? lesson.ai_summary_pt : lesson.ai_summary_en
+                  // Students don't see corrections / error patterns — teacher-only.
+                  return isProfessor ? raw : stripTeacherOnlySections(raw)
+                })()}
               </ReactMarkdown>
             </div>
 

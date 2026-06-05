@@ -7,6 +7,7 @@ import { generateLessonAnalysisV2 } from '@/lib/ai'
 import { enviarResumoAulaAI } from '@/lib/resend'
 import { syncFlashcardsFromVocabulary } from '@/lib/flashcards-auto'
 import { hasAnySkillScore, type SkillScores } from '@/lib/lesson-skills'
+import { stripTeacherOnlySections } from '@/lib/lesson-summary-filter'
 import type { VocabularyEntry } from '@/lib/dashboard-types'
 
 type StudentSummary = {
@@ -86,11 +87,13 @@ export async function enviarResumoAI(
       minute: '2-digit',
     })
 
+    // Student-facing email hides the corrections / error-pattern sections —
+    // those stay teacher-only. The stored summary keeps the full version.
     await enviarResumoAulaAI({
       to: student.email,
       nomeAluno: student.full_name || 'Aluno(a)',
       dataHora: dataFmt,
-      resumoMarkdown: summaryPt,
+      resumoMarkdown: stripTeacherOnlySections(summaryPt),
     })
 
     const { error: updateError } = await supabase
