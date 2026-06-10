@@ -57,6 +57,40 @@ export type RespostaAluno = {
   valor: number | boolean | string | number[]
 }
 
+// ---- composição (quantas questões de cada tipo) -------------------------------
+
+export type Composicao = Partial<Record<QuestaoTipo, number>>
+
+const COMPOSICAO_MAX_POR_TIPO = 15
+const COMPOSICAO_MAX_TOTAL = 25
+
+// Clampa cada contagem a [0, 15] e o total a 25. Tipos ausentes/zerados saem.
+export function normalizeComposicao(raw: unknown): Composicao {
+  const out: Composicao = {}
+  if (!raw || typeof raw !== 'object') return out
+  let total = 0
+  for (const tipo of QUESTAO_TIPOS) {
+    const n = Math.max(0, Math.min(COMPOSICAO_MAX_POR_TIPO, Math.floor(Number((raw as Record<string, unknown>)[tipo]) || 0)))
+    if (n <= 0) continue
+    const allowed = Math.min(n, COMPOSICAO_MAX_TOTAL - total)
+    if (allowed <= 0) break
+    out[tipo] = allowed
+    total += allowed
+  }
+  return out
+}
+
+export function composicaoTotal(c: Composicao): number {
+  return QUESTAO_TIPOS.reduce((sum, t) => sum + (c[t] || 0), 0)
+}
+
+// Frase em PT-BR para o prompt, ex.: "4 de Múltipla escolha, 2 de Completar a lacuna".
+export function describeComposicao(c: Composicao): string {
+  return QUESTAO_TIPOS.filter((t) => (c[t] || 0) > 0)
+    .map((t) => `${c[t]} de ${QUESTAO_TIPO_LABELS[t]}`)
+    .join(', ')
+}
+
 // ---- validação da saída da IA -------------------------------------------------
 
 export function validateQuestoes(raw: unknown): Questao[] {

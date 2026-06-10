@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict'
 
 import {
+  composicaoTotal,
+  describeComposicao,
   gradeRespostas,
+  normalizeComposicao,
   sanitizeQuestoesForStudent,
   shuffleMap,
   validateQuestoes,
@@ -105,5 +108,28 @@ const acentos = validateQuestoes([
   { tipo: 'lacunas', enunciado: 'Ele ___ feliz.', respostaTexto: 'está' },
 ])
 assert.equal(gradeRespostas(acentos, [{ id: 1, valor: 'esta' }], 's').acertos, 1)
+
+// ---- composição -----------------------------------------------------------------
+
+const comp = normalizeComposicao({ multipla_escolha: 4, lacunas: 2, dissertativa: 0, inexistente: 9 })
+assert.equal(comp.multipla_escolha, 4)
+assert.equal(comp.lacunas, 2)
+assert.equal('dissertativa' in comp, false) // zeros saem
+assert.equal('inexistente' in comp, false) // tipos inválidos ignorados
+assert.equal(composicaoTotal(comp), 6)
+
+// clamps: por tipo <= 15, total <= 25, negativos viram 0
+const clamped = normalizeComposicao({ multipla_escolha: 99, verdadeiro_falso: -3, lacunas: 20 })
+assert.equal(clamped.multipla_escolha, 15)
+assert.equal('verdadeiro_falso' in clamped, false)
+assert.equal(composicaoTotal(clamped) <= 25, true)
+
+assert.equal(composicaoTotal(normalizeComposicao(null)), 0)
+assert.equal(composicaoTotal(normalizeComposicao('x')), 0)
+
+// describe usa os labels e só os tipos > 0
+const desc = describeComposicao({ multipla_escolha: 3, lacunas: 1 })
+assert.match(desc, /3 de Múltipla escolha/)
+assert.match(desc, /1 de Completar a lacuna/)
 
 console.log('atividades-utils tests passed')
