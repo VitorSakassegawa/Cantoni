@@ -5,6 +5,7 @@ import { generateAIContent, generateAIContentFromFile, extractAndParseJSON } fro
 import {
   ATIVIDADE_NIVEIS,
   QUESTAO_TIPOS,
+  buildAtividadeReview,
   composicaoTotal,
   describeComposicao,
   gradeRespostas,
@@ -313,6 +314,44 @@ export async function getAtividadeParaResponder(atribuicaoId: string) {
             nota: atribuicao.nota === null ? null : Number(atribuicao.nota),
             feedback: atribuicao.feedback as string | null,
           },
+  }
+}
+
+// Revisão de uma entrega: gabarito + resposta do aluno lado a lado. Acessível
+// ao professor OU ao próprio aluno dono da atribuição. Construído no servidor
+// para não expor `questoes` (que contém o gabarito) ao cliente do aluno.
+export async function getAtribuicaoDetalhe(atribuicaoId: string) {
+  const user = await requireAuth()
+  const supabase = await createServiceClient()
+
+  const { data: atribuicao } = await supabase
+    .from('atividade_atribuicoes')
+    .select('id, aluno_id, status, respostas, acertos, total_objetivas, nota, feedback, atividades(titulo, questoes)')
+    .eq('id', atribuicaoId)
+    .single()
+  if (!atribuicao) throw new Error('Atividade não encontrada.')
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  const isProfessor = profile?.role === 'professor'
+  if (!isProfessor && atribuicao.aluno_id !== user.id) {
+    throw new Error('Acesso negado.')
+  }
+  if (atribuicao.status === 'pendente') {
+    return { status: 'pendente' as const, review: [] }
+  }
+
+  const atividade = atribuicao.atividades as unknown as { titulo: string; questoes: Questao[] } | null
+  const questoes = validateQuestoes(atividade?.questoes)
+  const review = buildAtividadeReview(questoes, atribuicao.respostas as RespostaAluno[] | null, atribuicao.id)
+
+  return {
+    status: atribuicao.status as 'entregue' | 'corrigida',
+    titulo: atividade?.titulo || '',
+    acertos: atribuicao.acertos as number | null,
+    totalObjetivas: atribuicao.total_objetivas as number | null,
+    nota: atribuicao.nota === null ? null : Number(atribuicao.nota),
+    feedback: atribuicao.feedback as string | null,
+    review,
   }
 }
 
