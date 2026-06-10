@@ -16,7 +16,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { updateLessonHomework } from '@/lib/actions/homework'
-import { concluirAula } from '@/lib/actions/aulas'
+import { concluirAula, marcarFalta } from '@/lib/actions/aulas'
 import { enviarResumoAI, getAIAnalysisV2 } from '@/lib/actions/ai-summary'
 import {
   BookOpen,
@@ -65,6 +65,8 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
   const [loading, setLoading] = useState(false)
   const [completing, setCompleting] = useState(false)
   const [confirmConcluir, setConfirmConcluir] = useState(false)
+  const [confirmFalta, setConfirmFalta] = useState(false)
+  const [markingFalta, setMarkingFalta] = useState(false)
   const [summarizing, setSummarizing] = useState(false)
   const [formData, setFormData] = useState<LessonFormData>({
     homework: aula.homework || '',
@@ -116,6 +118,23 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     } finally {
       setCompleting(false)
       setConfirmConcluir(false)
+    }
+  }
+
+  async function doFalta() {
+    setMarkingFalta(true)
+    try {
+      const { success } = await marcarFalta(aula.id)
+      if (success) {
+        toast.success('Falta registrada. 1 crédito foi descontado do plano.')
+        onSuccess?.()
+        onOpenChange(false)
+      }
+    } catch (error) {
+      toast.error(getReadableError(error, 'Erro ao registrar falta.'))
+    } finally {
+      setMarkingFalta(false)
+      setConfirmFalta(false)
     }
   }
 
@@ -193,8 +212,8 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
             </DialogDescription>
           </DialogHeader>
 
-          {aula.status !== 'dada' && aula.status !== 'finalizado' ? (
-            <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-3xl flex items-center justify-between gap-4 group animate-in slide-in-from-top-2 duration-500">
+          {aula.status !== 'dada' && aula.status !== 'falta' && aula.status !== 'finalizado' ? (
+            <div className="bg-emerald-50 border border-emerald-100 p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 group animate-in slide-in-from-top-2 duration-500">
               <div className="flex items-center gap-4">
                 <div className="w-12 h-12 rounded-2xl bg-white text-emerald-600 flex items-center justify-center shadow-sm">
                   <CheckCircle2 className="w-6 h-6" />
@@ -208,13 +227,23 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
                   </p>
                 </div>
               </div>
-              <Button
-                onClick={() => setConfirmConcluir(true)}
-                disabled={completing}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest px-6 h-12 rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
-              >
-                {completing ? 'Processando...' : 'Concluir aula'}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setConfirmFalta(true)}
+                  disabled={completing || markingFalta}
+                  variant="ghost"
+                  className="text-amber-700 hover:bg-amber-50 font-black text-xs uppercase tracking-widest px-4 h-12 rounded-xl border border-amber-200 transition-all active:scale-95"
+                >
+                  {markingFalta ? 'Processando...' : 'Faltou'}
+                </Button>
+                <Button
+                  onClick={() => setConfirmConcluir(true)}
+                  disabled={completing || markingFalta}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs uppercase tracking-widest px-6 h-12 rounded-xl shadow-lg shadow-emerald-600/20 transition-all active:scale-95"
+                >
+                  {completing ? 'Processando...' : 'Concluir aula'}
+                </Button>
+              </div>
             </div>
           ) : null}
 
@@ -468,6 +497,35 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
             </Button>
           </DialogFooter>
         </div>
+      </DialogContent>
+    </Dialog>
+
+    <Dialog open={confirmFalta} onOpenChange={setConfirmFalta}>
+      <DialogContent className="sm:max-w-[440px] rounded-3xl border-none shadow-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl font-black text-slate-900">Registrar falta do aluno?</DialogTitle>
+          <DialogDescription className="text-sm text-slate-500">
+            O aluno não compareceu? Isso registra a falta e desconta 1 crédito do plano (mesma regra do cancelamento em cima da hora). Esta ação não pode ser desfeita.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-3 sm:gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => setConfirmFalta(false)}
+            disabled={markingFalta}
+            className="rounded-xl font-bold text-slate-500 hover:bg-slate-50"
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={() => void doFalta()}
+            disabled={markingFalta}
+            className="rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold gap-2"
+          >
+            {markingFalta ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <AlertTriangle className="h-4 w-4" aria-hidden="true" />}
+            {markingFalta ? 'Processando...' : 'Confirmar falta'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
 

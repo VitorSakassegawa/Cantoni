@@ -130,6 +130,14 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
   const futureLessonsCount = lessonList.filter((lesson) =>
     ['agendada', 'confirmada', 'pendente_remarcacao'].includes(lesson.status)
   ).length
+  // Attendance: dadas vs faltas (no-shows). Reschedules are tracked separately —
+  // they don't lower presence, but a high count is its own signal.
+  const noShowCount = lessonList.filter((lesson) => lesson.status === 'falta').length
+  const rescheduledCount = lessonList.filter((lesson) => lesson.status === 'remarcada').length
+  const attendanceDenominator = completedLessonsCount + noShowCount
+  const attendanceRate = attendanceDenominator > 0
+    ? Math.round((completedLessonsCount / attendanceDenominator) * 100)
+    : null
   const generalWhatsAppHref = buildWhatsAppUrl(aluno.phone, buildGeneralWhatsAppMessage(aluno.full_name))
   const firstAccessWhatsAppHref = buildWhatsAppUrl(aluno.phone, buildFirstAccessWhatsAppMessage(aluno.full_name))
   const paymentWhatsAppHref = nextOpenPayment
@@ -438,6 +446,18 @@ export default async function AlunoDetailPage({ params }: { params: RouteParams 
                   <p className="mt-3 text-xs font-bold text-slate-500">
                     {contrato.aulas_dadas} de {contrato.aulas_totais} aulas concluídas • faltam {contrato.aulas_restantes}
                   </p>
+                  {attendanceRate !== null ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-slate-200 pt-3">
+                      <span className={`text-xs font-black uppercase tracking-widest ${
+                        attendanceRate >= 90 ? 'text-emerald-600' : attendanceRate >= 75 ? 'text-amber-600' : 'text-rose-600'
+                      }`}>
+                        Presença {attendanceRate}%
+                      </span>
+                      <span className="text-xs font-bold text-slate-400">
+                        {noShowCount} falta(s) • {rescheduledCount} remarcação(ões)
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
               </CardContent>
             </Card>

@@ -347,6 +347,45 @@ export async function concluirAula(aulaId: number) {
   return { success: true, xpAwarded: getXpReward('lessonComplete'), ...result }
 }
 
+// Marks a no-show: the credit is consumed (same financial treatment as a late
+// cancellation) but the status stays distinguishable for attendance analytics.
+export async function marcarFalta(aulaId: number) {
+  const { aula, contrato, serviceSupabase } = await requireLessonAccess(aulaId, {
+    allowProfessor: true,
+    allowStudentOwner: false,
+  })
+
+  if (aula.status === 'dada' || aula.status === 'falta') {
+    return { success: true, alreadyResolved: true }
+  }
+
+  const result = await ContractService.cancelarAulaComPenalidade(aulaId, contrato, aula, 'falta')
+
+  if (aula.google_event_id) {
+    const res = await deletarEventoCalendar(aula.google_event_id)
+    if (!res.success) {
+      console.warn('marcarFalta: Google Calendar sync failed, but proceeding.')
+    }
+    await serviceSupabase.from('aulas').update({ google_event_id: null }).eq('id', aulaId)
+  }
+
+  revalidatePath('/professor')
+  revalidatePath(`/professor/alunos/${contrato.aluno_id}`)
+  revalidatePath('/aluno')
+
+  await logActivityBestEffort({
+    targetUserId: contrato.aluno_id,
+    contractId: contrato.id,
+    lessonId: aulaId,
+    eventType: 'lesson.no_show',
+    title: 'Falta registrada',
+    description: `O aluno não compareceu à aula de ${formatDateTime(aula.data_hora)}; 1 crédito foi descontado.`,
+    severity: 'warning',
+  })
+
+  return { success: true, ...result }
+}
+
 export async function rejeitarRemarcacao(aulaId: number, justificativa: string) {
   const { user } = await requireProfessor()
   const serviceSupabase = await createServiceClient()

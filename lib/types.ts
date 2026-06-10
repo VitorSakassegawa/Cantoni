@@ -7,6 +7,7 @@ export type StatusAula =
   | 'agendada'
   | 'confirmada'
   | 'dada'
+  | 'falta'
   | 'finalizado'
   | 'cancelada'
   | 'remarcada'
