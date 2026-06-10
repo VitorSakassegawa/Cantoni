@@ -37,6 +37,13 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   // Remove the "X-Powered-By: Next.js" fingerprint header.
   poweredByHeader: false,
+  experimental: {
+    serverActions: {
+      // Default is 1MB; the activity PDF import sends the file through a
+      // server action (FormData). The action re-validates size server-side.
+      bodySizeLimit: "10mb",
+    },
+  },
   async headers() {
     return [
       {

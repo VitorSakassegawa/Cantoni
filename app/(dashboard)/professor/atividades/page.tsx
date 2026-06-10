@@ -21,6 +21,7 @@ import {
   corrigirAtividade,
   excluirAtividade,
   gerarAtividadeIA,
+  importarAtividadePDF,
   salvarAtividade,
 } from '@/lib/actions/atividades'
 import {
@@ -31,7 +32,7 @@ import {
   type Questao,
   type QuestaoTipo,
 } from '@/lib/atividades-utils'
-import { ClipboardList, Loader2, Plus, Send, Sparkles, Trash2, Users } from 'lucide-react'
+import { ClipboardList, FileUp, Loader2, Plus, Send, Sparkles, Trash2, Users } from 'lucide-react'
 
 type AtividadeRow = {
   id: string
@@ -84,6 +85,9 @@ export default function ProfessorAtividadesPage() {
   const [generating, setGenerating] = useState(false)
   const [phraseIdx, setPhraseIdx] = useState(0)
   const [draft, setDraft] = useState<{ titulo: string; nivel: AtividadeNivel; questoes: Questao[] } | null>(null)
+  const [draftFonte, setDraftFonte] = useState<'ia' | 'pdf'>('ia')
+  const [createMode, setCreateMode] = useState<'ia' | 'pdf'>('ia')
+  const [pdfFile, setPdfFile] = useState<File | null>(null)
   const [saving, setSaving] = useState(false)
 
   // atribuir
@@ -139,7 +143,26 @@ export default function ProfessorAtividadesPage() {
     try {
       const result = await gerarAtividadeIA({ tema, nivel, tipos, quantidade })
       setDraft(result)
+      setDraftFonte('ia')
       toast.success(`${result.questoes.length} questões geradas — revise antes de salvar.`)
+    } catch (error) {
+      toast.error(getErrorMessage(error))
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  async function handleImportarPdf() {
+    if (!pdfFile) return
+    setGenerating(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', pdfFile)
+      formData.append('nivel', nivel)
+      const result = await importarAtividadePDF(formData)
+      setDraft(result)
+      setDraftFonte('pdf')
+      toast.success(`${result.questoes.length} questões extraídas do PDF — revise antes de salvar.`)
     } catch (error) {
       toast.error(getErrorMessage(error))
     } finally {
@@ -151,7 +174,7 @@ export default function ProfessorAtividadesPage() {
     if (!draft) return
     setSaving(true)
     try {
-      await salvarAtividade({ titulo: draft.titulo, nivel: draft.nivel, questoes: draft.questoes, tipoFonte: 'ia' })
+      await salvarAtividade({ titulo: draft.titulo, nivel: draft.nivel, questoes: draft.questoes, tipoFonte: draftFonte })
       toast.success('Atividade salva no repositório!')
       setCreateOpen(false)
       setDraft(null)
@@ -348,6 +371,71 @@ export default function ProfessorAtividadesPage() {
               </div>
             ) : (
               <div className="space-y-5">
+                <div className="flex gap-2">
+                  {([
+                    { mode: 'ia' as const, label: 'Gerar do zero', icon: Sparkles },
+                    { mode: 'pdf' as const, label: 'Importar PDF', icon: FileUp },
+                  ]).map(({ mode, label, icon: Icon }) => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setCreateMode(mode)}
+                      aria-pressed={createMode === mode}
+                      className={`flex-1 flex items-center justify-center gap-2 rounded-xl border-2 px-4 py-3 text-xs font-black uppercase tracking-wide transition-all ${
+                        createMode === mode
+                          ? 'border-indigo-600 bg-indigo-50 text-indigo-700'
+                          : 'border-slate-100 bg-white text-slate-400 hover:border-indigo-200'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4" /> {label}
+                    </button>
+                  ))}
+                </div>
+
+                {createMode === 'pdf' ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="pdf-file" className="text-xs font-black uppercase tracking-widest text-slate-500">
+                        Arquivo PDF (até 6 MB)
+                      </Label>
+                      <Input
+                        id="pdf-file"
+                        type="file"
+                        accept="application/pdf"
+                        onChange={(e) => setPdfFile(e.target.files?.[0] || null)}
+                        className="h-11 rounded-xl pt-2"
+                      />
+                      <p className="text-xs font-medium text-slate-400">
+                        A IA lê o documento, extrai as questões e resolve o gabarito quando ele não estiver no PDF.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="nivel-pdf" className="text-xs font-black uppercase tracking-widest text-slate-500">
+                        Nível CEFR
+                      </Label>
+                      <select
+                        id="nivel-pdf"
+                        value={nivel}
+                        onChange={(e) => setNivel(e.target.value as AtividadeNivel)}
+                        className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white font-bold text-sm"
+                      >
+                        {ATIVIDADE_NIVEIS.map((n) => (
+                          <option key={n} value={n}>{n}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        onClick={() => void handleImportarPdf()}
+                        disabled={!pdfFile}
+                        className="h-12 px-8 rounded-xl lms-gradient text-white font-black text-xs uppercase tracking-widest"
+                      >
+                        <FileUp className="w-4 h-4 mr-2" /> Extrair questões
+                      </Button>
+                    </DialogFooter>
+                  </div>
+                ) : (
+                <>
                 <div className="space-y-2">
                   <Label htmlFor="tema" className="text-xs font-black uppercase tracking-widest text-slate-500">
                     Tema / instruções
@@ -420,6 +508,8 @@ export default function ProfessorAtividadesPage() {
                     <Sparkles className="w-4 h-4 mr-2" /> Gerar questões
                   </Button>
                 </DialogFooter>
+                </>
+                )}
               </div>
             )
           ) : (
