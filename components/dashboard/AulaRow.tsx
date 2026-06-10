@@ -98,6 +98,7 @@ const STATUS_BADGE: Record<StatusAula, BadgeVariant> = {
   agendada: 'secondary',
   confirmada: 'default',
   dada: 'success',
+  falta: 'destructive',
   finalizado: 'success',
   cancelada: 'outline',
   remarcada: 'warning',

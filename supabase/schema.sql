@@ -81,6 +81,7 @@ create table if not exists aulas (
       'agendada',
       'confirmada',
       'dada',
+      'falta',
       'cancelada',
       'remarcada',
       'pendente_remarcacao',
