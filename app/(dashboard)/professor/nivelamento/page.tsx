@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { 
   Sparkles, 
@@ -101,48 +101,28 @@ export default function ProfessorNivelamentoPage() {
   const [inviteFrom, setInviteFrom] = useState('')
   const [inviteUntil, setInviteUntil] = useState('')
   const [savingInvite, setSavingInvite] = useState(false)
+  const [confirmingRevoke, setConfirmingRevoke] = useState(false)
 
   const supabase = createClient()
 
-  async function fetchStudents() {
-    setLoading(true)
-    const [{ data, error }, { data: inviteRows }] = await Promise.all([
-      supabase.from('profiles').select('*').eq('role', 'aluno').order('full_name'),
-      supabase
-        .from('placement_invites')
-        .select('student_id, status, valid_from, valid_until, created_at')
-        .eq('status', 'pending'),
-    ])
-
-    if (error) {
-      toast.error('Erro ao carregar alunos')
-    } else {
-      setStudents((data as PlacementStudent[]) || [])
-      const inviteMap: Record<string, PlacementInvite> = {}
-      for (const invite of (inviteRows as PlacementInvite[]) || []) {
-        inviteMap[invite.student_id] = invite
-      }
-      setInvites(inviteMap)
-    }
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    let active = true
-
-    async function loadInitialStudents() {
+  // Single loader shared by the initial mount and manual refreshes. `isActive`
+  // guards against a setState after unmount when used from the mount effect.
+  const loadStudentsAndInvites = useCallback(
+    async (isActive: () => boolean = () => true) => {
       setLoading(true)
       const [{ data, error }, { data: inviteRows }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('role', 'aluno').order('full_name'),
+        supabase
+          .from('profiles')
+          .select('id, full_name, email, cefr_level, placement_test_completed')
+          .eq('role', 'aluno')
+          .order('full_name'),
         supabase
           .from('placement_invites')
           .select('student_id, status, valid_from, valid_until, created_at')
           .eq('status', 'pending'),
       ])
 
-      if (!active) {
-        return
-      }
+      if (!isActive()) return
 
       if (error) {
         toast.error('Erro ao carregar alunos')
@@ -154,16 +134,18 @@ export default function ProfessorNivelamentoPage() {
         }
         setInvites(inviteMap)
       }
-
       setLoading(false)
-    }
+    },
+    [supabase]
+  )
 
-    void loadInitialStudents()
-
+  useEffect(() => {
+    let active = true
+    void loadStudentsAndInvites(() => active)
     return () => {
       active = false
     }
-  }, [supabase])
+  }, [loadStudentsAndInvites])
 
   async function loadHistory(studentId: string) {
     setLoadingHistory(true)
@@ -196,7 +178,7 @@ export default function ProfessorNivelamentoPage() {
       await requestNewPlacementTest(student.id, { validFrom, validUntil })
       toast.success('Convite de novo teste criado!')
       setInviteFormOpen(false)
-      void fetchStudents()
+      void loadStudentsAndInvites()
     } catch (err: unknown) {
       toast.error(getErrorMessage(err))
     } finally {
@@ -204,13 +186,14 @@ export default function ProfessorNivelamentoPage() {
     }
   }
 
+  // Inline two-step confirm instead of window.confirm — the native dialog is
+  // blocked in an installed iOS PWA (standalone), where this app runs.
   async function handleRevoke(student: PlacementStudent) {
-    if (!confirm(`Revogar o convite de teste de ${student.full_name}?`)) return
-
     try {
       await revokePlacementInvite(student.id)
       toast.success('Convite revogado.')
-      void fetchStudents()
+      setConfirmingRevoke(false)
+      void loadStudentsAndInvites()
     } catch (err: unknown) {
       toast.error(getErrorMessage(err))
     }
@@ -258,6 +241,7 @@ export default function ProfessorNivelamentoPage() {
               key={student.id}
               onClick={() => {
                 setSelectedStudent(student)
+                setConfirmingRevoke(false)
                 loadHistory(student.id)
               }}
               className={`w-full text-left p-6 rounded-[2rem] border transition-all flex items-center justify-between group ${
@@ -328,12 +312,29 @@ export default function ProfessorNivelamentoPage() {
                           {describeInvite(invites[selectedStudent.id]).detail}
                         </p>
                       </div>
-                      <Button
-                        onClick={() => handleRevoke(selectedStudent)}
-                        className="h-10 px-4 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-bold text-[11px] uppercase tracking-widest"
-                      >
-                        Revogar
-                      </Button>
+                      {confirmingRevoke ? (
+                        <div className="flex items-center gap-2">
+                          <Button
+                            onClick={() => handleRevoke(selectedStudent)}
+                            className="h-10 px-4 rounded-xl bg-rose-500 hover:bg-rose-600 text-white font-bold text-[11px] uppercase tracking-widest"
+                          >
+                            Confirmar
+                          </Button>
+                          <Button
+                            onClick={() => setConfirmingRevoke(false)}
+                            className="h-10 px-3 rounded-xl bg-white/10 hover:bg-white/20 text-slate-300 font-bold text-[11px] uppercase tracking-widest"
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          onClick={() => setConfirmingRevoke(true)}
+                          className="h-10 px-4 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-bold text-[11px] uppercase tracking-widest"
+                        >
+                          Revogar
+                        </Button>
+                      )}
                     </div>
                   ) : (
                     <Button

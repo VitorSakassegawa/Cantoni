@@ -346,21 +346,23 @@ export default function LevelTestPage() {
 
     setLoadingAudio(true)
     try {
-      let audioBase64 = cachedAudio
-      if (!audioBase64) {
-        audioBase64 = await getPlacementAudio(currentModuleData.text)
-        if (audioBase64) {
-          setCachedAudio(audioBase64)
+      // getPlacementAudio returns a ready-to-play src: a public Storage URL
+      // (cached clips) or an inline data URI (caching unavailable).
+      let audioSrc = cachedAudio
+      if (!audioSrc) {
+        audioSrc = await getPlacementAudio(currentModuleData.text)
+        if (audioSrc) {
+          setCachedAudio(audioSrc)
         }
       }
 
-      if (!audioBase64) {
+      if (!audioSrc) {
         toast.error('Falha ao gerar o áudio com IA. Tente novamente.')
         return
       }
 
       setLoadingAudio(false)
-      const audio = new Audio(`data:audio/wav;base64,${audioBase64}`)
+      const audio = new Audio(audioSrc)
       audio.onloadedmetadata = () => setAudioDuration(audio.duration)
       audio.ontimeupdate = () => setAudioCurrentTime(audio.currentTime)
       audio.onended = () => {

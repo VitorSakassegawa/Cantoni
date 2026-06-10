@@ -1335,3 +1335,91 @@ create policy "aula_skill_scores_update_professor_policy" on aula_skill_scores
   for update using (is_professor()) with check (is_professor());
 create policy "aula_skill_scores_delete_professor_policy" on aula_skill_scores
   for delete using (is_professor());
+
+-- ============================================================
+-- Schema drift reconciliation (tables defined only in migrations)
+-- Self-contained idempotent blocks so a fresh bootstrap from this
+-- file matches production. Sourced from:
+--   20260601_pricing_settings.sql, 20260602_pricing_tiers.sql,
+--   20260610_placement_invites.sql
+-- ============================================================
+
+-- PRICING (singleton settings + adjustment audit log) ---------
+create table if not exists pricing_settings (
+  id boolean primary key default true,
+  price_semestral_1x numeric(10,2) not null default 1920,
+  price_semestral_2x numeric(10,2) not null default 2880,
+  price_avulsa numeric(10,2) not null default 90,
+  tier_pricing jsonb,
+  updated_at timestamptz not null default now(),
+  updated_by uuid references auth.users(id),
+  constraint pricing_settings_singleton check (id = true)
+);
+
+insert into pricing_settings (id) values (true) on conflict (id) do nothing;
+
+create table if not exists pricing_adjustments (
+  id bigint generated always as identity primary key,
+  kind text not null check (kind in ('ipca', 'manual')),
+  percent numeric(6,3),
+  prices_before jsonb not null,
+  prices_after jsonb not null,
+  note text,
+  created_by uuid references auth.users(id),
+  created_at timestamptz not null default now()
+);
+
+-- Snapshot of the standard price + deviation justification on a contract.
+alter table contratos
+  add column if not exists valor_padrao numeric(10,2),
+  add column if not exists pricing_override_reason text;
+
+alter table pricing_settings enable row level security;
+alter table pricing_adjustments enable row level security;
+
+drop policy if exists "pricing_settings_select_professor" on pricing_settings;
+drop policy if exists "pricing_settings_update_professor" on pricing_settings;
+drop policy if exists "pricing_settings_insert_professor" on pricing_settings;
+create policy "pricing_settings_select_professor" on pricing_settings for select using (is_professor());
+create policy "pricing_settings_update_professor" on pricing_settings for update using (is_professor()) with check (is_professor());
+create policy "pricing_settings_insert_professor" on pricing_settings for insert with check (is_professor());
+
+drop policy if exists "pricing_adjustments_select_professor" on pricing_adjustments;
+drop policy if exists "pricing_adjustments_insert_professor" on pricing_adjustments;
+create policy "pricing_adjustments_select_professor" on pricing_adjustments for select using (is_professor());
+create policy "pricing_adjustments_insert_professor" on pricing_adjustments for insert with check (is_professor());
+
+-- PLACEMENT INVITES (professor-issued, optional validity window) ----
+create table if not exists placement_invites (
+  id uuid primary key default gen_random_uuid(),
+  student_id uuid not null references profiles(id) on delete cascade,
+  created_by uuid references profiles(id) on delete set null,
+  status text not null default 'pending' check (status in ('pending', 'used', 'revoked')),
+  valid_from timestamptz,
+  valid_until timestamptz,
+  used_at timestamptz,
+  created_at timestamptz not null default now(),
+  constraint placement_invites_window_check check (
+    valid_from is null or valid_until is null or valid_from <= valid_until
+  )
+);
+
+create index if not exists idx_placement_invites_student_status
+  on placement_invites (student_id, status);
+
+alter table placement_invites enable row level security;
+
+drop policy if exists "placement_invites_select_policy" on placement_invites;
+drop policy if exists "placement_invites_insert_professor_policy" on placement_invites;
+drop policy if exists "placement_invites_update_policy" on placement_invites;
+drop policy if exists "placement_invites_delete_professor_policy" on placement_invites;
+create policy "placement_invites_select_policy" on placement_invites
+  for select using (is_professor() or student_id = (select auth.uid()));
+create policy "placement_invites_insert_professor_policy" on placement_invites
+  for insert with check (is_professor());
+create policy "placement_invites_update_policy" on placement_invites
+  for update
+  using (is_professor() or student_id = (select auth.uid()))
+  with check (is_professor() or (student_id = (select auth.uid()) and status = 'used'));
+create policy "placement_invites_delete_professor_policy" on placement_invites
+  for delete using (is_professor());
