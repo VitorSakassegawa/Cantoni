@@ -28,11 +28,13 @@ import {
   ATIVIDADE_NIVEIS,
   QUESTAO_TIPOS,
   QUESTAO_TIPO_LABELS,
+  composicaoTotal,
   type AtividadeNivel,
+  type Composicao,
   type Questao,
   type QuestaoTipo,
 } from '@/lib/atividades-utils'
-import { ClipboardList, FileUp, Loader2, Plus, Send, Sparkles, Trash2, Users } from 'lucide-react'
+import { ClipboardList, FileUp, Loader2, Minus, Plus, Send, Sparkles, Trash2, Users } from 'lucide-react'
 
 type AtividadeRow = {
   id: string
@@ -80,8 +82,13 @@ export default function ProfessorAtividadesPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [tema, setTema] = useState('')
   const [nivel, setNivel] = useState<AtividadeNivel>('B1')
-  const [tipos, setTipos] = useState<QuestaoTipo[]>(['multipla_escolha', 'lacunas', 'verdadeiro_falso'])
-  const [quantidade, setQuantidade] = useState(8)
+  const [composicao, setComposicao] = useState<Composicao>({
+    multipla_escolha: 4,
+    verdadeiro_falso: 2,
+    lacunas: 2,
+    ordenar: 0,
+    dissertativa: 0,
+  })
   const [generating, setGenerating] = useState(false)
   const [phraseIdx, setPhraseIdx] = useState(0)
   const [draft, setDraft] = useState<{ titulo: string; nivel: AtividadeNivel; questoes: Questao[] } | null>(null)
@@ -134,14 +141,15 @@ export default function ProfessorAtividadesPage() {
     return () => clearInterval(id)
   }, [generating])
 
-  function toggleTipo(tipo: QuestaoTipo) {
-    setTipos((prev) => (prev.includes(tipo) ? prev.filter((t) => t !== tipo) : [...prev, tipo]))
+  function setTipoQtd(tipo: QuestaoTipo, valor: number) {
+    setComposicao((prev) => ({ ...prev, [tipo]: Math.max(0, Math.min(15, valor)) }))
   }
+  const totalComposicao = composicaoTotal(composicao)
 
   async function handleGerar() {
     setGenerating(true)
     try {
-      const result = await gerarAtividadeIA({ tema, nivel, tipos, quantidade })
+      const result = await gerarAtividadeIA({ tema, nivel, composicao })
       setDraft(result)
       setDraftFonte('ia')
       toast.success(`${result.questoes.length} questões geradas — revise antes de salvar.`)
@@ -159,15 +167,65 @@ export default function ProfessorAtividadesPage() {
       const formData = new FormData()
       formData.append('file', pdfFile)
       formData.append('nivel', nivel)
+      // Composição opcional: total 0 = extrair o que existe no PDF.
+      if (totalComposicao > 0) formData.append('composicao', JSON.stringify(composicao))
       const result = await importarAtividadePDF(formData)
       setDraft(result)
       setDraftFonte('pdf')
-      toast.success(`${result.questoes.length} questões extraídas do PDF — revise antes de salvar.`)
+      toast.success(`${result.questoes.length} questões geradas do PDF — revise antes de salvar.`)
     } catch (error) {
       toast.error(getErrorMessage(error))
     } finally {
       setGenerating(false)
     }
+  }
+
+  // Grid reutilizável de composição (quantas questões de cada tipo).
+  function ComposicaoGrid({ optional }: { optional?: boolean }) {
+    return (
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <p className="text-xs font-black uppercase tracking-widest text-slate-500">
+            Composição {optional ? '(opcional)' : ''}
+          </p>
+          <span className="text-xs font-bold text-indigo-600">{totalComposicao} no total</span>
+        </div>
+        {optional ? (
+          <p className="text-[11px] font-medium text-slate-400">
+            Deixe tudo em 0 para extrair as questões que já existem no PDF.
+          </p>
+        ) : null}
+        <div className="grid gap-2">
+          {QUESTAO_TIPOS.map((tipo) => (
+            <div key={tipo} className="flex items-center justify-between gap-3 rounded-xl border border-slate-100 bg-white px-4 py-2">
+              <span className="text-sm font-bold text-slate-600">{QUESTAO_TIPO_LABELS[tipo]}</span>
+              <div className="flex items-center gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setTipoQtd(tipo, (composicao[tipo] || 0) - 1)}
+                  disabled={(composicao[tipo] || 0) <= 0}
+                  aria-label={`Menos ${QUESTAO_TIPO_LABELS[tipo]}`}
+                  className="h-8 w-8 p-0 rounded-lg border border-slate-200 text-slate-500"
+                >
+                  <Minus className="h-3.5 w-3.5" />
+                </Button>
+                <span className="w-7 text-center text-sm font-black tabular-nums text-slate-900">{composicao[tipo] || 0}</span>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => setTipoQtd(tipo, (composicao[tipo] || 0) + 1)}
+                  aria-label={`Mais ${QUESTAO_TIPO_LABELS[tipo]}`}
+                  className="h-8 w-8 p-0 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
   }
 
   async function handleSalvarDraft() {
@@ -406,7 +464,7 @@ export default function ProfessorAtividadesPage() {
                         className="h-11 rounded-xl pt-2"
                       />
                       <p className="text-xs font-medium text-slate-400">
-                        A IA lê o documento, extrai as questões e resolve o gabarito quando ele não estiver no PDF.
+                        A IA lê o documento. Defina a composição abaixo para gerar questões com base no PDF, ou deixe em 0 para extrair as que já existem.
                       </p>
                     </div>
                     <div className="space-y-2">
@@ -424,13 +482,14 @@ export default function ProfessorAtividadesPage() {
                         ))}
                       </select>
                     </div>
+                    <ComposicaoGrid optional />
                     <DialogFooter>
                       <Button
                         onClick={() => void handleImportarPdf()}
                         disabled={!pdfFile}
                         className="h-12 px-8 rounded-xl lms-gradient text-white font-black text-xs uppercase tracking-widest"
                       >
-                        <FileUp className="w-4 h-4 mr-2" /> Extrair questões
+                        <FileUp className="w-4 h-4 mr-2" /> {totalComposicao > 0 ? 'Gerar do PDF' : 'Extrair questões'}
                       </Button>
                     </DialogFooter>
                   </div>
@@ -448,61 +507,26 @@ export default function ProfessorAtividadesPage() {
                     className="rounded-xl min-h-[80px]"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="nivel-select" className="text-xs font-black uppercase tracking-widest text-slate-500">
-                      Nível CEFR
-                    </Label>
-                    <select
-                      id="nivel-select"
-                      value={nivel}
-                      onChange={(e) => setNivel(e.target.value as AtividadeNivel)}
-                      className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white font-bold text-sm"
-                    >
-                      {ATIVIDADE_NIVEIS.map((n) => (
-                        <option key={n} value={n}>{n}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="quantidade" className="text-xs font-black uppercase tracking-widest text-slate-500">
-                      Nº de questões
-                    </Label>
-                    <Input
-                      id="quantidade"
-                      type="number"
-                      min={3}
-                      max={15}
-                      value={quantidade}
-                      onChange={(e) => setQuantidade(Number(e.target.value))}
-                      className="h-11 rounded-xl"
-                    />
-                  </div>
-                </div>
                 <div className="space-y-2">
-                  <p className="text-xs font-black uppercase tracking-widest text-slate-500">Tipos de questão</p>
-                  <div className="flex flex-wrap gap-2">
-                    {QUESTAO_TIPOS.map((tipo) => (
-                      <button
-                        key={tipo}
-                        type="button"
-                        onClick={() => toggleTipo(tipo)}
-                        aria-pressed={tipos.includes(tipo)}
-                        className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide border transition-all ${
-                          tipos.includes(tipo)
-                            ? 'bg-indigo-600 text-white border-indigo-600'
-                            : 'bg-white text-slate-500 border-slate-200 hover:border-indigo-300'
-                        }`}
-                      >
-                        {QUESTAO_TIPO_LABELS[tipo]}
-                      </button>
+                  <Label htmlFor="nivel-select" className="text-xs font-black uppercase tracking-widest text-slate-500">
+                    Nível CEFR
+                  </Label>
+                  <select
+                    id="nivel-select"
+                    value={nivel}
+                    onChange={(e) => setNivel(e.target.value as AtividadeNivel)}
+                    className="w-full h-11 px-4 rounded-xl border border-slate-200 bg-white font-bold text-sm"
+                  >
+                    {ATIVIDADE_NIVEIS.map((n) => (
+                      <option key={n} value={n}>{n}</option>
                     ))}
-                  </div>
+                  </select>
                 </div>
+                <ComposicaoGrid />
                 <DialogFooter>
                   <Button
                     onClick={() => void handleGerar()}
-                    disabled={!tema.trim() || tipos.length === 0}
+                    disabled={!tema.trim() || totalComposicao === 0}
                     className="h-12 px-8 rounded-xl lms-gradient text-white font-black text-xs uppercase tracking-widest"
                   >
                     <Sparkles className="w-4 h-4 mr-2" /> Gerar questões

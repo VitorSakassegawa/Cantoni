@@ -5,10 +5,14 @@ import { generateAIContent, generateAIContentFromFile, extractAndParseJSON } fro
 import {
   ATIVIDADE_NIVEIS,
   QUESTAO_TIPOS,
+  composicaoTotal,
+  describeComposicao,
   gradeRespostas,
+  normalizeComposicao,
   sanitizeQuestoesForStudent,
   validateQuestoes,
   type AtividadeNivel,
+  type Composicao,
   type Questao,
   type QuestaoTipo,
   type RespostaAluno,
@@ -35,33 +39,36 @@ const TIPO_PROMPT: Record<QuestaoTipo, string> = {
 export async function gerarAtividadeIA(input: {
   tema: string
   nivel: AtividadeNivel
-  tipos: QuestaoTipo[]
-  quantidade: number
+  composicao: Composicao
 }) {
   await requireProfessor()
 
   const tema = (input.tema || '').trim().slice(0, 300)
   if (!tema) throw new Error('Descreva o tema da atividade.')
   const nivel = ATIVIDADE_NIVEIS.includes(input.nivel) ? input.nivel : 'B1'
-  const tipos = (input.tipos || []).filter((t) => QUESTAO_TIPOS.includes(t))
-  if (tipos.length === 0) throw new Error('Selecione pelo menos um tipo de questão.')
-  const quantidade = Math.max(3, Math.min(15, Number(input.quantidade) || 8))
+  const composicao = normalizeComposicao(input.composicao)
+  const total = composicaoTotal(composicao)
+  if (total === 0) throw new Error('Defina quantas questões de cada tipo você quer.')
 
-  const formatos = tipos.map((t) => `- ${TIPO_PROMPT[t]}`).join('\n')
+  const tiposUsados = QUESTAO_TIPOS.filter((t) => (composicao[t] || 0) > 0)
+  const formatos = tiposUsados.map((t) => `- ${TIPO_PROMPT[t]}`).join('\n')
 
   const prompt = `
     Você é um especialista em design de exercícios de inglês (padrão Cambridge/CEFR).
-    Crie ${quantidade} questões INÉDITAS de nível CEFR ${nivel} sobre o tema: "${tema}".
-    Misture APENAS estes formatos (use todos ao longo da lista):
+    Crie questões INÉDITAS de nível CEFR ${nivel} sobre o tema: "${tema}".
+    QUANTIDADE EXATA POR TIPO (gere exatamente esta composição, ${total} no total):
+    ${describeComposicao(composicao)}.
+    Use estes formatos:
 ${formatos}
 
     REGRAS CRÍTICAS:
-    1. Enunciados e conteúdo em INGLÊS (instruções curtas podem ser em inglês simples).
-    2. Para "lacunas", o enunciado DEVE conter ___ exatamente onde falta a palavra.
-    3. Para "ordenar", os itens devem vir na ORDEM CORRETA (o app embaralha).
-    4. Retorne APENAS JSON válido neste formato exato:
+    1. Respeite EXATAMENTE a quantidade pedida de cada tipo.
+    2. Enunciados e conteúdo em INGLÊS (instruções curtas podem ser em inglês simples).
+    3. Para "lacunas", o enunciado DEVE conter ___ exatamente onde falta a palavra.
+    4. Para "ordenar", os itens devem vir na ORDEM CORRETA (o app embaralha).
+    5. Retorne APENAS JSON válido neste formato exato:
     {"titulo": "Título curto da atividade em inglês", "questoes": [ ...objetos nos formatos acima... ]}
-    5. Sem preâmbulos, sem markdown, sem explicações.
+    6. Sem preâmbulos, sem markdown, sem explicações.
   `
 
   const response = await generateAIContent(prompt, undefined, 'application/json')
@@ -69,7 +76,7 @@ ${formatos}
 
   const parsed = extractAndParseJSON(response) as { titulo?: unknown; questoes?: unknown }
   const questoes = validateQuestoes(parsed?.questoes)
-  if (questoes.length < Math.min(3, quantidade)) {
+  if (questoes.length < Math.min(2, total)) {
     throw new Error('A IA gerou questões inválidas demais. Tente gerar novamente.')
   }
 
@@ -96,22 +103,40 @@ export async function importarAtividadePDF(formData: FormData) {
   const nivelRaw = String(formData.get('nivel') || 'B1') as AtividadeNivel
   const nivel = ATIVIDADE_NIVEIS.includes(nivelRaw) ? nivelRaw : 'B1'
 
+  // Composição opcional: se o professor especificar quantas de cada tipo, geramos
+  // essa composição COM BASE no conteúdo do PDF; senão, extraímos o que existe.
+  let composicao: Composicao = {}
+  const composicaoRaw = formData.get('composicao')
+  if (typeof composicaoRaw === 'string' && composicaoRaw.trim()) {
+    try {
+      composicao = normalizeComposicao(JSON.parse(composicaoRaw))
+    } catch {
+      composicao = {}
+    }
+  }
+  const total = composicaoTotal(composicao)
+
   const dataBase64 = Buffer.from(await file.arrayBuffer()).toString('base64')
 
-  const formatos = QUESTAO_TIPOS.map((t) => `- ${TIPO_PROMPT[t]}`).join('\n')
+  const tiposUsados = total > 0 ? QUESTAO_TIPOS.filter((t) => (composicao[t] || 0) > 0) : QUESTAO_TIPOS
+  const formatos = tiposUsados.map((t) => `- ${TIPO_PROMPT[t]}`).join('\n')
+
+  const instrucaoComposicao =
+    total > 0
+      ? `Com base no CONTEÚDO do PDF (vocabulário, gramática e temas que ele aborda), crie EXATAMENTE esta composição (${total} questões no total): ${describeComposicao(composicao)}.`
+      : `EXTRAIA as questões já presentes no documento, convertendo cada uma para o tipo que melhor a representa. NÃO invente questões além das que existem.`
+
   const prompt = `
-    O PDF anexado contém exercícios de inglês. EXTRAIA as questões do documento,
-    convertendo cada uma para o formato estruturado abaixo. Use o tipo que melhor
-    representa cada questão original:
+    O PDF anexado é material de inglês. ${instrucaoComposicao}
+    Use estes formatos:
 ${formatos}
 
     REGRAS CRÍTICAS:
-    1. NÃO invente questões — extraia apenas o que existe no PDF (enunciados podem ser levemente normalizados).
-    2. Para questões cujo gabarito não está no PDF, RESOLVA a questão você mesmo para preencher a resposta.
-    3. Para "lacunas", garanta que o enunciado contenha ___ no lugar da palavra.
-    4. Para "ordenar", liste os itens na ORDEM CORRETA.
-    5. Questões abertas/redação viram "dissertativa".
-    6. Retorne APENAS JSON válido: {"titulo": "título derivado do PDF", "questoes": [...]}
+    1. ${total > 0 ? 'Respeite EXATAMENTE a quantidade pedida de cada tipo.' : 'Para questões cujo gabarito não está no PDF, RESOLVA a questão você mesmo para preencher a resposta.'}
+    2. Para "lacunas", garanta que o enunciado contenha ___ no lugar da palavra.
+    3. Para "ordenar", liste os itens na ORDEM CORRETA.
+    4. Questões abertas/redação viram "dissertativa".
+    5. Conteúdo em INGLÊS. Retorne APENAS JSON válido: {"titulo": "título derivado do PDF", "questoes": [...]}
   `
 
   const response = await generateAIContentFromFile(prompt, {
