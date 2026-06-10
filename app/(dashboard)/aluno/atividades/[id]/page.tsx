@@ -7,8 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { getAtividadeParaResponder, submitAtividade } from '@/lib/actions/atividades'
-import type { QuestaoAluno, RespostaAluno } from '@/lib/atividades-utils'
+import { getAtividadeParaResponder, getAtribuicaoDetalhe, submitAtividade } from '@/lib/actions/atividades'
+import type { AtividadeReviewItem, QuestaoAluno, RespostaAluno } from '@/lib/atividades-utils'
 import { ArrowLeft, CheckCircle2, Loader2, Send, XCircle } from 'lucide-react'
 
 type AtividadeView = Awaited<ReturnType<typeof getAtividadeParaResponder>>
@@ -26,12 +26,20 @@ export default function ResponderAtividadePage({ params }: { params: Promise<{ i
   const [ordem, setOrdem] = useState<Record<number, number[]>>({})
   const [submitting, setSubmitting] = useState(false)
   const [resultado, setResultado] = useState<SubmitResult | null>(null)
+  const [review, setReview] = useState<AtividadeReviewItem[] | null>(null)
 
   useEffect(() => {
     let active = true
     getAtividadeParaResponder(id)
       .then((data) => {
-        if (active) setAtividade(data)
+        if (!active) return
+        setAtividade(data)
+        // já entregue/corrigida → busca o review (gabarito + suas respostas)
+        if (data.status !== 'pendente') {
+          getAtribuicaoDetalhe(id)
+            .then((d) => active && setReview(d.review))
+            .catch(() => {})
+        }
       })
       .catch((error) => toast.error(getErrorMessage(error)))
       .finally(() => active && setLoading(false))
@@ -74,6 +82,7 @@ export default function ResponderAtividadePage({ params }: { params: Promise<{ i
     try {
       const result = await submitAtividade(atividade.id, payload)
       setResultado(result)
+      void getAtribuicaoDetalhe(atividade.id).then((d) => setReview(d.review)).catch(() => {})
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       toast.error(getErrorMessage(error))
@@ -107,7 +116,6 @@ export default function ResponderAtividadePage({ params }: { params: Promise<{ i
     const total = resultado?.totalObjetivas ?? atividade.resultado?.totalObjetivas ?? 0
     const nota = resultado?.nota ?? atividade.resultado?.nota ?? null
     const aguardando = (resultado?.status ?? atividade.status) === 'entregue'
-    const corretasById = new Map((resultado?.detalhes || []).map((d) => [d.id, d.correta]))
 
     return (
       <div className="mx-auto max-w-2xl animate-fade-in space-y-8 py-10 px-4">
@@ -139,24 +147,49 @@ export default function ResponderAtividadePage({ params }: { params: Promise<{ i
           ) : null}
         </div>
 
-        {resultado ? (
+        {review && review.length > 0 ? (
           <div className="space-y-3">
-            {atividade.questoes.map((q) => {
-              const correta = corretasById.get(q.id)
-              if (correta === null || correta === undefined) return null
+            <p className="text-xs font-black uppercase tracking-widest text-slate-400 px-1">Revisão das respostas</p>
+            {review.map((item) => {
+              const neutra = item.correta === null
               return (
                 <div
-                  key={q.id}
-                  className={`flex items-start gap-3 rounded-2xl border p-4 ${
-                    correta ? 'border-emerald-100 bg-emerald-50/60' : 'border-rose-100 bg-rose-50/60'
+                  key={item.id}
+                  className={`rounded-2xl border p-5 ${
+                    neutra
+                      ? 'border-slate-100 bg-slate-50/60'
+                      : item.correta
+                        ? 'border-emerald-100 bg-emerald-50/60'
+                        : 'border-rose-100 bg-rose-50/60'
                   }`}
                 >
-                  {correta ? (
-                    <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
-                  ) : (
-                    <XCircle className="h-5 w-5 shrink-0 text-rose-500" />
-                  )}
-                  <p className="text-sm font-bold text-slate-800">{q.id}. {q.enunciado}</p>
+                  <div className="flex items-start gap-3">
+                    {neutra ? (
+                      <span className="mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 border-slate-300" />
+                    ) : item.correta ? (
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-500" />
+                    ) : (
+                      <XCircle className="h-5 w-5 shrink-0 text-rose-500" />
+                    )}
+                    <div className="space-y-2 min-w-0">
+                      <p className="text-sm font-bold text-slate-800">{item.id}. {item.enunciado}</p>
+                      <div className="space-y-1 rounded-xl bg-white/70 p-3">
+                        <p className={`text-xs font-semibold ${neutra ? 'text-slate-600' : item.correta ? 'text-emerald-700' : 'text-rose-700'}`}>
+                          <span className="mr-2 text-[11px] font-black uppercase tracking-widest opacity-70">Sua resposta:</span>
+                          {item.respostaAluno}
+                        </p>
+                        {!item.correta && item.respostaCorreta ? (
+                          <p className="text-xs font-semibold text-emerald-700">
+                            <span className="mr-2 text-[11px] font-black uppercase tracking-widest opacity-70">Correta:</span>
+                            {item.respostaCorreta}
+                          </p>
+                        ) : null}
+                        {neutra ? (
+                          <p className="text-[11px] font-medium text-slate-400">Resposta aberta — avaliada pelo professor.</p>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )
             })}

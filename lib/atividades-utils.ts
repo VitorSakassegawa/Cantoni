@@ -262,3 +262,66 @@ export function gradeRespostas(
 
   return { acertos, totalObjetivas, detalhes, temDissertativa }
 }
+
+// ---- review (gabarito + resposta do aluno, lado a lado) -------------------------
+// Construído no servidor (o gabarito é professor-only). Para dissertativa,
+// `respostaCorreta` é null — nunca expõe o critério de correção ao aluno.
+
+export type AtividadeReviewItem = {
+  id: number
+  tipo: QuestaoTipo
+  enunciado: string
+  respostaAluno: string
+  respostaCorreta: string | null
+  correta: boolean | null
+}
+
+const EM_BRANCO = '(em branco)'
+
+export function buildAtividadeReview(
+  questoes: Questao[],
+  respostas: RespostaAluno[] | null | undefined,
+  seedText: string
+): AtividadeReviewItem[] {
+  const byId = new Map<number, RespostaAluno['valor']>()
+  for (const r of respostas || []) {
+    if (typeof r?.id === 'number') byId.set(r.id, r.valor)
+  }
+  const graded = gradeRespostas(questoes, respostas, seedText)
+  const corretaById = new Map(graded.detalhes.map((d) => [d.id, d.correta]))
+
+  return questoes.map((q) => {
+    const valor = byId.has(q.id) ? byId.get(q.id)! : null
+    let respostaAluno = EM_BRANCO
+    let respostaCorreta: string | null = null
+
+    if (q.tipo === 'multipla_escolha' && q.opcoes) {
+      respostaAluno = typeof valor === 'number' && q.opcoes[valor] !== undefined ? q.opcoes[valor] : EM_BRANCO
+      respostaCorreta = typeof q.respostaIndice === 'number' ? q.opcoes[q.respostaIndice] ?? null : null
+    } else if (q.tipo === 'verdadeiro_falso') {
+      respostaAluno = typeof valor === 'boolean' ? (valor ? 'Verdadeiro' : 'Falso') : EM_BRANCO
+      respostaCorreta = q.respostaBool ? 'Verdadeiro' : 'Falso'
+    } else if (q.tipo === 'lacunas') {
+      respostaAluno = typeof valor === 'string' && valor.trim() ? valor.trim() : EM_BRANCO
+      respostaCorreta = (q.respostaTexto || '').split('|').map((s) => s.trim()).filter(Boolean).join(' / ') || null
+    } else if (q.tipo === 'ordenar' && q.itens) {
+      const map = shuffleMap(q.itens.length, `${seedText}:${q.id}`)
+      respostaAluno = Array.isArray(valor) && valor.length
+        ? (valor as number[]).map((si) => q.itens![map[si]] ?? '?').join(' → ')
+        : EM_BRANCO
+      respostaCorreta = q.itens.join(' → ')
+    } else if (q.tipo === 'dissertativa') {
+      respostaAluno = typeof valor === 'string' && valor.trim() ? valor.trim() : EM_BRANCO
+      respostaCorreta = null
+    }
+
+    return {
+      id: q.id,
+      tipo: q.tipo,
+      enunciado: q.enunciado,
+      respostaAluno,
+      respostaCorreta,
+      correta: corretaById.get(q.id) ?? null,
+    }
+  })
+}

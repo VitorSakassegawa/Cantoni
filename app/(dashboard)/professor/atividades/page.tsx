@@ -21,6 +21,7 @@ import {
   corrigirAtividade,
   excluirAtividade,
   gerarAtividadeIA,
+  getAtribuicaoDetalhe,
   importarAtividadePDF,
   salvarAtividade,
 } from '@/lib/actions/atividades'
@@ -29,6 +30,7 @@ import {
   QUESTAO_TIPOS,
   QUESTAO_TIPO_LABELS,
   composicaoTotal,
+  type AtividadeReviewItem,
   type AtividadeNivel,
   type Composicao,
   type Questao,
@@ -107,6 +109,9 @@ export default function ProfessorAtividadesPage() {
   const [reviewFor, setReviewFor] = useState<AtividadeRow | null>(null)
   const [feedbacks, setFeedbacks] = useState<Record<string, string>>({})
   const [gradingId, setGradingId] = useState<string | null>(null)
+  const [expandedReview, setExpandedReview] = useState<string | null>(null)
+  const [reviewData, setReviewData] = useState<Record<string, AtividadeReviewItem[]>>({})
+  const [reviewLoadingId, setReviewLoadingId] = useState<string | null>(null)
 
   const supabase = createClient()
 
@@ -285,6 +290,25 @@ export default function ProfessorAtividadesPage() {
       toast.error(getErrorMessage(error))
     } finally {
       setAssigning(false)
+    }
+  }
+
+  async function toggleReview(atrId: string) {
+    if (expandedReview === atrId) {
+      setExpandedReview(null)
+      return
+    }
+    setExpandedReview(atrId)
+    if (!reviewData[atrId]) {
+      setReviewLoadingId(atrId)
+      try {
+        const d = await getAtribuicaoDetalhe(atrId)
+        setReviewData((prev) => ({ ...prev, [atrId]: d.review }))
+      } catch (error) {
+        toast.error(getErrorMessage(error))
+      } finally {
+        setReviewLoadingId(null)
+      }
     }
   }
 
@@ -692,6 +716,40 @@ export default function ProfessorAtividadesPage() {
                           ) : null}
                         </div>
                       </div>
+
+                      {atr.status !== 'pendente' ? (
+                        <div className="border-t border-slate-200 pt-3 space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => void toggleReview(atr.id)}
+                            className="text-[11px] font-black uppercase tracking-widest text-indigo-600 hover:text-indigo-800"
+                          >
+                            {expandedReview === atr.id ? 'Ocultar respostas' : 'Ver respostas'}
+                          </button>
+                          {expandedReview === atr.id ? (
+                            reviewLoadingId === atr.id && !reviewData[atr.id] ? (
+                              <p className="text-xs text-slate-400 italic">Carregando...</p>
+                            ) : (
+                              <div className="space-y-2">
+                                {(reviewData[atr.id] || []).map((item) => {
+                                  const neutra = item.correta === null
+                                  return (
+                                    <div key={item.id} className={`rounded-xl border p-3 text-xs ${neutra ? 'border-slate-100 bg-white' : item.correta ? 'border-emerald-100 bg-emerald-50/50' : 'border-rose-100 bg-rose-50/50'}`}>
+                                      <p className="font-bold text-slate-800">{item.id}. {item.enunciado}</p>
+                                      <p className={`mt-1 font-semibold ${neutra ? 'text-slate-600' : item.correta ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                        <span className="opacity-60 font-black uppercase tracking-widest mr-1">Marcou:</span>{item.respostaAluno}
+                                      </p>
+                                      {!item.correta && item.respostaCorreta ? (
+                                        <p className="mt-0.5 font-semibold text-emerald-700"><span className="opacity-60 font-black uppercase tracking-widest mr-1">Correta:</span>{item.respostaCorreta}</p>
+                                      ) : null}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            )
+                          ) : null}
+                        </div>
+                      ) : null}
 
                       {atr.status === 'entregue' ? (
                         <div className="space-y-3 border-t border-slate-200 pt-3">
