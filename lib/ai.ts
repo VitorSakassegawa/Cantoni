@@ -61,29 +61,121 @@ const AUDIO_VOICE = process.env.GEMINI_TTS_VOICE || 'Kore'
 
 const TEXT_GENERATION_TIMEOUT_MS = Number(process.env.GEMINI_TEXT_TIMEOUT_MS || 60000)
 
+// --- Free-tier protection: concurrency gate + transient-error backoff ---------
+// Gemini's free tier caps requests per minute (e.g. 10 RPM on 2.5-flash) on a
+// quota shared across the whole Google Cloud project. Two safeguards:
+//   1. A concurrency gate so a burst (many students starting at once, or the
+//      batch lesson-summary import) is serialized instead of fired in parallel.
+//      NOTE: serverless runs many instances, so this caps bursts *within one
+//      instance*; cross-instance collisions are absorbed by the backoff below.
+//   2. Exponential backoff that retries the SAME model on a 429/503 before the
+//      caller falls back to a weaker model — switching models does NOT help a
+//      429, because the quota is per-project, not per-model.
+const MAX_CONCURRENCY = Math.max(1, Number(process.env.GEMINI_MAX_CONCURRENCY || 4))
+const MAX_RETRIES = Math.max(0, Number(process.env.GEMINI_MAX_RETRIES || 2))
+const RETRY_BASE_DELAY_MS = Number(process.env.GEMINI_RETRY_BASE_MS || 1500)
+
+let availableSlots = MAX_CONCURRENCY
+const slotQueue: Array<() => void> = []
+
+function acquireSlot(): Promise<void> {
+  if (availableSlots > 0) {
+    availableSlots -= 1
+    return Promise.resolve()
+  }
+  return new Promise<void>((resolve) => slotQueue.push(resolve))
+}
+
+function releaseSlot() {
+  const next = slotQueue.shift()
+  if (next) {
+    // Hand the permit straight to the next waiter (count stays consumed).
+    next()
+  } else {
+    availableSlots += 1
+  }
+}
+
+function isTransientError(error: unknown): boolean {
+  const message = (error instanceof Error ? error.message : String(error || '')).toLowerCase()
+  return (
+    message.includes('429') ||
+    message.includes('rate limit') ||
+    message.includes('quota') ||
+    message.includes('resource_exhausted') ||
+    message.includes('exhausted') ||
+    message.includes('503') ||
+    message.includes('500') ||
+    message.includes('unavailable') ||
+    message.includes('overloaded')
+  )
+}
+
+async function withBackoff<T>(fn: () => Promise<T>, label: string): Promise<T> {
+  let lastError: unknown
+  for (let attempt = 0; attempt <= MAX_RETRIES; attempt += 1) {
+    try {
+      return await fn()
+    } catch (error) {
+      lastError = error
+      // Only a transient (429/503) error is worth retrying the same model; a
+      // 404/permission error should fall through to the caller's model fallback.
+      if (attempt === MAX_RETRIES || !isTransientError(error)) {
+        break
+      }
+      const delay = RETRY_BASE_DELAY_MS * 2 ** attempt
+      console.warn(
+        `[gemini] transient error on ${label} (attempt ${attempt + 1}/${MAX_RETRIES + 1}); retrying in ${delay}ms`
+      )
+      await new Promise((resolve) => setTimeout(resolve, delay))
+    }
+  }
+  throw lastError
+}
+
+// Runs a Gemini call through the concurrency gate AND the backoff policy.
+async function runGeminiCall<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  await acquireSlot()
+  try {
+    return await withBackoff(fn, label)
+  } finally {
+    releaseSlot()
+  }
+}
+
+async function callTextModelOnce(
+  modelName: string,
+  prompt: string,
+  responseMimeType: string
+): Promise<string> {
+  const genAI = getGenAI()
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    generationConfig: { responseMimeType },
+  })
+  // Bound the call so a hung request can't block a whole import batch; on
+  // timeout we fall through to the fallback model below.
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), TEXT_GENERATION_TIMEOUT_MS)
+  )
+  const result = await Promise.race([model.generateContent(prompt), timeoutPromise])
+  const response = await result.response
+  return response.text()
+}
+
 export async function generateAIContent(
   prompt: string,
   modelName: string = PRIMARY_MODEL,
   responseMimeType: string = 'text/plain'
 ) {
   try {
-    const genAI = getGenAI()
-    const model = genAI.getGenerativeModel({
-      model: modelName,
-      generationConfig: { responseMimeType }
-    })
-    // Bound the call so a hung request can't block a whole import batch; on
-    // timeout we fall through to the fallback model below.
-    const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), TEXT_GENERATION_TIMEOUT_MS)
-    )
-    const result = await Promise.race([model.generateContent(prompt), timeoutPromise])
-    const response = await result.response
-    return response.text()
+    return await runGeminiCall(modelName, () => callTextModelOnce(modelName, prompt, responseMimeType))
   } catch (error: unknown) {
     console.error(`Error with model ${modelName}:`, error)
 
-    // Check for 403 or specific preview model errors
+    // After exhausting same-model retries, step down to a weaker model. This
+    // handles persistent failures (404/permission), NOT 429s — those were
+    // already retried in place by withBackoff above.
     if (modelName === PRIMARY_MODEL) {
       console.log(`Retrying with fallback model: ${FALLBACK_MODEL}`)
       return generateAIContent(prompt, FALLBACK_MODEL, responseMimeType)
@@ -347,47 +439,52 @@ function pcmToBase64Wav(pcmBase64: string): string {
   return wavBuffer.toString('base64')
 }
 
-export async function generateAIAudio(text: string, modelName: string = AUDIO_MODEL): Promise<string | null> {
-  console.log(`--- Starting generateAIAudio with ${modelName} ---`)
-  try {
-    const genAI = getGenAI()
-    const model = genAI.getGenerativeModel({ model: modelName })
+async function callAudioModelOnce(modelName: string, text: string): Promise<string> {
+  const genAI = getGenAI()
+  const model = genAI.getGenerativeModel({ model: modelName })
 
-    const audioPromise = model.generateContent({
-      contents: [{ role: 'user', parts: [{ text }] }],
-      generationConfig: {
-        // @ts-expect-error - supported by the Gemini API for TTS models
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: {
-              voiceName: AUDIO_VOICE,
-            },
+  const audioPromise = model.generateContent({
+    contents: [{ role: 'user', parts: [{ text }] }],
+    generationConfig: {
+      // @ts-expect-error - supported by the Gemini API for TTS models
+      responseModalities: ['AUDIO'],
+      speechConfig: {
+        voiceConfig: {
+          prebuiltVoiceConfig: {
+            voiceName: AUDIO_VOICE,
           },
         },
       },
-    })
+    },
+  })
 
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 45000)
-    )
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 45000)
+  )
 
-    const result = (await Promise.race([audioPromise, timeoutPromise])) as {
-      response: Promise<GeminiAudioResponse>
-    }
-    const response = await result.response
-    const part = response.candidates?.[0]?.content?.parts?.find((candidatePart) => candidatePart.inlineData)
-    
-    if (part?.inlineData?.data) {
-      console.log(`Audio generated successfully with ${modelName}. Converting PCM to WAV...`)
-      return pcmToBase64Wav(part.inlineData.data)
-    }
+  const result = (await Promise.race([audioPromise, timeoutPromise])) as {
+    response: Promise<GeminiAudioResponse>
+  }
+  const response = await result.response
+  const part = response.candidates?.[0]?.content?.parts?.find((candidatePart) => candidatePart.inlineData)
 
-    throw new Error('No audio data in response')
+  if (part?.inlineData?.data) {
+    console.log(`Audio generated successfully with ${modelName}. Converting PCM to WAV...`)
+    return pcmToBase64Wav(part.inlineData.data)
+  }
+
+  throw new Error('No audio data in response')
+}
+
+export async function generateAIAudio(text: string, modelName: string = AUDIO_MODEL): Promise<string | null> {
+  console.log(`--- Starting generateAIAudio with ${modelName} ---`)
+  try {
+    // Same gate + 429 backoff as text generation (TTS shares the project quota).
+    return await runGeminiCall(modelName, () => callAudioModelOnce(modelName, text))
   } catch (error: unknown) {
     console.error(`Error with ${modelName}:`, error instanceof Error ? error.message : error)
 
-    // Fallback logic for audio
+    // After same-model retries, step down to the fallback TTS model once.
     if (modelName === AUDIO_MODEL) {
       console.log(`Retrying audio with fallback: ${AUDIO_FALLBACK}`)
       return generateAIAudio(text, AUDIO_FALLBACK)
