@@ -11,6 +11,7 @@ import {
   FileText,
   Flame,
   LayoutDashboard,
+  MonitorPlay,
   Mail,
   Sparkles,
   Tag,
@@ -39,6 +40,7 @@ const iconMap = {
   documentos: FileText,
   jornada: Flame,
   perfil: User,
+  painel: MonitorPlay,
 } as const
 
 function normalizePath(pathname: string, href: string) {

@@ -15,6 +15,7 @@ import {
   Target,
   Clock3,
   Tag,
+  MonitorPlay,
 } from 'lucide-react'
 import { Logo } from '@/components/dashboard/Logo'
 import DesktopDashboardNav from '@/components/dashboard/DesktopDashboardNav'
@@ -49,6 +50,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         { href: '/professor/alunos', label: 'Alunos', icon: Users, iconKey: 'alunos' },
         { href: '/professor/aulas', label: 'Aulas', icon: BookOpen, iconKey: 'aulas' },
         { href: '/professor/nivelamento', label: 'Nivelamento', icon: Sparkles, iconKey: 'nivelamento' },
+        { href: '/professor/painel', label: 'Painel ao vivo', icon: MonitorPlay, iconKey: 'painel' },
         { href: '/professor/calendario', label: 'Calendário', icon: Calendar, iconKey: 'calendario' },
         { href: '/professor/cron', label: 'Cron', icon: Clock3, iconKey: 'cron' },
         { href: '/professor/email-preview', label: 'E-mails', icon: Mail, iconKey: 'emails' },
@@ -59,6 +61,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         { href: '/aluno/pagamentos', label: 'Financeiro', icon: CreditCard, iconKey: 'financeiro' },
         { href: '/aluno/aulas', label: 'Aulas', icon: BookOpen, iconKey: 'aulas' },
         { href: '/aluno/jornada', label: 'Jornada', icon: Flame, iconKey: 'jornada' },
+        { href: '/aluno/painel', label: 'Painel ao vivo', icon: MonitorPlay, iconKey: 'painel' },
         { href: '/aluno/nivelamento', label: 'Nivelamento', icon: Target, iconKey: 'target' },
         { href: '/aluno/calendario', label: 'Calendário', icon: Calendar, iconKey: 'calendario' },
         { href: '/aluno/documentos', label: 'Documentos', icon: FileText, iconKey: 'documentos' },
