@@ -120,7 +120,7 @@ export default function LevelTestPage() {
         return
       }
 
-      const [{ data: profile }, { data: contracts }, { data: latestResult }] = await Promise.all([
+      const [{ data: profile }, { data: contracts }, { data: latestResult }, { data: invites }] = await Promise.all([
         supabase.from('profiles').select('placement_test_completed').eq('id', user.id).single(),
         supabase.from('contratos').select('status, data_inicio, data_fim').eq('aluno_id', user.id).neq('status', 'cancelado'),
         supabase
@@ -130,6 +130,11 @@ export default function LevelTestPage() {
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
+        supabase
+          .from('placement_invites')
+          .select('status, valid_from, valid_until')
+          .eq('student_id', user.id)
+          .eq('status', 'pending'),
       ])
 
       setEligibility(
@@ -137,6 +142,7 @@ export default function LevelTestPage() {
           placementTestCompleted: profile?.placement_test_completed,
           latestResultAt: latestResult?.created_at || null,
           contracts: (contracts || []) as Array<{ status?: string | null; data_inicio?: string | null; data_fim?: string | null }>,
+          invites: (invites || []) as Array<{ status?: string | null; valid_from?: string | null; valid_until?: string | null }>,
         })
       )
       setEligibilityLoading(false)

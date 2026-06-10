@@ -16,7 +16,7 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { requestNewPlacementTest } from '@/lib/actions/placement-test'
+import { requestNewPlacementTest, revokePlacementInvite } from '@/lib/actions/placement-test'
 import type { PlacementAnswerRecord } from '@/lib/dashboard-types'
 import { hasDetailedPlacementAnswers, summarizePlacementSkills } from '@/lib/placement-test-utils'
 import ReactMarkdown from 'react-markdown'
@@ -33,6 +33,38 @@ interface PlacementStudent {
   email: string | null
   cefr_level: string | null
   placement_test_completed: boolean | null
+}
+
+interface PlacementInvite {
+  student_id: string
+  status: string
+  valid_from: string | null
+  valid_until: string | null
+  created_at: string
+}
+
+function describeInvite(invite: PlacementInvite, now = new Date()) {
+  const from = invite.valid_from ? new Date(invite.valid_from) : null
+  const until = invite.valid_until ? new Date(invite.valid_until) : null
+  const fmt = (d: Date) => d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+
+  if (until && now.getTime() > until.getTime()) {
+    return { label: 'Convite expirado', detail: `Janela encerrou em ${fmt(until)}`, expired: true, scheduled: false }
+  }
+  if (from && now.getTime() < from.getTime()) {
+    return {
+      label: 'Convite agendado',
+      detail: until ? `Janela de ${fmt(from)} até ${fmt(until)}` : `Libera em ${fmt(from)}`,
+      expired: false,
+      scheduled: true,
+    }
+  }
+  return {
+    label: 'Convite ativo',
+    detail: until ? `Válido até ${fmt(until)}` : 'Sem data de expiração',
+    expired: false,
+    scheduled: false,
+  }
 }
 
 interface PlacementResult {
@@ -59,26 +91,38 @@ function getSelectedOptionLabel(answer: PlacementAnswerRecord) {
 
 export default function ProfessorNivelamentoPage() {
   const [students, setStudents] = useState<PlacementStudent[]>([])
+  const [invites, setInvites] = useState<Record<string, PlacementInvite>>({})
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selectedStudent, setSelectedStudent] = useState<PlacementStudent | null>(null)
   const [history, setHistory] = useState<PlacementResult[]>([])
   const [loadingHistory, setLoadingHistory] = useState(false)
+  const [inviteFormOpen, setInviteFormOpen] = useState(false)
+  const [inviteFrom, setInviteFrom] = useState('')
+  const [inviteUntil, setInviteUntil] = useState('')
+  const [savingInvite, setSavingInvite] = useState(false)
 
   const supabase = createClient()
 
   async function fetchStudents() {
     setLoading(true)
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('role', 'aluno')
-      .order('full_name')
+    const [{ data, error }, { data: inviteRows }] = await Promise.all([
+      supabase.from('profiles').select('*').eq('role', 'aluno').order('full_name'),
+      supabase
+        .from('placement_invites')
+        .select('student_id, status, valid_from, valid_until, created_at')
+        .eq('status', 'pending'),
+    ])
 
     if (error) {
       toast.error('Erro ao carregar alunos')
     } else {
       setStudents((data as PlacementStudent[]) || [])
+      const inviteMap: Record<string, PlacementInvite> = {}
+      for (const invite of (inviteRows as PlacementInvite[]) || []) {
+        inviteMap[invite.student_id] = invite
+      }
+      setInvites(inviteMap)
     }
     setLoading(false)
   }
@@ -88,11 +132,13 @@ export default function ProfessorNivelamentoPage() {
 
     async function loadInitialStudents() {
       setLoading(true)
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('role', 'aluno')
-        .order('full_name')
+      const [{ data, error }, { data: inviteRows }] = await Promise.all([
+        supabase.from('profiles').select('*').eq('role', 'aluno').order('full_name'),
+        supabase
+          .from('placement_invites')
+          .select('student_id, status, valid_from, valid_until, created_at')
+          .eq('status', 'pending'),
+      ])
 
       if (!active) {
         return
@@ -102,6 +148,11 @@ export default function ProfessorNivelamentoPage() {
         toast.error('Erro ao carregar alunos')
       } else {
         setStudents((data as PlacementStudent[]) || [])
+        const inviteMap: Record<string, PlacementInvite> = {}
+        for (const invite of (inviteRows as PlacementInvite[]) || []) {
+          inviteMap[invite.student_id] = invite
+        }
+        setInvites(inviteMap)
       }
 
       setLoading(false)
@@ -130,16 +181,36 @@ export default function ProfessorNivelamentoPage() {
     setLoadingHistory(false)
   }
 
-  async function handleReset(student: PlacementStudent) {
-    if (!confirm(`Deseja solicitar um novo teste para ${student.full_name}?`)) return
-    
+  function openInviteForm() {
+    setInviteFrom('')
+    setInviteUntil('')
+    setInviteFormOpen(true)
+  }
+
+  async function handleInvite(student: PlacementStudent) {
+    setSavingInvite(true)
     try {
-      await requestNewPlacementTest(student.id)
-      toast.success('Novo teste solicitado com sucesso!')
+      // Date inputs give YYYY-MM-DD; open at local midnight, close at local end-of-day.
+      const validFrom = inviteFrom ? new Date(`${inviteFrom}T00:00:00`).toISOString() : null
+      const validUntil = inviteUntil ? new Date(`${inviteUntil}T23:59:59`).toISOString() : null
+      await requestNewPlacementTest(student.id, { validFrom, validUntil })
+      toast.success('Convite de novo teste criado!')
+      setInviteFormOpen(false)
       void fetchStudents()
-      if (selectedStudent?.id === student.id) {
-        setSelectedStudent({ ...student, placement_test_completed: false })
-      }
+    } catch (err: unknown) {
+      toast.error(getErrorMessage(err))
+    } finally {
+      setSavingInvite(false)
+    }
+  }
+
+  async function handleRevoke(student: PlacementStudent) {
+    if (!confirm(`Revogar o convite de teste de ${student.full_name}?`)) return
+
+    try {
+      await revokePlacementInvite(student.id)
+      toast.success('Convite revogado.')
+      void fetchStudents()
     } catch (err: unknown) {
       toast.error(getErrorMessage(err))
     }
@@ -203,7 +274,17 @@ export default function ProfessorNivelamentoPage() {
                   }`}>
                     {student.cefr_level || 'A1'}
                   </span>
-                  {!student.placement_test_completed && (
+                  {invites[student.id] ? (
+                    <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 ${
+                      describeInvite(invites[student.id]).expired
+                        ? 'text-slate-400 bg-slate-100'
+                        : describeInvite(invites[student.id]).scheduled
+                          ? 'text-indigo-500 bg-indigo-50'
+                          : 'text-emerald-600 bg-emerald-50'
+                    }`}>
+                      <Calendar className="w-2.5 h-2.5" /> {describeInvite(invites[student.id]).label}
+                    </span>
+                  ) : !student.placement_test_completed && (
                     <span className="text-[11px] font-bold text-amber-500 bg-amber-50 px-2 py-0.5 rounded-md flex items-center gap-1">
                       <RotateCcw className="w-2.5 h-2.5" /> Pendente
                     </span>
@@ -232,18 +313,37 @@ export default function ProfessorNivelamentoPage() {
                   <h2 className="text-3xl font-black tracking-tight">{selectedStudent.full_name}</h2>
                   <p className="text-slate-400 text-sm font-medium">{selectedStudent.email}</p>
                 </div>
-                <div className="relative z-10 flex items-center gap-3">
-                  <div className="text-right">
+                <div className="relative z-10 flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="text-right sm:mr-2">
                     <p className="text-[11px] font-black text-blue-400 uppercase tracking-widest">Nível Atual</p>
                     <p className="text-3xl font-black">{selectedStudent.cefr_level || 'A1'}</p>
                   </div>
-                  <Button 
-                    onClick={() => handleReset(selectedStudent)}
-                    className="h-14 px-6 rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2"
-                  >
-                    <RotateCcw className="w-4 h-4 text-blue-400" />
-                    Solicitar Re-nivelamento
-                  </Button>
+                  {invites[selectedStudent.id] ? (
+                    <div className="flex items-center gap-3 bg-white/10 rounded-2xl px-5 py-3 border border-white/10">
+                      <div>
+                        <p className="text-xs font-black uppercase tracking-widest text-emerald-300">
+                          {describeInvite(invites[selectedStudent.id]).label}
+                        </p>
+                        <p className="text-[11px] font-medium text-slate-300">
+                          {describeInvite(invites[selectedStudent.id]).detail}
+                        </p>
+                      </div>
+                      <Button
+                        onClick={() => handleRevoke(selectedStudent)}
+                        className="h-10 px-4 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 font-bold text-[11px] uppercase tracking-widest"
+                      >
+                        Revogar
+                      </Button>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={openInviteForm}
+                      className="h-14 px-6 rounded-2xl bg-white/10 hover:bg-white/20 border-white/20 text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2"
+                    >
+                      <RotateCcw className="w-4 h-4 text-blue-400" />
+                      Convidar para Re-nivelamento
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -383,6 +483,65 @@ export default function ProfessorNivelamentoPage() {
           )}
         </div>
       </div>
+
+      {/* Invite creation modal: optional validity window for the new test */}
+      {inviteFormOpen && selectedStudent && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4" onClick={() => !savingInvite && setInviteFormOpen(false)}>
+          <div className="bg-white rounded-[2.5rem] shadow-2xl border border-slate-100 p-10 w-full max-w-md space-y-6 animate-in zoom-in-95 duration-300" onClick={(e) => e.stopPropagation()}>
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-[11px] font-black uppercase tracking-widest border border-blue-100">
+                <Calendar className="w-3 h-3" /> Convite de Re-nivelamento
+              </div>
+              <h3 className="text-xl font-black text-slate-900 tracking-tight">{selectedStudent.full_name}</h3>
+              <p className="text-sm text-slate-500 font-medium">
+                Defina uma janela de validade (opcional). Sem datas, o convite vale até ser usado ou revogado.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500" htmlFor="invite-from">Liberar a partir de</label>
+                <input
+                  id="invite-from"
+                  type="date"
+                  value={inviteFrom}
+                  onChange={(e) => setInviteFrom(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-[11px] font-black uppercase tracking-widest text-slate-500" htmlFor="invite-until">Válido até</label>
+                <input
+                  id="invite-until"
+                  type="date"
+                  value={inviteUntil}
+                  min={inviteFrom || undefined}
+                  onChange={(e) => setInviteUntil(e.target.value)}
+                  className="w-full px-4 py-3 rounded-2xl bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 outline-none transition-all font-medium text-sm"
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <Button
+                onClick={() => setInviteFormOpen(false)}
+                disabled={savingInvite}
+                className="h-12 px-6 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs uppercase tracking-widest"
+              >
+                Cancelar
+              </Button>
+              <Button
+                onClick={() => handleInvite(selectedStudent)}
+                disabled={savingInvite}
+                className="h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs uppercase tracking-widest flex items-center gap-2"
+              >
+                <RotateCcw className="w-4 h-4" />
+                {savingInvite ? 'Criando...' : 'Criar convite'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
