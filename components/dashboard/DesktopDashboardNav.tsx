@@ -10,6 +10,7 @@ import {
   FileText,
   Flame,
   LayoutDashboard,
+  ListChecks,
   Mail,
   Sparkles,
   Tag,
@@ -38,6 +39,7 @@ const iconMap = {
   documentos: FileText,
   jornada: Flame,
   perfil: User,
+  atividades: ListChecks,
 } as const
 
 function normalizePath(pathname: string, href: string) {
