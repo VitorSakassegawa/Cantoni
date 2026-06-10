@@ -8,6 +8,7 @@ const allowedClientImports = new Set([
   path.join(projectRoot, 'app', '(dashboard)', 'professor', 'nivelamento', 'page.tsx'),
   path.join(projectRoot, 'app', '(dashboard)', 'professor', 'painel', 'page.tsx'),
   path.join(projectRoot, 'app', '(dashboard)', 'aluno', 'painel', 'page.tsx'),
+  path.join(projectRoot, 'app', '(dashboard)', 'professor', 'atividades', 'page.tsx'),
   path.join(projectRoot, 'app', '(dashboard)', 'professor', 'alunos', '[id]', 'contrato', 'novo', 'page.tsx'),
 ])
 

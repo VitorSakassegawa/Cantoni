@@ -150,7 +150,10 @@ export class ContractService {
   static async cancelarAulaComPenalidade(
     aulaId: number,
     contrato: ContractServiceContract,
-    aula: Pick<ContractServiceLesson, 'data_hora'>
+    aula: Pick<ContractServiceLesson, 'data_hora'>,
+    // 'falta' (no-show) is financially identical — consumes the credit — but is
+    // kept as a distinct status so attendance analytics can tell them apart.
+    statusFinal: 'dada' | 'falta' = 'dada'
   ) {
     const supabase = await createServiceClient()
     const aulasDadas = (contrato.aulas_dadas || 0) + 1
@@ -159,7 +162,7 @@ export class ContractService {
     await supabase
       .from('aulas')
       .update({
-        status: 'dada',
+        status: statusFinal,
         aviso_horas_antecedencia: 0,
       })
       .eq('id', aulaId)

@@ -12,6 +12,7 @@ import {
   Flame,
   LayoutDashboard,
   MonitorPlay,
+  ListChecks,
   Mail,
   Sparkles,
   Tag,
@@ -41,6 +42,7 @@ const iconMap = {
   jornada: Flame,
   perfil: User,
   painel: MonitorPlay,
+  atividades: ListChecks,
 } as const
 
 function normalizePath(pathname: string, href: string) {
