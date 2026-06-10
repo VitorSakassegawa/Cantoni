@@ -30,6 +30,11 @@ async function getServiceClientSafe() {
   }
 }
 
+// Returns a ready-to-play <audio> source: a public Storage URL when the clip is
+// (or can be) cached — so the ~4.7MB WAV streams from the CDN and the browser
+// caches it natively instead of round-tripping through a server action — and
+// only falls back to an inline data URI when caching is unavailable (no service
+// key). Either form plays via `new Audio(src)`.
 export async function getCachedOrGenerateAudio(text: string): Promise<string | null> {
   const trimmed = (text || '').trim()
   if (!trimmed) {
@@ -39,16 +44,22 @@ export async function getCachedOrGenerateAudio(text: string): Promise<string | n
   const path = `${audioKey(trimmed)}.wav`
   const supabase = await getServiceClientSafe()
 
-  // 1. Cache hit → return the stored WAV as base64, with NO Gemini call.
+  const publicUrl = (objectPath: string) =>
+    supabase ? supabase.storage.from(PLACEMENT_AUDIO_BUCKET).getPublicUrl(objectPath).data.publicUrl : null
+
+  // 1. Cache hit → hand back the public URL, no Gemini call. `list` with a search
+  // is a cheap existence check (avoids downloading the 4.7MB blob just to probe).
   if (supabase) {
     try {
-      const { data, error } = await supabase.storage.from(PLACEMENT_AUDIO_BUCKET).download(path)
-      if (!error && data) {
-        const buffer = Buffer.from(await data.arrayBuffer())
-        return buffer.toString('base64')
+      const { data: listed } = await supabase.storage
+        .from(PLACEMENT_AUDIO_BUCKET)
+        .list('', { search: path, limit: 1 })
+      if (listed?.some((file) => file.name === path)) {
+        const url = publicUrl(path)
+        if (url) return url
       }
     } catch (error) {
-      console.warn('[placement-audio] cache read failed; will generate:', error)
+      console.warn('[placement-audio] cache lookup failed; will generate:', error)
     }
   }
 
@@ -58,19 +69,25 @@ export async function getCachedOrGenerateAudio(text: string): Promise<string | n
     return null
   }
 
-  // 3. Best-effort cache write. A storage failure must never block the student.
+  // 3. Best-effort cache write, then return the public URL. A storage failure
+  // must never block the student — we fall through to the inline data URI.
   if (supabase) {
     try {
-      await supabase.storage
+      const { error } = await supabase.storage
         .from(PLACEMENT_AUDIO_BUCKET)
         .upload(path, Buffer.from(audioBase64, 'base64'), {
           contentType: 'audio/wav',
           upsert: true,
         })
+      if (!error) {
+        const url = publicUrl(path)
+        if (url) return url
+      }
     } catch (error) {
       console.warn('[placement-audio] cache write failed (ignored):', error)
     }
   }
 
-  return audioBase64
+  // 4. No caching available → inline the audio so it still plays.
+  return `data:audio/wav;base64,${audioBase64}`
 }

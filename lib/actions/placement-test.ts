@@ -294,6 +294,12 @@ export async function evaluatePlacementTest(input: {
     if (!payload) {
       throw new Error('Sessão de teste inválida. Reinicie o nivelamento.')
     }
+    // A valid token must carry a non-empty answer key. Reject a tampered/corrupt
+    // payload that decrypts but has an empty key, which would silently grade the
+    // module 0/0 and drag the estimated level down.
+    if (!Array.isArray(payload.key) || payload.key.length === 0) {
+      throw new Error('Sessão de teste inválida. Reinicie o nivelamento.')
+    }
     const graded = gradePlacementSelections(payload.key, mod?.selections || [])
     score += graded.score
     total += graded.total
