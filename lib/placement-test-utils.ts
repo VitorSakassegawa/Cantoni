@@ -116,6 +116,29 @@ export function summarizePlacementSkills(
     })
 }
 
+// Groups stored answers by module (grammar → reading → listening) so the
+// history detail can label each section instead of showing one flat list where
+// reading/listening errors get lost after the 15 grammar items. Legacy answers
+// without a module tag land in a trailing 'other' group.
+export function groupPlacementAnswersByModule<T extends { module?: string | null }>(
+  answers: T[] | null | undefined
+): Array<{ module: string; items: T[] }> {
+  const list = answers || []
+  const groups = PLACEMENT_SKILL_ORDER.map((moduleName) => ({
+    module: moduleName,
+    items: list.filter((answer) => answer.module === moduleName),
+  })).filter((group) => group.items.length > 0)
+
+  const other = list.filter(
+    (answer) => typeof answer.module !== 'string' || !PLACEMENT_SKILL_ORDER.includes(answer.module)
+  )
+  if (other.length > 0) {
+    groups.push({ module: 'other', items: other })
+  }
+
+  return groups
+}
+
 // ---- Validação estrutural das questões geradas pela IA (#3) ----
 
 export type ValidatedPlacementQuestion = {

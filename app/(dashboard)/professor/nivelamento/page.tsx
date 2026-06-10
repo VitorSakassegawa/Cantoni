@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { requestNewPlacementTest, revokePlacementInvite } from '@/lib/actions/placement-test'
 import type { PlacementAnswerRecord } from '@/lib/dashboard-types'
-import { hasDetailedPlacementAnswers, summarizePlacementSkills } from '@/lib/placement-test-utils'
+import { groupPlacementAnswersByModule, hasDetailedPlacementAnswers, summarizePlacementSkills } from '@/lib/placement-test-utils'
 import ReactMarkdown from 'react-markdown'
 
 const SKILL_LABELS: Record<string, string> = {
@@ -437,8 +437,17 @@ export default function ProfessorNivelamentoPage() {
                                 <BookOpen className="w-4 h-4 text-blue-500" />
                                 Detalhamento de Questões ({detailedAnswers.length})
                               </h4>
-                              <div className="grid grid-cols-1 gap-3 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
-                                {detailedAnswers.map((ans, idx) => (
+                              <div className="space-y-5 max-h-[400px] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-slate-200">
+                                {groupPlacementAnswersByModule(detailedAnswers).map((group) => (
+                                <div key={group.module} className="space-y-3">
+                                  <p className="text-[11px] font-black uppercase tracking-widest text-indigo-500 pt-1">
+                                    {SKILL_LABELS[group.module] || 'Outras questões'}
+                                    <span className="ml-2 text-slate-400 normal-case tracking-normal font-bold">
+                                      {group.items.filter((a) => a.correct).length}/{group.items.length} corretas
+                                    </span>
+                                  </p>
+                                  <div className="grid grid-cols-1 gap-3">
+                                {group.items.map((ans, idx) => (
                                   <div key={idx} className={`p-5 rounded-3xl border-2 ${ans.correct ? 'bg-emerald-50/50 border-emerald-100' : 'bg-rose-50/50 border-rose-100'} text-sm shadow-sm`}>
                                     <div className="flex items-start gap-3">
                                       <span className={`flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-black text-white ${ans.correct ? 'bg-emerald-500' : 'bg-rose-500'} mt-0.5`}>
@@ -461,6 +470,9 @@ export default function ProfessorNivelamentoPage() {
                                       </div>
                                     </div>
                                   </div>
+                                ))}
+                                  </div>
+                                </div>
                                 ))}
                               </div>
                             </div>

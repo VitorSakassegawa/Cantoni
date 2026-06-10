@@ -65,6 +65,27 @@ const MODULE_LABELS: Record<PlacementModule, string> = {
 const MODULE_SEQUENCE: PlacementModule[] = ['grammar', 'reading', 'listening']
 const LEVEL_SEQUENCE: PlacementLevel[] = ['A1', 'A2', 'B1', 'B2', 'C1']
 
+// Rotating messages shown while Gemini writes the questions (can take ~30s).
+// Goal: turn the wait into a feature ("made live, just for you") and keep the
+// student from clicking away or refreshing mid-generation.
+function getGenerationPhrases(level: PlacementLevel): string[] {
+  return [
+    `A IA está escrevendo questões inéditas no nível ${level}, só para você.`,
+    'Nenhum teste é igual ao outro: o seu está nascendo agora, em tempo real.',
+    'Calibrando a dificuldade no padrão Cambridge CEFR...',
+    'Montando alternativas e protegendo o gabarito com criptografia...',
+    'Ajustando o teste à sua autoavaliação para um diagnóstico preciso...',
+    'Quase pronto! O teste abre sozinho — não clique em nada.',
+  ]
+}
+
+const MODULE_TRANSITION_PHRASES = [
+  'Analisando seu desempenho no módulo anterior...',
+  'A IA está ajustando o nível da próxima etapa para você...',
+  'Escrevendo questões novas em tempo real...',
+  'Continua automaticamente — não atualize a página.',
+]
+
 function getReadableError(error: unknown, fallback: string) {
   if (error instanceof Error && error.message) {
     return error.message
@@ -93,12 +114,23 @@ export default function LevelTestPage() {
   const [cachedAudio, setCachedAudio] = useState<string | null>(null)
   const [eligibility, setEligibility] = useState<PlacementEligibilityResult | null>(null)
   const [eligibilityLoading, setEligibilityLoading] = useState(true)
+  const [phraseIndex, setPhraseIndex] = useState(0)
 
   useEffect(() => {
     return () => {
       window.speechSynthesis.cancel()
     }
   }, [])
+
+  // Rotates the "generating your test" messages while a module loads.
+  useEffect(() => {
+    if (!loading) {
+      setPhraseIndex(0)
+      return
+    }
+    const interval = setInterval(() => setPhraseIndex((value) => value + 1), 4000)
+    return () => clearInterval(interval)
+  }, [loading])
 
   useEffect(() => {
     const supabase = createClient()
@@ -207,6 +239,8 @@ export default function LevelTestPage() {
     setModuleSubmissions([])
     setCurrentSelections([])
     setResult(null)
+    // Show the chosen level on the generation screen before the module arrives.
+    if (startLevel) setCurrentLevel(startLevel)
     await loadModule(startLevel || currentLevel, 'grammar')
   }
 
@@ -540,6 +574,47 @@ export default function LevelTestPage() {
     )
   }
 
+  // Full-screen "your test is being written live" experience: the first Gemini
+  // generation can take ~30s and the only feedback used to be a button spinner.
+  if (step === 'auto-eval' && loading) {
+    const phrases = getGenerationPhrases(currentLevel)
+    return (
+      <div className="max-w-xl mx-auto py-24 px-4 text-center space-y-12 animate-in fade-in zoom-in-95 duration-700">
+        <div className="relative w-32 h-32 mx-auto">
+          <div className="absolute inset-0 bg-indigo-600/20 rounded-[2.5rem] animate-ping" />
+          <div className="relative bg-indigo-600 w-32 h-32 rounded-[2.5rem] flex items-center justify-center shadow-2xl shadow-indigo-500/40">
+            <Sparkles className="w-14 h-14 text-white animate-pulse" />
+          </div>
+        </div>
+
+        <div className="space-y-6">
+          <div className="inline-flex items-center gap-2 bg-indigo-50 text-indigo-600 px-4 py-1.5 rounded-full text-xs font-black uppercase tracking-widest border border-indigo-100">
+            <Loader2 className="w-3 h-3 animate-spin" /> Gerando seu teste com IA
+          </div>
+          <h1 className="text-3xl font-black text-slate-900 tracking-tight">
+            Sua prova está sendo criada <span className="text-indigo-600">agora</span>
+          </h1>
+          <p
+            key={phraseIndex}
+            className="text-slate-500 font-medium text-sm leading-relaxed max-w-sm mx-auto min-h-[40px] animate-in fade-in slide-in-from-bottom-2 duration-500"
+          >
+            {phrases[phraseIndex % phrases.length]}
+          </p>
+        </div>
+
+        <div className="space-y-4">
+          <div className="h-1.5 w-full max-w-xs mx-auto bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-full w-1/3 bg-indigo-600 rounded-full animate-[loading-slide_1.5s_ease-in-out_infinite]" />
+          </div>
+          <style>{`@keyframes loading-slide { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }`}</style>
+          <div className="inline-flex items-center gap-2 bg-amber-50 text-amber-700 px-5 py-2.5 rounded-2xl text-xs font-bold border border-amber-100">
+            Aguarde nesta tela — o teste começa sozinho. Não clique em voltar nem atualize a página.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (step === 'auto-eval') {
     return (
       <div className="max-w-2xl mx-auto py-12 px-4 text-center space-y-12 animate-in fade-in zoom-in-95 duration-700">
@@ -689,9 +764,12 @@ export default function LevelTestPage() {
             {loading ? (
               <div className="absolute inset-0 bg-white/90 backdrop-blur-sm z-50 flex flex-col items-center justify-center text-center p-8 animate-in fade-in duration-300">
                 <Loader2 className="w-12 h-12 text-indigo-600 animate-spin mb-4" />
-                <h3 className="text-lg font-black text-slate-900 tracking-tight">Ajustando dificuldade...</h3>
-                <p className="text-sm text-slate-500 font-medium">
-                  A próxima etapa está sendo calibrada com base no seu desempenho.
+                <h3 className="text-lg font-black text-slate-900 tracking-tight">Gerando a próxima etapa...</h3>
+                <p
+                  key={phraseIndex}
+                  className="text-sm text-slate-500 font-medium min-h-[40px] animate-in fade-in slide-in-from-bottom-2 duration-500"
+                >
+                  {MODULE_TRANSITION_PHRASES[phraseIndex % MODULE_TRANSITION_PHRASES.length]}
                 </p>
               </div>
             ) : null}
