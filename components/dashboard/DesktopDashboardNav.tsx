@@ -10,6 +10,7 @@ import {
   FileText,
   Flame,
   LayoutDashboard,
+  MonitorPlay,
   ListChecks,
   Mail,
   Sparkles,
@@ -39,6 +40,7 @@ const iconMap = {
   documentos: FileText,
   jornada: Flame,
   perfil: User,
+  painel: MonitorPlay,
   atividades: ListChecks,
 } as const
 
