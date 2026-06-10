@@ -1,6 +1,7 @@
 'use server'
 
-import { generateAIContent, generateAIAudio, extractAndParseJSON } from '@/lib/ai'
+import { generateAIContent, extractAndParseJSON } from '@/lib/ai'
+import { getCachedOrGenerateAudio } from '@/lib/placement-audio-cache'
 import type { PlacementModuleSubmission, PlacementSelection } from '@/lib/dashboard-types'
 import { gradePlacementSelections, validateGeneratedQuestions } from '@/lib/placement-test-utils'
 import { encryptPlacementKey, decryptPlacementKey } from '@/lib/placement-token'
@@ -435,5 +436,17 @@ export async function requestNewPlacementTest(studentId: string) {
 }
 
 export async function getPlacementAudio(text: string) {
-  return await generateAIAudio(text)
+  // Require an authenticated user: this action triggers a (cached) Gemini TTS
+  // call, so leaving it open would let anyone burn the shared free-tier quota.
+  const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return null
+  }
+
+  // Reuse a previously synthesized clip when the same script comes up again,
+  // instead of paying for a fresh TTS generation every time.
+  return await getCachedOrGenerateAudio(text)
 }
