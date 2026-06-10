@@ -1,7 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
-import { generateAIContent, extractAndParseJSON } from '@/lib/ai'
+import { generateAIContent, generateAIContentFromFile, extractAndParseJSON } from '@/lib/ai'
 import {
   ATIVIDADE_NIVEIS,
   QUESTAO_TIPOS,
@@ -75,6 +75,62 @@ ${formatos}
 
   return {
     titulo: typeof parsed?.titulo === 'string' && parsed.titulo.trim() ? parsed.titulo.trim() : tema,
+    nivel,
+    questoes,
+  }
+}
+
+const PDF_MAX_BYTES = 6 * 1024 * 1024
+
+// Extrai questões de um PDF (apostila/worksheet) via Gemini multimodal e
+// devolve um rascunho no mesmo formato do gerador — o professor revisa antes
+// de salvar (tipo_fonte 'pdf').
+export async function importarAtividadePDF(formData: FormData) {
+  await requireProfessor()
+
+  const file = formData.get('file')
+  if (!(file instanceof File)) throw new Error('Envie um arquivo PDF.')
+  if (file.type !== 'application/pdf') throw new Error('Apenas arquivos PDF são aceitos.')
+  if (file.size > PDF_MAX_BYTES) throw new Error('O PDF excede o limite de 6 MB.')
+
+  const nivelRaw = String(formData.get('nivel') || 'B1') as AtividadeNivel
+  const nivel = ATIVIDADE_NIVEIS.includes(nivelRaw) ? nivelRaw : 'B1'
+
+  const dataBase64 = Buffer.from(await file.arrayBuffer()).toString('base64')
+
+  const formatos = QUESTAO_TIPOS.map((t) => `- ${TIPO_PROMPT[t]}`).join('\n')
+  const prompt = `
+    O PDF anexado contém exercícios de inglês. EXTRAIA as questões do documento,
+    convertendo cada uma para o formato estruturado abaixo. Use o tipo que melhor
+    representa cada questão original:
+${formatos}
+
+    REGRAS CRÍTICAS:
+    1. NÃO invente questões — extraia apenas o que existe no PDF (enunciados podem ser levemente normalizados).
+    2. Para questões cujo gabarito não está no PDF, RESOLVA a questão você mesmo para preencher a resposta.
+    3. Para "lacunas", garanta que o enunciado contenha ___ no lugar da palavra.
+    4. Para "ordenar", liste os itens na ORDEM CORRETA.
+    5. Questões abertas/redação viram "dissertativa".
+    6. Retorne APENAS JSON válido: {"titulo": "título derivado do PDF", "questoes": [...]}
+  `
+
+  const response = await generateAIContentFromFile(prompt, {
+    mimeType: 'application/pdf',
+    dataBase64,
+  })
+  if (!response) throw new Error('A IA não conseguiu ler o PDF. Tente novamente.')
+
+  const parsed = extractAndParseJSON(response) as { titulo?: unknown; questoes?: unknown }
+  const questoes = validateQuestoes(parsed?.questoes)
+  if (questoes.length === 0) {
+    throw new Error('Nenhuma questão válida foi extraída deste PDF. Confira se ele contém exercícios.')
+  }
+
+  return {
+    titulo:
+      typeof parsed?.titulo === 'string' && parsed.titulo.trim()
+        ? parsed.titulo.trim()
+        : file.name.replace(/\.pdf$/i, ''),
     nivel,
     questoes,
   }

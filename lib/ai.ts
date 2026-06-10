@@ -190,6 +190,54 @@ export async function generateAIContent(
   }
 }
 
+async function callFileModelOnce(
+  modelName: string,
+  prompt: string,
+  file: { mimeType: string; dataBase64: string },
+  responseMimeType: string
+): Promise<string> {
+  const genAI = getGenAI()
+  const model = genAI.getGenerativeModel({
+    model: modelName,
+    generationConfig: { responseMimeType },
+  })
+  const timeoutPromise = new Promise<never>((_, reject) =>
+    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), TEXT_GENERATION_TIMEOUT_MS)
+  )
+  const result = await Promise.race([
+    model.generateContent([
+      { inlineData: { mimeType: file.mimeType, data: file.dataBase64 } },
+      { text: prompt },
+    ]),
+    timeoutPromise,
+  ])
+  const response = await result.response
+  return response.text()
+}
+
+// Multimodal variant of generateAIContent (e.g. PDF extraction). Shares the
+// same concurrency gate, 429 backoff and model fallback chain.
+export async function generateAIContentFromFile(
+  prompt: string,
+  file: { mimeType: string; dataBase64: string },
+  modelName: string = PRIMARY_MODEL,
+  responseMimeType: string = 'application/json'
+): Promise<string> {
+  try {
+    return await runGeminiCall(modelName, () => callFileModelOnce(modelName, prompt, file, responseMimeType))
+  } catch (error: unknown) {
+    console.error(`Error with model ${modelName} (file input):`, error)
+
+    if (modelName === PRIMARY_MODEL) {
+      return generateAIContentFromFile(prompt, file, FALLBACK_MODEL, responseMimeType)
+    }
+    if (modelName === FALLBACK_MODEL) {
+      return generateAIContentFromFile(prompt, file, STABLE_FALLBACK, responseMimeType)
+    }
+    throw error
+  }
+}
+
 export async function generateLessonSummary(notes: string) {
   const prompt = `
     Você é um assistente de ensino de inglês de alta qualidade para a Cantoni English School.
