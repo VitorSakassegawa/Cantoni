@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic'
 
+import type { Metadata } from 'next'
 import Image from 'next/image'
 import DocumentAcceptanceForm from '@/components/documents/DocumentAcceptanceForm'
 import ExternalSignatureGuide from '@/components/documents/ExternalSignatureGuide'
@@ -43,6 +44,39 @@ function getStatusTone(status: string) {
       return 'border-slate-200 bg-slate-100 text-slate-600'
     default:
       return 'border-blue-200 bg-blue-50 text-blue-700'
+  }
+}
+
+// Standardized print/save filename per document kind, following the lesson
+// report scheme (CES - <Tipo> (<Nome do Aluno>)). RLS scopes the lookup, so an
+// unauthorized request just gets the generic fallback (no data leak).
+const DOCUMENT_KIND_LABELS: Record<string, string> = {
+  contract: 'Contrato de Serviço Educacional',
+  enrollment_declaration: 'Declaração de Matrícula',
+  cancellation_notice: 'Termo de Cancelamento',
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ issuanceId: string }>
+}): Promise<Metadata> {
+  const fallback: Metadata = { title: 'Documento - Cantoni English School' }
+  try {
+    const { issuanceId } = await params
+    const supabase = await createClient()
+    const { data: issuance } = await supabase
+      .from('document_issuances')
+      .select('kind, payload')
+      .eq('id', Number.parseInt(issuanceId, 10))
+      .single()
+    if (!issuance) return fallback
+
+    const label = DOCUMENT_KIND_LABELS[issuance.kind as string] || 'Documento'
+    const studentName = (issuance.payload as { student?: { fullName?: string | null } } | null)?.student?.fullName
+    return { title: studentName ? `CES - ${label} (${studentName})` : `CES - ${label}` }
+  } catch {
+    return fallback
   }
 }
 
