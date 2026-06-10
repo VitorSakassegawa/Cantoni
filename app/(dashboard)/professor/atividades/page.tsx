@@ -351,7 +351,7 @@ export default function ProfessorAtividadesPage() {
 
       {/* ---- Criar com IA ---- */}
       <Dialog open={createOpen} onOpenChange={(open) => !generating && setCreateOpen(open)}>
-        <DialogContent className="sm:max-w-[640px] rounded-[2.5rem] border-none shadow-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[640px] rounded-[2.5rem] border-none shadow-2xl max-h-[85vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle className="text-2xl font-black text-slate-900 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-indigo-600" /> Criar atividade com IA
@@ -583,7 +583,7 @@ export default function ProfessorAtividadesPage() {
 
       {/* ---- Atribuir ---- */}
       <Dialog open={Boolean(assignFor)} onOpenChange={(open) => !open && setAssignFor(null)}>
-        <DialogContent className="sm:max-w-[480px] rounded-[2.5rem] border-none shadow-2xl">
+        <DialogContent className="sm:max-w-[480px] rounded-[2.5rem] border-none shadow-2xl bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-slate-900">Atribuir &quot;{assignFor?.titulo}&quot;</DialogTitle>
             <DialogDescription className="text-sm text-slate-500">
@@ -632,7 +632,7 @@ export default function ProfessorAtividadesPage() {
 
       {/* ---- Entregas / correção ---- */}
       <Dialog open={Boolean(reviewFor)} onOpenChange={(open) => !open && setReviewFor(null)}>
-        <DialogContent className="sm:max-w-[640px] rounded-[2.5rem] border-none shadow-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[640px] rounded-[2.5rem] border-none shadow-2xl max-h-[85vh] overflow-y-auto bg-white">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-slate-900">Entregas — {reviewFor?.titulo}</DialogTitle>
           </DialogHeader>
@@ -710,7 +710,7 @@ export default function ProfessorAtividadesPage() {
 
       {/* ---- Confirmar exclusão ---- */}
       <Dialog open={Boolean(confirmDelete)} onOpenChange={(open) => !open && setConfirmDelete(null)}>
-        <DialogContent className="sm:max-w-[420px] rounded-3xl border-none shadow-2xl">
+        <DialogContent className="sm:max-w-[420px] rounded-3xl border-none shadow-2xl bg-white">
           <DialogHeader>
             <DialogTitle className="text-lg font-black text-slate-900">Excluir esta atividade?</DialogTitle>
             <DialogDescription className="text-sm text-slate-500">

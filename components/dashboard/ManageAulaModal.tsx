@@ -501,7 +501,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     </Dialog>
 
     <Dialog open={confirmFalta} onOpenChange={setConfirmFalta}>
-      <DialogContent className="sm:max-w-[440px] rounded-3xl border-none shadow-2xl">
+      <DialogContent className="sm:max-w-[440px] rounded-3xl border-none shadow-2xl bg-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-black text-slate-900">Registrar falta do aluno?</DialogTitle>
           <DialogDescription className="text-sm text-slate-500">
@@ -530,7 +530,7 @@ export default function ManageAulaModal({ aula, open, onOpenChange, onSuccess }:
     </Dialog>
 
     <Dialog open={confirmConcluir} onOpenChange={setConfirmConcluir}>
-      <DialogContent className="sm:max-w-[440px] rounded-3xl border-none shadow-2xl">
+      <DialogContent className="sm:max-w-[440px] rounded-3xl border-none shadow-2xl bg-white">
         <DialogHeader>
           <DialogTitle className="text-xl font-black text-slate-900">Concluir esta aula?</DialogTitle>
           <DialogDescription className="text-sm text-slate-500">

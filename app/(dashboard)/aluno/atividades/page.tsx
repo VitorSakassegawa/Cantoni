@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
@@ -31,7 +31,12 @@ export default async function AlunoAtividadesPage() {
   } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data } = await supabase
+  // Service-role read, strictly scoped to this student: the `atividades` table
+  // is professor-only under RLS (it holds answer keys), so an RLS-bound join
+  // would return null and hide every assignment. We only select safe columns
+  // (titulo/nivel) — never `questoes`.
+  const serviceSupabase = await createServiceClient()
+  const { data } = await serviceSupabase
     .from('atividade_atribuicoes')
     .select('id, status, due_date, nota, acertos, total_objetivas, assigned_at, atividades(titulo, nivel)')
     .eq('aluno_id', user.id)
