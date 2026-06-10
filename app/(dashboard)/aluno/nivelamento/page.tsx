@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import SkillsRadar from '@/components/dashboard/SkillsRadar'
 import { evaluatePlacementEligibility } from '@/lib/placement-eligibility'
-import { summarizePlacementSkills } from '@/lib/placement-test-utils'
+import { groupPlacementAnswersByModule, summarizePlacementSkills } from '@/lib/placement-test-utils'
 import {
   ArrowLeft,
   ArrowRight,
@@ -379,48 +379,65 @@ export default async function AlunoNivelamentoPage() {
                           </span>
                         </summary>
 
-                        <div className="grid gap-3 border-t border-slate-100 px-5 py-5">
-                          {answers.map((answer, index) => (
-                            <div
-                              key={`${test.id}-${index}`}
-                              className={`rounded-3xl border px-5 py-5 ${
-                                answer.correct ? 'border-emerald-100 bg-emerald-50/60' : 'border-rose-100 bg-rose-50/60'
-                              }`}
-                            >
-                              <div className="flex items-start gap-4">
-                                <div
-                                  className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${
-                                    answer.correct ? 'bg-emerald-500' : 'bg-rose-500'
-                                  }`}
-                                >
-                                  {answer.correct ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
-                                </div>
-                                <div className="space-y-3">
-                                  <p className="text-sm font-bold leading-relaxed text-slate-900">
-                                    {index + 1}. {answer.question || 'Questão sem texto disponível'}
+                        <div className="space-y-6 border-t border-slate-100 px-5 py-5">
+                          {groupPlacementAnswersByModule(answers).map((group) => {
+                            const groupWrong = group.items.filter((item) => item.correct === false).length
+                            return (
+                              <div key={`${test.id}-${group.module}`} className="space-y-3">
+                                <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                                  <p className="text-xs font-black uppercase tracking-widest text-indigo-500">
+                                    {SKILL_LABELS[group.module] || 'Outras questões'}
                                   </p>
-                                  <div className="space-y-1 rounded-2xl bg-white/70 p-4">
-                                    <p className={`text-xs font-semibold ${answer.correct ? 'text-emerald-700' : 'text-rose-700'}`}>
-                                      <span className="mr-2 text-[11px] font-black uppercase tracking-widest opacity-70">
-                                        Sua resposta:
-                                      </span>
-                                      {typeof answer.selected === 'number' && answer.options
-                                        ? answer.options[answer.selected]
-                                        : 'Resposta não identificada'}
-                                    </p>
-                                    {!answer.correct && typeof answer.correctAnswer === 'number' && answer.options ? (
-                                      <p className="text-xs font-semibold text-emerald-700">
-                                        <span className="mr-2 text-[11px] font-black uppercase tracking-widest opacity-70">
-                                          Correta:
-                                        </span>
-                                        {answer.options[answer.correctAnswer]}
-                                      </p>
-                                    ) : null}
-                                  </div>
+                                  <span className="text-[11px] font-bold text-slate-400">
+                                    {group.items.length - groupWrong}/{group.items.length} corretas
+                                  </span>
+                                </div>
+                                <div className="grid gap-3">
+                                  {group.items.map((answer, index) => (
+                                    <div
+                                      key={`${test.id}-${group.module}-${index}`}
+                                      className={`rounded-3xl border px-5 py-5 ${
+                                        answer.correct ? 'border-emerald-100 bg-emerald-50/60' : 'border-rose-100 bg-rose-50/60'
+                                      }`}
+                                    >
+                                      <div className="flex items-start gap-4">
+                                        <div
+                                          className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white ${
+                                            answer.correct ? 'bg-emerald-500' : 'bg-rose-500'
+                                          }`}
+                                        >
+                                          {answer.correct ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                                        </div>
+                                        <div className="space-y-3">
+                                          <p className="text-sm font-bold leading-relaxed text-slate-900">
+                                            {index + 1}. {answer.question || 'Questão sem texto disponível'}
+                                          </p>
+                                          <div className="space-y-1 rounded-2xl bg-white/70 p-4">
+                                            <p className={`text-xs font-semibold ${answer.correct ? 'text-emerald-700' : 'text-rose-700'}`}>
+                                              <span className="mr-2 text-[11px] font-black uppercase tracking-widest opacity-70">
+                                                Sua resposta:
+                                              </span>
+                                              {typeof answer.selected === 'number' && answer.options
+                                                ? answer.options[answer.selected]
+                                                : 'Resposta não identificada'}
+                                            </p>
+                                            {!answer.correct && typeof answer.correctAnswer === 'number' && answer.options ? (
+                                              <p className="text-xs font-semibold text-emerald-700">
+                                                <span className="mr-2 text-[11px] font-black uppercase tracking-widest opacity-70">
+                                                  Correta:
+                                                </span>
+                                                {answer.options[answer.correctAnswer]}
+                                              </p>
+                                            ) : null}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            )
+                          })}
                         </div>
                       </details>
                     ) : null}

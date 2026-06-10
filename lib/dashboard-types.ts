@@ -241,6 +241,7 @@ export type PlacementAnswer = PlacementQuestion & {
 }
 
 export type PlacementAnswerRecord = Partial<PlacementQuestion> & {
+  module?: string
   selected?: number
   correct?: boolean
 }

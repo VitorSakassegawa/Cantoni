@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
   countPlacementCorrectAnswers,
   gradePlacementSelections,
+  groupPlacementAnswersByModule,
   hasDetailedPlacementAnswers,
   normalizePlacementAnswers,
   summarizePlacementSkills,
@@ -94,5 +95,23 @@ assert.equal(skills[1].ratio, 1)
 // resultados legados (sem module) não geram breakdown
 assert.deepEqual(summarizePlacementSkills([{ correct: true }, { correct: false }]), [])
 assert.deepEqual(summarizePlacementSkills(null), [])
+
+// agrupamento por módulo: ordem fixa, contagens por grupo, legados em 'other'
+const groups = groupPlacementAnswersByModule([
+  { module: 'listening', correct: false },
+  { module: 'grammar', correct: true },
+  { module: 'reading', correct: true },
+  { module: 'grammar', correct: false },
+  { correct: true },
+])
+assert.deepEqual(
+  groups.map((g) => g.module),
+  ['grammar', 'reading', 'listening', 'other']
+)
+assert.equal(groups[0].items.length, 2)
+assert.equal(groups[2].items.length, 1)
+assert.equal(groups[3].items.length, 1)
+assert.deepEqual(groupPlacementAnswersByModule(null), [])
+assert.deepEqual(groupPlacementAnswersByModule([]), [])
 
 console.log('placement-test-utils tests passed')
