@@ -64,7 +64,7 @@ export default async function AlunoNivelamentoPage() {
 
   if (profile?.role === 'professor') redirect('/professor/nivelamento')
 
-  const [{ data: history }, { data: avaliacoes }, { data: contracts }] = await Promise.all([
+  const [{ data: history }, { data: avaliacoes }, { data: contracts }, { data: invites }] = await Promise.all([
     supabase.from('placement_results').select('*').eq('student_id', user.id).order('created_at', { ascending: false }),
     supabase
       .from('avaliacoes_habilidades')
@@ -73,6 +73,11 @@ export default async function AlunoNivelamentoPage() {
       .order('mes_referencia', { ascending: false })
       .limit(6),
     supabase.from('contratos').select('status, data_inicio, data_fim').eq('aluno_id', user.id).neq('status', 'cancelado'),
+    supabase
+      .from('placement_invites')
+      .select('status, valid_from, valid_until')
+      .eq('student_id', user.id)
+      .eq('status', 'pending'),
   ])
 
   const latestResult = history?.[0] || null
@@ -81,6 +86,7 @@ export default async function AlunoNivelamentoPage() {
     placementTestCompleted: profile?.placement_test_completed,
     latestResultAt: latestResult?.created_at || null,
     contracts: (contracts || []) as Array<{ status?: string | null; data_inicio?: string | null; data_fim?: string | null }>,
+    invites: (invites || []) as Array<{ status?: string | null; valid_from?: string | null; valid_until?: string | null }>,
   })
 
   const eligibilityRules = [

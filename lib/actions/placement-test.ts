@@ -11,7 +11,7 @@ import { evaluatePlacementEligibility } from '@/lib/placement-eligibility'
 const PLACEMENT_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'] as const
 
 async function getPlacementGate(supabase: Awaited<ReturnType<typeof createClient>>, studentId: string) {
-  const [{ data: profile }, { data: contracts }, { data: latestResult }] = await Promise.all([
+  const [{ data: profile }, { data: contracts }, { data: latestResult }, { data: invites }] = await Promise.all([
     supabase.from('profiles').select('placement_test_completed').eq('id', studentId).single(),
     supabase.from('contratos').select('status, data_inicio, data_fim').eq('aluno_id', studentId).neq('status', 'cancelado'),
     supabase
@@ -21,12 +21,18 @@ async function getPlacementGate(supabase: Awaited<ReturnType<typeof createClient
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle(),
+    supabase
+      .from('placement_invites')
+      .select('status, valid_from, valid_until')
+      .eq('student_id', studentId)
+      .eq('status', 'pending'),
   ])
 
   return evaluatePlacementEligibility({
     placementTestCompleted: profile?.placement_test_completed,
     latestResultAt: latestResult?.created_at || null,
     contracts: (contracts || []) as Array<{ status?: string | null; data_inicio?: string | null; data_fim?: string | null }>,
+    invites: (invites || []) as Array<{ status?: string | null; valid_from?: string | null; valid_until?: string | null }>,
   })
 }
 
@@ -400,6 +406,17 @@ export async function evaluatePlacementTest(input: {
     throw new Error('Erro ao atualizar perfil no banco de dados.')
   }
 
+  // Consume any pending invite: a completed test satisfies the release no
+  // matter which eligibility rule granted access, so invites are one-shot.
+  // (RLS allows students to transition their OWN invites to 'used' only.)
+  const { error: inviteError } = await supabase
+    .from('placement_invites')
+    .update({ status: 'used', used_at: new Date().toISOString() })
+    .eq('student_id', studentId)
+    .eq('status', 'pending')
+
+  if (inviteError) console.error('Error consuming placement invite:', inviteError)
+
   const result = {
     suggestedLevel,
     suggestedNivel: nivelMap[suggestedLevel],
@@ -415,8 +432,7 @@ export async function evaluatePlacementTest(input: {
   return JSON.parse(JSON.stringify(result))
 }
 
-export async function requestNewPlacementTest(studentId: string) {
-  const supabase = await createClient()
+async function requireProfessor(supabase: Awaited<ReturnType<typeof createClient>>) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
@@ -424,14 +440,57 @@ export async function requestNewPlacementTest(studentId: string) {
   if (!user) throw new Error('Não autorizado')
 
   const { data: prof } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (prof?.role !== 'professor') throw new Error('Apenas professores podem solicitar novos testes')
+  if (prof?.role !== 'professor') throw new Error('Apenas professores podem gerenciar convites de teste')
+
+  return user
+}
+
+// Creates an explicit invite (with optional validity window) instead of the
+// legacy `placement_test_completed = false` toggle. Any previous pending invite
+// for the student is revoked first, so the latest invite is the source of truth.
+export async function requestNewPlacementTest(
+  studentId: string,
+  window?: { validFrom?: string | null; validUntil?: string | null }
+) {
+  const supabase = await createClient()
+  const user = await requireProfessor(supabase)
+
+  const validFrom = window?.validFrom || null
+  const validUntil = window?.validUntil || null
+  if (validFrom && validUntil && new Date(validFrom).getTime() > new Date(validUntil).getTime()) {
+    throw new Error('A data de início do convite não pode ser depois do fim.')
+  }
+
+  const { error: revokeError } = await supabase
+    .from('placement_invites')
+    .update({ status: 'revoked' })
+    .eq('student_id', studentId)
+    .eq('status', 'pending')
+
+  if (revokeError) throw new Error('Falha ao substituir convite anterior')
+
+  const { error } = await supabase.from('placement_invites').insert({
+    student_id: studentId,
+    created_by: user.id,
+    valid_from: validFrom,
+    valid_until: validUntil,
+  })
+
+  if (error) throw new Error('Falha ao criar convite de novo teste')
+  return { success: true }
+}
+
+export async function revokePlacementInvite(studentId: string) {
+  const supabase = await createClient()
+  await requireProfessor(supabase)
 
   const { error } = await supabase
-    .from('profiles')
-    .update({ placement_test_completed: false })
-    .eq('id', studentId)
+    .from('placement_invites')
+    .update({ status: 'revoked' })
+    .eq('student_id', studentId)
+    .eq('status', 'pending')
 
-  if (error) throw new Error('Falha ao resetar teste')
+  if (error) throw new Error('Falha ao revogar convite')
   return { success: true }
 }
 
