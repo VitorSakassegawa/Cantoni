@@ -55,11 +55,16 @@ const FALLBACK_MODEL = process.env.GEMINI_FALLBACK_MODEL || 'gemini-2.5-flash-li
 // (The previous gemini-1.5-* models were silently retired by Google → 404.)
 const STABLE_FALLBACK = process.env.GEMINI_STABLE_FALLBACK_MODEL || 'gemini-flash-latest'
 
+// TTS fallback chain. The *-flash-tts models respond in ~3s and are on the free
+// tier; the *-pro-preview-tts model has a tiny free-tier quota that exhausts
+// quickly (429), so it is only a last resort — NOT the first fallback.
 const AUDIO_MODEL = process.env.GEMINI_TTS_MODEL || 'gemini-2.5-flash-preview-tts'
-const AUDIO_FALLBACK = process.env.GEMINI_TTS_FALLBACK_MODEL || 'gemini-2.5-pro-preview-tts'
+const AUDIO_FALLBACK = process.env.GEMINI_TTS_FALLBACK_MODEL || 'gemini-3.1-flash-tts-preview'
+const AUDIO_STABLE_FALLBACK = process.env.GEMINI_TTS_FALLBACK2_MODEL || 'gemini-2.5-pro-preview-tts'
 const AUDIO_VOICE = process.env.GEMINI_TTS_VOICE || 'Kore'
 
 const TEXT_GENERATION_TIMEOUT_MS = Number(process.env.GEMINI_TEXT_TIMEOUT_MS || 60000)
+const AUDIO_GENERATION_TIMEOUT_MS = Number(process.env.GEMINI_TTS_TIMEOUT_MS || 45000)
 
 // --- Free-tier protection: concurrency gate + transient-error backoff ---------
 // Gemini's free tier caps requests per minute (e.g. 10 RPM on 2.5-flash) on a
@@ -507,7 +512,7 @@ async function callAudioModelOnce(modelName: string, text: string): Promise<stri
   })
 
   const timeoutPromise = new Promise((_, reject) =>
-    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), 45000)
+    setTimeout(() => reject(new Error(`Timeout with ${modelName}`)), AUDIO_GENERATION_TIMEOUT_MS)
   )
 
   const result = (await Promise.race([audioPromise, timeoutPromise])) as {
@@ -532,10 +537,14 @@ export async function generateAIAudio(text: string, modelName: string = AUDIO_MO
   } catch (error: unknown) {
     console.error(`Error with ${modelName}:`, error instanceof Error ? error.message : error)
 
-    // After same-model retries, step down to the fallback TTS model once.
+    // Step down through the TTS fallback chain: primary → newer flash → pro.
     if (modelName === AUDIO_MODEL) {
       console.log(`Retrying audio with fallback: ${AUDIO_FALLBACK}`)
       return generateAIAudio(text, AUDIO_FALLBACK)
+    }
+    if (modelName === AUDIO_FALLBACK) {
+      console.log(`Retrying audio with stable fallback: ${AUDIO_STABLE_FALLBACK}`)
+      return generateAIAudio(text, AUDIO_STABLE_FALLBACK)
     }
 
     return null
